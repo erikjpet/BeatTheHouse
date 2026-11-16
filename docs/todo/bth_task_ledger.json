@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T10:04:40.001499+00:00",
+  "updated_at": "2026-11-16T10:45:29.476232+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -4981,7 +4981,7 @@
         }
       },
       "state": "open",
-      "status": "NATIVE_CORRIDOR_PREP_ACTIVE_COLLECTOR_FIX_MAIN_NEXT_VERIFIED",
+      "status": "NATIVE_COLLECTION_CORRIDOR_ENDING_VERIFIED",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -5130,7 +5130,7 @@
         {
           "kind": "native_collection_corridor_progress",
           "reference": "docs/testing/Crew_collection_and_Corridor_QA_20261116.md",
-          "summary": "Both actual collection outcomes/persistence pass; natural nextopening1680 produced DebtCourt. AdjacentCasino had noeligiblelender; actualMotel9fare ledtoNico20advance/22repayment/fourturn quote, normalconfirmation,9fare return andClubdoor. Correct full actualledger showsNico22active3turns. ActualTalkpriceomission confirmed/fixed separately; one normal17settlement ends170cash/emptyactualdebt/twoCrewduties andCourtmarkerearned, cold/stalepaymentreject passes. Original historical debtsproxyqualificationwithdrawn;120correct nativeaudits documented. Corridor itself remains untested."
+          "summary": "Actual friendly and pressed collections, natural Debt Court, eligible Nico marker and17settlement earned the Corridor guard. Normal schedule/cart,Hold/Sit/Corridor and three legal hands survived Eye in the Sky quiet response; actual Delta Queen arrival Clean Sweep paid1150once,cash1315/chips16. Cold ending, pending House Edge entitlement, once-only claim and cold collection persistence passed. Five diagnostics retained/excluded; old debts-proxy qualification remains withdrawn outside explicit actual-ledger audits."
         }
       ],
       "implementation_batches": [
@@ -5144,7 +5144,7 @@
         "BTH-QA-CREW-DEBT-PROBE-20261116",
         "CREW-COLLECTOR-SETTLEMENT-DISCLOSURE-20261116"
       ],
-      "next_action": "Continue actual cr5 atGrandCage:170cash/Heat23/twoCrewduties/emptyactualdebt/Courtmarkertrue, Countscheduleholdactive with10actions. Use actual enabled HoldSightline underdisclosedHeat55limit, then follow normal chainedswap-cart andtablecontrols. Collectorfix is already main/NEXTidentity/assets verified; corrected120debtchecks accepted. Preserve all originals and browser/humanpacing limits.",
+      "next_action": "Preserve cr19/cr20 unclaimed and cr21/cr22 once-claimed Clean Sweep:1315cash/16chips/twoCrewduties/emptyactualdebt. Bounded collection/Court/Corridor route passed normal ending,1150payout and cold reward persistence. Associate the scoped proof commit, then keep broader browser/WASM acceptance, route balance and human pacing Open under the existing browser restriction.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -5158,7 +5158,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T10:04:40.001499+00:00"
+      "updated_at": "2026-11-16T10:45:29.476232+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -39406,7 +39406,7 @@
         "Pursue reachable normal collection settlement and persistence; earn optional Count Corridor prerequisite only through actual eligible debt settlement before play. Record gates honestly; do not manufacture markers or claim browser/human pacing."
       ],
       "acceptance_scope": "Native normal-control continuation of recovered broader Crew objective; meaningful reachable job/route prerequisite behavior and cold persistence. Optional Corridor acceptance requires actually earned Collector settlement plus Knucklesassociate, before Count play samples the marker. Browser/WASM remains restricted.",
-      "status": "NATIVE_CORRIDOR_PREP_ACTIVE_COLLECTOR_FIX_MAIN_NEXT_VERIFIED",
+      "status": "NATIVE_COLLECTION_CORRIDOR_ENDING_VERIFIED",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -39416,10 +39416,10 @@
         {
           "kind": "native_collection_corridor_progress",
           "reference": "docs/testing/Crew_collection_and_Corridor_QA_20261116.md",
-          "summary": "Both actual collection outcomes/persistence pass; natural nextopening1680 produced DebtCourt. AdjacentCasino had noeligiblelender; actualMotel9fare ledtoNico20advance/22repayment/fourturn quote, normalconfirmation,9fare return andClubdoor. Correct full actualledger showsNico22active3turns. ActualTalkpriceomission confirmed/fixed separately; one normal17settlement ends170cash/emptyactualdebt/twoCrewduties andCourtmarkerearned, cold/stalepaymentreject passes. Original historical debtsproxyqualificationwithdrawn;120correct nativeaudits documented. Corridor itself remains untested."
+          "summary": "Actual friendly and pressed collections, natural Debt Court, eligible Nico marker and17settlement earned the Corridor guard. Normal schedule/cart,Hold/Sit/Corridor and three legal hands survived Eye in the Sky quiet response; actual Delta Queen arrival Clean Sweep paid1150once,cash1315/chips16. Cold ending, pending House Edge entitlement, once-only claim and cold collection persistence passed. Five diagnostics retained/excluded; old debts-proxy qualification remains withdrawn outside explicit actual-ledger audits."
         }
       ],
-      "next_action": "Continue actual cr5 atGrandCage:170cash/Heat23/twoCrewduties/emptyactualdebt/Courtmarkertrue, Countscheduleholdactive with10actions. Use actual enabled HoldSightline underdisclosedHeat55limit, then follow normal chainedswap-cart andtablecontrols. Collectorfix is already main/NEXTidentity/assets verified; corrected120debtchecks accepted. Preserve all originals and browser/humanpacing limits.",
+      "next_action": "Preserve cr19/cr20 unclaimed and cr21/cr22 once-claimed Clean Sweep:1315cash/16chips/twoCrewduties/emptyactualdebt. Bounded collection/Court/Corridor route passed normal ending,1150payout and cold reward persistence. Associate the scoped proof commit, then keep broader browser/WASM acceptance, route balance and human pacing Open under the existing browser restriction.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -39428,7 +39428,7 @@
         "observed_at": "2026-11-16T07:49:13.948778+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T10:04:40.001499+00:00"
+      "updated_at": "2026-11-16T10:45:29.476232+00:00"
     },
     {
       "id": "BTH-QA-CREW-ENDING-001-ORDINARY-DELIVERY-20261116",
@@ -43330,7 +43330,7 @@
         "No duplicate worker or bypass of browser/computer denials."
       ],
       "acceptance_scope": "Owner restart request Sentinel_3464b568ddc48191af59e314081b75ef and sidebar request Sentinel_11391c7e280c81918ac7603758e4721d; transferred intact checkpoint and explicit three-directory custody. Native ending reached and persisted; deployed browser/WASM acceptance remains separately required.",
-      "status": "NATIVE_CORRIDOR_PREP_ACTIVE_COLLECTOR_FIX_MAIN_NEXT_VERIFIED",
+      "status": "NATIVE_COLLECTION_CORRIDOR_ENDING_VERIFIED",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -43395,10 +43395,10 @@
         {
           "kind": "native_collection_corridor_progress",
           "reference": "docs/testing/Crew_collection_and_Corridor_QA_20261116.md",
-          "summary": "Both actual collection outcomes/persistence pass; natural nextopening1680 produced DebtCourt. AdjacentCasino had noeligiblelender; actualMotel9fare ledtoNico20advance/22repayment/fourturn quote, normalconfirmation,9fare return andClubdoor. Correct full actualledger showsNico22active3turns. ActualTalkpriceomission confirmed/fixed separately; one normal17settlement ends170cash/emptyactualdebt/twoCrewduties andCourtmarkerearned, cold/stalepaymentreject passes. Original historical debtsproxyqualificationwithdrawn;120correct nativeaudits documented. Corridor itself remains untested."
+          "summary": "Actual friendly and pressed collections, natural Debt Court, eligible Nico marker and17settlement earned the Corridor guard. Normal schedule/cart,Hold/Sit/Corridor and three legal hands survived Eye in the Sky quiet response; actual Delta Queen arrival Clean Sweep paid1150once,cash1315/chips16. Cold ending, pending House Edge entitlement, once-only claim and cold collection persistence passed. Five diagnostics retained/excluded; old debts-proxy qualification remains withdrawn outside explicit actual-ledger audits."
         }
       ],
-      "next_action": "Continue actual cr5 atGrandCage:170cash/Heat23/twoCrewduties/emptyactualdebt/Courtmarkertrue, Countscheduleholdactive with10actions. Use actual enabled HoldSightline underdisclosedHeat55limit, then follow normal chainedswap-cart andtablecontrols. Collectorfix is already main/NEXTidentity/assets verified; corrected120debtchecks accepted. Preserve all originals and browser/humanpacing limits.",
+      "next_action": "Preserve cr19/cr20 unclaimed and cr21/cr22 once-claimed Clean Sweep:1315cash/16chips/twoCrewduties/emptyactualdebt. Bounded collection/Court/Corridor route passed normal ending,1150payout and cold reward persistence. Associate the scoped proof commit, then keep broader browser/WASM acceptance, route balance and human pacing Open under the existing browser restriction.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -43411,7 +43411,7 @@
           "user:Sentinel_b9ecabacc1848191bed579864eef4f2a"
         ]
       },
-      "updated_at": "2026-11-16T10:04:40.001499+00:00"
+      "updated_at": "2026-11-16T10:45:29.476232+00:00"
     },
     {
       "id": "CREW-NOAUDIT-ENABLED-LOCK-20261116",

@@ -62,6 +62,24 @@ The Collector fix is published as scopedb59969cc/integratedc2b9a231 and verified
 
 On exact **c2b9a231**, the genuinely settled campaign returned normally through Casino/BackRoom doors (cr1:14/14), then inspected the actual Planning Table (cr2:6/6). It still shows Countsetup, identityready, no missingstars, and a disabled BeginPlay because preparation remains incomplete. **Watch the schedule** is actually enabled and says to hold the GrandCage atHeat55orlower; direct transport is covered. Normal response (cr3:7/7) starts one hold `heist:the_count:schedule`,12total/11remaining actions, one requiredhold, with Courtmarkertrue and170cash. Actual freeGrand travel (cr4:9/9) reachesMainFloor, clock1842,Heat23/10actions; actual freeCage door (cr5:9/9) retainsHeat23/10actions and shows enabled **Hold Sightline**. Courtflag, twoCrewduties and actual empty debt array persist across normal Continue boundaries. No schedule completion, cart or Corridor success is claimed yet. Current checkpoint **`crew-sidebar-cr5-261116`**.
 
+## Actual earned Corridor ending
+
+The continuation on exact published **fe9d212a** used the displayed Cage **Hold Sightline**, completed schedule preparation and naturally started the carried swap-cart package with fourteen actions. The actual free Main Floor door and Floor Contact handoff completed that cart and began Count play. The previously earned Court settlement was sampled as a genuine guard marker; identity, schedule and cart were all ready. The normal setup granted twenty-four Crew chips once, with170cash, two outstanding Crew duties and an empty actual debt array. Count started at action36 with inclusive deadline45 and score100.
+
+The first actual Live Table **Hold** response recorded go=hold. A legal eight-chip Blackjack hand lost eight chips, then the offered **Sit on it** response recorded distraction=sit and applied its authored six deliberate Heat. These normal actions reached action39, round1/3, score100 and an intact Corridor. One helper edit produced a parse error before Main initialization in **cr10**; original log SHA-256 `c9f72ab37d5795ffe2e863355b506002dd498ac4440706b764d71ecc1a0cddc5` is retained. It emitted no checks and performed no campaign action. Its save_dir, localappdata and non-log appdata files match the input; only Godot's own diagnostic log rotation differs. The corrected helper resumed the untouched successfulcr9, never the failed copy. It is excluded from positive counts.
+
+Sit naturally triggered the blocking **Eye in the Sky** popup. The actual **Change tables** Button resolved through the authored one-press triggered-popup callback: cash170->165, applied Heat-8 plus ordinary boundary cooling produced28->19, action40, attention cleared. The snapshot's generic requires_confirm metadata does not create a second popup confirmation; no blind second press or direct resolution bypass was used. Count round1 and the earned Corridor remained intact. A second normal eight-chip hand won eight chips, reaching round2/action41. The actual offered **Corridor** response recorded exit=corridor at action42; a third legal hand lost eight chips, reaching round3/action43 with16chips, score100 and no Corridor blowout. Every successful action boundary used official Save/Continue and retained exact actual debt, wallet, RNG, duties, heist and private authority.
+
+The actual **Take the exit** response started the Corridor getaway at action44: twelve total actions, eleven remaining, pursuit1/limit11, destination **Delta Queen**, with both named assists still unused. The actual enabled zero-fare Delta Queen route took36minutes and resolved the mission naturally as escaped, clean and fast: two boundaries elapsed, ten actions remained, pursuit3. No additional handoff or destination was invented.
+
+Normal arrival produced warm **VICTORY / Clean Sweep**, score100, payout **1150** exactly once: cash165->1315, sixteen chips retained, both unrelated Crew duties still2 and actual full debt array empty. The terminal report records the already-paid1150 Heist payout; it is not a second award. Official Save/Continue retained the ending screen, completed heist and resolved getaway. A distinct cold process then compared the exact prior actual ending signature, report money/outcome and pending reward; repeated report reads could not repay the settlement. Terminal verification uses terminal-screen persistence rather than an active-room authority precondition.
+
+The pending reward survived the independent cold reload. Its actual enabled **Claim** control allocated one **House Edge Blue Bag**, instance5, while retaining older bags, owned items and gold byte-for-byte in the public collection snapshot. The claim preserved the paid ending's wallet, chips, RNG, two Crew duties and actual empty debts. A stale repeated claim allocated nothing, the durable pending flag cleared and New Run unlocked. A separate cold process verified the claimed collection digest and exact completed ending again. Preserved checkpoints: **cr19/cr20** retain the unclaimed ending; **cr21/cr22** retain the once-claimed ending. No New Run or bag opening was needed for this route's acceptance; those lifecycle stages have their separate prior evidence.
+
+The bounded **collection/Court/Corridor** route is now accepted through natural ending, payout, pending entitlement, once-only claim and cold persistence, once its associated scoped proof commit is recorded below. The broader parent and sidebar remain Open for actual browser/WASM startup/input/visual parity, broader route balance and human pacing. The existing browser-profile access restriction remains in force; no browser fallback, watcher/export/restart, stable/itch publication or owner-profile access was attempted. The historical assistant-only30–40minute pacing figure is not a confirmed human requirement. The separate corrected120-check debt audit qualifies only its named historical boundaries; current cr cases use the actual singular debt array throughout.
+
+Final custody recheck covers all44 positive cases in this combined route proof: **132/132 original save_dir/appdata/localappdata comparisons unchanged**, zero mismatches. Receipt: `E:/CodexQA/BTH/runs/crew-corridor-finish-custody1-261116/evidence/custody-recheck.json`. The ten owned task IDs reconciled with zero scoped findings; the global ledger checker still reports unrelated inherited backlog and is not claimed green.
+
 
 ## Native worker evidence
 
@@ -97,5 +115,21 @@ Every case used admitted E: layouts and manifests, both capacity/launch gates, v
 | crew-sidebar-cr3-261116 | `c2b9a231` | 7/7 | `aacf58082ac2987a2a46ae25dffb3ecd47a8c3221335d557526a4ea7cf3528cc` |
 | crew-sidebar-cr4-261116 | `c2b9a231` | 9/9 | `922cd55a54963bebe956a0dd621c197e28bb94548e728620ff0a43f9105ab7ac` |
 | crew-sidebar-cr5-261116 | `c2b9a231` | 9/9 | `0103b6ee9cd9e3e83c029f76da59f1d7ce4ea68b6006d63f37cb69a5ef37f64a` |
+| crew-sidebar-cr6-261116 | `fe9d212a` | 10/10 | `6252f40be682b0701a0f97111e57fdcc1a5f2deb80ad37a9abbb5caf4565cc58` |
+| crew-sidebar-cr7-261116 | `fe9d212a` | 9/9 | `5cffd03d761a6382d6aefe2c27bc322130257a939fd114bab3bdd97fb4df449b` |
+| crew-sidebar-cr8-261116 | `fe9d212a` | 10/10 | `c4f263bc57aa98f4d6f15291d0af153b87a5d39ec9520a5576a57f9b31ed2775` |
+| crew-sidebar-cr9-261116 | `fe9d212a` | 6/6 | `22b3275cb24a1c8767d57ec291e03c7b82c49342372854ef614600d3692ded6a` |
+| crew-sidebar-cr11-261116 | `fe9d212a` | 9/9 | `6acc1e0992d516e20a5433bcd606cb6d3cc2e487c0ee0332e8707ac401f816bf` |
+| crew-sidebar-cr12-261116 | `fe9d212a` | 11/11 | `6dac6a372fa201ca62eb729c99de98336fda8354da321ff83b1481696fbbb6e5` |
+| crew-sidebar-cr13-261116 | `fe9d212a` | 9/9 | `6acfd6ecf3cf4d7d359337d96e599c5d669260703cce71c794ab433ffe2355aa` |
+| crew-sidebar-cr14-261116 | `fe9d212a` | 12/12 | `c38420dc9dc8525bfb5ac6bd39fc078892c890fd4182f933130950a36f17fb31` |
+| crew-sidebar-cr15-261116 | `fe9d212a` | 11/11 | `e08a3f0648ff0565912f6fea917e471b05917f2f34fa0fe88f6c65156807a15f` |
+| crew-sidebar-cr16-261116 | `fe9d212a` | 9/9 | `d6e56197d95635e07d6e1773b0341d74b3f08fa8d65eee0e6e4e7644fdd53655` |
+| crew-sidebar-cr17-261116 | `fe9d212a` | 11/11 | `c558bbc0f97e46389620390268a0a9dae209d208f9e093a928221a9d0ea2ab6f` |
+| crew-sidebar-cr18-261116 | `fe9d212a` | 7/7 | `fa6acea1f5691a0b38b96899ff22fc1ea7b453b6a79cde664f5961da9422547f` |
+| crew-sidebar-cr19-261116 | `fe9d212a` | 10/10 | `cf1b5c1f5aa87623e11e5a0c65a68ebae8efeaa8f7a33612d5057cd4b93e6b88` |
+| crew-sidebar-cr20-261116 | `fe9d212a` | 12/12 | `9f8f978ab41ca403896928bac4b8528d0f96f8608ebb013cd5382e754bb62c19` |
+| crew-sidebar-cr21-261116 | `fe9d212a` | 13/13 | `04940bf606497b18edeffc40e14672a4ae10c29330d6a3eb21a56e92ebe5c1a0` |
+| crew-sidebar-cr22-261116 | `fe9d212a` | 13/13 | `f7bd0d8e43982595905b12fdef93d210fd0ee3ae76df4d88146a137a621b71c4` |
 
-Total **255/255** in 28 closed native Jobs. Exact GD copies and source/custody/storage/launch/cleanup receipts remain beside each log. Consolidated receipt: `E:\CodexQA\BTH\runs\crew-collection-record4-261116\evidence\cases.json`. Manual reconciliation: `E:\CodexQA\BTH\runs\crew-collection-record4-261116\evidence\reconciliation.json`.
+Total **417/417** in 44 closed native Jobs. Exact GD copies and source/custody/storage/launch/cleanup receipts remain beside each log. Consolidated receipt: `E:\CodexQA\BTH\runs\crew-collection-record7-261116\evidence\cases.json`. Manual reconciliation: `E:\CodexQA\BTH\runs\crew-collection-record7-261116\evidence\reconciliation.json`.
