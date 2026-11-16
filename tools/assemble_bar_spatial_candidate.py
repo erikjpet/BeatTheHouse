@@ -20,7 +20,9 @@ from bar_spatial_candidate_check import (ACTIVE_HASHES, PNGImage, check_changed_
                                          source_inventory, validate_candidate)
 
 
-RECIPE_VERSION = "bar-spatial-r2-assembly-v1"
+RECIPE_VERSION = "bar-spatial-r2-assembly-v2"
+PREDECESSOR_SHA256 = "a03fc77eeb06c841ef43ab3b7e68e84c324d7e4d9814825a050ffd68bfaa9de6"
+PREDECESSOR_RECIPE_SHA256 = "9a6eba85be76af9a56ff9b7b0f8b5709d4cd8c644e8d477d222abcef93549914"
 RAW_SHA256 = "a850b1bc8f36ea62db85cba4f80233cc10591353b8fb0d8a0a82c9998aec16c7"
 RAW_SIZE = (1815, 867)
 SOURCE_RECT = (1184, 376, 488, 216)
@@ -31,6 +33,8 @@ FELT_POLYGON = ((633, 204), (788, 204), (805, 246), (616, 246))
 FLOOR_HORIZON = 488
 OLD_BODY_BOTTOM = 528  # Same-coordinate R4 floor is exposed below the old frame.
 FLOOR_DONOR_X = (1664, 1800)  # Unobstructed original floor; keep each exact y.
+WALL_TOP_DONOR_Y = 375  # Reflect below this last exposed original wall row.
+WALL_EDGE_QUILT_WIDTH = 8  # Side donors stay clear of bar wood and fixtures.
 
 # Source-pixel silhouettes traced from inspected R2. Body/legs/contact shadows
 # stay separate so the negative floor space is never vertically resampled.
@@ -59,24 +63,69 @@ def native_source_row(target_y):
     raise ValueError("Row is outside the bounded target")
 
 
+def _mask_at(x, y):
+    source_x = SOURCE_RECT[0] + min(SOURCE_RECT[2] - 1,
+                                  int((x - TARGET_RECT[0] + .5) * SOURCE_RECT[2] / TARGET_RECT[2]))
+    source_y = native_source_row(y)
+    point = (source_x + .5, source_y + .5)
+    return source_x, source_y, next((name for name, polygon in TABLE_MASKS.items()
+                                   if point_in_polygon(point, polygon)), None)
+
+
+def _rgba(image, x, y):
+    index = (y * image.width + x) * 4
+    return image.rgba[index:index + 4]
+
+
+def _wall_donors(original, x, y, side):
+    # Same-column continuation retains the original vertical plank positions.
+    top = _rgba(original, x, WALL_TOP_DONOR_Y - (y - TARGET_RECT[1]))
+    edge = TARGET_RECT[0] if side == "left" else TARGET_RECT[0] + TARGET_RECT[2] - 1
+    offset = abs(x - edge)
+    donor_offset = min(offset, WALL_EDGE_QUILT_WIDTH - 1)
+    donor_x = TARGET_RECT[0] - 1 - donor_offset if side == "left" else edge + 1 + donor_offset
+    return top, _rgba(original, donor_x, y)
+
+
+def _wall_cut(original, y, positions, side, previous):
+    if not positions or y == TARGET_RECT[1]:
+        return -1  # Top edge copies its immediately adjoining original wall row.
+    limit = min(WALL_EDGE_QUILT_WIDTH - 1, len(positions) - 1)
+    edge = TARGET_RECT[0] if side == "left" else TARGET_RECT[0] + TARGET_RECT[2] - 1
+    choices = range(max(0, min(previous, limit) - 1), min(limit, max(previous, 0) + 1) + 1)
+
+    def cost(offset):
+        x = edge + offset if side == "left" else edge - offset
+        top, adjoining = _wall_donors(original, x, y, side)
+        return sum(abs(a - b) for a, b in zip(top[:3], adjoining[:3])) + 8 * abs(offset - previous)
+
+    return min(choices, key=lambda offset: (cost(offset), offset))
+
+
 def assemble_pixels(original, generated):
     """Pure in-memory recipe. Every returned RGBA sample is copied from an input."""
     if not check_master(original)["ok"] or not check_master(generated, RAW_SIZE)["ok"]:
         raise ValueError("Exact opaque original/raw dimensions are required")
     candidate = bytearray(original.rgba)
     counts = {"generated_table": 0, "generated_upper_background": 0,
-              "original_floor_same_coordinate": 0, "original_floor_same_row_donor": 0}
+              "original_floor_same_coordinate": 0, "original_floor_same_row_donor": 0,
+              "original_wall_same_column": 0, "original_wall_adjoining_side": 0}
     counts.update({name: 0 for name in TABLE_MASKS})
     target_left, target_top, target_width, target_height = TARGET_RECT
-    source_left, _source_top, source_width, _source_height = SOURCE_RECT
+    wall_seams = []
+    previous_cuts = {"left": 0, "right": 0}
     for y in range(target_top, target_top + target_height):
-        source_y = native_source_row(y)
+        samples = {x: _mask_at(x, y) for x in range(target_left, target_left + target_width)}
+        cuts = {}
+        if y < FLOOR_HORIZON:
+            for side in ("left", "right"):
+                positions = [x for x, sample in samples.items() if sample[2] is None and
+                             (x < target_left + target_width // 2) == (side == "left")]
+                cuts[side] = _wall_cut(original, y, positions, side, previous_cuts[side])
+                previous_cuts[side] = max(0, cuts[side])
+            wall_seams.append([y, cuts["left"], cuts["right"]])
         for x in range(target_left, target_left + target_width):
-            source_x = source_left + min(source_width - 1,
-                                        int((x - target_left + .5) * source_width / target_width))
-            point = (source_x + .5, source_y + .5)
-            mask = next((name for name, polygon in TABLE_MASKS.items()
-                         if point_in_polygon(point, polygon)), None)
+            source_x, source_y, mask = samples[x]
             target_index = (y * original.width + x) * 4
             if mask is not None:
                 source_index = (source_y * generated.width + source_x) * 4
@@ -84,11 +133,17 @@ def assemble_pixels(original, generated):
                 counts["generated_table"] += 1
                 counts[mask] += 1
             elif y < FLOOR_HORIZON:
-                # Clear the old upright frame with the generated wall material,
-                # within the explicitly permitted repair rectangle only.
-                source_index = (source_y * generated.width + source_x) * 4
-                candidate[target_index:target_index + 4] = generated.rgba[source_index:source_index + 4]
-                counts["generated_upper_background"] += 1
+                # V2 replaces only V1's rejected generated-wall rectangle.
+                # Copy original plank material down the same column. Within an
+                # eight-pixel edge strip, quilt to same-row adjoining wall at a
+                # low color-difference seam, with one-pixel row-to-row movement.
+                side = "left" if x < target_left + target_width // 2 else "right"
+                edge = target_left if side == "left" else target_left + target_width - 1
+                offset = abs(x - edge)
+                top, adjoining = _wall_donors(original, x, y, side)
+                use_side = offset <= cuts[side]
+                candidate[target_index:target_index + 4] = adjoining if use_side else top
+                counts["original_wall_adjoining_side" if use_side else "original_wall_same_column"] += 1
             elif y >= OLD_BODY_BOTTOM:
                 # The original master's real floor was never hidden here.
                 counts["original_floor_same_coordinate"] += 1
@@ -104,7 +159,31 @@ def assemble_pixels(original, generated):
     bounded = check_changed_region(original, image)
     if not bounded["ok"]:
         raise ValueError("Internal recipe error: changed pixels outside repair envelope")
+    bounded["wall_continuation"] = {"top_same_column_mirrored_y_bounds": [264, 375],
+        "left_adjoining_same_row_x_bounds": [1188, 1195],
+        "right_adjoining_same_row_x_bounds": [1644, 1651],
+        "side_quilt_width_pixels": WALL_EDGE_QUILT_WIDTH,
+        "seam_rows_y_left_offset_right_offset": wall_seams,
+        "color_blending": False, "generated_wall_pixels_copied": 0}
     return image, counts, bounded
+
+
+def check_only_wall_changed(predecessor, candidate):
+    if (predecessor.width, predecessor.height) != (candidate.width, candidate.height):
+        raise ValueError("V1 predecessor dimensions differ")
+    bounded = check_changed_region(predecessor, candidate)
+    if not bounded["ok"]:
+        raise ValueError("V2 changed pixels outside the V1 repair envelope")
+    count = 0
+    for y in range(TARGET_RECT[1], TARGET_RECT[1] + TARGET_RECT[3]):
+        for x in range(TARGET_RECT[0], TARGET_RECT[0] + TARGET_RECT[2]):
+            if _rgba(predecessor, x, y) == _rgba(candidate, x, y):
+                continue
+            count += 1
+            if y >= FLOOR_HORIZON or _mask_at(x, y)[2] is not None:
+                raise ValueError("V2 changed a protected V1 table/body/leg/floor pixel at %d,%d" % (x, y))
+    return {"ok": True, "changed_wall_pixels": count,
+            "table_body_leg_floor_pixels_identical": True, "only_v1_generated_upper_background_changed": True}
 
 
 def encode_opaque_png(image):
@@ -134,9 +213,10 @@ def main(argv=None):
         layout = Layout(**{key: Path(value) for key, value in receipt["paths"].items()},
                         **{key: receipt[key] for key in ("run_id", "token", "expected_write_bytes", "reserve_bytes", "prepared")})
         candidate_dir = layout.workspace / "candidate_sources"
-        output = candidate_dir / "bar-spatial-r2-assembled-v1.png"
+        output = candidate_dir / "bar-spatial-r2-assembled-v2.png"
+        predecessor_path = candidate_dir / "bar-spatial-r2-assembled-v1.png"
         ignore = candidate_dir / ".gdignore"
-        report_path = evidence / "bar-spatial-r2-assembly.json"
+        report_path = evidence / "bar-spatial-r2-assembly-v2.json"
         admission = validate_layout(layout, extra_write_paths=(candidate_dir, output, report_path))
         # No mkdir, exclusion marker or output has been written before admission.
         if output.exists() or report_path.exists():
@@ -153,6 +233,10 @@ def main(argv=None):
         original_path = source / "assets/art/environments/bar/background.png"
         original_bytes = original_path.read_bytes()
         image, counts, bounded = assemble_pixels(decode_png(original_bytes), decode_png(raw_bytes))
+        predecessor_bytes = predecessor_path.read_bytes()
+        if hashlib.sha256(predecessor_bytes).hexdigest() != PREDECESSOR_SHA256:
+            raise ValueError("Immutable V1 predecessor SHA256 mismatch")
+        wall_only = check_only_wall_changed(decode_png(predecessor_bytes), image)
         png_bytes = encode_opaque_png(image)
         roundtrip = decode_png(png_bytes)
         if roundtrip != image:
@@ -186,6 +270,10 @@ def main(argv=None):
                   "status": "NON_ACTIVE_CANDIDATE_READY_FOR_AUDIT" if ready else "NON_ACTIVE_CANDIDATE_PREFLIGHT_FAILED",
                   "art_approval": False, "active_files_written": False,
                   "raw_source": {"path": str(raw_path), "sha256": RAW_SHA256, "size": list(RAW_SIZE)},
+                  "predecessor_v1": {"path": str(predecessor_path), "sha256": PREDECESSOR_SHA256,
+                      "recipe_sha256": PREDECESSOR_RECIPE_SHA256, "source_commit": "911e58a16",
+                      "retained_unchanged": True},
+                  "wall_only_revision_invariant": wall_only,
                   "active_master": {"path": str(original_path), "sha256": hashlib.sha256(original_bytes).hexdigest()},
                   "output": {"path": str(output), "sha256": hashlib.sha256(png_bytes).hexdigest(), "size": [image.width, image.height]},
                   "source_crop_native": SOURCE_RECT, "target_rect_native": TARGET_RECT,
@@ -205,7 +293,7 @@ def main(argv=None):
                   "risks": ["Declared felt and tight silhouettes require independent inspection against actual painted pixels.",
                       "Nearest-neighbor band fitting changes proportions and may expose local sampling/outline artifacts.",
                       "Same-row original-floor donors fill previously hidden side slivers; those are copied pixels, not recovered original hidden floor.",
-                      "Generated upper background is local to the allowed envelope; inspect its wall joins for seams.",
+                      "Original wall continuation uses copied same-column/side material; inspect reflected grain and the narrow material-quilt joins.",
                       "No live actor/label, floor-mover occlusion, animation/liveness, Reduce Motion or TEST/Web approval."]}
         # Output PNG is now an existing file: validate the admitted containing
         # directory and still-new report path, not an existing-file ancestor.

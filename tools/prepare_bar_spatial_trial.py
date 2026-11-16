@@ -105,6 +105,13 @@ def main():
                 with target.open("xb") as output:
                     output.write(data)
             harness[target.relative_to(layout.workspace).as_posix()] = digest(data)
+    # The archived canvas is loaded explicitly as renamed source by the
+    # sequence observer. Automatic discovery would register a second global
+    # PixelSceneCanvas and prevent the production scene from compiling.
+    baseline_ignore = layout.workspace / "qa_baseline/.gdignore"
+    if not baseline_ignore.exists():
+        with baseline_ignore.open("x") as output:
+            output.write("# Explicit reference source; exclude global-class discovery.\n")
     # Bounded cold-import settings apply to this fresh QA source only. No
     # project pipeline pin or original workspace setting is changed.
     if not args.harness_only:

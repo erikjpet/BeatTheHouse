@@ -114,8 +114,22 @@ scenario acceptance or authorization to activate a package.
 - Read-only R4 baseline candidate preflight passes. These results approve the
   checking/preparation path, not the uninspected R1 trial or a new Bar package.
 
-The concrete next action is to supply the exact preserved R1 PNG through a
-supported executor/Library transfer or from its original generator, inspect it,
-and revise only a separately versioned table patch with the clearance above.
-Then assemble into the unchanged master, run the candidate preflight and exact
-native/visual/motion gates, and publish that passed package to TEST.
+## Current correction checkpoint
+
+R1 source access is resolved. The supported Page reference reader returned its
+exact PNG and matching SHA256; it was visually inspected without retrying the
+failed Windows helper. R1 remains preserved. The localized R2 source and assembly
+recipes are recorded in `docs/testing/bar_spatial_r2_source_checkpoint_20261116.md`.
+
+Assembled v2 passed exact custody/felt preflight and all eight native initial
+contexts, 1,017 checks, zero machine findings. Independent populated review found
+the Numbers Book contact/glow extending left of the new rear-left rail. This is
+a visual rejection despite passing machine checks. Preserve the fixed object;
+correct only the upper-left table support in a distinct v3. Its support must
+reach approximately board x598..600 at y188 without creating a concave side plane
+or moving the lower body, feet, floor or ball paths. The static cyan item-surface
+glyph is above its contact shadow; it is not a moving paper-note sprite.
+
+The next action is to assemble and independently review v3, then rerun exact
+native contexts, sequence/motion/Reduce Motion, replay and liveness gates before
+publishing the approved package to TEST. D production art remains original R4.

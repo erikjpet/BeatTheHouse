@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-16T01:59:01.818637+00:00",
+  "observed_at": "2026-11-16T02:55:04+00:00",
   "tasks": [
     {
       "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
       "title": "Repair environment art",
       "state": "active",
-      "observed_at": "2026-11-16T01:59:01.818637+00:00",
-      "source": "Actual active sidebar: exact R1 reviewed through supported Page reader with matching hash; R2 imagegen source preserved on E and in project source. Assembly recipe is being implemented; unchanged R4 eight-composition native baseline passed1017checks."
+      "observed_at": "2026-11-16T02:55:04+00:00",
+      "source": "Actual active sidebar: V2 native8contexts1017checks passed, independent visual review rejects Numbers support and bright feet. Bounded next revision and generated darker feet source active; production R4 and TEST unchanged."
     }
   ]
 }

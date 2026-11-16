@@ -1,0 +1,20 @@
+{
+  "task_id": "BTH-ENV-SPATIAL-BAR-001",
+  "reviewer": "/root/audit_spatial_handoff",
+  "candidate": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-BARTRIAL-20261116/candidate_sources/bar-spatial-r2-assembled-v2.png",
+  "candidate_sha256": "5df5041dabe3d674c31bf201cf8c6ee270f7694cc45cdc59a3326f7bd1d0412d",
+  "verdict": "GO_FOR_NATIVE_TRIAL_ONLY",
+  "findings": [
+    "Original teal wall fill resolves the conspicuous rectangular splice around the table shoulders.",
+    "Horizontal felt, separate apron, legs and floor contact remain coherent.",
+    "The conservative declared polygon matches the actual painted felt."
+  ],
+  "required_populated_review": [
+    "Numbers Book actual painted support at619,188, not just its model bounding box.",
+    "Darts, Live Band and Dead Tuesday actor clearance and the y279 label band.",
+    "Floor movers at y274/288 crossing the supports; all17motions and ReduceMotion.",
+    "Counter replay, placement/closing liveness and exact TEST delivery."
+  ],
+  "production_activation_approved": false,
+  "test_publication_approved": false
+}

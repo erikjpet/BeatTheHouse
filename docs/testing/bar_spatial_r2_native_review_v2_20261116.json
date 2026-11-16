@@ -1,0 +1,19 @@
+{
+  "task_id": "BTH-ENV-SPATIAL-BAR-001",
+  "candidate_sha256": "5df5041dabe3d674c31bf201cf8c6ee270f7694cc45cdc59a3326f7bd1d0412d",
+  "reviewer": "/root/audit_spatial_handoff",
+  "verdict": "NO_GO_VISUAL_REVISION_REQUIRED",
+  "native_evidence": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-BARTRIAL-20261116-r2-settled20/evidence",
+  "machine_result": {"checks": 1017, "contexts": 8, "findings": []},
+  "guarded_job": {"pid": 31264, "exit_code": 0, "active_at_release": 0, "assigned_before_execution": true},
+  "reviewed_contexts": ["base", "wake", "payday", "darts", "fight_night", "lock_in", "live_band", "dead_tuesday"],
+  "visual_findings": [
+    {"kind": "unsupported_numbers_contact", "description": "The fixed Numbers Book surface/contact extends left of the rear-left table corner. No paper-note sprite is present; actual painted surface and contact were inspected separately from model bounds.", "bright_cyan_surface_native": [1192, 346, 92, 6], "contact_glow_board": [598.84, 188, 40.32, 2], "required_support_left_board": [598, 600], "fixed_contact_board": [619, 188]},
+    {"kind": "support_highlights_reduce_label_contrast", "description": "Fight Night left/right brawler label tails cross bright gold support trim. Keep geometry but subdue support materials.", "regions_native": [[1230, 548, 65, 40], [1562, 548, 76, 40]], "label_band_board_y": [279, 294]}
+  ],
+  "visual_passes": ["Wall-material joins", "Darts captain and Band leader foreground occlusion", "Band label on dark felt", "Dead Tuesday bartender foreground occlusion"],
+  "remaining_checks": ["Correct the two visual findings in a new immutable candidate", "Full motion crossings,58sequence cases,17motions/ReduceMotion,replay,placement/closing,liveness", "Final independent package review and exact TEST delivery"],
+  "production_activation_approved": false,
+  "test_updated": false,
+  "source_png_unchanged": true
+}

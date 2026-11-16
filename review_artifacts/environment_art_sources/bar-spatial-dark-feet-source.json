@@ -1,0 +1,14 @@
+{
+  "schema": "bth.environment_art_imagegen_source/v1",
+  "task_id": "BTH-ENV-SPATIAL-BAR-001",
+  "source": "Built-in imagegen",
+  "edit_target_sha256": "5df5041dabe3d674c31bf201cf8c6ee270f7694cc45cdc59a3326f7bd1d0412d",
+  "edit_target": "bar-spatial-r2-assembled-v2.png",
+  "prompt": "Use case: precise-object-edit. Asset type: pixel-art game background source, same 1800x860 framing as the edit target. Change ONLY the two short support legs and feet beneath the pool table in the lower right. Replace their shiny gold diamonds, gold horizontal trim and bright yellow-orange highlights with very dark worn walnut, near-black iron and subdued burgundy-brown accents matching the stool legs and dim floor. Keep readable solid support volume, exactly the same leg/foot silhouettes and floor contact, and the same separation from the background floor. The support area must be quiet and dark enough for magenta text labels drawn above it in the game; do not draw any labels or UI. Edit zones approximately left native x1230..1295,y548..588 and right x1562..1638,y548..588. Do not brighten the floor or add a new light. Preserve the entire pool tabletop, green felt, rails, apron, all other furniture, wall grain, neon text, framing, camera, pixel style and all non-foot pixels unchanged. No global restyle, no haze, no gradients, no text additions. Output the same complete room view so the two darker feet can be mechanically extracted into the exact original master.",
+  "input_method": "Most recent inspected image, after unsupported Windows absolute-path serialization error returned before generation.",
+  "raw_png_base64": "bar-spatial-dark-feet-source.png.b64",
+  "raw_sha256": "fd57182cfee0e5c94f393a0faf64c2a7825713638f5c63e2edf59425c36273f9",
+  "raw_bytes": 1941777,
+  "raw_size": [1815, 867],
+  "approval": "Non-active raw source only; bounded exact feet assembly and independent review pending."
+}

@@ -45,3 +45,35 @@ coverage, feet and style but rejected wall-material joins at the repair-envelope
 edges. The v1 PNG is preserved; a distinct v2 will correct only wall fill. No
 candidate native trial or activation is authorized by that partial static result.
 See `bar_spatial_r2_static_review_v1_20261116.json` for the exact review disposition.
+
+The distinct assembled v2 is now preserved at
+`candidate_sources/bar-spatial-r2-assembled-v2.png` in the E QA workspace, SHA256
+`5df5041dabe3d674c31bf201cf8c6ee270f7694cc45cdc59a3326f7bd1d0412d`.
+Independent static review approved an isolated native trial, after confirming the
+wall correction preserves the table, feet and floor from v1. All96 atlas frames,
+the requested second-ball margin, unchanged counter crop and bounded master
+differences passed exact preflight. The candidate is installed only in E QA.
+
+Native attempt17 timed out after the editor registered the archived reference
+canvas as a duplicate global `PixelSceneCanvas`. Its exit0 import16 was not an
+acceptance pass: that log contains a compile error. The closed attempt retained
+all evidence and drained to zero processes. Guarded discovery18 added only
+`qa_baseline/.gdignore`; no baseline bytes were changed or deleted. Refresh19
+completed without errors and the global-class cache now names only the production
+canvas. Fresh native composition attempt20 is producing real populated captures.
+The faithful original17 animation sources, production anchors and D production
+art remain unchanged. No TEST activation is claimed by these intermediate runs.
+
+Attempt20 completed all8contexts,1017checks,zero machine findings; PID31264
+exited0 and drained to zero. The independent actual-play review rejected Numbers
+contact support and gold feet behind Fight Night labels. See
+`bar_spatial_r2_native_review_v2_20261116.json`. V3 is a separate bounded left-table
+extension; a new generated dark-feet source is preserved verbatim in project
+source and by guarded decode21 on E. Its SHA256 is
+`fd57182cfee0e5c94f393a0faf64c2a7825713638f5c63e2edf59425c36273f9`.
+Only its foot materials may enter a further candidate; the regenerated room
+cannot replace the exact master. The complete imagegen prompt is retained in
+`review_artifacts/environment_art_sources/bar-spatial-dark-feet-source.json`.
+
+Ledger checkpoint native-reconcile11 reports4108 retained historical/other-scope
+findings and zero spatial-scope findings. This does not close any spatial task.
