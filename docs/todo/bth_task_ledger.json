@@ -4991,7 +4991,7 @@
         }
       },
       "state": "open",
-      "status": "FIXES_DEPLOYED_ORIGINAL_CJ2_FAILED_CUSTODY",
+      "status": "READONLY_PERSISTED_PREHANDOFF_PROVEN_RECOVERY_NOT_ADMITTED",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -5226,6 +5226,11 @@
           "kind": "current_CJ2_failed_custody_checkpoint",
           "reference": "docs/testing/Crew_handoff_cleanup_publication_QA_20261116.md",
           "summary": "One normal handoff delivered in memory then final room authority failed. Explicit Save skipped; autosave unknown. No replay/reset. Contact fix qualified; cleanup evidence and delivery stages recorded separately. Original post-handoff persistence/browser acceptance remain open."
+        },
+        {
+          "kind": "qualified_readonly_failed_CJ2",
+          "reference": "docs/testing/Crew_CJ2_failed_inspection_QA_20261116.md",
+          "summary": "18guard+29codec checks then originalread-onlyJob37072. Bothprimarybackup151/87/2/1230/carried,0handoffcommands/outcomes/acks,no checkpoint. Originalfilesand111QAreceiptsunchanged,CASE_FAILED preserved. No replay permitted; privateauthority and recovery unqualified."
         }
       ],
       "implementation_batches": [
@@ -5245,21 +5250,22 @@
         "CREW-CONCURRENT-ROUTE-OFFER-20261116",
         "CREW-CJ2-MAP-HANDOFF-20261116",
         "CREW-HANDOFF-CONTACT-CONTINUE-20261116",
-        "CREW-HANDOFF-CLEANUP-PUBLICATION-20261116"
+        "CREW-HANDOFF-CLEANUP-PUBLICATION-20261116",
+        "CREW-CJ2-FAILED-INSPECTION-20261116"
       ],
-      "next_action": "Obtain a separately supported, qualified read-only failed-case inspection/recovery capability before any original CJ2 continuation; never reset custody or replay the observed handoff. Preserve original persistence uncertainty. Continue broader Crew/browser/human-pacing coverage only through compliant independently authorized paths.",
+      "next_action": "Keep original CJ2 CASE_FAILED and never replay its observed handoff. Qualify read-only private authority/receipt correlation before any named cold recovery; develop a separate exact-case typed admission only if existing rules permit it, retaining failed predecessor and forbidding handoff/reward replay. No ordinary Continue, Save or gameplay is currently admitted.",
       "blocker": {
         "state": "active",
         "kind": "native_failed_custody",
-        "description": "Original CJ2 is CASE_FAILED after one actual handoff and failed final authority. Explicit Save skipped, automatic persistence unknown. Existing forward-only adapter has no failed-case inspection/recovery policy; combined cleanup product is not admitted. No custody reset or completed-action replay. Independent tested source delivery continues.",
+        "description": "Persisted public generations are now known pre-handoff, but privateauthority/precisecorrelation and a separately typed exact-case cold recovery are notqualified. Originalobservedhandoff mustneverbereplayed. Existingnormalforwardguard remains correctlyblocked; no reset or profilecopy.",
         "requires_user_input": false,
-        "observed_at": "2026-11-16T19:20:56.329761+00:00",
+        "observed_at": "2026-11-16T19:42:27.783646+00:00",
         "evidence": [
-          "docs/testing/Crew_handoff_cleanup_publication_QA_20261116.md"
+          "docs/testing/Crew_CJ2_failed_inspection_QA_20261116.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T19:20:56.329761+00:00"
+      "updated_at": "2026-11-16T19:42:27.783646+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -43756,6 +43762,57 @@
       ]
     },
     {
+      "id": "CREW-CJ2-FAILED-INSPECTION-20261116",
+      "name": "Inspect preserved failed CJ2 without replay or mutation",
+      "aliases": [],
+      "group": "current",
+      "parent_id": "BTH-QA-CREW-ENDING-001",
+      "state": "open",
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": []
+      },
+      "scope": [
+        "Determine the actual persisted CJ2 state after one observed handoff and failed room authority, preserving all original profile directories, failed custody and evidence.",
+        "Qualify a separate bounded read-only native codec/inspection path with fresh E write storage, exact source/input identities, existing mutex and caps; never load Main or mint private authority during inspection.",
+        "Determine technical versus permission boundary. Develop/qualify recovery only within existing authorization; no reset, clone, replay, reward replay, weakened normal-forward guard or denial bypass."
+      ],
+      "acceptance_scope": "Synthetic qualification and independent review before original reads; bind exact failed case/closed Job/custody/directory identities, use supported pure codec APIs, prove original files unchanged, report persisted public and private-authority limits separately. Ordinary gameplay only after separate qualification and explicit exact-case admission.",
+      "status": "READONLY_PERSISTED_PREHANDOFF_PROVEN_RECOVERY_NOT_ADMITTED",
+      "owner": {
+        "name": "Playtest Crew ending",
+        "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
+        "assignment_state": "assigned"
+      },
+      "evidence": [
+        {
+          "kind": "authorized_failed_case_inspection_investigation",
+          "reference": "docs/testing/Crew_CJ2_failed_inspection_QA_20261116.md",
+          "summary": "Parent delegated investigation/qualification after delivered046754f0 and docs9bf0d6c2. OriginalCJ2 remainsCASE_FAILED. No owned game worker live at start; no replay/reset or profile access performed by source reviewers."
+        },
+        {
+          "kind": "qualified_readonly_failed_CJ2",
+          "reference": "docs/testing/Crew_CJ2_failed_inspection_QA_20261116.md",
+          "summary": "18guard+29codec checks then originalread-onlyJob37072. Bothprimarybackup151/87/2/1230/carried,0handoffcommands/outcomes/acks,no checkpoint. Originalfilesand111QAreceiptsunchanged,CASE_FAILED preserved. No replay permitted; privateauthority and recovery unqualified."
+        }
+      ],
+      "next_action": "Keep original CJ2 CASE_FAILED and never replay its observed handoff. Qualify read-only private authority/receipt correlation before any named cold recovery; develop a separate exact-case typed admission only if existing rules permit it, retaining failed predecessor and forbidding handoff/reward replay. No ordinary Continue, Save or gameplay is currently admitted.",
+      "blocker": {
+        "state": "active",
+        "kind": "native_failed_custody",
+        "description": "Persisted public generations are now known pre-handoff, but privateauthority/precisecorrelation and a separately typed exact-case cold recovery are notqualified. Originalobservedhandoff mustneverbereplayed. Existingnormalforwardguard remains correctlyblocked; no reset or profilecopy.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-16T19:42:27.783646+00:00",
+        "evidence": [
+          "docs/testing/Crew_CJ2_failed_inspection_QA_20261116.md"
+        ]
+      },
+      "updated_at": "2026-11-16T19:42:27.783646+00:00"
+    },
+    {
       "id": "CREW-HANDOFF-CLEANUP-PUBLICATION-20261116",
       "name": "Publish trusted world-only room after handoff cleanup",
       "aliases": [],
@@ -43786,7 +43843,7 @@
         "Use detached synthetic regression only while original CJ2 custody is failed; no failed-profile replay, copying, reset or forced save."
       ],
       "acceptance_scope": "Native one-contact handoff observed delivered beforedeadline but finalactiveauthority failed; terminal/specificauthorityerror not captured there. Need causal synthetic cleanup red/green, no-replay/persistence and rejection evidence plus main/NEXT; original CJ2 outcome persistence remains separately blocked until supported inspection.",
-      "status": "FIXES_DEPLOYED_ORIGINAL_CJ2_FAILED_CUSTODY",
+      "status": "READONLY_PERSISTED_PREHANDOFF_PROVEN_RECOVERY_NOT_ADMITTED",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -43802,20 +43859,25 @@
           "kind": "current_CJ2_failed_custody_checkpoint",
           "reference": "docs/testing/Crew_handoff_cleanup_publication_QA_20261116.md",
           "summary": "One normal handoff delivered in memory then final room authority failed. Explicit Save skipped; autosave unknown. No replay/reset. Contact fix qualified; cleanup evidence and delivery stages recorded separately. Original post-handoff persistence/browser acceptance remain open."
+        },
+        {
+          "kind": "qualified_readonly_failed_CJ2",
+          "reference": "docs/testing/Crew_CJ2_failed_inspection_QA_20261116.md",
+          "summary": "18guard+29codec checks then originalread-onlyJob37072. Bothprimarybackup151/87/2/1230/carried,0handoffcommands/outcomes/acks,no checkpoint. Originalfilesand111QAreceiptsunchanged,CASE_FAILED preserved. No replay permitted; privateauthority and recovery unqualified."
         }
       ],
-      "next_action": "Obtain a separately supported, qualified read-only failed-case inspection/recovery capability before any original CJ2 continuation; never reset custody or replay the observed handoff. Preserve original persistence uncertainty. Continue broader Crew/browser/human-pacing coverage only through compliant independently authorized paths.",
+      "next_action": "Keep original CJ2 CASE_FAILED and never replay its observed handoff. Qualify read-only private authority/receipt correlation before any named cold recovery; develop a separate exact-case typed admission only if existing rules permit it, retaining failed predecessor and forbidding handoff/reward replay. No ordinary Continue, Save or gameplay is currently admitted.",
       "blocker": {
         "state": "active",
         "kind": "native_failed_custody",
-        "description": "Original CJ2 is CASE_FAILED after one actual handoff and failed final authority. Explicit Save skipped, automatic persistence unknown. Existing forward-only adapter has no failed-case inspection/recovery policy; combined cleanup product is not admitted. No custody reset or completed-action replay. Independent tested source delivery continues.",
+        "description": "Persisted public generations are now known pre-handoff, but privateauthority/precisecorrelation and a separately typed exact-case cold recovery are notqualified. Originalobservedhandoff mustneverbereplayed. Existingnormalforwardguard remains correctlyblocked; no reset or profilecopy.",
         "requires_user_input": false,
-        "observed_at": "2026-11-16T19:20:56.329761+00:00",
+        "observed_at": "2026-11-16T19:42:27.783646+00:00",
         "evidence": [
-          "docs/testing/Crew_handoff_cleanup_publication_QA_20261116.md"
+          "docs/testing/Crew_CJ2_failed_inspection_QA_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T19:20:56.329761+00:00"
+      "updated_at": "2026-11-16T19:42:27.783646+00:00"
     },
     {
       "id": "CREW-HANDOFF-CONTACT-CONTINUE-20261116",
@@ -43848,7 +43910,7 @@
         "Use the preserved CJ2 forward-only slot without profile copies, replay or forced time/outcomes; keep browser restrictions."
       ],
       "acceptance_scope": "Actual native lookout present on arrival then absent immediately after Continue, despite same valid carried package and matching mounted/presentation owner. Focused synthetic regression and rejection checks plus exact-new-build native contact/handoff/cold-persistence and NEXT artifact evidence; broader Web/game acceptance remains on parent.",
-      "status": "FIXES_DEPLOYED_ORIGINAL_CJ2_FAILED_CUSTODY",
+      "status": "READONLY_PERSISTED_PREHANDOFF_PROVEN_RECOVERY_NOT_ADMITTED",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -43864,20 +43926,25 @@
           "kind": "current_CJ2_failed_custody_checkpoint",
           "reference": "docs/testing/Crew_handoff_contact_continue_QA_20261116.md",
           "summary": "One normal handoff delivered in memory then final room authority failed. Explicit Save skipped; autosave unknown. No replay/reset. Contact fix qualified; cleanup evidence and delivery stages recorded separately. Original post-handoff persistence/browser acceptance remain open."
+        },
+        {
+          "kind": "qualified_readonly_failed_CJ2",
+          "reference": "docs/testing/Crew_CJ2_failed_inspection_QA_20261116.md",
+          "summary": "18guard+29codec checks then originalread-onlyJob37072. Bothprimarybackup151/87/2/1230/carried,0handoffcommands/outcomes/acks,no checkpoint. Originalfilesand111QAreceiptsunchanged,CASE_FAILED preserved. No replay permitted; privateauthority and recovery unqualified."
         }
       ],
-      "next_action": "Obtain a separately supported, qualified read-only failed-case inspection/recovery capability before any original CJ2 continuation; never reset custody or replay the observed handoff. Preserve original persistence uncertainty. Continue broader Crew/browser/human-pacing coverage only through compliant independently authorized paths.",
+      "next_action": "Keep original CJ2 CASE_FAILED and never replay its observed handoff. Qualify read-only private authority/receipt correlation before any named cold recovery; develop a separate exact-case typed admission only if existing rules permit it, retaining failed predecessor and forbidding handoff/reward replay. No ordinary Continue, Save or gameplay is currently admitted.",
       "blocker": {
         "state": "active",
         "kind": "native_failed_custody",
-        "description": "Original CJ2 is CASE_FAILED after one actual handoff and failed final authority. Explicit Save skipped, automatic persistence unknown. Existing forward-only adapter has no failed-case inspection/recovery policy; combined cleanup product is not admitted. No custody reset or completed-action replay. Independent tested source delivery continues.",
+        "description": "Persisted public generations are now known pre-handoff, but privateauthority/precisecorrelation and a separately typed exact-case cold recovery are notqualified. Originalobservedhandoff mustneverbereplayed. Existingnormalforwardguard remains correctlyblocked; no reset or profilecopy.",
         "requires_user_input": false,
-        "observed_at": "2026-11-16T19:20:56.329761+00:00",
+        "observed_at": "2026-11-16T19:42:27.783646+00:00",
         "evidence": [
-          "docs/testing/Crew_handoff_cleanup_publication_QA_20261116.md"
+          "docs/testing/Crew_CJ2_failed_inspection_QA_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T19:20:56.329761+00:00"
+      "updated_at": "2026-11-16T19:42:27.783646+00:00"
     },
     {
       "id": "CREW-CJ2-MAP-HANDOFF-20261116",
@@ -43908,7 +43975,7 @@
         "Continue the carried Back Alley package through normal visible choices and terms, preserving all existing caps, no-copy lineage, save boundaries and owner saves."
       ],
       "acceptance_scope": "Focused control/CLI guard and syntax qualification plus actual same-slot forward Map/handoff/save evidence or precise observed blocker. Browser/WASM, human pacing and broader Crew remain with the parent.",
-      "status": "FIXES_DEPLOYED_ORIGINAL_CJ2_FAILED_CUSTODY",
+      "status": "READONLY_PERSISTED_PREHANDOFF_PROVEN_RECOVERY_NOT_ADMITTED",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -43929,20 +43996,25 @@
           "kind": "current_CJ2_failed_custody_checkpoint",
           "reference": "docs/testing/Crew_CJ2_map_handoff_QA_20261116.md",
           "summary": "One normal handoff delivered in memory then final room authority failed. Explicit Save skipped; autosave unknown. No replay/reset. Contact fix qualified; cleanup evidence and delivery stages recorded separately. Original post-handoff persistence/browser acceptance remain open."
+        },
+        {
+          "kind": "qualified_readonly_failed_CJ2",
+          "reference": "docs/testing/Crew_CJ2_failed_inspection_QA_20261116.md",
+          "summary": "18guard+29codec checks then originalread-onlyJob37072. Bothprimarybackup151/87/2/1230/carried,0handoffcommands/outcomes/acks,no checkpoint. Originalfilesand111QAreceiptsunchanged,CASE_FAILED preserved. No replay permitted; privateauthority and recovery unqualified."
         }
       ],
-      "next_action": "Obtain a separately supported, qualified read-only failed-case inspection/recovery capability before any original CJ2 continuation; never reset custody or replay the observed handoff. Preserve original persistence uncertainty. Continue broader Crew/browser/human-pacing coverage only through compliant independently authorized paths.",
+      "next_action": "Keep original CJ2 CASE_FAILED and never replay its observed handoff. Qualify read-only private authority/receipt correlation before any named cold recovery; develop a separate exact-case typed admission only if existing rules permit it, retaining failed predecessor and forbidding handoff/reward replay. No ordinary Continue, Save or gameplay is currently admitted.",
       "blocker": {
         "state": "active",
         "kind": "native_failed_custody",
-        "description": "Original CJ2 is CASE_FAILED after one actual handoff and failed final authority. Explicit Save skipped, automatic persistence unknown. Existing forward-only adapter has no failed-case inspection/recovery policy; combined cleanup product is not admitted. No custody reset or completed-action replay. Independent tested source delivery continues.",
+        "description": "Persisted public generations are now known pre-handoff, but privateauthority/precisecorrelation and a separately typed exact-case cold recovery are notqualified. Originalobservedhandoff mustneverbereplayed. Existingnormalforwardguard remains correctlyblocked; no reset or profilecopy.",
         "requires_user_input": false,
-        "observed_at": "2026-11-16T19:20:56.329761+00:00",
+        "observed_at": "2026-11-16T19:42:27.783646+00:00",
         "evidence": [
-          "docs/testing/Crew_handoff_cleanup_publication_QA_20261116.md"
+          "docs/testing/Crew_CJ2_failed_inspection_QA_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T19:20:56.329761+00:00"
+      "updated_at": "2026-11-16T19:42:27.783646+00:00"
     },
     {
       "id": "CREW-CONCURRENT-ROUTE-OFFER-20261116",
@@ -44197,7 +44269,7 @@
         "No duplicate worker or bypass of browser/computer denials."
       ],
       "acceptance_scope": "Owner restart request Sentinel_3464b568ddc48191af59e314081b75ef and sidebar request Sentinel_11391c7e280c81918ac7603758e4721d; transferred intact checkpoint and explicit three-directory custody. Native ending reached and persisted; deployed browser/WASM acceptance remains separately required.",
-      "status": "FIXES_DEPLOYED_ORIGINAL_CJ2_FAILED_CUSTODY",
+      "status": "READONLY_PERSISTED_PREHANDOFF_PROVEN_RECOVERY_NOT_ADMITTED",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -44298,20 +44370,25 @@
           "kind": "current_CJ2_failed_custody_checkpoint",
           "reference": "docs/testing/Crew_handoff_cleanup_publication_QA_20261116.md",
           "summary": "One normal handoff delivered in memory then final room authority failed. Explicit Save skipped; autosave unknown. No replay/reset. Contact fix qualified; cleanup evidence and delivery stages recorded separately. Original post-handoff persistence/browser acceptance remain open."
+        },
+        {
+          "kind": "qualified_readonly_failed_CJ2",
+          "reference": "docs/testing/Crew_CJ2_failed_inspection_QA_20261116.md",
+          "summary": "18guard+29codec checks then originalread-onlyJob37072. Bothprimarybackup151/87/2/1230/carried,0handoffcommands/outcomes/acks,no checkpoint. Originalfilesand111QAreceiptsunchanged,CASE_FAILED preserved. No replay permitted; privateauthority and recovery unqualified."
         }
       ],
-      "next_action": "Obtain a separately supported, qualified read-only failed-case inspection/recovery capability before any original CJ2 continuation; never reset custody or replay the observed handoff. Preserve original persistence uncertainty. Continue broader Crew/browser/human-pacing coverage only through compliant independently authorized paths.",
+      "next_action": "Keep original CJ2 CASE_FAILED and never replay its observed handoff. Qualify read-only private authority/receipt correlation before any named cold recovery; develop a separate exact-case typed admission only if existing rules permit it, retaining failed predecessor and forbidding handoff/reward replay. No ordinary Continue, Save or gameplay is currently admitted.",
       "blocker": {
         "state": "active",
         "kind": "native_failed_custody",
-        "description": "Original CJ2 is CASE_FAILED after one actual handoff and failed final authority. Explicit Save skipped, automatic persistence unknown. Existing forward-only adapter has no failed-case inspection/recovery policy; combined cleanup product is not admitted. No custody reset or completed-action replay. Independent tested source delivery continues.",
+        "description": "Persisted public generations are now known pre-handoff, but privateauthority/precisecorrelation and a separately typed exact-case cold recovery are notqualified. Originalobservedhandoff mustneverbereplayed. Existingnormalforwardguard remains correctlyblocked; no reset or profilecopy.",
         "requires_user_input": false,
-        "observed_at": "2026-11-16T19:20:56.329761+00:00",
+        "observed_at": "2026-11-16T19:42:27.783646+00:00",
         "evidence": [
-          "docs/testing/Crew_handoff_cleanup_publication_QA_20261116.md"
+          "docs/testing/Crew_CJ2_failed_inspection_QA_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T19:20:56.329761+00:00"
+      "updated_at": "2026-11-16T19:42:27.783646+00:00"
     },
     {
       "id": "CREW-NOAUDIT-ENABLED-LOCK-20261116",
