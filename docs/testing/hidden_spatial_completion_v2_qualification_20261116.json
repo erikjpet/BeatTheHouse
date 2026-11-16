@@ -1,0 +1,66 @@
+{
+  "schema": "bth.hidden_spatial_completion_qualification/v2",
+  "recorded_at": "2026-11-16T16:24:42.441949+00:00",
+  "task_id": "BTH-ENV-SPATIAL-HIDDEN-001",
+  "status": "ACTUAL_ARCHIVED_REPORT_PREFLIGHT_63_TESTS_PASS",
+  "source_files": {
+    "tools/hidden_spatial_native_completion_profile_v2.py": {
+      "sha256": "c3bd15b0e3ebc582f282f060a30f773c5e5924cba941c5c3dc0ad56c698897ae",
+      "bytes": 26206
+    },
+    "tools/hidden_spatial_native_completion_v2.py": {
+      "sha256": "5df907519094280fec6fbcb395a6b2722f3c90b498808d0fb9e81f5afb3d1105",
+      "bytes": 16707
+    },
+    "tools/test_hidden_spatial_native_completion_v2.py": {
+      "sha256": "1de7e2ea1abd09677c3f129ab1a2eb74495bc6e72c249e6868df0e9773107ac1",
+      "bytes": 33292
+    },
+    "docs/testing/hidden_spatial_native_completion_v2_plan_20261116.md": {
+      "sha256": "11c30c2b82f2b4719c4bed669911c593a8d075bf0172fa90854458172e4f487c",
+      "bytes": 11039
+    }
+  },
+  "unchanged_transport_catalog_sha256": "658cda3e2e3802f122db431fd1835b05cdc9a44dfe104ab4777b5b9ef46063f9",
+  "peer": "/root/bar_clearance_audit; exact rawmanifest/Godot/originalsuccessfulobserver/serializedwitness independently reviewed",
+  "actual_test_count": 63,
+  "seconds": 29.631,
+  "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HIDCOMPLETE-20261116-v2-tests01\\evidence",
+  "job_pid": 19396,
+  "job_sha256": "b39dd55e0220831e5e39519ef3f03c1a2769959ca0754ce846f4a468560a9f76",
+  "log_sha256": "7ccf8b5f946ce14309aa87e55d1214bb8a7d74f4384ddb13508e290a391e53fd",
+  "exit_code": 0,
+  "active_at_release": 0,
+  "limits": {
+    "control_flags": 5,
+    "cpu_rate": 1200,
+    "aggregate_job_cpu_percent": 12.0,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "job_memory_limit_bytes": 2147483648,
+    "active_processes": 0
+  },
+  "manifest_sha256": "9d46641bbdb06dcc87d05298022f5ba17aef2beb2593da6fc08d43fa30792326",
+  "claim_sha256": "1c1bf584ef0fe52a3b00b89fb35ff08c17e4062a025226c2272487412a1e3d24",
+  "preflight_scope": [
+    "Actual archived report filenames, stronger thin246 and hitsr2b9461 counts and fullschemas validated before engineadmission.",
+    "Exact currentrawmanifest and byteexact originalproducer/Godotpins plus exact7192serialized source/bob witness; no epsilon/guessedrounding.",
+    "Old22PASS/failedthin51/sixabsent and source4049 custody authenticated; evidence-onlytransports retain source/assertions.",
+    "Native geometry comparison preserves r2b originalJSONroundtriplaw; no crossrepresentation floatidentity assumption.",
+    "Only sys.dont_write_bytecode=True exempted from AST moduleattribute mutation rejection."
+  ],
+  "preserved_failed_predecessor": {
+    "commit": "65582ce94a3c09ed696b7433e1ab91e37de39fa8",
+    "test_stop_document": "docs/testing/hidden_spatial_completion_test_stop_20261116.json",
+    "test_stop_document_sha256": "28a5f492997be5f35fb53dde5b5dfbc01cc6044480ae0a568527e15a455d41c0",
+    "old53_result": "FAILED4/ERROR3; unchanged, neverrelabeled"
+  },
+  "runtime_source_commit": "8727e4481fd1ca2babe8c803c76d5e210f245f44",
+  "runtime_source_tree": "9ebe55d48d5ab06cebde73559b5cbf80541ff9ea",
+  "controller_not_in_runtime_source_commit": true,
+  "next_action": "NewV2 readonlyplan then new thin-qualify receipt; exclusiveenginegrant required before six newengineobservations, finalsummaryseparate. No all29 V4pass claim.",
+  "production_art_written": false,
+  "test_updated": false,
+  "native_complete": false,
+  "browser_acceptance": "NOT_RUN"
+}
