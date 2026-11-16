@@ -1,0 +1,475 @@
+{
+  "schema": "bth.owner_full_room_composition_reassessment/v1",
+  "task_id": "BTH-ENV-SPATIAL-001",
+  "reviewed_at": "2026-11-16T17:08:44.200937+00:00",
+  "reviewer": "/root/audit_spatial_handoff",
+  "assigned_rooms": [
+    "motel",
+    "back_alley",
+    "punchline_club"
+  ],
+  "decision": "FAIL_COMPOSITION_REQUIRES_NEW_TRIAL",
+  "visual_GO": false,
+  "native_trial_approved": false,
+  "production_activation_approved": false,
+  "TEST_build_or_publication_approved": false,
+  "authority_change": {
+    "reason": "Owner rejected the full populated compositions: shelf-like surfaces at wall/floor boundaries, compressed or visually swallowed supports, flat counter mass and furniture on wall planes. Support counts and prior technical passes do not resolve this rejection.",
+    "scope": "Owner feedback supersedes earlier visual GOs, including delivered rooms. Historical technical/source evidence remains preserved; it is not current visual acceptance.",
+    "Private_release": "Completed Private release adapters and preflight V2 source are frozen. Earlier Private art94c93 is not permission to start TEST build/publication after owner rejection. No release action taken by this reviewer.",
+    "parent_all20_status": "OPEN; this report owns only the three assigned rooms and closes none."
+  },
+  "method": {
+    "personally_viewed_full_populated_frames": 7,
+    "source": "Existing full application native frames and one retained served browser screenshot, not background-only or board2x art layers.",
+    "coordinates": "All construction coordinates below are900x430 board units from the room briefs, interpreted against full populated images. They are not new runtime mask/clearance measurements. Full application margins/scales differ by context.",
+    "read_only_checks": "Recomputed exact frame and metadata hashes; matched captured package BG/JSON identities to current D room sources where recorded; no helper or adapter execution.",
+    "excluded": [
+      "No new engine, browser or HTTP launch",
+      "No generation, image transformation, art integration, runtime/placement/motion change",
+      "No cleanup, deletion, moving, save/profile access, Git or site write"
+    ],
+    "sampling_limits": [
+      "Seven still views do not establish all scenarios, motion extrema, complete cycles, dynamic occlusion or current live browser acceptance.",
+      "No claim of a fresh source/Git-tree audit from historical observer commit labels.",
+      "Candidate repair regions, final floor horizons, silhouettes and contact shadows require a newly authorized full-room trial and populated owner review."
+    ]
+  },
+  "references": {
+    "direction": {
+      "path": "docs/art/environment_spatial_rework_direction.md",
+      "sha256": "9a438875d8c5b4d923e1f5938caa9d900e5433aed0e27f3836907284245e579b",
+      "status": "Historical direction; owner feedback supersedes any visual-body freezes that preserve the rejected construction."
+    },
+    "motel_brief": {
+      "path": "docs/art/briefs/motel.md",
+      "sha256": "742c94d47cf9ab9d01efbbe10e336b3df14a6c0604535e5e1f92e900b1fc888b"
+    },
+    "back_alley_brief": {
+      "path": "docs/art/briefs/back_alley.md",
+      "sha256": "61f536178988d5d53c586ac9bb776ef949837e5252ca27bd3d2b625575622541"
+    },
+    "punchline_brief": {
+      "path": "docs/art/briefs/punchline_club.md",
+      "sha256": "696470a97ef8fb2776a39c9c5939869c1189b26b20cbbc321a5f3eeb42df8c70"
+    }
+  },
+  "rooms": {
+    "motel": {
+      "task_id": "BTH-ENV-SPATIAL-MOTEL-001",
+      "room": "motel",
+      "not_motel_room": true,
+      "status": "FAIL_COMPOSITION",
+      "version": {
+        "native_package": "4b22c9cfda8ad88f0d989b544c50cc84efd4fc290583a3e87464f9963821b971",
+        "current_BG": "b23d84e7a320189a5343cd2be2b1655d58f2c54e4c8e27d8943af8a7ed164fb0",
+        "current_JSON": "efaf7ffff76a064d711b31ee4821a3e09fbbd5cd88247fb3d0ddd8cb731c2bc5",
+        "summary_source_commit": "c5d5d17f691a010ac3173ac2a8c42232777081e5",
+        "identity_proof": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-MOTELTRIAL-20261114-r3-final-summary-01/evidence/motel-r3-native-summary.json",
+          "sha256": "8c132c6a9c7751d5a8fa995d9be3000b37902babb7e9718726eb6717b753d34f"
+        },
+        "binding": "Summary package_payloads BG/JSON match current D bytes. Its source_commit is retained summary provenance, not a new Git-tree attestation."
+      },
+      "viewed_frames": [
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-MOTELTRIAL-20261114-r3-base-preview-01/evidence/frames/settled_play.png",
+          "sha256": "2fec12ee8a970cfee38c7edd848e98d3a57d3ddfc99c4427d65177b6959144dc",
+          "bytes": 772008,
+          "context": "Base",
+          "version": "Motel R3 native full application",
+          "dimensions": [
+            1280,
+            720
+          ],
+          "personally_viewed_full_room": true,
+          "sha256_recomputed": true
+        },
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-MOTELTRIAL-20261114-r3-settled-01/evidence/motel_wedding_overflow_actual_play.png",
+          "sha256": "0daf262d0e7dacc80482fe8299d78c8833e22730b70be38c8d0af0b0b717bf92",
+          "bytes": 742993,
+          "context": "Wedding Overflow",
+          "version": "Motel R3 native full application",
+          "dimensions": [
+            1280,
+            720
+          ],
+          "personally_viewed_full_room": true,
+          "sha256_recomputed": true
+        },
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-MOTELTRIAL-20261114-r3-settled-01/evidence/motel_weekly_rates_actual_play.png",
+          "sha256": "79078ed67fbbf56bf12c7f0d01c5407925f486a1afadd6279297ae548b4e43eb",
+          "bytes": 754449,
+          "context": "Weekly Rates",
+          "version": "Motel R3 native full application",
+          "dimensions": [
+            1280,
+            720
+          ],
+          "personally_viewed_full_room": true,
+          "sha256_recomputed": true
+        }
+      ],
+      "construction": {
+        "visible_horizon_y": 246,
+        "placement_floor_band_starts_y": 244,
+        "back_reception_front": [
+          370,
+          176,
+          260,
+          52
+        ],
+        "right_merchandise_front": [
+          700,
+          246,
+          170,
+          40
+        ],
+        "foreground_support_front": [
+          450,
+          286,
+          224,
+          38
+        ],
+        "foreground_leg_rects": [
+          [
+            466,
+            324,
+            12,
+            48
+          ],
+          [
+            646,
+            324,
+            12,
+            48
+          ]
+        ],
+        "banquette": [
+          96,
+          224,
+          452,
+          72
+        ]
+      },
+      "findings": [
+        {
+          "id": "MOTEL-C01",
+          "status": "FAIL",
+          "region": "Back reception cabinet/front x370..630,y176..228 and curtain/floor context",
+          "observation": "The pink top is a narrow line and the dark body reads as a wall/curtain-mounted horizontal panel. It ends at228 above the floor boundary246, with no coherent return/base joining that floor. Full Wedding/Weekly views retain this reading around two live staff and the phone.",
+          "implication": "The complete reception volume and its floor relationship must be designed; appending counted feet to the fixed panel does not settle it."
+        },
+        {
+          "id": "MOTEL-C02",
+          "status": "FAIL",
+          "region": "Right merchandise counter x700..870,y246..286 around June",
+          "observation": "Its top lies directly on the wall/floor transition. The shallow straight front has no readable side return, usable top depth or convincing contact shadow. In Base and both populated scenarios it reads as a hanging low fascia in front of June rather than a freestanding counter.",
+          "implication": "A complete cabinet/top/base silhouette must relate to the same room floor, with June and Numbers readable in the actual composition."
+        },
+        {
+          "id": "MOTEL-C03",
+          "status": "FAIL_FULL_ROOM_PROPORTION_REQUIRES_REVIEW",
+          "region": "Foreground 'low support' x450..674,y286..372 and Motel Friend nearby",
+          "observation": "Two long supports and a wood front are visible, but the top is a very thin teal edge under oversized live stock. The entire object reads tall/heavy relative to nearby Motel Friend, while the back counter is unusually shallow. Having two visible legs is not an acceptance argument.",
+          "implication": "Reconcile apparent furniture height, top depth, floor contact and the two counter scales in one populated room view."
+        }
+      ],
+      "uncertainties": [
+        "This report does not independently measure per-actor paint/label clearance or determine final leg/base coordinates.",
+        "The foreground table has visible ground-reaching supports; this finding is a composition/proportion judgment, not a claim that those supports are absent.",
+        "No new defect is inferred solely from dark outlines at material joins."
+      ],
+      "next_bounded_composition_correction": {
+        "scope": "One non-active full-room composition trial for the lobby floor/reception/merchandise/foreground-table relationship. Current master and all evidence remain immutable.",
+        "requirements": [
+          "Keep all live contact anchors and gameplay geometry. Treat frozen front/replay rectangles as occluding planes, not complete furniture silhouettes.",
+          "Establish one coherent visible floor behind cabinet bases; reconsider the painted horizon and furniture bodies together where required. Do not invent separate plinths or a bedroom.",
+          "Paint clear horizontal top planes, distinct apron/cabinet returns, proportionate support/base and local contact shadows. Evaluate the foreground stock table beside Motel Friend, not in an empty crop.",
+          "Preserve the banquette identity and circulation; avoid growing the rear cabinet through its footprint or hiding fixed props/labels with new body mass.",
+          "Retain all14 motions and both counter contracts; any future replay must be an exact crop of the same final master. No position, clock or renderer changes."
+        ],
+        "required_first_review": "Full populated Base plus Wedding/Weekly and remaining scenario compositions at normal room scale before any visual GO. This report authorizes no generation or integration."
+      }
+    },
+    "back_alley": {
+      "task_id": "BTH-ENV-SPATIAL-BACK-001",
+      "room": "back_alley",
+      "status": "FAIL_COMPOSITION",
+      "version": {
+        "native_package": "f42919a146d4fdc17d7cd120ef926b44f6ccaefabcaf6a8a171e805db2150b68",
+        "current_BG": "a8533e7dbd30cd75153e961cbf999acb0ffb1577e49111c3ed1eabba5704ffb6",
+        "current_JSON": "79bb8a15b3b2e5de523aad990277fe8e149ada30443b94e3077cd78d22c164ce",
+        "served_capture_source": "182ae255d04bd1fbd81e1542a0d153475cfb1e6a",
+        "served_capture_tree": "77422a09ce9d0598ae5bcad7aaea02e8bb6c55b1",
+        "capture_observation": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-BACKWEB01-probe-9/evidence/observation.json",
+          "sha256": "328bf1f317add9b70668805a76b357669e3c45d43b75b3d03bc591e5581829d2",
+          "url": "https://192.168.0.36:8443/p/beat-the-house/play/test/182ae255d04bd1fbd81e1542a0d153475cfb1e6a/index.html"
+        },
+        "immutable_manifest": {
+          "path": "D:/Projects/site/projects/beat-the-house/public/play/test/182ae255d04bd1fbd81e1542a0d153475cfb1e6a/build_manifest.json",
+          "sha256": "37cf2baab508177905db5350320cfe2a1d2ae0a390debd4e71dbcef661b70641"
+        },
+        "binding": "Retained screenshot observation URL and resident immutable source182ae manifest agree; manifest BG/JSON and active room seal match current D. No new HTTP/browser verification or current TEST claim."
+      },
+      "viewed_frames": [
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-BACKWEB01-probe-9/evidence/screen.png",
+          "sha256": "c0bf3b6a6854f70b53a771cc92433fe42f63ed7111dae09eef344310def9d254",
+          "bytes": 765951,
+          "context": "Populated Back Alley with result panel, stock, merchant, patrons and floor props",
+          "version": "Back Alley R3 retained served Web source182ae255",
+          "dimensions": [
+            1280,
+            720
+          ],
+          "personally_viewed_full_room": true,
+          "sha256_recomputed": true
+        }
+      ],
+      "construction": {
+        "visible_horizon_y": 236,
+        "central_front": [
+          282,
+          192,
+          336,
+          24
+        ],
+        "central_leg_rects": [
+          [
+            318,
+            216,
+            14,
+            78
+          ],
+          [
+            572,
+            216,
+            14,
+            78
+          ]
+        ],
+        "right_crate_front": [
+          638,
+          168,
+          208,
+          50
+        ],
+        "side_access_x_ranges": [
+          [
+            0,
+            88
+          ],
+          [
+            812,
+            900
+          ]
+        ],
+        "side_access_y": [
+          220,
+          414
+        ],
+        "right_bin": [
+          742,
+          248,
+          42,
+          54
+        ]
+      },
+      "findings": [
+        {
+          "id": "BACK-C01",
+          "status": "FAIL",
+          "region": "Right crate/display x638..846,y168..218 and wall/floor below",
+          "observation": "The diagonal-braced wooden body has a distinct front but ends at218, above floor236. No body/return/support/shadow joins it to that floor. The merchant and drink above it make the full view read as a high wall shelf/crate panel.",
+          "implication": "Reconstruct the complete service counter and room-depth relationship rather than copying its opaque replay rectangle as furniture."
+        },
+        {
+          "id": "BACK-C02",
+          "status": "FAIL",
+          "region": "Central folding table x282..618 with supports to294",
+          "observation": "Its long legs are visible and reach the ground. Nevertheless, the usable top is almost a line and stock sits on the wall field; the long front reads as a horizontal shelf/beam against masonry. The contrast between extremely narrow top depth and tall supports is the composition problem.",
+          "implication": "Provide a readable horizontal top with coherent near/far edges and body proportions at the unchanged shop contacts. Leg presence alone is insufficient."
+        },
+        {
+          "id": "BACK-C03",
+          "status": "UNCERTAINTY_REQUIRES_CLEARANCE_BEFORE_REPAIR",
+          "region": "Below/right of crate front",
+          "observation": "A blind full-width cabinet extension below220 would consume the existing right access strip x812..900 and overlap the right bin x742..784,y248..302. The current screenshot also has live merchant, Parking Tip and marked exit in that area.",
+          "implication": "Do not solve the floating crate by unmeasured downward extrusion. A coherent floor-horizon/body redesign needs the actual actor/prop union first."
+        }
+      ],
+      "uncertainties": [
+        "Only one retained served populated context was personally inspected here, not the entire scenario/work or motion union.",
+        "A global/coherent painted horizon adjustment may be needed; this report does not approve a local floor patch or exact new horizon.",
+        "Wet reflected light is source identity, not evidence of a contact shadow or new geometric seam."
+      ],
+      "next_bounded_composition_correction": {
+        "scope": "One non-active whole-alley composition trial around the table/crate/floor relationship, with original source and existing served evidence preserved.",
+        "requirements": [
+          "Keep all shop/merchant/drink/actor/exit anchors, lamp, bins, wall identity and authored motion.",
+          "Consider the floor horizon and two furniture bodies together so their bases occupy real ground. Do not create different unexplained floor levels or tiny platforms.",
+          "Paint actual top depth, near/far edges, distinct vertical body and grounded local shadows. Preserve the central negative space where it serves circulation.",
+          "Resolve right bin and exit-lane overlap with the full populated union before authoring a footprint. Avoid adding a solid slab through the bin or exit.",
+          "Retain all23 current motion entries and opaque crate replay contract; recrop a future replay from the identical final master."
+        ],
+        "required_first_review": "Full populated source182ae-equivalent composition plus scenario/work placements and rain/light extrema before any visual GO. No generation/integration authorized by this report."
+      }
+    },
+    "punchline_club": {
+      "task_id": "BTH-ENV-SPATIAL-PUNCH-001",
+      "room": "punchline_club",
+      "status": "FAIL_COMPOSITION",
+      "version": {
+        "native_package": "c617fb48dbbb22f8fcf9ea8b9c80369d007fa8beef5d1953231eb1956ac5b373",
+        "current_BG": "fec38c67c148ed8c610b997febdaba4f912b857f0befa7d80249e028bc912448",
+        "current_JSON": "06d926688a02aeea70a55f3935095897cdf6e8dd274716dfd709cd204ad6e00e",
+        "identity_proof": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-PUBLICR2-20261114-current6-01/evidence/identity.json",
+          "sha256": "a34ee3a10876fee637b9cedae4a25981c6ba9d654acf92a4624debccbb9f9056"
+        },
+        "metadata": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-PUBLICR2-20261114-current6-01/evidence/public_r2_initial_metadata.json",
+          "sha256": "b98b23e923fc6d095b38bdf853c83faabf577b1f0dcbcbccbec90a4efa457e8b",
+          "observer_commit_label": "ab0b49deeab019deac7ef30b79b17f86ffbc521d"
+        },
+        "binding": "Identity files BG/JSON match current D. Observer report commit label is retained historical code-baseline provenance, not a new actual capture Git-tree proof."
+      },
+      "viewed_frames": [
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-PUBLICR2-20261114-current6-01/evidence/__none_actual_play.png",
+          "sha256": "d9837d0384fa74e90893ee682fdc95cccf75c9c32898835ecf301a9a2697cce9",
+          "bytes": 908445,
+          "context": "Base",
+          "version": "Public Punchline R2 native full application",
+          "dimensions": [
+            1280,
+            720
+          ],
+          "personally_viewed_full_room": true,
+          "sha256_recomputed": true
+        },
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-PUBLICR2-20261114-current6-01/evidence/punchline_headliner_night_actual_play.png",
+          "sha256": "62f11c2213c02cd54077b7b8f9a613075a0a7980de7515f7260e2a8f8aa7a120",
+          "bytes": 879099,
+          "context": "Headliner Night",
+          "version": "Public Punchline R2 native full application",
+          "dimensions": [
+            1280,
+            720
+          ],
+          "personally_viewed_full_room": true,
+          "sha256_recomputed": true
+        },
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-PUBLICR2-20261114-current6-01/evidence/punchline_open_mic_night_actual_play.png",
+          "sha256": "6fbf73d14fa1ddce08aaef0a1ed4b91ed71da53d0519f6b98bd9f112ecedfff9",
+          "bytes": 875513,
+          "context": "Open Mic Night",
+          "version": "Public Punchline R2 native full application",
+          "dimensions": [
+            1280,
+            720
+          ],
+          "personally_viewed_full_room": true,
+          "sha256_recomputed": true
+        }
+      ],
+      "construction": {
+        "visible_horizon_y": 245,
+        "table_centers": [
+          [
+            108,
+            194
+          ],
+          [
+            202,
+            222
+          ],
+          [
+            704,
+            194
+          ],
+          [
+            790,
+            222
+          ]
+        ],
+        "table_outer_radius": 28,
+        "curtain": [
+          264,
+          80,
+          372,
+          150
+        ],
+        "stage_envelope": [
+          264,
+          202,
+          372,
+          50
+        ],
+        "apron": [
+          302,
+          202,
+          296,
+          50
+        ],
+        "door": [
+          814,
+          78,
+          64,
+          164
+        ]
+      },
+      "findings": [
+        {
+          "id": "PUNCH-C01",
+          "status": "FAIL",
+          "region": "All four round forms at108/194,202/222,704/194,790/222",
+          "observation": "They read as vertical framed/barrel-end wall disks with candle marks. Upper circles end at222 above floor245; lower circles barely reach250 and have no freestanding body/base. Headliner and Open Mic preserve the wall-mounted reading, including the fourth form behind Ox/door.",
+          "implication": "These are documented tables. They need horizontal ellipses/usable planes, a distinct underside/body and plausible connection to the room floor around fixed practical contacts."
+        },
+        {
+          "id": "PUNCH-C02",
+          "status": "UNCERTAINTY_STAGE_DEPTH_REQUIRES_COMPOSITION_REPLAN",
+          "region": "Curtain/stage/apron x264..636,y80..252",
+          "observation": "The proscenium and ground-reaching front exist, but the usable deck reads as a thin lip in front of a large vertical curtain. Event chair/step/rope/lectern visuals appear in the curtain field in Open Mic/Headliner. Those live authored projections are not automatically missing background furniture.",
+          "implication": "Review a usable deck plane and curtain termination against actual event contacts. Do not manufacture a performer or new chairs to hide production-owned visuals. This sampling does not independently prove every performer foot contact."
+        },
+        {
+          "id": "PUNCH-C03",
+          "status": "FAIL_PREVIOUS_BODY_FREEZE",
+          "region": "Historical public brief table construction rule",
+          "observation": "The older compact-circles/no-long-legs instruction froze the silhouettes that now fail owner composition review. Correct counts, retained practical pixels and prior motion assertions did not make them read as horizontal tables.",
+          "implication": "Preserve gameplay anchors and practical positions; do not preserve the rejected vertical-disk furniture silhouette as a requirement."
+        }
+      ],
+      "uncertainties": [
+        "Tonight's Comic is documented as a disabled fixture/projection, not a guaranteed character actor; no person should be baked in as an art correction.",
+        "No final table footprint is cleared under Ox or across the side door. x814 and onward belongs to door architecture; full scenario paint/label clearance remains necessary.",
+        "Three viewed contexts are not all six current scenarios or all pulse/floor phases."
+      ],
+      "next_bounded_composition_correction": {
+        "scope": "One non-active full public-room perspective/composition trial, preserving all current live authority and recognizable comedy identity.",
+        "requirements": [
+          "Replace four vertical disk readings with small horizontal table volumes around existing practical/contact positions. Establish their place in a coherent floor plane rather than adding short sticks to circles.",
+          "Reconcile the floor horizon, table bases and real stage deck together; keep a walkable room foreground, side-door access and architecture.",
+          "Show usable stage depth behind its near fascia and end curtain material behind that deck where actual contacts justify it. Do not invent a comic, audience, chairs or new gameplay furniture.",
+          "Check all six populated scenarios, especially Open Mic lectern/steps, Headliner runner and Ox/door, before choosing support footprints.",
+          "Preserve all11 current motions, three practical pulse positions, steady fourth practical and zero counters/replays. No label, contact, clock, placement or renderer changes."
+        ],
+        "required_first_review": "Full populated Base/Open Mic/Headliner and the remaining three scenario compositions at normal room scale. This report is a failure/reassessment and grants no visual GO or generation/integration permission."
+      }
+    }
+  },
+  "remaining_gates": [
+    "Parent chooses next room and authorizes one bounded composition trial; this report does not start one.",
+    "Independent owner review of complete populated composition precedes technical/source clearance or any renewed art/build authorization.",
+    "Existing technical receipts remain historical evidence. All new geometry/art/counter/animation changes require their proper scoped checks; no acceptance is inherited.",
+    "No current browser/served acceptance or all20 closure is claimed."
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "schema": "bth.private_crew_owner_rejected_active_art_reversion/v1",
+  "recorded_at": "2026-11-16T17:54:34.315519+00:00",
+  "reason": "Keep the owner-rejected Private candidate non-active so an unrelated corrected TEST package cannot accidentally include it.",
+  "owner_rejection_document": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\docs\\testing\\environment_spatial_owner_visual_rejection_20261116.json",
+  "owner_rejection_sha256": "1058e66f635bee370818434d73001cbd766d72570345952fa63bb1e2b347e030",
+  "changed_file": "assets/art/environments/punchline_back_room/background.png",
+  "before_rejected_candidate_sha256": "1939afd50bc5df04524c45965e9a895d6cb2f9fd17b30dc1824df9671892242b",
+  "after_retained_deployment_baseline_sha256": "0913167ca23cb0422a11e8fa7a7be429e04ff19c0ead3ddfb6a751598029f4ee",
+  "baseline_source": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-PRIVATETRIAL-20261116\\source_baseline\\assets\\art\\environments\\punchline_back_room\\background.png",
+  "rejected_candidate_preserved": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-PRIVATETRIAL-20261116\\candidate_sources\\private-crew-spatial-r1-assembled-v2\\assets\\art\\environments\\punchline_back_room\\background.png",
+  "rejected_source_commit_preserved": "f7066d965304916b5b0279efa58e852218ed27a3",
+  "candidate_unchanged": true,
+  "other_room_files_changed": false,
+  "gameplay_anchors_or_animation_changed": false,
+  "TEST_or_main_or_NEXT_written": false,
+  "deletion_cleanup_or_profile_access": false
+}

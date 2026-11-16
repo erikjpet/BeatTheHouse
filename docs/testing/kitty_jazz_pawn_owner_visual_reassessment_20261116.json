@@ -1,0 +1,589 @@
+{
+  "schema": "bth.kitty_jazz_pawn_owner_visual_reassessment/v1",
+  "reviewed_at_utc": "2026-11-16T17:08:12Z",
+  "owner": "/root/native_suite_adapter",
+  "supporting_readonly_reviewer": "/root/native_suite_adapter/pawn_composition_review",
+  "status": "VISUAL_ACCEPTANCE_WITHHELD_FOR_ALL_THREE_ROOMS",
+  "visual_GO": false,
+  "authority": "Owner visual rejection supersedes previous art GOs, including published rooms. Source/pixel/technical custody remains evidence; it grants no composition acceptance.",
+  "scope": {
+    "rooms": [
+      "kitty_cat_lounge",
+      "jazz_club",
+      "pawn_shop"
+    ],
+    "method": "Read actual complete populated 1280x720 application frames as compositions. Assess wall/floor separation, perspective, stage and counter mass, human/body scale, contact and shadows together. Source-only candidate master inspection is explicitly separate.",
+    "parent_personally_viewed": {
+      "kitty_cat_lounge": "all five retained actual-play frames",
+      "jazz_club": "all five retained actual-play frames",
+      "pawn_shop": "Base and Estate Lot Day actual-play frames"
+    },
+    "supporting_reviewer_personally_viewed": {
+      "pawn_shop": "all four retained actual-play frames"
+    },
+    "not_performed": [
+      "new engine or browser session",
+      "image generation",
+      "art or anchor edits",
+      "gameplay, save or profile access",
+      "new release or adapter work",
+      "cleanup, moving or deleting files",
+      "Git operations"
+    ],
+    "fresh_current_code_runtime": false,
+    "technical_pass_counts_used_as_visual_acceptance": false,
+    "coordinate_note": "Approximate bounds below are image pixels in the named 1280x720 preview, unless explicitly marked native1800x860. They are visual location notes, not authored geometry or changed anchors."
+  },
+  "rooms": {
+    "kitty_cat_lounge": {
+      "decision": "CURRENT_STAGE_AND_COUNTER_COMPOSITION_UNRESOLVED; CANDIDATE_NOT_POPULATED",
+      "findings": [
+        {
+          "id": "KITTY-OWNER-STAGE-01",
+          "confidence": "directly visible in retained populated current-static-art frames",
+          "area": "stage across left half; Amateur contestant and Slow-night Host bases",
+          "description": "The existing lower stage reads as framed vertical red panels. In Amateur Night the contestant base meets the front-panel area, and in Slow Night the Host and mini-stage meet the same fascia. A horizontal deck, its rear boundary and the change of height to the main floor are not legible together. The actor shadow/foot contact is therefore read against a vertical face rather than a believable occupied platform.",
+          "approximate_preview_bounds": [
+            122,
+            343,
+            605,
+            120
+          ],
+          "evidence_frames": [
+            "kitty_cat_lounge_amateur_night_actual_play.png",
+            "kitty_cat_lounge_slow_night_actual_play.png"
+          ]
+        },
+        {
+          "id": "KITTY-OWNER-BAR-02",
+          "confidence": "direct visual judgment; contact depth remains ambiguous",
+          "area": "right champagne bar and bartender figures",
+          "description": "The bright bar-top line and broad drawer/wood front form a nearly frontal strip against the backbar. There is little readable top depth, end return or base/contact shadow separating the counter volume from the wall and floor. Hiding lower bodies behind an exact replay crop does not establish a full-height grounded counter.",
+          "approximate_preview_bounds": [
+            818,
+            391,
+            365,
+            85
+          ],
+          "evidence_frames": [
+            "__none_actual_play.png",
+            "kitty_cat_lounge_buyout_actual_play.png"
+          ]
+        },
+        {
+          "id": "KITTY-OWNER-FOREGROUND-03",
+          "confidence": "direct visual judgment; source of the live game prop is outside the static master",
+          "area": "lower-right Roulette surface and scenario tables",
+          "description": "The lower-right Roulette display reads as an upright green game face with a wheel above it and no visible cabinet or support volume. Small scenario tables are outlined blocks amid full-size people. Their body scale and floor contact must be reviewed with the room rather than treating unchanged anchors as visual evidence. This report does not assign the live prop issue solely to the background.",
+          "evidence_frames": [
+            "__none_actual_play.png",
+            "kitty_cat_lounge_amateur_night_actual_play.png"
+          ]
+        },
+        {
+          "id": "KITTY-OWNER-CANDIDATE-04",
+          "confidence": "source-only observation and explicit missing populated evidence",
+          "description": "V3 introduces a timber top plane in the old stage window, but its source-only thin front edge and the unchanged right bar cannot establish full-room stage height, counter mass, shadows or human scale. The old 8-pixel contact-buffer and donor checks are preserved, not promoted to visual acceptance. There is no actual populated V3 candidate frame to inspect."
+        }
+      ],
+      "next_bounded_correction": {
+        "action": "Prepare a new full-composition stage-and-bar volume proposal before another localized assembly decision.",
+        "requirements": [
+          "Keep every gameplay anchor, interaction, actor route and authored motion alive and unchanged.",
+          "Make stage rear edge, horizontal occupied deck, full front mass/step and floor contact shadow read as one volume beneath the actual Host, contestant, rack and scenario prop positions.",
+          "Give the bar a readable top, end return and grounded cabinet/plinth mass at the existing counter anchor; assess the people at the same scale.",
+          "Review the unchanged Roulette/scenario prop bodies as part of the same full frame; do not conceal their missing support with labels or a stretched wall texture.",
+          "If the old y476 floor-preservation boundary or narrow assembly window prevents a believable full volume, root must explicitly review a new bounded physical mask. No silent expansion or geometry change is authorized here.",
+          "Require actual full populated candidate frames in all five contexts before any new visual decision. A master, contact-buffer count or exact replay crop is insufficient."
+        ]
+      },
+      "candidate": {
+        "version": "kitty-spatial-r1-assembled-v3, non-active source candidate",
+        "background": {
+          "path": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-KITTYTRIAL-20261116/candidate_sources/kitty-spatial-r1-assembled-v3/assets/art/environments/kitty_cat_lounge/background.png",
+          "sha256": "bb1abe93ac133d59e9107c56efc51338af6f99603a9c181219a10a20a24d719b",
+          "bytes": 990392,
+          "dimensions": [
+            1800,
+            860
+          ]
+        },
+        "room30_sha256": "ba8a2c2ab3e812673cb9ad39b84c22a2a9769171282eb3ff7f357ba5f226d06e",
+        "assembly_report": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-KITTYTRIAL-20261116-v3-assemble01/evidence/kitty-spatial-r1-assembly-v3.json",
+          "sha256": "3974ce60951a6e2a8da8655982b20da22317603c6002bf6e16b4ca155b1768cf",
+          "bytes": 71727
+        },
+        "old_static_review": {
+          "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/kitty_spatial_r1_static_review_v3_20261116.json",
+          "sha256": "ebb0acf227f15b39842af495a103e92ec9ac990f4887c936c9d7b593c82ceb6e",
+          "bytes": 37967,
+          "current_visual_authority": "SUPERSEDED_BY_OWNER_REJECTION; preserved unchanged"
+        },
+        "source_master_personally_viewed": true,
+        "populated_frame": null,
+        "populated_status": "NOT_PRODUCED: parent reports first seven file-only native phases complete; no candidate engine import/contexts/capture. No composition is inferred from source-only master."
+      },
+      "evidence": {
+        "version": "Historical R5 populated initial noon/closing fixtures over source archive317f; R6 changed two animation positions only and documents identical R5 static master/counter. Current30 room files match the R6 document. These are not a new render of current code or the V3 candidate.",
+        "frames": [
+          {
+            "path": "E:/CodexQA/BTH/runs/BTH-ENVART-KITTYTRIAL-20261115-r5-capture-01/evidence/__none_actual_play.png",
+            "sha256": "696c6585e3a1d4a9176ad3b1483efe56bfa25a0d360e0e7b4fccae0316c0e09f",
+            "bytes": 730022,
+            "dimensions": [
+              1280,
+              720
+            ]
+          },
+          {
+            "path": "E:/CodexQA/BTH/runs/BTH-ENVART-KITTYTRIAL-20261115-r5-capture-01/evidence/kitty_cat_lounge_amateur_night_actual_play.png",
+            "sha256": "8904d91d77d26d56679046d50049768aa0901229e919a63dd9fe6caf5916be1a",
+            "bytes": 715582,
+            "dimensions": [
+              1280,
+              720
+            ]
+          },
+          {
+            "path": "E:/CodexQA/BTH/runs/BTH-ENVART-KITTYTRIAL-20261115-r5-capture-01/evidence/kitty_cat_lounge_bachelorette_storm_actual_play.png",
+            "sha256": "545402124cf208534537a6f9a6a63dd50710db591c926747085b239faf0f177e",
+            "bytes": 717009,
+            "dimensions": [
+              1280,
+              720
+            ]
+          },
+          {
+            "path": "E:/CodexQA/BTH/runs/BTH-ENVART-KITTYTRIAL-20261115-r5-capture-01/evidence/kitty_cat_lounge_buyout_actual_play.png",
+            "sha256": "2abf05b550ad2a95c9bf9ef494d82d941a97fb0c8c6f9ff26c96d174d6d7d1cf",
+            "bytes": 727487,
+            "dimensions": [
+              1280,
+              720
+            ]
+          },
+          {
+            "path": "E:/CodexQA/BTH/runs/BTH-ENVART-KITTYTRIAL-20261115-r5-capture-01/evidence/kitty_cat_lounge_slow_night_actual_play.png",
+            "sha256": "928a68cc22b01b0541ccf1d8f5405750d6cc70d193a5084ba550fc5ad3c959a7",
+            "bytes": 719680,
+            "dimensions": [
+              1280,
+              720
+            ]
+          }
+        ],
+        "retained_source_identity": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-KITTYTRIAL-20261115-r5-capture-01/evidence/source_identity.json",
+          "sha256": "9cfed402bfda6722bd11bb9aacb6a43b84d4ab01f96e9c0386705ba11ff027f5",
+          "bytes": 1063658
+        },
+        "retained_archive_commit": "317f252b71fdd8cbe3c2f917d24fc651245190e2",
+        "retained_archive_tree": "0a23364e3a04303486bf7f935d28a85929832f5c",
+        "retained_archive_sha256": "e4a6da798f1dd2c3a80fa73fbbb0deba9384b3840a9fae7ec4426150a03672ce",
+        "source_identity_boundary": "The archived commit inventory predates the art overlay; it is not misrepresented as a Git commit containing these candidate art assets.",
+        "R6_static_continuity_document": {
+          "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/kitty_cat_r6_native_trial.json",
+          "sha256": "1bdaaeaf14834960884a57893e54431582ad63bc91c1bf17b0ef7f0ad7ff377e",
+          "bytes": 10946
+        },
+        "current_R6_room_differences": [],
+        "initial_metadata": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-KITTYTRIAL-20261115-r5-capture-01/evidence/kitty_preart_metadata.json",
+          "sha256": "2159cd06068bad11d6741d483c75a98b184ae29adc8d5bb3d2db3bf36203eedf",
+          "bytes": 7180372
+        },
+        "job_receipt": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-KITTYTRIAL-20261115-r5-capture-01/evidence/job.json",
+          "sha256": "4822b29258ff76ead7c909321cb6242e7975aa48fb9b3f2947ea87aefe61fafb",
+          "bytes": 7940
+        }
+      },
+      "current_source": {
+        "room_png_and_json_count": 30,
+        "files_sha256": {
+          "assets/art/environments/kitty_cat_lounge/anim/candle_light_0.png": "d79eddbe02603a5412ab7be088d6790b329d2e04dd817842f8eaf6064fe1a12a",
+          "assets/art/environments/kitty_cat_lounge/anim/candle_light_1.png": "545375c389080aefa2f4e0461474452313a6ce5754d6946910e7a38b52698d95",
+          "assets/art/environments/kitty_cat_lounge/anim/candle_light_2.png": "d73a331a1e0b2e7aca2b472aa8bd02035453ec120d8303e2e9126b0135fd168f",
+          "assets/art/environments/kitty_cat_lounge/anim/candle_light_3.png": "0a563e8293c2d67067ca6cb9988ff4287007abc690c33d09aa6cd48252efec64",
+          "assets/art/environments/kitty_cat_lounge/anim/candle_light_4.png": "766debe06cb201c06999bcbacc7ede2dcd7a2d76dbbff435315660268029bda9",
+          "assets/art/environments/kitty_cat_lounge/anim/cool_air_0.png": "ebe7ceb580eb4286ed3d03d2c18d2c8423b818e65704049dafec601134cdb5b9",
+          "assets/art/environments/kitty_cat_lounge/anim/cool_air_1.png": "048dd38269941db7e74d803ac5c0878ca190c7da6b8a7d714d00fea7c79f006e",
+          "assets/art/environments/kitty_cat_lounge/anim/cool_air_2.png": "b5f8e207a2c83a23623feb29034e115fb767cc5b45332ca23444044f61342c03",
+          "assets/art/environments/kitty_cat_lounge/anim/cool_air_3.png": "2e4e4699cb2436b7ef3fc6e4b4fd611d760e19d6f2d3edff02346071af4b9302",
+          "assets/art/environments/kitty_cat_lounge/anim/cool_air_4.png": "2410d0bd01c2927c264b0d73fca0328341ca04c4cce3d8596cbcdd987dcd55ad",
+          "assets/art/environments/kitty_cat_lounge/anim/floor_glint_0.png": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+          "assets/art/environments/kitty_cat_lounge/anim/floor_glint_1.png": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+          "assets/art/environments/kitty_cat_lounge/anim/floor_glint_2.png": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+          "assets/art/environments/kitty_cat_lounge/anim/floor_glint_3.png": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+          "assets/art/environments/kitty_cat_lounge/anim/floor_glint_4.png": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+          "assets/art/environments/kitty_cat_lounge/anim/floor_glint_5.png": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+          "assets/art/environments/kitty_cat_lounge/anim/floor_glint_6.png": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+          "assets/art/environments/kitty_cat_lounge/anim/kitty_sign_pulse.png": "30af2beae75ddd29b474b645ff86fb26b6f4e2797761cfbf077e05d988f7901f",
+          "assets/art/environments/kitty_cat_lounge/anim/pink_air_0.png": "7884f7f55c0dfcf00fce4442cf4eb742b373a057ef928ae3e2cf996ff0bc09a6",
+          "assets/art/environments/kitty_cat_lounge/anim/pink_air_1.png": "54e57decb1b1a83ad10cda5400cb53e85f0cb697d63b80b2e550060df55de1f1",
+          "assets/art/environments/kitty_cat_lounge/anim/pink_air_2.png": "741b09243d56c16c0380ac01426b6a9ae5c50f3b226b54c4da56858a52f64d73",
+          "assets/art/environments/kitty_cat_lounge/anim/pink_air_3.png": "2ce1065d3eb05218ad8c557879b4f4e47c39ac113d6833863e43a8d3a4deb516",
+          "assets/art/environments/kitty_cat_lounge/anim/pink_air_4.png": "b9ae8238f27bf31326147aca81dfc11e16f03f384c007063a5eaf64f00cc9fb4",
+          "assets/art/environments/kitty_cat_lounge/anim/warm_sparkle_0.png": "5476a12e98bbfbfa2145403b7d8909f7bf662693f5116926dcd3f08a960dbe13",
+          "assets/art/environments/kitty_cat_lounge/anim/warm_sparkle_1.png": "5476a12e98bbfbfa2145403b7d8909f7bf662693f5116926dcd3f08a960dbe13",
+          "assets/art/environments/kitty_cat_lounge/anim/warm_sparkle_2.png": "5476a12e98bbfbfa2145403b7d8909f7bf662693f5116926dcd3f08a960dbe13",
+          "assets/art/environments/kitty_cat_lounge/anim/warm_sparkle_3.png": "5476a12e98bbfbfa2145403b7d8909f7bf662693f5116926dcd3f08a960dbe13",
+          "assets/art/environments/kitty_cat_lounge/background.png": "808cdc6dc571889e288d1db023487f8b776f229592463d0459d07a711e8c06e1",
+          "assets/art/environments/kitty_cat_lounge/counters/kitty_champagne_bar.png": "3ad4156cec44de64000f94848f159575b7d8f2f96ed8fb42fffa7b6d84a52497",
+          "data/art/environments/kitty_cat_lounge.json": "03da076bad28b512c463bf6d620f9a037e36678545f1c06fb685102da923fd6a"
+        },
+        "canonical_sorted_json_map_sha256": "c6836bb5862364097ea8f1300400807b4d93ac635ce296ea2a8beb461948071c",
+        "root": "D:/Projects/Beat-The-House/.tmp/environment-art-layers"
+      }
+    },
+    "jazz_club": {
+      "decision": "STAGE_DECK_AND_COUNTER_DEPTH_REQUIRE_COMPOSITION_REWORK",
+      "findings": [
+        {
+          "id": "JAZZ-OWNER-STAGE-01",
+          "confidence": "directly visible across all five populated R3 contexts",
+          "area": "curtained band stage on left",
+          "description": "The band bases sit at the long front stripe while the curtain/wall treatment continues behind their lower bodies. The front is a long shallow framed fascia; a receding horizontal deck, its rear edge, a convincing front height and a shadowed step down to the main floor are not readable as one occupied stage. Dark performer bodies merge into the stage/backdrop, leaving feet and instrument support difficult to read.",
+          "approximate_preview_bounds": [
+            119,
+            239,
+            647,
+            238
+          ],
+          "evidence_frames": [
+            "__none_actual_play.png",
+            "jazz_club_recording_night_actual_play.png",
+            "jazz_club_guest_legend_actual_play.png"
+          ]
+        },
+        {
+          "id": "JAZZ-OWNER-BAR-02",
+          "confidence": "direct visual judgment",
+          "area": "right bar in front of large backbar mirror",
+          "description": "The counter is dominated by a thin bright top line and front-facing panels, ending near the same wall/floor boundary as the stage. Its top depth, side returns and grounded base/contact shadow are weak. The bartender and objects consequently read against a wall shelf or panel rather than within a substantial service-counter volume.",
+          "approximate_preview_bounds": [
+            831,
+            392,
+            380,
+            82
+          ],
+          "evidence_frames": [
+            "__none_actual_play.png",
+            "jazz_club_union_trouble_actual_play.png"
+          ]
+        },
+        {
+          "id": "JAZZ-OWNER-DEPTH-03",
+          "confidence": "direct visual judgment; semantic support assignment remains unresolved",
+          "area": "Recording Night desk, Guest Legend instrument case, band and floor props",
+          "description": "Different scenario objects occupy different vertical bands within or beside the stage opening. The Recording desk appears against the curtain above the band bases; the Guest instrument case sits at the right stage edge. Their physical support, size and shadows cannot be validated by matching isolated body masks. One full perspective design must explain these depths together without moving their anchors. Tall UI/event markers are not automatically classified as floor furniture.",
+          "evidence_frames": [
+            "jazz_club_recording_night_actual_play.png",
+            "jazz_club_guest_legend_actual_play.png"
+          ]
+        }
+      ],
+      "next_bounded_correction": {
+        "action": "Design one stage-and-adjacent-bar perspective proposal using the complete populated frame.",
+        "requirements": [
+          "Preserve all original anchors, labels, interaction positions, routes and authored animation timing.",
+          "Choose and show a clear stage back edge and deck plane beneath band bases and scenario props, with credible apron/step height and a floor contact shadow.",
+          "Separate the bar top, front cabinet and end returns from the mirror/wall and main floor; use the existing bartender/prop scale.",
+          "Check Base, Guest Legend, Recording Night, Rent Party and Union Trouble together before assembly, including the near-floor foreground props.",
+          "Keep the original technical archives and count assertions unchanged, but require actual full populated candidate renders for visual review."
+        ]
+      },
+      "candidate": {
+        "later_owner_correction_candidate_identified": false,
+        "populated_candidate_frame": null,
+        "status": "No later owner-directed Jazz composition candidate was identified in the scoped room briefs/source evidence inspected. R3 is the retained/current-art comparison, not a new candidate."
+      },
+      "evidence": {
+        "version": "Historical Jazz R3 non-active trial package2c9e93f5 over baseline9ac963f1. All18 current room PNG/JSON files equal the identity artifact; the cumulative index is separately bound. These are not fresh current-code or live-Web observations.",
+        "frames": [
+          {
+            "path": "E:/CodexQA/BTH/runs/BTH-ENVART-JAZZTRIAL-20261114-r3-initial-five-01/evidence/__none_actual_play.png",
+            "sha256": "7a37c8e86d115252b09bab2793aa879de4ff89016ee3204ae3017628b253f0d7",
+            "bytes": 692505,
+            "dimensions": [
+              1280,
+              720
+            ]
+          },
+          {
+            "path": "E:/CodexQA/BTH/runs/BTH-ENVART-JAZZTRIAL-20261114-r3-initial-five-01/evidence/jazz_club_guest_legend_actual_play.png",
+            "sha256": "3077955eabc76cffc1bd7287a493f07500db5213f9444ae0f554b148239c49fa",
+            "bytes": 673650,
+            "dimensions": [
+              1280,
+              720
+            ]
+          },
+          {
+            "path": "E:/CodexQA/BTH/runs/BTH-ENVART-JAZZTRIAL-20261114-r3-initial-five-01/evidence/jazz_club_recording_night_actual_play.png",
+            "sha256": "ab7a2e7c67bb80a7eb5a267330a5922f9727552490b66662f560b001220783cd",
+            "bytes": 678768,
+            "dimensions": [
+              1280,
+              720
+            ]
+          },
+          {
+            "path": "E:/CodexQA/BTH/runs/BTH-ENVART-JAZZTRIAL-20261114-r3-initial-five-01/evidence/jazz_club_rent_party_actual_play.png",
+            "sha256": "bcd8ddc4bb0c102886a46e017cf4bf525815118ffae8a1e5ea66029cabcb1fd0",
+            "bytes": 671602,
+            "dimensions": [
+              1280,
+              720
+            ]
+          },
+          {
+            "path": "E:/CodexQA/BTH/runs/BTH-ENVART-JAZZTRIAL-20261114-r3-initial-five-01/evidence/jazz_club_union_trouble_actual_play.png",
+            "sha256": "dd36331f85be83c9b55684718115924a809d8fa73102f680932c58834a8c64d6",
+            "bytes": 674974,
+            "dimensions": [
+              1280,
+              720
+            ]
+          }
+        ],
+        "retained_identity": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-JAZZTRIAL-20261114-r3-initial-five-01/evidence/identity.json",
+          "sha256": "4d8986721921caf71f1829486f043f09dfad636bf8814f935698300024acf8dd",
+          "bytes": 130689
+        },
+        "baseline_commit": "9ac963f185afbc5c54c604e5f68e8111f598d997",
+        "historical_package_sha256": "2c9e93f50f150242a9d4f6a14059e466eb48295e3170d50fd61bb646f4b5bce7",
+        "current_R3_room_differences": [],
+        "initial_metadata": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-JAZZTRIAL-20261114-r3-initial-five-01/evidence/jazz_r3_initial_metadata.json",
+          "sha256": "de39b07a384db4ee1f5bdf5e619a9ea88092840d03a03e63facd4d4a1f1365b4",
+          "bytes": 7198644
+        },
+        "job_receipt": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-JAZZTRIAL-20261114-r3-initial-five-01/evidence/job.json",
+          "sha256": "000587b3eeabfd2820b33ad788bc641a9c19020c8e57553682e0cb6c857d1b6b",
+          "bytes": 8169
+        }
+      },
+      "current_source": {
+        "room_png_and_json_count": 18,
+        "files_sha256": {
+          "assets/art/environments/jazz_club/anim/amber_air_0.png": "e1b8afbb0f22f311a55f1f9ad99717354ee6d981b71341facfd953030ca46fae",
+          "assets/art/environments/jazz_club/anim/amber_air_1.png": "916e1c9f572de16d2b7c623b5422b146a752ac32566dce2c259eaf037c61a18b",
+          "assets/art/environments/jazz_club/anim/backbar_magenta_light.png": "58b7adecf3dbc7b55292edaefe05fd8b2f7a8e4623af4f1cb0d96d8e538da720",
+          "assets/art/environments/jazz_club/anim/bar_trim_reflection.png": "f8508fc9d7e4e520468f7da585ed99864c6a5ad9c805b52e2512182041e65f03",
+          "assets/art/environments/jazz_club/anim/cyan_air_0.png": "a16683d361ed6011fd7d21755253272e69a42c3c4f97b5a75d08a6d1a8cdc11c",
+          "assets/art/environments/jazz_club/anim/cyan_air_1.png": "f410f7608a0db40cbd1c42fef56c5a28112a6bd90668cf0db2f1b0c94d9088a7",
+          "assets/art/environments/jazz_club/anim/floor_glint_0.png": "0558b4271f2f940a0cc0d5fd94b247995be4c4f5a472f6e05d374a7f706676bc",
+          "assets/art/environments/jazz_club/anim/floor_glint_1.png": "401dc266cefbb1fbd795a9bc071bdb93ac731c6d59bcdb4351abdfe21e4f6f6d",
+          "assets/art/environments/jazz_club/anim/floor_glint_2.png": "5456a23c539d52df7fb447255f10c190d0851aa8888fdaef22a1d6d804ed8d1d",
+          "assets/art/environments/jazz_club/anim/floor_glint_3.png": "7254fb137f6d62c1a72692902c74de60ce101d39ea2105aea5e8faa0f4d232fa",
+          "assets/art/environments/jazz_club/anim/floor_glint_4.png": "5ca2fea9be7fe93ad4aa2ef3c7387f0b5f1b2bf6f644b93faf5608bcab3c9241",
+          "assets/art/environments/jazz_club/anim/floor_glint_5.png": "50cfcbbc94905c1653a0bfee82e26a6404fb476ce30b408ef5fe57051db7e76f",
+          "assets/art/environments/jazz_club/anim/floor_glint_6.png": "0da4ca5952b816e1647248949cb217afdcf06e46d76e935dec502651471e0d92",
+          "assets/art/environments/jazz_club/anim/fold_reflection.png": "f785d2a6b4527db45235f416fd31028f91a6a5799224f684dda183bfc352cbe3",
+          "assets/art/environments/jazz_club/anim/jazz_glyph_pulse.png": "10f9b14d0d97ac1985d43b6948eac2d759e04a691881e6bba5565a781962c99a",
+          "assets/art/environments/jazz_club/background.png": "3db8f4ee4c90e7de1ecb3de452ecbb5bc6bc08abcc127db42e11d7dcd261f63b",
+          "assets/art/environments/jazz_club/counters/jazz_bar.png": "dd300a4e52d018ab9119d48a7e21e211ab2414e0e46dd0653cfc01fec66a9a8d",
+          "data/art/environments/jazz_club.json": "2b09a5778fc265fd33da1e083a3356e810f84cdd9bb1644f826a4d57f8a5be0d"
+        },
+        "canonical_sorted_json_map_sha256": "068c7c0a401bceb55564aed8d04300fb21a0397080ba241ff220547d67164f64",
+        "root": "D:/Projects/Beat-The-House/.tmp/environment-art-layers"
+      }
+    },
+    "pawn_shop": {
+      "decision": "MAIN_COUNTER_MASS_AND_FLOOR_RELATIONSHIP_REQUIRE_REASSESSMENT",
+      "findings": [
+        {
+          "id": "PAWN-OWNER-COUNTER-01",
+          "confidence": "direct visual judgment by parent and supporting reviewer",
+          "area": "main wooden service counter across Sal and scenario clerk/appraiser",
+          "description": "The counter reads as a shallow wooden fascia across the waist area. The full populated view does not make its top plane, end panels, cabinet depth or a grounded base/contact shadow legible. Correctly occluding a person with a narrow replay strip does not establish believable counter mass or standing height.",
+          "approximate_preview_bounds": [
+            456,
+            488,
+            368,
+            63
+          ],
+          "evidence_frames": [
+            "__none_actual_play.png",
+            "pawn_shop_estate_lot_day_actual_play.png"
+          ]
+        },
+        {
+          "id": "PAWN-OWNER-FLOOR-02",
+          "confidence": "visible ambiguity, not a proven raised-floor interpretation",
+          "area": "broad dark textured strip behind the service counter",
+          "description": "The dark strip spans the wall base behind the foreground counter and can read as a mat, wall-base band or raised platform. The counter has little visible end depth to explain its relationship to that strip and to the tiled foreground floor. The report does not assert that the strip is necessarily a raised floor; that ambiguity is part of the composition problem."
+        },
+        {
+          "id": "PAWN-OWNER-SCALE-03",
+          "confidence": "direct visual judgment",
+          "area": "large central wall fixture versus foreground counter and people",
+          "description": "The central wall-mounted service fixture dominates the frame while the foreground counter is visually insubstantial. Sal and the appraiser/clerk lose their lower bodies behind the narrow front. The service counter needs a clear physical hierarchy relative to the fixture and full-size people. Existing wall display shelves should remain wall fixtures; adding invented floor legs to them would not solve the service-counter problem."
+        }
+      ],
+      "next_bounded_correction": {
+        "action": "Propose one substantial service-counter volume around the unchanged anchors.",
+        "requirements": [
+          "Preserve Sal, clerk/appraiser, game, work-prop and interaction positions and all authored motions.",
+          "Make a readable top plane, end returns, full cabinet/plinth and contact shadow; do not solve this with tiny compressed feet under the existing fascia alone.",
+          "Explain the relationship of the dark strip, wall base and tiled floor in the same complete frame.",
+          "Check Base, Estate Lot Day, Serial Check Day and Sals Mood together, including the estate fixture and work props.",
+          "Require an actual full populated candidate render before visual acceptance. No later correction candidate populated frame was identified here."
+        ]
+      },
+      "candidate": {
+        "later_owner_correction_candidate_identified": false,
+        "populated_candidate_frame": null,
+        "status": "No later owner-directed Pawn composition candidate identified in the scoped retained/current source evidence."
+      },
+      "evidence": {
+        "version": "Historical R2 populated trial over baseline173b235d. Supporting reviewer verified all18 current room assets equal R2; cumulative index differs. Not a newly rendered current-code scene.",
+        "frames": [
+          {
+            "path": "E:/CodexQA/BTH/runs/BTH-ENVART-PAWNTRIAL-20261114-r2-initial-four-01/evidence/__none_actual_play.png",
+            "sha256": "cdd830c19f58c2cabcbf1d33b576730cf3977432e4e0ca35d607d7480cfdabe3",
+            "bytes": 770671,
+            "dimensions": [
+              1280,
+              720
+            ]
+          },
+          {
+            "path": "E:/CodexQA/BTH/runs/BTH-ENVART-PAWNTRIAL-20261114-r2-initial-four-01/evidence/pawn_shop_estate_lot_day_actual_play.png",
+            "sha256": "6c8f38892d64fd297aca69a18e9c56b14283c3bf18684fd1094a099d6087b048",
+            "bytes": 751581,
+            "dimensions": [
+              1280,
+              720
+            ]
+          },
+          {
+            "path": "E:/CodexQA/BTH/runs/BTH-ENVART-PAWNTRIAL-20261114-r2-initial-four-01/evidence/pawn_shop_sals_mood_actual_play.png",
+            "sha256": "8b70d004daf28d5e20805adf899918e0a9d84f99f0fa5170cfd2ec634894a782",
+            "bytes": 752712,
+            "dimensions": [
+              1280,
+              720
+            ]
+          },
+          {
+            "path": "E:/CodexQA/BTH/runs/BTH-ENVART-PAWNTRIAL-20261114-r2-initial-four-01/evidence/pawn_shop_serial_check_day_actual_play.png",
+            "sha256": "268593de9e7a95f6d55a34221daf74bfc890270a2888a486a4b2cdfb34fe85e8",
+            "bytes": 750411,
+            "dimensions": [
+              1280,
+              720
+            ]
+          }
+        ],
+        "retained_identity": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-PAWNTRIAL-20261114-r2-initial-four-01/evidence/identity.json",
+          "sha256": "8bdd175e37cfeea7b002926a6b269aa7a78d2e49f194a7e6cc843aa4e754351f",
+          "bytes": 127366
+        },
+        "retained_identity_baseline_commit": "173b235da9171a5369894bdfb5e9f901d009e018",
+        "initial_metadata": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-PAWNTRIAL-20261114-r2-initial-four-01/evidence/pawn_r2_initial_metadata.json",
+          "sha256": "087f8ca762e9d627192063dd99314d296971db3f8b2fd5439597fa0726c2f216"
+        },
+        "job_receipt": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-PAWNTRIAL-20261114-r2-initial-four-01/evidence/job.json",
+          "sha256": "02b9127c23f434c9b34d4073409f3474cabce113896e2f35ec92094661a66a26"
+        },
+        "supporting_reviewer": "/root/native_suite_adapter/pawn_composition_review"
+      },
+      "current_source": {
+        "room_png_and_json_count": 18,
+        "files_sha256": {
+          "assets/art/environments/pawn_shop/anim/fixed_material_occlusion.png": "dd33ee23ce2154cecbbdedbfd1e5a7b28fb9d9d45c4efbe82d8d266793656763",
+          "assets/art/environments/pawn_shop/anim/floor_glint_0.png": "a8f9ee0437a66388c2d14203be0b404c0e19171da8f6ea9bc8cbd40e57848dce",
+          "assets/art/environments/pawn_shop/anim/floor_glint_1.png": "0a5e5583c186618e8d3c0d41b685784ad9576bf83de11ee9c50c744e89c2a2f0",
+          "assets/art/environments/pawn_shop/anim/floor_glint_2.png": "a24e39320d76dc298058cfbb154c12f4f1173c681825b18384b6a4f76bdb3f12",
+          "assets/art/environments/pawn_shop/anim/floor_glint_3.png": "c88cc4409ac8d33358e3c85daa9068dae1dc14df66c4d87feed92bfe75a3994f",
+          "assets/art/environments/pawn_shop/anim/floor_glint_4.png": "5585b0bb0623a4b85b25fd30c15d9e8fcd39c6966cafa30596155af75e50b266",
+          "assets/art/environments/pawn_shop/anim/floor_glint_5.png": "46ff4e40128b49b941c03b8f0a2687896e262bc89d6e5f6880c2bd86818b4366",
+          "assets/art/environments/pawn_shop/anim/floor_glint_6.png": "d1f2e6e5be1d87cb4c360e8fa8db6561e65a403e11a60adbce4556fa0592fdac",
+          "assets/art/environments/pawn_shop/anim/hardware_glint.png": "58e320a00023e6d4c8536b10d7cc4eb708ef2f14fa844b59d6db9a385de09085",
+          "assets/art/environments/pawn_shop/anim/high_air_0.png": "69972e946bc86fb1a26a99f13062613dbebecdda808330f6f5d8eb097c376946",
+          "assets/art/environments/pawn_shop/anim/high_air_1.png": "5018fff5b6b2903530376cb23645dab16cab77b7b255bbb004cbd055aaff9e2d",
+          "assets/art/environments/pawn_shop/anim/inspection_tray_breath.png": "d4a1c132740c051d6573e889029d1d718bd7734d1c8765ee8e088c5bc0680c64",
+          "assets/art/environments/pawn_shop/anim/sals_sign.png": "7b3ca554843f8850f168c2a154bb09366fff8e99dd2af5fd569374aadb8c6411",
+          "assets/art/environments/pawn_shop/anim/security_scan.png": "8a340cdb0824daf4cb6e4cef8ad8a8e107f53fef17016618757ef50c9dab1649",
+          "assets/art/environments/pawn_shop/background.png": "922b8522eed72005e3b26c9312021e9489f6b6337cdb47dd37419087e44947b5",
+          "assets/art/environments/pawn_shop/counters/pawn_counter.png": "6b65f51ceaed27cc421d3b864cd292325ee05ecc7f61b32f837a7571fe6076f8",
+          "assets/art/environments/pawn_shop/counters/pawn_estate_shelf.png": "c6fdbde2baf185b6b29434a5c7b1296ffcdf239f78dc34ddb3df7f1b646cd98f",
+          "data/art/environments/pawn_shop.json": "22f272681a6330eb4a55c71bc3cf2463392fe1acca4c619a9bfbda159a95775b"
+        },
+        "canonical_sorted_json_map_sha256": "12217561a11e4b988c6da3f2e29de43b04a1958d14ff834dde4ebdabba09cb33",
+        "root": "D:/Projects/Beat-The-House/.tmp/environment-art-layers"
+      }
+    }
+  },
+  "preservation": {
+    "global_index": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/data/art/environments/index.json",
+      "sha256": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+      "bytes": 459
+    },
+    "source_map_digest_definition": "SHA256 of UTF-8 json.dumps(files_sha256,sort_keys=True,separators=(comma,colon)); explicitly a custody digest, not a substituted historical package seal.",
+    "original_art_and_all_motion_files_unchanged": true,
+    "gameplay_anchors_unchanged": true,
+    "old_technical_receipts_and_reviews_preserved": true,
+    "old_visual_GOs_do_not_override_owner_rejection": true,
+    "new_art_or_runtime_qualification": false,
+    "TEST_release_or_publication_performed": false,
+    "source_code_or_canvas_edits": false
+  },
+  "write_preflight": {
+    "target": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/kitty_jazz_pawn_owner_visual_reassessment_20261116.json",
+    "exists": false,
+    "ancestors": [
+      {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing",
+        "directory": true,
+        "reparse": false
+      },
+      {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs",
+        "directory": true,
+        "reparse": false
+      },
+      {
+        "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers",
+        "directory": true,
+        "reparse": false
+      },
+      {
+        "path": "D:/Projects/Beat-The-House/.tmp",
+        "directory": true,
+        "reparse": false
+      },
+      {
+        "path": "D:/Projects/Beat-The-House",
+        "directory": true,
+        "reparse": false
+      },
+      {
+        "path": "D:/Projects",
+        "directory": true,
+        "reparse": false
+      },
+      {
+        "path": "D:/",
+        "directory": true,
+        "reparse": false
+      }
+    ]
+  },
+  "remaining_gates": [
+    "Root/owner must review the proposed complete physical compositions and the bounded correction masks.",
+    "No additional engine or generation is authorized by this document.",
+    "Any later candidate needs actual full populated room frames with exact source identity before visual reassessment.",
+    "Source, masks and replay technical checks remain necessary and separate; their counts cannot close visual acceptance.",
+    "This is a reassessment of only Kitty, Jazz and Pawn. Gas/Corner are paused and owned by ReviewTest; other room ownership is disjoint."
+  ]
+}

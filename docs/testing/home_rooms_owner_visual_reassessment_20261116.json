@@ -1,0 +1,1299 @@
+{
+  "schema": "bth.home_rooms_owner_visual_reassessment/v1",
+  "task_id": "BTH-ENV-SPATIAL-HOME-OWNER-REASSESSMENT-20261116",
+  "reviewer": "/root/bar_clearance_audit/dark_feet_source_audit",
+  "assignment_source": "/root owner-directed read-only reassessment after owner visual rejection",
+  "recorded_utc": "2026-11-16T17:16:19.0311862Z",
+  "decision": "OWNER_HOLD__CURRENT_COMPOSITIONS_FAIL__CANDIDATES_WITHOUT_POPULATED_RENDER_UNREVIEWED",
+  "rooms_in_scope": [
+    "apartment",
+    "house",
+    "motel_room"
+  ],
+  "owner_hold": {
+    "prior_visual_acceptances_superseded": true,
+    "apartment_f32f_superseded": true,
+    "statement": "The owner rejected furniture/platform compositions at the wall/floor edge and raised the bed concern. Earlier numerical/art GOs are retained as custody evidence, not current visual acceptance.",
+    "new_art_accepted": false,
+    "native_trial_approved": false,
+    "production_art_approved": false,
+    "test_updated": false
+  },
+  "method": {
+    "personal_image_views": "All three retained full-app populated frames000/030/061 (nine1280x720 images), three native1800x860 populated R2 context boards, current House/Motel backgrounds and the unpopulated Apartment V2 background were personally viewed. No image was altered or synthesized.",
+    "pixel_reads": "Read-only .NET Bitmap inspection of three bounded typed bed-body PNG regions; SHA256 over actual files. Native coordinates refer to1800x860 art; board coordinates to900x430. Bounding boxes are half-open [x0,y0,x1,y1].",
+    "source_reads": "Current room PNG/JSON hashes compared with retained native-trial payload maps; all64 room members matched. Current bed-painter function compared with actual legacy capture workspace source after CRLF→LF normalization.",
+    "not_executed": [
+      "No engine, browser, generation, helper import, test, QA campaign, E write, Git mutation, cleanup, save access or candidate assembly.",
+      "No new populated render or current served/browser identity verification."
+    ],
+    "visual_judgment_is_not_pixel_count_approval": true
+  },
+  "provenance_limits": {
+    "retained_capture_versions": "House R3, Apartment R2, Motel Room R3. Their current room art/JSON members match retained release payload identities. These are retained constructed-Base captures, not fresh renders of current HEAD or the current TEST build.",
+    "current_canvas_sha256": "c2ce2abee8827372d66fd6c9647a74e06f5db8fed520bbd812b8c7eb29f4af38",
+    "retained_canvas_sha256": "695359df463096a612c093160ab08169aa8aafe2729e16a400745e6375b1b0b2",
+    "bed_function_equal_despite_whole_canvas_hash_difference": true,
+    "capture_identity_files_exclude_room_payloads": "Specific room BG/JSON keys are absent from source_identity.files/capture_inputs.source_hashes. This review does not claim those maps alone authenticate the art overlay. Retained release payload maps and actual legacy workspace BG/JSON were compared separately with current room payloads.",
+    "native_art_board2x_warning": "Video board2x_* contains the actual production background/animation render target and excludes live objects. It is not used as a populated-bed acceptance frame. The separately retained __none_production_board_1800x860.png is a populated QA board view.",
+    "R2_context_warning": "House/Motel native populated context boards are R2, not fresh R3. R3 changes concern animation placement; current room geometry is corroborated by fresh retained R3 full-app frames000/030/061. No R2 frame is relabeled R3.",
+    "capture_spans": "Each retained excerpt is approximately8.1s of a57.7777777777778s maximum cycle. No whole-cycle claim.",
+    "current_global_index_separate_sha256": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+    "historical_delivery_claims": "Delivery docs identify historical TEST artifacts/served bytes. This reassessment does not claim to have viewed live Web or the currently deployed build."
+  },
+  "shared_bed_painter": {
+    "path": "scripts/ui/pixel_scene_canvas.gd",
+    "current_function_start_line": 9584,
+    "function": "_draw_bed_prop(rect,selected)",
+    "normalized_LF_sha256": "a07d996987e55ecc7b95d2780a05ba5b42ca519cfbada80aa976e8a1eb3a5485",
+    "normalized_LF_bytes": 1221,
+    "exact_current_vs_all_three_legacy_function": true,
+    "geometry_law": "One axis-aligned frame at rect.position+(0.08w,0.34h), size(0.84w,0.44h); inset rectangular pillow/bedding/three vertical stripes; two straight9-board-pixel legs. It defines no receding mattress polygon or separate foreshortened top, front and side planes.",
+    "visual_result": "The same horizontal rectangular symbol is read as a vertical panel in populated rooms. Grounded bedside furniture cannot be established by extending legs, counting alpha texels, or moving the floor behind this symbol alone.",
+    "preservation_requirement": "Any later design must retain each object's ID, interaction/label anchors and hit geometry, item placements, environment animation timing/alpha/default-low/Reduce Motion semantics, and autonomous redraw. A visual-only painter redesign may require a distinct draw envelope from the fixed interaction rectangle; this is a proposal requiring full populated composition review, not authorization to alter code."
+  },
+  "rooms": {
+    "apartment": {
+      "version": "Apartment R2",
+      "decision": "FAIL_CURRENT_POPULATED_COMPOSITION__V1_V2_UNREVIEWED",
+      "current_payload": {
+        "background": {
+          "path": "assets/art/environments/apartment/background.png",
+          "sha256": "30ef28ec1cde5329b2ac3f6244df850b32d8ef423e77ee23ccdc0943c7fe1f44"
+        },
+        "manifest": {
+          "path": "data/art/environments/apartment.json",
+          "sha256": "fbf295a0ecb2b6f22497db5afd8c44e791ce15f3894b0500ae7c59b350f244b9"
+        },
+        "room_logical_file_count": 16,
+        "room_seal": "546a482bc114b1a8d0db0400be9bd0b6df7e0837ad49bc0aeac3cf1c82586753",
+        "room_seal_law": "SHA256 UTF8(sorted(path+' '+sha256) joined LF, no trailing LF), excludes global index and import sidecars",
+        "all_current_room_members_match_retained_payload_map": true,
+        "motion_entry_count": 14,
+        "room_files_sha256": {
+          "assets/art/environments/apartment/anim/floor_glint_0.png": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+          "assets/art/environments/apartment/anim/floor_glint_1.png": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+          "assets/art/environments/apartment/anim/floor_glint_2.png": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+          "assets/art/environments/apartment/anim/floor_glint_3.png": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+          "assets/art/environments/apartment/anim/floor_glint_4.png": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+          "assets/art/environments/apartment/anim/floor_glint_5.png": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+          "assets/art/environments/apartment/anim/floor_glint_6.png": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+          "assets/art/environments/apartment/anim/kitchen_strip.png": "5569d55f5ee1dd1f8517ad567acd2d26829bc0a76a75106b66dd2a668f35e0a4",
+          "assets/art/environments/apartment/anim/room_ribbon_0.png": "730e04be2d2c3639746bfedff7e85645fc3cad570ac174d716c94ecc1dd323c7",
+          "assets/art/environments/apartment/anim/room_ribbon_1.png": "19e257e358635ceaf248747dc4bf378b2e1271e98359c2bb0e2416005125ac5c",
+          "assets/art/environments/apartment/anim/room_ribbon_2.png": "5a0ca53858b0e444f7e2a73adbe5e9a62fd9f15c8db4c30aab6da52980941edb",
+          "assets/art/environments/apartment/anim/room_ribbon_3.png": "d1a6c42388bacade61f0155dfc4efd53ef1ff56bb969ed64685b5d3cf7b3a0b4",
+          "assets/art/environments/apartment/anim/room_ribbon_4.png": "9386f643045668fde1a419f1b9a26d111513d619da90dd32c775006c27a94b0f",
+          "assets/art/environments/apartment/anim/window_pulse.png": "9a80ff9347e6fb44cb9dba58ffde40c923169661d636145273e89abfae44d60e",
+          "assets/art/environments/apartment/background.png": "30ef28ec1cde5329b2ac3f6244df850b32d8ef423e77ee23ccdc0943c7fe1f44",
+          "data/art/environments/apartment.json": "fbf295a0ecb2b6f22497db5afd8c44e791ce15f3894b0500ae7c59b350f244b9"
+        }
+      },
+      "retained_release": {
+        "native_doc": "docs/testing/apartment_r2_native_trial.json",
+        "native_doc_sha256": "faa8f80b32e5c29b0a87912a3b81ad1cb43d6a56bbb0ed4aa9f28c16fc0830a4",
+        "historical_package_including_then_index": "d37ad2ca8a34b20a53e00ce693e1fa2d52b1d6d35cd9f245a518022d1924e978",
+        "delivery_doc": "docs/testing/apartment_r2_test_delivery.json",
+        "delivery_doc_sha256": "ce007f16d9f13be8cbae7ff5070529b04ed86b5bfcc931916b81364b894ab0f4",
+        "historical_delivery_source_commit": "8c421f56ea10a0d699f861e2f0e1efd9a6801388",
+        "historical_TEST_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+        "prior_GO_superseded": true
+      },
+      "populated_evidence": {
+        "capture_directory": "E:/CodexQA/BTH/runs/BTH-ENVART-APARTMENTTRIAL-20261115-r2-video-01/evidence/capture",
+        "capture_metadata_sha256": "a8db253a4be0df707ffc7d18e1a367a6fecc6f114a5fcda99e9fb1273642b229",
+        "source_identity_sha256": "4b091fddb7de5c25fd6c880a6e6bb5e1546673129522ff7ceddca1c00f2b2bff",
+        "capture_baseline_commit": "bde105bc0548242c71086dbe2aa5faaaa4504ec6",
+        "capture_baseline_tree": "d9724641fd84e8ffeb9a6ed358a0086cf4a5aeef",
+        "actual_frames_personally_viewed": [
+          {
+            "frame": 0,
+            "path": "E:/CodexQA/BTH/runs/BTH-ENVART-APARTMENTTRIAL-20261115-r2-video-01/evidence/capture/frame_000.png",
+            "sha256": "48a3517d8214c7d3d5162c5e6770cd4a1dbc3ef36d617b6e737007cb067f68ba",
+            "bytes": 712607,
+            "width": 1280,
+            "height": 720,
+            "clock": 8.45482066666678,
+            "board900_clock": 8.45482066666678
+          },
+          {
+            "frame": 30,
+            "path": "E:/CodexQA/BTH/runs/BTH-ENVART-APARTMENTTRIAL-20261115-r2-video-01/evidence/capture/frame_030.png",
+            "sha256": "4a84ceb71e20bd1f130e0bfc8670b7ef2eca2f43913dcc96aa0189a989c32691",
+            "bytes": 712850,
+            "width": 1280,
+            "height": 720,
+            "clock": 12.4481043333334,
+            "board900_clock": 12.4481043333334
+          },
+          {
+            "frame": 61,
+            "path": "E:/CodexQA/BTH/runs/BTH-ENVART-APARTMENTTRIAL-20261115-r2-video-01/evidence/capture/frame_061.png",
+            "sha256": "d34cc14c528a25ae274c286d9b30ba01d6d8ed53f892f209a88e6d157a34ec2f",
+            "bytes": 712839,
+            "width": 1280,
+            "height": 720,
+            "clock": 16.5863323333335,
+            "board900_clock": 16.5863323333335
+          }
+        ],
+        "frame_selection": "000/030/061; actual full app, not generated/overlaid/resized previews",
+        "measured_frame_count": 62,
+        "actual_clock_span_seconds": 8.13151166666667,
+        "maximum_cycle_seconds": 57.7777777777778,
+        "not_full_cycle": true,
+        "scenario": "__none constructed practice Base",
+        "native_populated_R2_board": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-APARTMENTTRIAL-20261115-r2-contexts-01/evidence/__none_production_board_1800x860.png",
+          "sha256": "e688fac53d6c5d43ee36e5e60c02233f16c4e58bc6d8693133e621d479a6185b",
+          "bytes": 748270,
+          "width": 1800,
+          "height": 860
+        },
+        "current_bed_function_matches_legacy": true,
+        "legacy_source": {
+          "legacy_workspace": "E:/CodexQA/BTH/workspaces/BTH-ENVART-APARTMENT-TRIAL-20261115",
+          "canvas_path": "E:/CodexQA/BTH/workspaces/BTH-ENVART-APARTMENT-TRIAL-20261115/scripts/ui/pixel_scene_canvas.gd",
+          "canvas_sha256": "695359df463096a612c093160ab08169aa8aafe2729e16a400745e6375b1b0b2",
+          "bed_function_normalized_LF_sha256": "a07d996987e55ecc7b95d2780a05ba5b42ca519cfbada80aa976e8a1eb3a5485",
+          "bed_function_normalized_LF_bytes": 1221,
+          "function_equal_to_current": true,
+          "job_sha256": "7ab02487d055e71fc770340a66c09e98a27b91acf924197239207396bda22a3d",
+          "exit_code": 0,
+          "active_at_release": 0
+        },
+        "current_legacy_workspace_BG_JSON_match_current": true,
+        "current_HEAD_runtime_not_reexecuted": true,
+        "current_served_web_not_viewed": true
+      },
+      "live_bed": {
+        "object_id": "home_sleep:bed",
+        "runtime_rendered_not_baked": true,
+        "body_motion_not_assumed": "Live means runtime-rendered interactive bed. This review does not invent autonomous mattress movement.",
+        "fixed_interaction_rect_board": {
+          "aspect_ratio": 2.57692307692308,
+          "h": 104,
+          "w": 268,
+          "x": 0,
+          "y": 190
+        },
+        "label_rect_board": {
+          "aspect_ratio": 3.2,
+          "h": 15,
+          "w": 48,
+          "x": 110,
+          "y": 173
+        },
+        "prop": "bed",
+        "surface": "floor",
+        "typed_body_png": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-APARTMENTTRIAL-20261115-r2-contexts-01/evidence/__none_host_3_body.png",
+          "sha256": "f1333b7262eaa1639ce6a5e9133e85d4548d0d3cfb30c1b0d4a62bedf9f7488a",
+          "query_half_open": [
+            0,
+            370,
+            550,
+            610
+          ],
+          "alpha_bbox_counts": {
+            "1": [
+              22,
+              391,
+              514,
+              592,
+              54572
+            ],
+            "64": [
+              39,
+              451,
+              497,
+              588,
+              43494
+            ],
+            "255": [
+              39,
+              451,
+              497,
+              560,
+              41238
+            ]
+          }
+        },
+        "bounded_alpha_analysis_scope": "Bounds/counts apply to the recorded query rectangle in the actual typed body PNG. Alpha255 isolates opaque drawn bed/frame/feet here; alpha1 and64 include generic interaction lighting/shadow and are not physical furniture extents.",
+        "strong_shadow_rows_alpha_at_least64": [
+          {
+            "y": 582,
+            "alpha_at_least64": 376,
+            "opaque": 0
+          },
+          {
+            "y": 583,
+            "alpha_at_least64": 376,
+            "opaque": 0
+          },
+          {
+            "y": 584,
+            "alpha_at_least64": 376,
+            "opaque": 0
+          },
+          {
+            "y": 585,
+            "alpha_at_least64": 376,
+            "opaque": 0
+          },
+          {
+            "y": 586,
+            "alpha_at_least64": 376,
+            "opaque": 0
+          },
+          {
+            "y": 587,
+            "alpha_at_least64": 376,
+            "opaque": 0
+          }
+        ],
+        "physical_floor_facts": {
+          "current_floor_boundary_y": 492,
+          "bed_opaque_top_y": 451,
+          "bed_frame_bottom_approx_y_exclusive": 542,
+          "opaque_feet_end_y_exclusive": 560,
+          "strong_shadow_rows_half_open": [
+            582,
+            588
+          ],
+          "static_sofa_feet_end_approx_y_exclusive": 444,
+          "static_lamp_base_end_approx_y_exclusive": 452,
+          "candidate_floor_boundary_y": 440,
+          "strong_shadow_start_after_opaque_end_rows": 22
+        }
+      },
+      "all_actual_object_anchors_board": [
+        {
+          "id": "item:lucky_bar_napkin",
+          "label": "Lucky Bar Napkin",
+          "interaction_rect": {
+            "aspect_ratio": 0.916666666666667,
+            "h": 48,
+            "w": 44,
+            "x": 407,
+            "y": 120.999984741211
+          },
+          "label_rect": {
+            "aspect_ratio": 6.98666788736979,
+            "h": 15,
+            "w": 104.800018310547,
+            "x": 376.600006103516,
+            "y": 103.999984741211
+          }
+        },
+        {
+          "id": "item:payment_calendar",
+          "label": "Payment Calendar",
+          "interaction_rect": {
+            "aspect_ratio": 0.916666666666667,
+            "h": 48,
+            "w": 44,
+            "x": 346,
+            "y": 122
+          },
+          "label_rect": {
+            "aspect_ratio": 6.98666788736979,
+            "h": 15,
+            "w": 104.800018310547,
+            "x": 315.600006103516,
+            "y": 172
+          }
+        },
+        {
+          "id": "home_tenure:status",
+          "label": "Pay Rent",
+          "interaction_rect": {
+            "aspect_ratio": 1.5,
+            "h": 48,
+            "w": 72,
+            "x": 715,
+            "y": 150
+          },
+          "label_rect": {
+            "aspect_ratio": 3.8933349609375,
+            "h": 15,
+            "w": 58.4000244140625,
+            "x": 721.799987792969,
+            "y": 133
+          }
+        },
+        {
+          "id": "home_sleep:bed",
+          "label": "Sleep",
+          "interaction_rect": {
+            "aspect_ratio": 2.57692307692308,
+            "h": 104,
+            "w": 268,
+            "x": 0,
+            "y": 190
+          },
+          "label_rect": {
+            "aspect_ratio": 3.2,
+            "h": 15,
+            "w": 48,
+            "x": 110,
+            "y": 173
+          }
+        },
+        {
+          "id": "home_storage:place",
+          "label": "Storage Spot",
+          "interaction_rect": {
+            "aspect_ratio": 1.4375,
+            "h": 64,
+            "w": 92,
+            "x": 418,
+            "y": 317
+          },
+          "label_rect": {
+            "aspect_ratio": 5.44000040690104,
+            "h": 15,
+            "w": 81.6000061035156,
+            "x": 423.200012207031,
+            "y": 300
+          }
+        },
+        {
+          "id": "home_container:backpack_01",
+          "label": "Backpack",
+          "interaction_rect": {
+            "aspect_ratio": 1.4375,
+            "h": 64,
+            "w": 92,
+            "x": 518,
+            "y": 318
+          },
+          "label_rect": {
+            "aspect_ratio": 3.8933349609375,
+            "h": 15,
+            "w": 58.4000244140625,
+            "x": 534.799987792969,
+            "y": 301
+          }
+        },
+        {
+          "id": "travel:leave",
+          "label": "Travel",
+          "interaction_rect": {
+            "aspect_ratio": 0.888888888888889,
+            "h": 72,
+            "w": 64,
+            "x": 836,
+            "y": 341
+          },
+          "label_rect": {
+            "aspect_ratio": 2.66666666666667,
+            "h": 15,
+            "w": 40,
+            "x": 844,
+            "y": 324
+          }
+        }
+      ],
+      "findings": [
+        "FAIL: The runtime Sleep object below the left window is an axis-aligned horizontal pillow/bedding rectangle with a dark border and short legs. It has no discernible receding mattress top or coherent body thickness; it reads as a flat panel in the populated room.",
+        "FAIL: The current wall/floor/skirting boundary near y492 passes behind the bed's opaque face y451..541 rather than establishing a clear floor/body relationship. The bed's lower supports reach y559, but the detached stronger shadow at y582..587 does not by itself establish a connected contact plane.",
+        "FAIL: The separate static sofa, lamp base and cabinet all terminate around y440..452 while the original broad floor begins near y492, leaving their support relation to the wall/floor edge unclear. This supports rethinking the composition, not granting acceptance from floor or foot counts.",
+        "UNREVIEWED: V1/V2 raise the floor area and V2 reanchors the amber kitchen strip, but neither has a retained populated candidate preview in the examined campaigns. Their actual bed/sofa/label/motion relationship cannot be approved from the empty background."
+      ],
+      "next_bounded_composition_correction": {
+        "one_bounded_composition_correction": "Keep the lower-left Sleep hit/label anchor and the separate static sofa. Design a visually receding bed within a reviewed visual envelope, with distinct mattress top and near body, consistent body height relative to the sofa, and a connected contact shadow on the chosen floor. Evaluate this as one full populated bed-plus-room composition using the existing floor candidate as an unapproved input, while retaining all14 environment motifs and live props.",
+        "must_not": "Do not treat the static sofa as the bed, paint a second static pillow/blanket, or infer candidate approval by applying the old typed mask over the new background.",
+        "unresolved": "The V2 warm strip intersects the actual Pay Rent adornment408 alpha-positive texels and its pulse extrema/RM readability remain unreviewed. This material gate remains separate from the bed composition problem.",
+        "trial_approved": false
+      },
+      "candidate_status": {
+        "state": "V1_AND_V2_PRESERVED__NO_POPULATED_PREVIEW",
+        "v1": {
+          "path": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116/candidate_sources/apartment-spatial-r1-assembled-v1",
+          "room16_seal": "429cbf7fa9e85f2c77612fcb9ee107dd9d28e88e4158c71b1a8103922013a7d6",
+          "background_sha256": "686990fa7fd73b7f6af112eb76a43e98c11e2f7ea55e7d53f9edad66e4af4ef4",
+          "manifest_sha256": "fbf295a0ecb2b6f22497db5afd8c44e791ce15f3894b0500ae7c59b350f244b9",
+          "prior_floor_review": {
+            "path": "docs/testing/apartment_spatial_r1_static_review_v1_20261116.json",
+            "sha256": "f32f73cbce05fe7951b7efddc0669662937e56daa2600694b8fcf3ff3c6c63e5",
+            "superseded_by_owner_hold": true
+          }
+        },
+        "v2": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116\\candidate_sources\\apartment-spatial-r1-assembled-v2",
+          "room16_seal": "244fcf5fde99ee186dc447a1c06e44bb2bf1a2d2ddd0ccd257aa0cc3751b4ac9",
+          "producer_path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-v2-assemble01/evidence/apartment-spatial-r1-assembly-v2.json",
+          "producer_sha256": "84dba14e14783f911ddcb549be2d7647144903a812c76416e6c909001619c31f",
+          "actual_all16_files_match_report": true,
+          "background_sha256": "686990fa7fd73b7f6af112eb76a43e98c11e2f7ea55e7d53f9edad66e4af4ef4",
+          "manifest_sha256": "c8e17598262e221cd770ac5f4a346d6824b6d32c1c5fcbd29504afd17baec4a8",
+          "change": "All15 PNGs byte-identical to V1; only kitchen_strip.rect.xy changes[624,96]→[634,132].",
+          "status": "UNREVIEWED_POPULATED_COMPOSITION",
+          "source_report_native_trial_approved": false
+        },
+        "candidate_namespace_search": {
+          "scope": "20261116 Apartment-specific retained run-directory names under E:/CodexQA/BTH/runs, not a global process/runtime search",
+          "observed_runs": [
+            "BTH-ENV-SPATIAL-APARTMENT-META-20261116-after01",
+            "BTH-ENV-SPATIAL-APARTMENT-META-20261116-before01",
+            "BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-assemble01",
+            "BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-rawdecode01",
+            "BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-tests01",
+            "BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-v2-assemble01",
+            "BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116-v2-tests01"
+          ],
+          "populated_native_candidate_phase_found": false
+        },
+        "unpopulated_candidate_BG_personally_viewed": true
+      },
+      "limitations": [
+        "Constructed initial Base only; no rest, mortgage/rent/renewal, storage, save/revisit or browser behavior was exercised by this reassessment.",
+        "Prior normal/low-detail/Reduce Motion/liveness results are preserved as historical evidence; no new runtime gate or visual acceptance is granted."
+      ]
+    },
+    "house": {
+      "version": "House R3",
+      "decision": "FAIL_CURRENT_POPULATED_COMPOSITION__NEW_RAW_UNREVIEWED",
+      "current_payload": {
+        "background": {
+          "path": "assets/art/environments/house/background.png",
+          "sha256": "ec1049f1ccbae9221cbfdcaa30b676c44c3a6831e0b8347aad656767d5d78b7d"
+        },
+        "manifest": {
+          "path": "data/art/environments/house.json",
+          "sha256": "3872a3d92ecd98168ea569a37d1ad79c670e95ea3f8bff57a6b5f9e94c55c0b0"
+        },
+        "room_logical_file_count": 26,
+        "room_seal": "321488bd62518658bbf325b938603fd7684dd271e404a43ec01520e9f5288884",
+        "room_seal_law": "SHA256 UTF8(sorted(path+' '+sha256) joined LF, no trailing LF), excludes global index and import sidecars",
+        "all_current_room_members_match_retained_payload_map": true,
+        "motion_entry_count": 24,
+        "room_files_sha256": {
+          "assets/art/environments/house/anim/central_strip.png": "3d4b9ad369609f37949e0b2d3f60a4a35da12dc3917b64ba3b21d96937df6bbb",
+          "assets/art/environments/house/anim/floor_glint_0.png": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+          "assets/art/environments/house/anim/floor_glint_1.png": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+          "assets/art/environments/house/anim/floor_glint_2.png": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+          "assets/art/environments/house/anim/floor_glint_3.png": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+          "assets/art/environments/house/anim/floor_glint_4.png": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+          "assets/art/environments/house/anim/floor_glint_5.png": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+          "assets/art/environments/house/anim/floor_glint_6.png": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+          "assets/art/environments/house/anim/right_support_pulse.png": "8c0d2ac71fb6ae93d1c54843e15f08c0cefec25e433935942f0901bd738bb94a",
+          "assets/art/environments/house/anim/room_ribbon_0.png": "d6902ddcffe6389b1cb72e9f2cfba11c1fb320b1fc06cd702a3b376140981edf",
+          "assets/art/environments/house/anim/room_ribbon_1.png": "21ac8da89a8bf4f3d267d600d122c05dbf332a30e7119a426fe55682614f89f8",
+          "assets/art/environments/house/anim/room_ribbon_2.png": "fba82f8246f7aac6e71f2160288c604c41c7246c45d61525acd445b98e11cea2",
+          "assets/art/environments/house/anim/room_ribbon_3.png": "0ecb9eb27feba9ed1c345ee3ab97f048e8d95477eb011fd9b11b2ff0dbb4caa1",
+          "assets/art/environments/house/anim/room_ribbon_4.png": "afd206e143b62b904b0c6042af282cd11ac6b12c8e455d9ca4179891aa6258a4",
+          "assets/art/environments/house/anim/shelf_bob_0.png": "f4dc9d0f8fef41972c8edea2d24570f116c13c5a0a5ebf5bce0e9efc8346127c",
+          "assets/art/environments/house/anim/shelf_bob_1.png": "a7340540fa75e4fb2406e2d5fd2d286a15c7ea60756d9ee8e5317118a531e082",
+          "assets/art/environments/house/anim/shelf_bob_2.png": "fb2130611aa621029f8002c7b6f6de3902e4054c161e47bf744564c2aa30c178",
+          "assets/art/environments/house/anim/shelf_bob_3.png": "bdff9ce3003a37a8efcab212e2c539bccf24200bdec7c2126e1f3490edc8ab44",
+          "assets/art/environments/house/anim/shelf_bob_4.png": "91843f9a1a11c4735ff34f21df3872defbbfd6094901e889249976d0f5dc8b2e",
+          "assets/art/environments/house/anim/window_glow_0.png": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+          "assets/art/environments/house/anim/window_glow_1.png": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+          "assets/art/environments/house/anim/window_glow_2.png": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+          "assets/art/environments/house/anim/window_glow_3.png": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+          "assets/art/environments/house/anim/window_glow_4.png": "5f30f04ce6439d256d531dbb2103e3ec981e6e4c438266da691ee9beb68d8160",
+          "assets/art/environments/house/background.png": "ec1049f1ccbae9221cbfdcaa30b676c44c3a6831e0b8347aad656767d5d78b7d",
+          "data/art/environments/house.json": "3872a3d92ecd98168ea569a37d1ad79c670e95ea3f8bff57a6b5f9e94c55c0b0"
+        }
+      },
+      "retained_release": {
+        "native_doc": "docs/testing/house_r3_native_trial.json",
+        "native_doc_sha256": "d41e8ca1329ec77877aa484e1a2555c6a7aa1238eeb4034750a4affbfd176e44",
+        "historical_package_including_then_index": "3a076309f40b5dfad0317d06055fb589d5d91834991dc84016827eb61a477028",
+        "delivery_doc": "docs/testing/house_r3_test_delivery.json",
+        "delivery_doc_sha256": "a9aa96d7143eb9bfe85c58a5aeeeaef6e656bac36f4bac9ca2639269c8d103d8",
+        "historical_delivery_source_commit": "701b5e3292bc97db66a4a3bfb7e6d887b901b83b",
+        "historical_TEST_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+        "prior_GO_superseded": true
+      },
+      "populated_evidence": {
+        "capture_directory": "E:/CodexQA/BTH/runs/BTH-ENVART-HOUSETRIAL-20261115-r3-video-01/evidence/capture",
+        "capture_metadata_sha256": "38390444d067bd54a6ca826eb1bdab7046b927df405a5af51169cac5ea658f85",
+        "source_identity_sha256": "af19f9a92fc3c5d0639447e7b35d6b1366397331288e3da6b1555b3b587a64f5",
+        "capture_baseline_commit": "8c421f56ea10a0d699f861e2f0e1efd9a6801388",
+        "capture_baseline_tree": "6c77e136e6ff8834c3830140c8901c2fde2a9be9",
+        "actual_frames_personally_viewed": [
+          {
+            "frame": 0,
+            "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HOUSETRIAL-20261115-r3-video-01/evidence/capture/frame_000.png",
+            "sha256": "eb801d44c07a7a2f10b0f42a4da72d89bd6941adf5126dccee35e6408bb72935",
+            "bytes": 499988,
+            "width": 1280,
+            "height": 720,
+            "clock": 8.45481233333344,
+            "board900_clock": 8.45481233333344
+          },
+          {
+            "frame": 30,
+            "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HOUSETRIAL-20261115-r3-video-01/evidence/capture/frame_030.png",
+            "sha256": "52999f4dc25c2422f7f8a774ef8c4743a2a0c6d99fb7e82ea0f8c88124c72a25",
+            "bytes": 500644,
+            "width": 1280,
+            "height": 720,
+            "clock": 12.4459513333334,
+            "board900_clock": 12.4459513333334
+          },
+          {
+            "frame": 61,
+            "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HOUSETRIAL-20261115-r3-video-01/evidence/capture/frame_061.png",
+            "sha256": "a930e17a85c113a2d78ab25e0ca26ad4ffefde4acae265ef4609cc724569cea0",
+            "bytes": 500177,
+            "width": 1280,
+            "height": 720,
+            "clock": 16.5843780000001,
+            "board900_clock": 16.5843780000001
+          }
+        ],
+        "frame_selection": "000/030/061; actual full app, not generated/overlaid/resized previews",
+        "measured_frame_count": 62,
+        "actual_clock_span_seconds": 8.12956566666666,
+        "maximum_cycle_seconds": 57.7777777777778,
+        "not_full_cycle": true,
+        "scenario": "__none constructed practice Base",
+        "native_populated_R2_board": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01/evidence/__none_production_board_1800x860.png",
+          "sha256": "7985d84b32ba7a64e111129eaa8db92830882c18b262870f8501e99f978ca6f2",
+          "bytes": 486308,
+          "width": 1800,
+          "height": 860
+        },
+        "current_bed_function_matches_legacy": true,
+        "legacy_source": {
+          "legacy_workspace": "E:/CodexQA/BTH/workspaces/BTH-ENVART-HOUSE-TRIAL-20261115",
+          "canvas_path": "E:/CodexQA/BTH/workspaces/BTH-ENVART-HOUSE-TRIAL-20261115/scripts/ui/pixel_scene_canvas.gd",
+          "canvas_sha256": "695359df463096a612c093160ab08169aa8aafe2729e16a400745e6375b1b0b2",
+          "bed_function_normalized_LF_sha256": "a07d996987e55ecc7b95d2780a05ba5b42ca519cfbada80aa976e8a1eb3a5485",
+          "bed_function_normalized_LF_bytes": 1221,
+          "function_equal_to_current": true,
+          "job_sha256": "a22c7c8d6d67fea4762ed592bce06c8cf93baac2667ee4d554d176a131650054",
+          "exit_code": 0,
+          "active_at_release": 0
+        },
+        "current_legacy_workspace_BG_JSON_match_current": true,
+        "current_HEAD_runtime_not_reexecuted": true,
+        "current_served_web_not_viewed": true
+      },
+      "live_bed": {
+        "object_id": "home_sleep:bed",
+        "runtime_rendered_not_baked": true,
+        "body_motion_not_assumed": "Live means runtime-rendered interactive bed. This review does not invent autonomous mattress movement.",
+        "fixed_interaction_rect_board": {
+          "aspect_ratio": 1.5,
+          "h": 96,
+          "w": 144,
+          "x": 176,
+          "y": 120
+        },
+        "label_rect_board": {
+          "aspect_ratio": 3.2,
+          "h": 15,
+          "w": 48,
+          "x": 224,
+          "y": 103
+        },
+        "prop": "bed",
+        "surface": "floor",
+        "typed_body_png": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-HOUSETRIAL-20261115-r2-contexts-01/evidence/__none_host_4_body.png",
+          "sha256": "9cf5cf2806cd86c7c1a3ce0b5f3e6511835d27692256fa7aa586b9fa0f662232",
+          "query_half_open": [
+            340,
+            230,
+            660,
+            450
+          ],
+          "alpha_bbox_counts": {
+            "1": [
+              364,
+              250,
+              628,
+              436,
+              27418
+            ],
+            "64": [
+              371,
+              305,
+              621,
+              432,
+              22070
+            ],
+            "255": [
+              371,
+              305,
+              621,
+              408,
+              20858
+            ]
+          }
+        },
+        "bounded_alpha_analysis_scope": "Bounds/counts apply to the recorded query rectangle in the actual typed body PNG. Alpha255 isolates opaque drawn bed/frame/feet here; alpha1 and64 include generic interaction lighting/shadow and are not physical furniture extents.",
+        "strong_shadow_rows_alpha_at_least64": [
+          {
+            "y": 426,
+            "alpha_at_least64": 202,
+            "opaque": 0
+          },
+          {
+            "y": 427,
+            "alpha_at_least64": 202,
+            "opaque": 0
+          },
+          {
+            "y": 428,
+            "alpha_at_least64": 202,
+            "opaque": 0
+          },
+          {
+            "y": 429,
+            "alpha_at_least64": 202,
+            "opaque": 0
+          },
+          {
+            "y": 430,
+            "alpha_at_least64": 202,
+            "opaque": 0
+          },
+          {
+            "y": 431,
+            "alpha_at_least64": 202,
+            "opaque": 0
+          }
+        ],
+        "physical_floor_facts": {
+          "current_floor_boundary_y": 492,
+          "static_left_base_rect": [
+            244,
+            348,
+            488,
+            100
+          ],
+          "static_back_rect": [
+            292,
+            300,
+            368,
+            84
+          ],
+          "static_small_unit_rect": [
+            708,
+            368,
+            216,
+            76
+          ],
+          "static_right_body_rect": [
+            1232,
+            300,
+            300,
+            120
+          ],
+          "right_leg_visible_end_y_exclusive": 468,
+          "rug_rect": [
+            436,
+            468,
+            1220,
+            124
+          ],
+          "opaque_bed_to_floor_gap_native_rows": 84,
+          "strong_shadow_start_after_opaque_end_rows": 18
+        }
+      },
+      "all_actual_object_anchors_board": [
+        {
+          "id": "item:payment_calendar",
+          "label": "Payment Calendar",
+          "interaction_rect": {
+            "aspect_ratio": 0.916666666666667,
+            "h": 48,
+            "w": 44,
+            "x": 744,
+            "y": 54
+          },
+          "label_rect": {
+            "aspect_ratio": 6.98666585286458,
+            "h": 15,
+            "w": 104.799987792969,
+            "x": 713.599975585938,
+            "y": 37
+          }
+        },
+        {
+          "id": "item:card_counters_notes",
+          "label": "Counter's Notes",
+          "interaction_rect": {
+            "aspect_ratio": 0.916666666666667,
+            "h": 48,
+            "w": 44,
+            "x": 663,
+            "y": 56
+          },
+          "label_rect": {
+            "aspect_ratio": 6.6,
+            "h": 15,
+            "w": 99,
+            "x": 635.5,
+            "y": 106
+          }
+        },
+        {
+          "id": "item:instant_coffee",
+          "label": "Instant Coffee",
+          "interaction_rect": {
+            "aspect_ratio": 0.916666666666667,
+            "h": 48,
+            "w": 44,
+            "x": 595,
+            "y": 57
+          },
+          "label_rect": {
+            "aspect_ratio": 6.21333414713542,
+            "h": 15,
+            "w": 93.2000122070313,
+            "x": 570.400024414063,
+            "y": 40
+          }
+        },
+        {
+          "id": "home_storage:place",
+          "label": "Storage Spot",
+          "interaction_rect": {
+            "aspect_ratio": 1.4375,
+            "h": 64,
+            "w": 92,
+            "x": 364,
+            "y": 157
+          },
+          "label_rect": {
+            "aspect_ratio": 5.44000040690104,
+            "h": 15,
+            "w": 81.6000061035156,
+            "x": 369.200012207031,
+            "y": 140
+          }
+        },
+        {
+          "id": "home_sleep:bed",
+          "label": "Sleep",
+          "interaction_rect": {
+            "aspect_ratio": 1.5,
+            "h": 96,
+            "w": 144,
+            "x": 176,
+            "y": 120
+          },
+          "label_rect": {
+            "aspect_ratio": 3.2,
+            "h": 15,
+            "w": 48,
+            "x": 224,
+            "y": 103
+          }
+        },
+        {
+          "id": "home_container:trunk_01",
+          "label": "Trunk",
+          "interaction_rect": {
+            "aspect_ratio": 1.4375,
+            "h": 64,
+            "w": 92,
+            "x": 746,
+            "y": 167
+          },
+          "label_rect": {
+            "aspect_ratio": 3.2,
+            "h": 15,
+            "w": 48,
+            "x": 768,
+            "y": 150
+          }
+        },
+        {
+          "id": "home_tenure:status",
+          "label": "Pay Mortgage",
+          "interaction_rect": {
+            "aspect_ratio": 1.5,
+            "h": 48,
+            "w": 72,
+            "x": 711.000061035156,
+            "y": 251
+          },
+          "label_rect": {
+            "aspect_ratio": 5.43999837239583,
+            "h": 15,
+            "w": 81.5999755859375,
+            "x": 706.200073242188,
+            "y": 234
+          }
+        },
+        {
+          "id": "travel:leave",
+          "label": "Travel",
+          "interaction_rect": {
+            "aspect_ratio": 0.888888888888889,
+            "h": 72,
+            "w": 64,
+            "x": 832,
+            "y": 309
+          },
+          "label_rect": {
+            "aspect_ratio": 2.93333333333333,
+            "h": 15,
+            "w": 44,
+            "x": 840,
+            "y": 292
+          }
+        }
+      ],
+      "findings": [
+        "FAIL: The live bed is a small upright rectangular panel in front of a much broader painted plum seating/support body. Their overlapping fronts do not form one credible mattress/body assembly; the raised painted block behind the live pillow reinforces the duplicated-furniture reading.",
+        "FAIL: Opaque bed/feet end at y407 while the existing floor begins near y492. The substantial wall material below the bed remains visible; the separate stronger shadow at y426..431 also lies on this wall. This is not a floor-contacting bed.",
+        "FAIL: Static right-unit legs terminate near y468 at a rug whose top is y468, while the broad wall/floor boundary remains near y492. The rug and upright long front read as an elevated strip/platform and compress the usable floor depth.",
+        "UNCERTAINTY: The semantic identity of the large static plum form remains seating/support per the brief; this review does not rename it a second live bed. The live Sleep object is the independently drawn overlay."
+      ],
+      "next_bounded_composition_correction": {
+        "one_bounded_composition_correction": "Design one integrated left Sleep bed composition: retain the fixed Sleep hit/label anchors, replace the panel-like live mattress drawing with a receding mattress top, a visibly thick near body and a contact shadow tied to the same visual bed; simplify/rework only the overlapping static plum support so it reads as that bed's backing rather than another oversized body. Determine a coherent local floor and flat-rug relationship from the full room, including the two existing right legs, before fixing the final draw envelope.",
+        "must_not": "Do not execute the frozen floor-at384 proposal, extend feet alone, or bake another pillow/bed into the background as a sufficient repair.",
+        "unresolved": "The existing opaque bed lies84 native rows above the floor; keeping its entire existing visual extent cannot ground it on that floor. A future painter/backing design must show how a changed visual envelope preserves the unchanged interaction and all other anchors without overlaps.",
+        "trial_approved": false
+      },
+      "candidate_status": {
+        "state": "NO_ASSEMBLED_OR_POPULATED_HOUSE_CANDIDATE",
+        "observed_workspace": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-HOUSETRIAL-20261116",
+        "observed_top_level_entries": [
+          "raw_source"
+        ],
+        "held_proposal": {
+          "path": "docs/testing/house_spatial_assembly_proposal_20261116.json",
+          "sha256": "4bfbd542aa59b84aaa69ab9a70ad27a448f8cb2af68b373aac7bc4e6a0ea7b7c",
+          "state": "HELD__NOT_VISUAL_ACCEPTANCE"
+        },
+        "new_raw_state": "Raw generation/source is preserved but has no new populated render. It is not accepted by this review."
+      },
+      "limitations": [
+        "Constructed initial Base only; no rest, mortgage/rent/renewal, storage, save/revisit or browser behavior was exercised by this reassessment.",
+        "Prior normal/low-detail/Reduce Motion/liveness results are preserved as historical evidence; no new runtime gate or visual acceptance is granted."
+      ]
+    },
+    "motel_room": {
+      "version": "Motel Room R3",
+      "decision": "FAIL_CURRENT_POPULATED_COMPOSITION",
+      "current_payload": {
+        "background": {
+          "path": "assets/art/environments/motel_room/background.png",
+          "sha256": "5ebe73862694b418eb9dfd596ae706c344b6fe2bf7f12d1ec7ac6b3cdd10f6f2"
+        },
+        "manifest": {
+          "path": "data/art/environments/motel_room.json",
+          "sha256": "8b9d99df6654264dfc22b05ec7d3b8e5ce9f46b3a62623d2ae83e2a8e74d71c3"
+        },
+        "room_logical_file_count": 22,
+        "room_seal": "06ec99be6535209f0087607e3f3d6557f52fd8c991c20e5337ce9ec599932a23",
+        "room_seal_law": "SHA256 UTF8(sorted(path+' '+sha256) joined LF, no trailing LF), excludes global index and import sidecars",
+        "all_current_room_members_match_retained_payload_map": true,
+        "motion_entry_count": 20,
+        "room_files_sha256": {
+          "assets/art/environments/motel_room/anim/bed_strip_pulse.png": "70e2abc231de2950f7bc2e88ed9d455437c0fb74e3b61b68b7b48da5544c71c2",
+          "assets/art/environments/motel_room/anim/bedding_block_0.png": "9e5609fde931c01456dd35efb2843c4b04b5d928e793673641b6ef0240eebabf",
+          "assets/art/environments/motel_room/anim/bedding_block_1.png": "9e5609fde931c01456dd35efb2843c4b04b5d928e793673641b6ef0240eebabf",
+          "assets/art/environments/motel_room/anim/bedding_block_2.png": "9e5609fde931c01456dd35efb2843c4b04b5d928e793673641b6ef0240eebabf",
+          "assets/art/environments/motel_room/anim/bedding_block_3.png": "9e5609fde931c01456dd35efb2843c4b04b5d928e793673641b6ef0240eebabf",
+          "assets/art/environments/motel_room/anim/bedding_block_4.png": "9e5609fde931c01456dd35efb2843c4b04b5d928e793673641b6ef0240eebabf",
+          "assets/art/environments/motel_room/anim/bedding_block_5.png": "9e5609fde931c01456dd35efb2843c4b04b5d928e793673641b6ef0240eebabf",
+          "assets/art/environments/motel_room/anim/bedding_block_6.png": "9e5609fde931c01456dd35efb2843c4b04b5d928e793673641b6ef0240eebabf",
+          "assets/art/environments/motel_room/anim/floor_glint_0.png": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+          "assets/art/environments/motel_room/anim/floor_glint_1.png": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+          "assets/art/environments/motel_room/anim/floor_glint_2.png": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+          "assets/art/environments/motel_room/anim/floor_glint_3.png": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+          "assets/art/environments/motel_room/anim/floor_glint_4.png": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+          "assets/art/environments/motel_room/anim/floor_glint_5.png": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+          "assets/art/environments/motel_room/anim/floor_glint_6.png": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+          "assets/art/environments/motel_room/anim/tv_architecture_band_0.png": "4504fed02d5c1a31eb3389c04c8de29dbd8db048505782a4086074d82b490985",
+          "assets/art/environments/motel_room/anim/tv_architecture_band_1.png": "a11034fd83ddd1504299034d0000c5f78f9f6e447b5125d144d7ed45022fd275",
+          "assets/art/environments/motel_room/anim/tv_scene_band_0.png": "4504fed02d5c1a31eb3389c04c8de29dbd8db048505782a4086074d82b490985",
+          "assets/art/environments/motel_room/anim/tv_scene_band_1.png": "a11034fd83ddd1504299034d0000c5f78f9f6e447b5125d144d7ed45022fd275",
+          "assets/art/environments/motel_room/anim/vacancy_sign_pulse.png": "230026fd66e2611741cb82fcf184755308368f86d5d954b3e7f42514d278a1c2",
+          "assets/art/environments/motel_room/background.png": "5ebe73862694b418eb9dfd596ae706c344b6fe2bf7f12d1ec7ac6b3cdd10f6f2",
+          "data/art/environments/motel_room.json": "8b9d99df6654264dfc22b05ec7d3b8e5ce9f46b3a62623d2ae83e2a8e74d71c3"
+        }
+      },
+      "retained_release": {
+        "native_doc": "docs/testing/motel_room_r3_native_trial.json",
+        "native_doc_sha256": "1df32692445f628484221d9311e5684a5306346ad57899f3858c52ea10d8d24d",
+        "historical_package_including_then_index": "3c6a5dbda5fca2b2fdf3d36a88027c778486e65a5f2412a19197eba87e65a3e6",
+        "delivery_doc": "docs/testing/motel_room_r3_test_delivery.json",
+        "delivery_doc_sha256": "2ad91ceaa6b92c9b4b51f15975ec29ff7bd0ea60c941fdefe23d72a4932aa22a",
+        "historical_delivery_source_commit": "bde105bc0548242c71086dbe2aa5faaaa4504ec6",
+        "historical_TEST_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/",
+        "prior_GO_superseded": true
+      },
+      "populated_evidence": {
+        "capture_directory": "E:/CodexQA/BTH/runs/BTH-ENVART-MOTELROOMTRIAL-20261115-r3-video-01/evidence/capture",
+        "capture_metadata_sha256": "888046eb51cd05193be79804190a852d518238b9414075b72d482be626a20ed7",
+        "source_identity_sha256": "f175f23a9b7246fee4fd72f9f0fdab45ae85042b7ae860af1c46e70e47c83f0a",
+        "capture_baseline_commit": "2e98323deb3273fb5e7c9d99b7d9c26d14b97541",
+        "capture_baseline_tree": "1430510e08df8ac9c1cbafdbe7be71116d01acba",
+        "actual_frames_personally_viewed": [
+          {
+            "frame": 0,
+            "path": "E:/CodexQA/BTH/runs/BTH-ENVART-MOTELROOMTRIAL-20261115-r3-video-01/evidence/capture/frame_000.png",
+            "sha256": "2bf068ee32e44c8fc2513125e2c10d8a445156bcc90db89acf66a487c68daeac",
+            "bytes": 699302,
+            "width": 1280,
+            "height": 720,
+            "clock": 8.4182040000001,
+            "board900_clock": 8.4182040000001
+          },
+          {
+            "frame": 30,
+            "path": "E:/CodexQA/BTH/runs/BTH-ENVART-MOTELROOMTRIAL-20261115-r3-video-01/evidence/capture/frame_030.png",
+            "sha256": "fced3d51e30ba93dbb6a2d79ae0a9b74e5554d6d46f6bf07f0ffe786a68ffe78",
+            "bytes": 700005,
+            "width": 1280,
+            "height": 720,
+            "clock": 12.4053590000001,
+            "board900_clock": 12.4053590000001
+          },
+          {
+            "frame": 61,
+            "path": "E:/CodexQA/BTH/runs/BTH-ENVART-MOTELROOMTRIAL-20261115-r3-video-01/evidence/capture/frame_061.png",
+            "sha256": "f56a81c02a474ed960f802d2ce3632be9204499918945d3981f4281d616163d6",
+            "bytes": 699337,
+            "width": 1280,
+            "height": 720,
+            "clock": 16.5348706666668,
+            "board900_clock": 16.5348706666668
+          }
+        ],
+        "frame_selection": "000/030/061; actual full app, not generated/overlaid/resized previews",
+        "measured_frame_count": 62,
+        "actual_clock_span_seconds": 8.11666666666666,
+        "maximum_cycle_seconds": 57.7777777777778,
+        "not_full_cycle": true,
+        "scenario": "__none constructed practice Base",
+        "native_populated_R2_board": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-MOTELROOMTRIAL-20261115-r2-contexts-01/evidence/__none_production_board_1800x860.png",
+          "sha256": "dba926b859fee787030216ad20bcf10654961ef570c8b25a8fab9187840d4119",
+          "bytes": 731045,
+          "width": 1800,
+          "height": 860
+        },
+        "current_bed_function_matches_legacy": true,
+        "legacy_source": {
+          "legacy_workspace": "E:/CodexQA/BTH/workspaces/BTH-ENVART-MOTELROOM-TRIAL-20261115",
+          "canvas_path": "E:/CodexQA/BTH/workspaces/BTH-ENVART-MOTELROOM-TRIAL-20261115/scripts/ui/pixel_scene_canvas.gd",
+          "canvas_sha256": "695359df463096a612c093160ab08169aa8aafe2729e16a400745e6375b1b0b2",
+          "bed_function_normalized_LF_sha256": "a07d996987e55ecc7b95d2780a05ba5b42ca519cfbada80aa976e8a1eb3a5485",
+          "bed_function_normalized_LF_bytes": 1221,
+          "function_equal_to_current": true,
+          "job_sha256": "e7187a8550981fb78eb464832d2ce03afcf3db74545b47508d98398fde106df4",
+          "exit_code": 0,
+          "active_at_release": 0
+        },
+        "current_legacy_workspace_BG_JSON_match_current": true,
+        "current_HEAD_runtime_not_reexecuted": true,
+        "current_served_web_not_viewed": true
+      },
+      "live_bed": {
+        "object_id": "home_sleep:bed",
+        "runtime_rendered_not_baked": true,
+        "body_motion_not_assumed": "Live means runtime-rendered interactive bed. This review does not invent autonomous mattress movement.",
+        "fixed_interaction_rect_board": {
+          "aspect_ratio": 2.75,
+          "h": 104,
+          "w": 286,
+          "x": 350,
+          "y": 88
+        },
+        "label_rect_board": {
+          "aspect_ratio": 3.2,
+          "h": 15,
+          "w": 48,
+          "x": 469,
+          "y": 71
+        },
+        "prop": "bed",
+        "surface": "floor",
+        "typed_body_png": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-MOTELROOMTRIAL-20261115-r2-contexts-01/evidence/__none_host_0_body.png",
+          "sha256": "5fc7a7c70eeb740a350af576b2025b36250b4a3105f3fe5803eb9bf71529358a",
+          "query_half_open": [
+            690,
+            160,
+            1290,
+            410
+          ],
+          "alpha_bbox_counts": {
+            "1": [
+              723,
+              187,
+              1249,
+              388,
+              58204
+            ],
+            "64": [
+              742,
+              247,
+              1230,
+              384,
+              46368
+            ],
+            "255": [
+              742,
+              247,
+              1230,
+              356,
+              43968
+            ]
+          }
+        },
+        "bounded_alpha_analysis_scope": "Bounds/counts apply to the recorded query rectangle in the actual typed body PNG. Alpha255 isolates opaque drawn bed/frame/feet here; alpha1 and64 include generic interaction lighting/shadow and are not physical furniture extents.",
+        "strong_shadow_rows_alpha_at_least64": [
+          {
+            "y": 378,
+            "alpha_at_least64": 400,
+            "opaque": 0
+          },
+          {
+            "y": 379,
+            "alpha_at_least64": 400,
+            "opaque": 0
+          },
+          {
+            "y": 380,
+            "alpha_at_least64": 400,
+            "opaque": 0
+          },
+          {
+            "y": 381,
+            "alpha_at_least64": 400,
+            "opaque": 0
+          },
+          {
+            "y": 382,
+            "alpha_at_least64": 400,
+            "opaque": 0
+          },
+          {
+            "y": 383,
+            "alpha_at_least64": 400,
+            "opaque": 0
+          }
+        ],
+        "physical_floor_facts": {
+          "current_floor_boundary_y": 492,
+          "static_central_backing_rect": [
+            704,
+            228,
+            572,
+            208
+          ],
+          "static_inset_rect": [
+            744,
+            260,
+            484,
+            68
+          ],
+          "rug_rect": [
+            408,
+            472,
+            1028,
+            116
+          ],
+          "opaque_bed_end_y_exclusive": 356,
+          "opaque_bed_to_floor_gap_native_rows": 136,
+          "strong_shadow_rows_half_open": [
+            378,
+            384
+          ],
+          "strong_shadow_start_after_opaque_end_rows": 22
+        }
+      },
+      "all_actual_object_anchors_board": [
+        {
+          "id": "home_sleep:bed",
+          "label": "Sleep",
+          "interaction_rect": {
+            "aspect_ratio": 2.75,
+            "h": 104,
+            "w": 286,
+            "x": 350,
+            "y": 88
+          },
+          "label_rect": {
+            "aspect_ratio": 3.2,
+            "h": 15,
+            "w": 48,
+            "x": 469,
+            "y": 71
+          }
+        },
+        {
+          "id": "item:scratch_pad",
+          "label": "Scratch Pad",
+          "interaction_rect": {
+            "aspect_ratio": 0.916666666666667,
+            "h": 48,
+            "w": 44,
+            "x": 763,
+            "y": 133.000015258789
+          },
+          "label_rect": {
+            "aspect_ratio": 5.05333251953125,
+            "h": 15,
+            "w": 75.7999877929688,
+            "x": 747.099975585938,
+            "y": 116.000015258789
+          }
+        },
+        {
+          "id": "home_tenure:status",
+          "label": "Renew Stay",
+          "interaction_rect": {
+            "aspect_ratio": 1.5,
+            "h": 48,
+            "w": 72,
+            "x": 83,
+            "y": 137
+          },
+          "label_rect": {
+            "aspect_ratio": 4.66666666666667,
+            "h": 15,
+            "w": 70,
+            "x": 84,
+            "y": 120
+          }
+        },
+        {
+          "id": "home_container:backpack_01",
+          "label": "Backpack",
+          "interaction_rect": {
+            "aspect_ratio": 1.4375,
+            "h": 64,
+            "w": 92,
+            "x": 357.999969482422,
+            "y": 220
+          },
+          "label_rect": {
+            "aspect_ratio": 3.89333292643229,
+            "h": 15,
+            "w": 58.3999938964844,
+            "x": 374.799957275391,
+            "y": 203
+          }
+        },
+        {
+          "id": "home_storage:place",
+          "label": "Storage Spot",
+          "interaction_rect": {
+            "aspect_ratio": 1.4375,
+            "h": 64,
+            "w": 92,
+            "x": 262,
+            "y": 220
+          },
+          "label_rect": {
+            "aspect_ratio": 5.44000040690104,
+            "h": 15,
+            "w": 81.6000061035156,
+            "x": 267.200012207031,
+            "y": 203
+          }
+        },
+        {
+          "id": "travel:leave",
+          "label": "Travel",
+          "interaction_rect": {
+            "aspect_ratio": 0.888888888888889,
+            "h": 72,
+            "w": 64,
+            "x": 8,
+            "y": 340
+          },
+          "label_rect": {
+            "aspect_ratio": 3.2,
+            "h": 15,
+            "w": 48,
+            "x": 16,
+            "y": 323
+          }
+        }
+      ],
+      "findings": [
+        "FAIL: The live Sleep bed sits inside the central framed wall backing, with its pillow and blanket drawn as an upright, straight-on rectangle. In the full-room view it reads as a wall-mounted bed diagram rather than furniture projecting into a floor plane.",
+        "FAIL: Opaque bed/feet end at y355,136 native rows before the floor boundary near y492. The detached stronger shadow at y378..383 is still on wall/backing material and cannot be a floor contact shadow.",
+        "FAIL: The central backing's bottom frame ends around y436 and the rug starts around y472 above the y492 floor. Together these frames produce stacked horizontal upright rectangles instead of a credible mattress/headboard/body/floor relationship.",
+        "UNCERTAINTY: The blank central static rectangle is documented headboard/backing, not a second complete bed. The lower broad shape is documented a flat rug, not a raised platform. Their current populated appearance still fails those intended material roles."
+      ],
+      "next_bounded_composition_correction": {
+        "one_bounded_composition_correction": "Design a single bed projecting out from the existing central headboard/backing toward the real floor: one foreshortened mattress top, an attached front/side body and supports/contact shadow on the room plane. Keep home_sleep:bed's interaction/label anchors and the actual six live objects unchanged. Review a visual-only draw envelope extending beyond the old middle-of-slot panel, integrating or simplifying the backing's lower frame and keeping the rug flat.",
+        "must_not": "Do not raise the whole floor to the bed icon, draw another static mattress, or infer a raised stage/counter to justify its current height.",
+        "unresolved": "The fixed Sleep slot [350,88,286,104] ends at native384, still108 rows before the original floor. An entirely slot-confined painter cannot reach that floor. A future visual draw-envelope extension must explicitly protect Storage Spot/Backpack around board y220 and all20 motion masks; current exact-footprint constraints and realistic grounding require a design decision, not a silent background patch.",
+        "trial_approved": false
+      },
+      "candidate_status": {
+        "state": "NO_NEW_MOTEL_ROOM_SPATIAL_CANDIDATE_REVIEWED",
+        "latest_inspected_populated_version": "retained R3 full-app frames000/030/061",
+        "fresh_candidate_populated_preview_available_to_this_review": false
+      },
+      "limitations": [
+        "Constructed initial Base only; no rest, mortgage/rent/renewal, storage, save/revisit or browser behavior was exercised by this reassessment.",
+        "Prior normal/low-detail/Reduce Motion/liveness results are preserved as historical evidence; no new runtime gate or visual acceptance is granted."
+      ]
+    }
+  },
+  "next_gate": {
+    "state": "HOLD",
+    "required": "Owner-directed full populated composition design review before any new trial execution or visual acceptance. First establish a credible mattress top, body thickness, relative scale, support/contact and room floor perspective together for each existing Sleep object. Review whole-room actual populated views at native and1280 UI scales, including labels/items/motion extrema and Reduce Motion, under a separately authorized guarded future job.",
+    "remaining_blockers": [
+      "No new bed/body/backing composition has been designed or approved.",
+      "Apartment V1/V2 have no retained populated candidate capture in the examined campaign namespace.",
+      "House has raw source/proposal only, with no assembled/populated candidate.",
+      "Motel's fixed Sleep interaction slot lies well above the existing floor; a background-only material edit cannot resolve the current live painter's apparent height. A visual draw-envelope design and conflict check are required.",
+      "No current live-Web/served populated preview or whole-cycle proof was performed."
+    ]
+  },
+  "write_scope": {
+    "only_new_doc": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/home_rooms_owner_visual_reassessment_20261116.json",
+    "absolute_absence_preflight": {
+      "destination": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/home_rooms_owner_visual_reassessment_20261116.json",
+      "destination_absent": true,
+      "wrong_main": "D:/Projects/Beat-The-House/docs/testing/home_rooms_owner_visual_reassessment_20261116.json",
+      "wrong_main_absent": true,
+      "ancestors": [
+        {
+          "path": "D:\\Projects",
+          "ordinary_directory": true,
+          "attributes": "Directory"
+        },
+        {
+          "path": "D:\\Projects\\Beat-The-House",
+          "ordinary_directory": true,
+          "attributes": "Directory"
+        },
+        {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp",
+          "ordinary_directory": true,
+          "attributes": "Directory"
+        },
+        {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers",
+          "ordinary_directory": true,
+          "attributes": "Directory"
+        },
+        {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\docs",
+          "ordinary_directory": true,
+          "attributes": "Directory"
+        },
+        {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\docs\\testing",
+          "ordinary_directory": true,
+          "attributes": "Directory"
+        }
+      ],
+      "observed_utc": "2026-11-16T17:16:19.0311862Z"
+    },
+    "prior_reports_unchanged": true,
+    "root_owns_task_ledger": true
+  }
+}

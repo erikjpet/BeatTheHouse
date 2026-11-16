@@ -1,0 +1,82 @@
+{
+  "schema": "bth.environment_spatial_raw_descriptor/v1",
+  "room": "grand_casino_back_room",
+  "base64": {
+    "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/grand-back-room-composition-r3/grand-back-room-composition-r3.png.b64",
+    "sha256": "5f8ad82095005b9d4d7237f0e4006580ec2ee7692eae989bd26c8dbc56a32b48",
+    "bytes": 2146845,
+    "data_url_sha256": "f3c8db96e0985f8642929ae941fb09a3a7f8ef6c358035b09e9f328634f4d058",
+    "encoding": "ASCII_BASE64_ONE_LINE_LF"
+  },
+  "png": {
+    "sha256": "b7bdfde4f88ec32bd5cf21b7b9bc8de1954a5e572a82fb98907cc716b4e6fc7a",
+    "bytes": 1610131,
+    "width": 1815,
+    "height": 867,
+    "bit_depth": 8,
+    "color_type": 2,
+    "compression": 0,
+    "filter": 0,
+    "interlace": 0,
+    "chunks": [
+      {
+        "kind": "IHDR",
+        "bytes": 13,
+        "payload_sha256": "b00f81744d3d7bb35835d776ef709a2e27bd75e61fcbf4adfd26b4f7d6b56f7b"
+      },
+      {
+        "kind": "caBX",
+        "bytes": 21881,
+        "payload_sha256": "f646e3a88b7492ade8d50be4181c813454d9eb4fb015b3ce065e253d0b4f2c8f"
+      },
+      {
+        "kind": "IDAT",
+        "bytes": 1588181,
+        "payload_sha256": "47fdfdfb404f5689568efd60822f1bff6ca479bbf6b616281ba439b981ef22ec"
+      },
+      {
+        "kind": "IEND",
+        "bytes": 0,
+        "payload_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ]
+  },
+  "prompt": {
+    "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/grand-back-room-composition-r3/prompt.txt",
+    "sha256": "1a2d585f2958e47db34bc093dd03256235a0e9abfa27ed1ec46adef1f5af951a",
+    "bytes": 3261
+  },
+  "provenance": {
+    "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/grand-back-room-composition-r3/provenance.json",
+    "sha256": "9d3b5d6946c1df86a66a2dfd5693b31a5b6b922d301c98af93c3f1f2ec280dbf",
+    "bytes": 17197
+  },
+  "original_controls": {
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_0.png": "988e0207c99758ba1f5d7f30d4bfa9b7439beb9faf15b3c9ff9a76c55ba27340",
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_1.png": "f9e2470a1a73e3ab62b6f3c2f23102ef4184003d7b7b98bf4691d39583221515",
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_2.png": "0fac3ccc158a14a64b034e55acbb242436e145bf47bc822b8b7ba41aca239595",
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_3.png": "74b88031a6733ffcacbf97bbd910e9e30ba139ac37132f72fd00e62963b40bf1",
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_4.png": "7964ba8bd36745aeb5b44feeee7cff613d813e1b4a4fd5aebc91deb877663ba9",
+    "assets/art/environments/grand_casino_back_room/anim/casino_sign_pulse.png": "dceb1dc0df381fa98592cb9c58822e1863512f7a44f64b5c5bdd88faea8d51ed",
+    "assets/art/environments/grand_casino_back_room/anim/casino_sparkle_0.png": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+    "assets/art/environments/grand_casino_back_room/anim/casino_sparkle_1.png": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+    "assets/art/environments/grand_casino_back_room/anim/casino_sparkle_2.png": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_0.png": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_1.png": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_2.png": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_3.png": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_4.png": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_5.png": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_6.png": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+    "assets/art/environments/grand_casino_back_room/background.png": "46492785829f659c5869d91a6510d424ea4977e6921b1ece7de1225aa804e6ca",
+    "assets/art/environments/grand_casino_back_room/counters/grand_table_left.png": "9a96841d98e0f5ee53d15563c94881f3ce34ab4569182f7009f6b0609c4dafac",
+    "assets/art/environments/grand_casino_back_room/counters/grand_table_right.png": "de3a5e82cce15772a929306eb423aaf44b96ff3302cf8c73aec1eb12b7dc0964",
+    "data/art/environments/grand_casino_back_room.json": "cc8553a5856289c7fe6b42754db43b4bd02d07e5c793ca1fea54e7655eca103d",
+    "data/art/environments/index.json": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24"
+  },
+  "output": {
+    "workspace": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-GBRCOMPOSITION-R3-20261116",
+    "png": "raw_source/grand-back-room-composition-r3.png",
+    "receipt": "raw_source/grand-back-room-composition-r3-materialization.json"
+  }
+}

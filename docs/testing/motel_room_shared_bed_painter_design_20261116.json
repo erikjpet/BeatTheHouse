@@ -1,0 +1,674 @@
+{
+  "schema": "bth.shared_bed_painter_motel_design/v1",
+  "task_id": "BTH-ENV-SPATIAL-HOME-BED-PROTOTYPE-DESIGN-20261116",
+  "author": "/root/bar_clearance_audit/dark_feet_source_audit",
+  "status": "SOURCE_ONLY_PROVISIONAL_DESIGN__UNAPPLIED__OWNER_REVIEW_REQUIRED",
+  "prototype_room": "motel_room",
+  "production_GD_modified": false,
+  "source_art_modified": false,
+  "extra_asset_or_UID_created": false,
+  "native_execution": false,
+  "native_acceptance": false,
+  "visual_approval": false,
+  "TEST_updated": false,
+  "owner_direction": {
+    "hold": "All prior home-room visual GOs remain superseded. No prototype execution follows from this document.",
+    "latest_clarification": "Keep the exact hit/model/label rectangles visible beside the proposed silhouette. No rail solely to hide the generic shadow. A bed-specific correctly attached shadow paint adjustment is permitted in the design. Per-room calibration and fresh populated review are mandatory; no global adoption from proportional scaling."
+  },
+  "source_identity": {
+    "home3_reassessment": "docs/testing/home_rooms_owner_visual_reassessment_20261116.json",
+    "home3_sha256": "3d30caed2da7c8d0fa57e58a561c9b02fb285afbf76f1372d9b01c224a9d4ca4",
+    "current_canvas": "scripts/ui/pixel_scene_canvas.gd",
+    "current_canvas_sha256": "c2ce2abee8827372d66fd6c9647a74e06f5db8fed520bbd812b8c7eb29f4af38",
+    "old_bed_function_normalized_LF_sha256": "a07d996987e55ecc7b95d2780a05ba5b42ca519cfbada80aa976e8a1eb3a5485",
+    "Motel_current_room22_seal": "06ec99be6535209f0087607e3f3d6557f52fd8c991c20e5337ce9ec599932a23",
+    "background_sha256": "5ebe73862694b418eb9dfd596ae706c344b6fe2bf7f12d1ec7ac6b3cdd10f6f2",
+    "manifest_sha256": "8b9d99df6654264dfc22b05ec7d3b8e5ce9f46b3a62623d2ae83e2a8e74d71c3",
+    "global_index_separate_sha256": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+    "old_source_recipe": {
+      "path": "E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261115/assemble_motelroom_r1.py",
+      "sha256": "06955a234ddd637ca61fb05a5fd62b2ba3bd82ac27cd3e0ccff2bd287106ce1d",
+      "r2_path": "E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261115/assemble_motelroom_r2.py",
+      "r2_sha256": "6b34579053cba3e7bca703ef5e45fea27dd1adb5d01a81bef878d27ad5e2b5bd",
+      "read_only": "Recipes read as text only; neither exec/string replacement, Pillow nor any old helper was executed."
+    }
+  },
+  "actual_composition_evidence": {
+    "all_nine_full_app_frames_personally_viewed_in_home3": true,
+    "Motel_R3_actual_frames": [
+      {
+        "frame": 0,
+        "path": "E:/CodexQA/BTH/runs/BTH-ENVART-MOTELROOMTRIAL-20261115-r3-video-01/evidence/capture/frame_000.png",
+        "sha256": "2bf068ee32e44c8fc2513125e2c10d8a445156bcc90db89acf66a487c68daeac",
+        "bytes": 699302,
+        "width": 1280,
+        "height": 720,
+        "clock": 8.4182040000001,
+        "board900_clock": 8.4182040000001
+      },
+      {
+        "frame": 30,
+        "path": "E:/CodexQA/BTH/runs/BTH-ENVART-MOTELROOMTRIAL-20261115-r3-video-01/evidence/capture/frame_030.png",
+        "sha256": "fced3d51e30ba93dbb6a2d79ae0a9b74e5554d6d46f6bf07f0ffe786a68ffe78",
+        "bytes": 700005,
+        "width": 1280,
+        "height": 720,
+        "clock": 12.4053590000001,
+        "board900_clock": 12.4053590000001
+      },
+      {
+        "frame": 61,
+        "path": "E:/CodexQA/BTH/runs/BTH-ENVART-MOTELROOMTRIAL-20261115-r3-video-01/evidence/capture/frame_061.png",
+        "sha256": "f56a81c02a474ed960f802d2ce3632be9204499918945d3981f4281d616163d6",
+        "bytes": 699337,
+        "width": 1280,
+        "height": 720,
+        "clock": 16.5348706666668,
+        "board900_clock": 16.5348706666668
+      }
+    ],
+    "Motel_capture_metadata_sha256": "888046eb51cd05193be79804190a852d518238b9414075b72d482be626a20ed7",
+    "Motel_native_R2_populated_board": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-MOTELROOMTRIAL-20261115-r2-contexts-01/evidence/__none_production_board_1800x860.png",
+      "sha256": "dba926b859fee787030216ad20bcf10654961ef570c8b25a8fab9187840d4119",
+      "bytes": 731045,
+      "width": 1800,
+      "height": 860
+    },
+    "actual_frame_scope": "Motel constructed Base only; House R3 and Apartment R2 full-app000/030/061 were also viewed to reject an uncalibrated global rollout. None is a new prototype render.",
+    "old_failure": "Opaque live bed/feet end at native y355, generic stronger shadow remains y378..383 on the wall, while original floor begins near492. The source's central framed panel is a backing; it must not be counted as a second complete bed."
+  },
+  "units": {
+    "board": [
+      900,
+      430
+    ],
+    "native": [
+      1800,
+      860
+    ],
+    "scale": 2,
+    "rect_format": "[x,y,width,height], half-open",
+    "polygon_format": "ordered[x,y] vertices",
+    "snap": "Proposed native geometry snaps native Rect2/Vector2 arithmetic to whole board pixels, yielding crisp2x native clusters. No serialized position parsing."
+  },
+  "fixed_targets": {
+    "Sleep": {
+      "id": "home_sleep:bed",
+      "interaction_and_model_rect_board": [
+        350,
+        88,
+        286,
+        104
+      ],
+      "interaction_and_model_rect_native": [
+        700,
+        176,
+        572,
+        208
+      ],
+      "label_rect_board": [
+        469,
+        71,
+        48,
+        15
+      ],
+      "label_rect_native": [
+        938,
+        142,
+        96,
+        30
+      ],
+      "native_position_Vector2": "(0.547778,0.325581)",
+      "native_size_Vector2": "(286,104)",
+      "fixed_slot_geometry": true,
+      "unchanged": true
+    },
+    "all_six_actual_targets": [
+      {
+        "id": "home_sleep:bed",
+        "label": "Sleep",
+        "interaction_rect": {
+          "aspect_ratio": 2.75,
+          "h": 104,
+          "w": 286,
+          "x": 350,
+          "y": 88
+        },
+        "label_rect": {
+          "aspect_ratio": 3.2,
+          "h": 15,
+          "w": 48,
+          "x": 469,
+          "y": 71
+        }
+      },
+      {
+        "id": "item:scratch_pad",
+        "label": "Scratch Pad",
+        "interaction_rect": {
+          "aspect_ratio": 0.916666666666667,
+          "h": 48,
+          "w": 44,
+          "x": 763,
+          "y": 133.000015258789
+        },
+        "label_rect": {
+          "aspect_ratio": 5.05333251953125,
+          "h": 15,
+          "w": 75.7999877929688,
+          "x": 747.099975585938,
+          "y": 116.000015258789
+        }
+      },
+      {
+        "id": "home_tenure:status",
+        "label": "Renew Stay",
+        "interaction_rect": {
+          "aspect_ratio": 1.5,
+          "h": 48,
+          "w": 72,
+          "x": 83,
+          "y": 137
+        },
+        "label_rect": {
+          "aspect_ratio": 4.66666666666667,
+          "h": 15,
+          "w": 70,
+          "x": 84,
+          "y": 120
+        }
+      },
+      {
+        "id": "home_container:backpack_01",
+        "label": "Backpack",
+        "interaction_rect": {
+          "aspect_ratio": 1.4375,
+          "h": 64,
+          "w": 92,
+          "x": 357.999969482422,
+          "y": 220
+        },
+        "label_rect": {
+          "aspect_ratio": 3.89333292643229,
+          "h": 15,
+          "w": 58.3999938964844,
+          "x": 374.799957275391,
+          "y": 203
+        }
+      },
+      {
+        "id": "home_storage:place",
+        "label": "Storage Spot",
+        "interaction_rect": {
+          "aspect_ratio": 1.4375,
+          "h": 64,
+          "w": 92,
+          "x": 262,
+          "y": 220
+        },
+        "label_rect": {
+          "aspect_ratio": 5.44000040690104,
+          "h": 15,
+          "w": 81.6000061035156,
+          "x": 267.200012207031,
+          "y": 203
+        }
+      },
+      {
+        "id": "travel:leave",
+        "label": "Travel",
+        "interaction_rect": {
+          "aspect_ratio": 0.888888888888889,
+          "h": 72,
+          "w": 64,
+          "x": 8,
+          "y": 340
+        },
+        "label_rect": {
+          "aspect_ratio": 3.2,
+          "h": 15,
+          "w": 48,
+          "x": 16,
+          "y": 323
+        }
+      }
+    ],
+    "attachment": "The existing Sleep target remains over the recognizable headboard, which is structurally joined to the live mattress. New runtime headboard top/stiles lie inside the existing hit rectangle, rather than leaving an empty invisible target above a disjoint mattress.",
+    "usability_limit": "The mattress and front legs extend below the old hit rectangle; clicking those newly drawn pixels is not implicitly made interactive. The fixed headboard/label remains the target. Root must review this visible-target relationship before a prototype; this design does not silently enlarge the hit area or move the model.",
+    "no_source_coordinate_recovery": "Production paint takes the actual Rect2 passed from _natural_model_rect_for_object(object_data); future QA obtains native objects from _active_scene_objects() and requires TYPE_VECTOR2 position/size before serializing diagnostics. JSON/debug strings never become paint targets."
+  },
+  "one_shared_paint_change": {
+    "objective": "Replace the upright rectangular mattress symbol with one horizontal foreshortened mattress, a differentiated near side and low right footboard, load-bearing headboard posts/front legs, and attached shadows. The existing backing becomes the panel of that same headboard; no complete bed/pillow is baked into art.",
+    "retained_signature": "_draw_bed_prop(rect: Rect2, selected: bool) -> void",
+    "actual_call_chain": "_draw_scene_object_body -> _natural_model_rect_for_object -> _draw_item_prop -> _draw_bed_prop",
+    "shared_geometry_law": "One painter constructs typed Vector2/PackedVector2Array top, pillow and blanket polygons; timber frame/footboard planes; structural supports; and contact shadows. It uses current CanvasItem draw_colored_polygon/draw_rect/draw_line/draw_polyline primitives and existing color family. No sprite, atlas, UID, shader, new asset, renderer scheduling or game-state mutation.",
+    "calibration_rule": "The numerical calibration below is Motel-only and provisional. Do not apply its offsets/ratios to House or Apartment. A future shared painter needs an explicitly reviewed paint-only calibration per room while preserving each actual model/hit/label target; no new gameplay anchor or broad QA framework is proposed.",
+    "prototype_scope": "A future prototype must be isolated and Motel-only. If expressed as a QA-only conditional or explicit paint projection calibration, that is paint admission, not a production feature flag or global adoption. No such code exists from this task.",
+    "existing_interaction_light": "Retain the existing _draw_interactable_light(rect,accent,selected) call/cadence once using the original Rect2. Its flickering headboard/interaction cue is not the physical contact shadow and is never counted as grounding."
+  },
+  "provisional_geometry_board": {
+    "headboard": {
+      "top_rail": [
+        352,
+        114,
+        286,
+        8
+      ],
+      "left_load_bearing_post": [
+        352,
+        122,
+        8,
+        112
+      ],
+      "right_load_bearing_post": [
+        630,
+        122,
+        8,
+        112
+      ],
+      "lower_structural_rail": [
+        360,
+        192,
+        270,
+        8
+      ],
+      "open_panel": [
+        360,
+        122,
+        270,
+        70
+      ],
+      "reason": "Top/stiles surround the existing animated backing; the lower rail joins the panel to the mattress at y199. Both posts carry the headboard to its rear floor contact at y234. This is bed structure, not a rail introduced to conceal the generic shadow.",
+      "panel_not_filled_by_live_painter": "Existing source panel remains visible through the frame so all seven pink motions and the source strip retain their coordinates and alpha."
+    },
+    "mattress_top": [
+      [
+        373,
+        199
+      ],
+      [
+        613,
+        199
+      ],
+      [
+        636,
+        243
+      ],
+      [
+        350,
+        243
+      ]
+    ],
+    "near_mattress_rim": [
+      350,
+      243,
+      286,
+      4
+    ],
+    "near_timber_side": [
+      350,
+      247,
+      286,
+      16
+    ],
+    "right_low_footboard": [
+      [
+        613,
+        193
+      ],
+      [
+        636,
+        237
+      ],
+      [
+        636,
+        263
+      ],
+      [
+        613,
+        216
+      ]
+    ],
+    "near_left_leg": [
+      362,
+      263,
+      12,
+      22
+    ],
+    "near_right_leg": [
+      612,
+      263,
+      12,
+      22
+    ],
+    "rear_floor_y": 234,
+    "near_feet_contact_y": 285,
+    "source_floor_boundary_y": 234,
+    "top_depth": 44,
+    "near_body_height": 20,
+    "visible_near_leg_height": 22,
+    "pillow_on_top": "Let Q(u,v) be bilinear interpolation of the four mattress vertices. A single pillow uses u=[0.04,0.22],v=[0.58,0.90]; main blanket uses u=[0.28,0.94],v=[0.08,0.92]. Three restrained static stripes follow the same projected plane in the right-hand blanket area. These replace the old upright inset rectangles; they are not extra environment motion.",
+    "head_end_material": "Keep the entire far-left head-end top plane dark and quiet behind the fixed Backpack label at x374.8..433.2,y203..218. The pillow remains naturally near the left near corner, below that label; no label plaque, cutout or label movement.",
+    "draw_order": [
+      "Bed-specific attached shadows on the floor/rug.",
+      "Headboard structure and front legs.",
+      "Near timber side and mattress rim.",
+      "Projected mattress base, pillow and blanket.",
+      "Low right footboard/end cap, using a modest value change from the side.",
+      "Selected outline following the same structure, never the obsolete upright frame."
+    ],
+    "selected_outline_guard": 2
+  },
+  "provisional_geometry_native": {
+    "full_permitted_bed_paint_envelope_including_selection_and_shadows": [
+      696,
+      224,
+      584,
+      356
+    ],
+    "original_unchanged_interaction_light": "Its separate original Rect2-derived glow can exist above the physical bed. No newly expanded light envelope is authorized by this design.",
+    "headboard_top_rail": [
+      704,
+      228,
+      572,
+      16
+    ],
+    "headboard_left_post": [
+      704,
+      244,
+      16,
+      224
+    ],
+    "headboard_right_post": [
+      1260,
+      244,
+      16,
+      224
+    ],
+    "headboard_lower_rail": [
+      720,
+      384,
+      540,
+      16
+    ],
+    "open_source_panel": [
+      720,
+      244,
+      540,
+      140
+    ],
+    "mattress_top": [
+      [
+        746,
+        398
+      ],
+      [
+        1226,
+        398
+      ],
+      [
+        1272,
+        486
+      ],
+      [
+        700,
+        486
+      ]
+    ],
+    "near_mattress_rim": [
+      700,
+      486,
+      572,
+      8
+    ],
+    "near_timber_side": [
+      700,
+      494,
+      572,
+      32
+    ],
+    "right_low_footboard": [
+      [
+        1226,
+        386
+      ],
+      [
+        1272,
+        474
+      ],
+      [
+        1272,
+        526
+      ],
+      [
+        1226,
+        432
+      ]
+    ],
+    "near_left_leg": [
+      724,
+      526,
+      24,
+      44
+    ],
+    "near_right_leg": [
+      1224,
+      526,
+      24,
+      44
+    ],
+    "rear_contact_y": 468,
+    "near_contact_y": 570,
+    "source_floor_boundary_y": 468,
+    "headboard_to_mattress_join": "Headboard lower rail ends y400; mattress far edge is y398, giving a2-native-row structural overlap rather than a visible gap.",
+    "floor_depth": "The far support contact is at the new rear floor boundary468. Near legs end570,102 native rows deeper in the room. The mattress top has88 native rows of receding depth; its near body is40 native rows thick with44 native rows of visible leg, rather than a thin shelf.",
+    "rug_contact_margin": "The preserved rug is [408,472,1028,116], ending588. Near feet570 and shadows through578 are inside it with10 native rows left before its near border.",
+    "physical_shape_not_approved": true
+  },
+  "bed_specific_shadow_paint": {
+    "change_required": "At _draw_scene_object_body's existing shadow dispatch, the admitted bed projection must use its own contact shadow instead of _draw_object_shadow(rect,...). Other props retain the exact generic call. Do not draw the old detached bed shadow and do not hide it under a cosmetic rail.",
+    "narrowly_scoped_unapplied_dispatch": "For the admitted bed painter only, skip the generic shadow call and let _draw_bed_prop paint its attached contacts. No change to _draw_object_shadow's implementation for other props, shadow_kind data, input/selection state, processing or frame cadence.",
+    "native_rear_contact_patches": [
+      [
+        702,
+        466,
+        20,
+        8
+      ],
+      [
+        1258,
+        466,
+        20,
+        8
+      ]
+    ],
+    "native_near_contact_patches": [
+      [
+        722,
+        568,
+        28,
+        8
+      ],
+      [
+        1222,
+        568,
+        28,
+        8
+      ]
+    ],
+    "native_soft_cast_polygon": [
+      [
+        712,
+        566
+      ],
+      [
+        1260,
+        566
+      ],
+      [
+        1268,
+        578
+      ],
+      [
+        704,
+        578
+      ]
+    ],
+    "attachment": "Rear posts end at y468 with contact patches beginning466; near legs end570 with patches beginning568. Each dark contact overlaps the final2 native rows of its own support and continues onto the actual floor/rug. There is no detached gap or opaque cross-room platform.",
+    "alpha_and_material": "Reuse the existing black0.42 contact weight, with a low black~0.14 cast polygon, no blur/filter. Preserve visible original floor/rug through translucent cast paint and the under-bed negative space; do not fill the whole leg-height rectangle.",
+    "old_shadow_removed_intentionally": "The old generic bed strip at y378..383 is replaced, not covered. The new structural lower rail is at384..399 and supports the mattress; it is not a shadow-concealment device.",
+    "future_check": "Fresh actual source-bound frames must prove support/shadow connectivity and material contact, including selection, normal/RM and low detail. None has been rendered."
+  },
+  "source_backing_and_floor_companion": {
+    "state": "PROPOSED_ALLOWANCE_ONLY__NO_PIXEL_PATCH_OR_DONOR_APPROVED",
+    "only_expected_raw_asset_change": "assets/art/environments/motel_room/background.png",
+    "backing_allowance_native": {
+      "outer": [
+        698,
+        226,
+        580,
+        222
+      ],
+      "subtract_preserve_exact_open_panel": [
+        720,
+        244,
+        540,
+        140
+      ],
+      "allowed_pixel_count": 53160,
+      "purpose": "Retire the baked full framed-box perimeter/bottom below and around the panel, restoring coherent original-family plaster where exposed. Retain the panel's existing source pixels exactly. Runtime bed structure replaces the frame; do not bake a mattress, pillow, legs, labels or contact shadow into the background."
+    },
+    "floor_allowance_native": {
+      "disjoint_rects": [
+        [
+          0,
+          468,
+          1800,
+          4
+        ],
+        [
+          0,
+          472,
+          408,
+          20
+        ],
+        [
+          1436,
+          472,
+          364,
+          20
+        ]
+      ],
+      "allowed_pixel_count": 22640,
+      "purpose": "Continue the existing floor to y468 outside the preserved rug, replacing only the old lower wall/skirting strip. Original y492+ floor remains exact. This is paired with a completely new volumetric bed painter, not a floor move behind the old rectangle."
+    },
+    "total_source_allowance_pixels": 75800,
+    "preserve_exact": {
+      "all_pixels_outside_union": true,
+      "open_headboard_panel": true,
+      "rug_rect_native": [
+        408,
+        472,
+        1028,
+        116
+      ],
+      "NO_VACANCY_and_its_material": true,
+      "right_TV_cabinet_and_nightstand": true,
+      "all20_motion_PNGs": true,
+      "full_manifest_JSON": true,
+      "separate_global_index": true,
+      "no_counter_replay_added": true
+    },
+    "floor_material_join_gate": "The y468 floor transition, y492 existing-floor join and both rug-side joins must follow the actual floor material and its grain/perspective. No reflected/reversed grain band, obvious rectangular donor splice, invented step or automatic periodic fill is accepted by this design. Donor provenance or any artist companion must be reviewed separately before an executable patch exists.",
+    "source_module_facts": "The retained assembly targets are central backing [704,228,572,208], TV [1300,168,232,296] ending464, nightstand [1488,376,164,92] ending468 and flat rug [408,472,1028,116]. Starting the floor allowance at468 avoids preserving rectangular old-wall patches around these bases.",
+    "residual_material_uncertainty": "Current source fringe/shadow texels and the TV/nightstand-to-new-floor relationship still require actual pixel review. The mask is a maximum allowed change region, not a claim that every allowed pixel should change or that the full composition will pass."
+  },
+  "motion_and_other_live_paint": {
+    "immutable_motion_count": 20,
+    "default_low_detail_count": 20,
+    "manifest_changes": 0,
+    "motion_PNG_changes": 0,
+    "seven_blocks": "All seven rects [390+34i,160,20,16] remain y160..176. They lie in the open headboard panel, above the lower rail y192 and mattress far edge199. A mattress placed at the old y123 face would cover them; that rejected geometry is not this proposal.",
+    "source_strip": "bed_strip_pulse remains [372,130,242,6], inside the open panel. It is still the existing animated backing/headboard accent, with unchanged timing/phase/alpha/blend/still semantics.",
+    "remainder": "All four TV bands, vacancy-sign pulse and seven floor movers retain their existing source/timing/alpha/mover paths. Floor glints may be locally occluded by real legs at their crossings, but no scheduler, texture, path or low-detail motif is removed.",
+    "layer_order": "Retain actual object/source ordering and body/adorn streams. The Bed paints before the existing Storage Spot/Backpack in Base. Do not redraw/clone either prop over the bed as a workaround; future actual composites must verify the existing draw order and intended occlusion.",
+    "Backpack_overlap": "Backpack model [357.99997,220,92,64] lies over the new mattress/front-left region. Its later live paint must remain visible; it may physically occlude part of the left near leg. Fresh full populated review must decide whether both leg readability and the bag-on-floor relation remain credible. No zero-overlap claim is made.",
+    "Storage_Spot": "Model [262,220,92,64], label [267.2,203,81.600006,15] stay unchanged left of the bed. The label ends near348.8; the selected mattress guard begins348 but only low near the mattress, while the headboard begins352. Exact actual paint/outline clearance must be reviewed.",
+    "other_props": "Scratch Pad, Renew Stay and their selected titles remain untouched. No new hosted props, door, people, storage contents or baked interaction graphics.",
+    "travel_and_routes": "Actual Base has no person route to certify. Travel remains [8,340,64,72], entirely away from the proposed bed envelope. Do not reinterpret the right television cabinet as a doorway or claim later-route coverage.",
+    "right_clearance_native": "The permitted selected envelope ends x1280; the existing TV cabinet begins1300, leaving20 native pixels. This is a geometric proposal, not a tested door/route clearance result."
+  },
+  "intentionally_changed_previous_pixel_assertions": [
+    "The old live bed body hash5fc7a7c7..., its opaque bbox[742,247,1230,356] and alpha64/alpha1 extents are expected to change. They remain baseline evidence, not acceptance targets.",
+    "The old generic bed-shadow strip y378..383 and old upright selected rectangle must disappear from bed paint. New support-connected shadow and selection geometry replace them.",
+    "Motel populated/typed Bed, selected Sleep, normal/RM/low composite pixels and conservative occlusion metrics must be freshly measured. Old40/40 numerical visibility and historical exact populated-frame equality do not approve the new shapes.",
+    "Background hash/room package seal change only after an independently reviewed companion is actually made. Old strict whole-background identity assertions are replaced only by exact outside-mask/source-donor proof for this scoped prototype.",
+    "A positive bed-grounding assertion now checks real top/body/post/leg/contact geometry against the floor/rug, not the former feet-count or upright bounding box."
+  ],
+  "invariants_that_must_remain": [
+    "All six actual object IDs, native Vector2 positions/sizes, model/hit rectangles, fixed-slot geometry, source ordering, label rectangles/titles, selected-info actions and publication/model state remain exact.",
+    "The projection never writes scene_objects, RunState, placement overrides, slot scale, model size, camera transforms or saved games.",
+    "All20 motion PNGs/full JSON/index retain exact bytes; no new asset/import/UID, invented opaque replay, alpha boost, motion boost, frozen motif or frame-clock retiming.",
+    "Canvas processing, autonomous redraw scheduling and no-input behavior remain unchanged, including while placement overlays are open. Reduce Motion retains its actual semantics.",
+    "Non-bed prop painters/shadows/body/adorn bytes and routes are unchanged. No generic global shadow/rendering change.",
+    "Other rooms receive no approval from this prototype. House and Apartment require their own paint calibration and full populated review before the shared painter can be adopted globally."
+  ],
+  "next_bounded_review_and_future_checks": {
+    "now": "Root reviews this source-only geometry, fixed-target attachment, bed frame/mattress silhouette, motion survival and source mask before authorizing a code/art prototype.",
+    "future_if_authorized": [
+      "Build only the isolated Motel prototype and exact scoped background companion; no global rollout.",
+      "Use the actual native Rect2/Vector2 APIs, verify fixed target/model/label equality before/after drawing, and keep the other five live objects unchanged.",
+      "Inspect full populated actual1280 UI and native1800 board views at matched clocks in normal/RM and actual low-detail modes. Show source headboard, complete bed, rug/floor, other live items and selected Sleep together.",
+      "Check the four support/contact attachments, under-bed negative space, projected pillow/blanket/footboard, backdrop/floor material joins and Backpack/left-leg occlusion. Reject a wall-mounted panel, stage, shelf or detached shadow even if all numeric assertions pass.",
+      "Retain original no-pointer liveness/placement-animation checks. If any scheduling/performance code changes, the repository-mandated animation_liveness_without_pointer_check.gd becomes required; this proposal does not authorize such changes."
+    ],
+    "no_new_QA_framework": true,
+    "remaining_blockers": [
+      "No prototype source patch, source-floor donor recipe or new populated render exists.",
+      "Root must accept the headboard as the visibly attached fixed Sleep target while the mattress extends outside the existing hit rectangle; physical mattress clicks are not silently added.",
+      "Backpack overlap/leg readability and all material joins remain visually unproved.",
+      "House/Apartment calibration remains open and owner-held."
+    ]
+  },
+  "recorded_utc": "2026-11-16T17:53:41.9113978Z",
+  "write_scope": {
+    "only_new_design": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/motel_room_shared_bed_painter_design_20261116.json",
+    "absolute_absence_and_source_preflight": {
+      "destination": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/motel_room_shared_bed_painter_design_20261116.json",
+      "destination_absent": true,
+      "wrong_main_absent": true,
+      "ordinary_ancestors": [
+        {
+          "path": "D:\\Projects",
+          "ordinary_directory": true
+        },
+        {
+          "path": "D:\\Projects\\Beat-The-House",
+          "ordinary_directory": true
+        },
+        {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp",
+          "ordinary_directory": true
+        },
+        {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers",
+          "ordinary_directory": true
+        },
+        {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\docs",
+          "ordinary_directory": true
+        },
+        {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\docs\\testing",
+          "ordinary_directory": true
+        }
+      ],
+      "Motel_source_members_unchanged": 22,
+      "canvas_sha256": "c2ce2abee8827372d66fd6c9647a74e06f5db8fed520bbd812b8c7eb29f4af38",
+      "observed_utc": "2026-11-16T17:53:41.9113978Z"
+    },
+    "prior_reports_frozen": true,
+    "root_owns_ledger": true
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "schema": "bth.environment_spatial_owner_checkpoint/v1",
+  "recorded_at": "2026-11-16T17:58:01.070596+00:00",
+  "sidebar_task": "6afa5098-a83c-8191-9486-9c03c92ed02a",
+  "status": "ALL20_REOPENED_AFTER_OWNER_VISUAL_REJECTION",
+  "visually_accepted": 0,
+  "remaining": 20,
+  "historical_TEST_artifact_deliveries": 4,
+  "new_release_held": true,
+  "active_owned_engine_grants": 0,
+  "active_jobs_interrupted": false,
+  "next_trial": "Exactly one GBRR3 composition raw b7bdfde4 generated and preserved; materializer pre-execution test/source peer pending; no PNG/E candidate assembly yet.",
+  "parallel_trial": "Motel-only shared bed painter/backing source design903e, no production code change or global adoption.",
+  "evidence_references": {
+    "docs/testing/environment_spatial_owner_visual_rejection_20261116.json": "1058e66f635bee370818434d73001cbd766d72570345952fa63bb1e2b347e030",
+    "docs/testing/private_crew_owner_rejection_baseline_restoration_20261116.json": "bbb1ec3ac650a74b766ac4b363c378cd71044d86eb33c6735d03d79e0eb3114e",
+    "docs/testing/bar_grand_high_limit_owner_visual_reassessment_20261116.json": "2f9c223663837e50b675c0295ee31787892f5b22d7a13cec66b459b16f5fe4b4",
+    "docs/testing/hidden_delta_cage_owner_visual_reassessment_20261116.json": "11f26b8211c0aade930d57912252caa30b027c387fa3b5e443b85eaaf72640d4",
+    "docs/testing/kitty_jazz_pawn_owner_visual_reassessment_20261116.json": "94c59b1c0119701131944cd5b6447fd7c84f58cca760644ec642463ea78ffd36",
+    "docs/testing/home_rooms_owner_visual_reassessment_20261116.json": "3d30caed2da7c8d0fa57e58a561c9b02fb285afbf76f1372d9b01c224a9d4ca4",
+    "docs/testing/motel_alley_punchline_owner_visual_reassessment_20261116.json": "8a9d2b3fcb4e3cb97719eb17005d9e59acd7313a520397dbf5fa2f5732b743c1",
+    "docs/testing/gas_corner_beach_owner_visual_reassessment_20261116.json": "96b22b17f93d7a1a6778f9d0a5536b87345e35ceeb80b543997299595a0e3a06",
+    "docs/testing/grand_back_room_composition_preview_path_20261116.md": "5adfc6cfd63c40f91aa641f83b86083a150cd0321783a1a7a02ad885381dbd28",
+    "docs/testing/grand_back_room_replay_mask_trace_20261116.md": "29483ac4ff91271d8f235727191e93fe7c29881373a16abc764839a094d2ee67",
+    "docs/testing/motel_room_shared_bed_painter_design_20261116.json": "903e97f562a5d30bb2c394ad8dfb9dca82b8f782484dec3389d9ed54d1e90701"
+  },
+  "manual_reconciliation": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-SIDEBAR-20261116-source-reconcile30\\evidence\\reconciliation.json",
+    "job_pid": 39728,
+    "job_sha256": "d8610628269ec8b5caaf65874d434b332bfde6192e722e080e119897fed75082",
+    "report_sha256": "ff0bbaab4082db370c8d0a1d06e2e8c80add394db2d1e1fdbd85414bdddf32aa",
+    "exit_code": 1,
+    "active_at_release": 0,
+    "global_summary": {
+      "objectives_checked": 386,
+      "batches_checked": 100,
+      "open_objectives": 241,
+      "open_batches": 57,
+      "open_work_items": 298,
+      "user_paused_items": 36,
+      "complete_objectives": 143,
+      "errors": 751,
+      "warnings": 0,
+      "tasks_with_errors": 253
+    },
+    "spatial_findings": [],
+    "scope": "751 unrelated whole-ledger findings remain;0 spatial findings. This is not a global green check."
+  },
+  "pending": "New exact assembly and authentic populated preview before any renewed visual GO; preserve all prior technical evidence and failed runs.",
+  "limits": [
+    "No TEST/main/NEXT/stable/itch publication after owner rejection.",
+    "Private active-artwork BG restored to retained deployed baseline; rejected1939/f706 remains in candidate/Git unchanged.",
+    "Five retained preview Pages now state owner visual failure; all8 original image embeds preserved.",
+    "No saves, active profiles, globalprocess inspection, browser denial bypass, cleanup or extra engine slot.",
+    "Earlier wrong-main untracked-content incident remains unresolved awaiting human answer."
+  ]
+}

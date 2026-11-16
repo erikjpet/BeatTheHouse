@@ -1,0 +1,497 @@
+{
+  "schema": "bth.bar_grand_high_limit_owner_visual_reassessment/v1",
+  "date": "2026-11-16",
+  "owner": "/root/bar_clearance_audit",
+  "task_id": "BTH-ENV-SPATIAL-001-OWNER-COMPOSITION-REASSESSMENT",
+  "room_task_ids": [
+    "BTH-ENV-SPATIAL-BAR-001",
+    "BTH-ENV-SPATIAL-GRAND-001",
+    "BTH-ENV-SPATIAL-HL-001"
+  ],
+  "status": "THREE_COMPOSITION_FAILS_RECORDED_NO_EXECUTION_AUTHORIZED",
+  "scope": "Read-only reassessment of Bar, public Grand Casino and High Limit only, beginning with the published spatial repairs. One new D review JSON is the sole write.",
+  "owner_feedback_authority": {
+    "prior_art_GOs_superseded": true,
+    "owner_observation": "Bar legs vanish into floor/labels and its counter mass stays wall-flat. Broad felt planes on compressed supports at the wall/floor edge read as shelves/platforms. Evaluate floor depth, whole furniture height, perspective, negative space and contact shadows together.",
+    "previous_technical_receipts_preserved": true,
+    "previous_TEST_publications_preserved": true,
+    "previous_numeric_passes_reclassified_as_test_failures": false,
+    "no_room_visually_accepted_by_this_review": true
+  },
+  "method": {
+    "actual_images": "Personally viewed the listed unmodified full application populated PNGs, the listed populated1800x860 diagnostic production boards and the current Bar master. No art-only board2x image was used as evidence for actor clearance.",
+    "capture_review": "Viewed explicitly listed original full-app capture samples at their recorded scene clocks. No fresh rendering, animation encoding or APNG playback was performed.",
+    "coordinate_system": "Geometry descriptions are native1800x860 pixels unless noted. Full-app images are1280x720 and include UI/camera framing; apparent physical ratios are visual evidence, not real-world unit measurements.",
+    "source_identity": "Independently rehashed all19/22/21 logical PNG+roomJSON+separate global-index members and compared seals with the published delivery identities. Canonical .import sidecars are outside these established raw-art seal scopes.",
+    "served_limit": "The preserved HTTPS receipts bind delivered bytes, not browser-rendered visuals. All three recorded browser visual/gameplay acceptances are NOT_RUN. No served browser screenshot is asserted and no current TEST pointer/HTTP request was made.",
+    "no_helper_or_engine_execution": true,
+    "no_image_edits_or_generation": true,
+    "no_adapters_or_release": true,
+    "no_cleanup_or_moves": true
+  },
+  "reference_documents": [
+    {
+      "Path": "docs/testing/bar_spatial_test_delivery_20261116.json",
+      "SHA256": "09ea7bee4d75482455e5ad9996dada889fe476a9e0ba8abb35a0e3b8423e8bc3"
+    },
+    {
+      "Path": "docs/testing/bar_spatial_v4_native_checkpoint_20261116.json",
+      "SHA256": "3dc6330ae41a359dd6ef3f5b81ef620f5383341b3ab79c4de3c3b6aa91f3b91b"
+    },
+    {
+      "Path": "docs/testing/bar_spatial_v4_art_approval_20261116.json",
+      "SHA256": "a36d1aed3a4db4fe492d949bd9553d80706f8102b517449223d77f9a28e4292b"
+    },
+    {
+      "Path": "docs/testing/grand_spatial_test_delivery_20261116.json",
+      "SHA256": "10c90c55cf6883b35911d7d14819a3f150a88e0fa3e60e2fecd3c4044a39325b"
+    },
+    {
+      "Path": "docs/testing/grand_spatial_v4_art_approval_20261116.json",
+      "SHA256": "f326256b6fdf9139d667d738069415e54a66789da86b1bb863c91f46027c9930"
+    },
+    {
+      "Path": "docs/testing/high_limit_spatial_test_delivery_20261116.json",
+      "SHA256": "b4650bd3538419c0242b58429d1eb84da0a75abc239ff03f659ed8b1d1552261"
+    },
+    {
+      "Path": "docs/testing/high_limit_spatial_v1_native_art_approval_20261116.json",
+      "SHA256": "871b8e811a05b12b40da059732b0e6de94633143fa44ac0bc6cba16149ecea9b"
+    }
+  ],
+  "common_constraints": {
+    "preserve": [
+      "Every gameplay/model/hit/label/placement anchor, actor scale and camera",
+      "All existing animation PNGs, timing, phases, low-detail flags, Reduce Motion and autonomous scheduling",
+      "Original saves/profiles and all historical source/evidence",
+      "Actual room identity and existing fixed objects; no invented furniture or moved people"
+    ],
+    "failure_standard": "A count of opaque support pixels or zero actor intersections does not demonstrate plausible furniture height, room depth or contact. A complete full-room populated composition must read coherently at the actual1280x720 application scale.",
+    "approved_for_execution": false
+  },
+  "rooms": [
+    {
+      "environment_id": "bar",
+      "verdict": "VISUAL_FAIL_OWNER_COMPOSITION_REJECTION",
+      "repair_version": "Published spatial V4; native settled26/Fight capture and exported7b284648.",
+      "source": {
+        "art_commit": "6f430446ccc3f3217f5bc481dbbbc1c5ebee569c",
+        "export_commit": "7b284648642a896e534c8bfd53c8e7abbc55108d",
+        "export_tree": "f7d316a268984bfdd7fafef71d0971c9fff0956e",
+        "background_sha256": "a870d3652a72d3ebb5067fe9e46b412f3c2a5b938a40e4c3b2cf72e0be7a2408",
+        "manifest_sha256": "022aeb004597bdc8f1b9a82bbaa5c2ea98fb434f3a38a7c14947fedf0235d696",
+        "package": {
+          "Room": "bar",
+          "Count": 19,
+          "Seal": "e001ad4d76344f0bb2e0542a21fa3f4936656c8c2a63ace475a6294cb9ca723e",
+          "Files": {
+            "data/art/environments/bar.json": "022aeb004597bdc8f1b9a82bbaa5c2ea98fb434f3a38a7c14947fedf0235d696",
+            "assets/art/environments/bar/anim/high_smoke_0.png": "727cd5cebc02502f04b42dd6fd3642be18f588c65223d176783589fe36313825",
+            "assets/art/environments/bar/anim/high_smoke_1.png": "b7125a1b6db0e024e201e18c3ed9c759f5cbe482f3606160d8cc71b9873a8733",
+            "assets/art/environments/bar/anim/dive_sign.png": "8c82ead27b75b2a08c779db5ba333963e6953440cf409d3d757f959b6b7274a1",
+            "assets/art/environments/bar/anim/timber_reflection.png": "8a55664beb9f1b3f8a3c30c79f8a1aa9f1d7929fd19c83810aeda8d9522c2ed8",
+            "data/art/environments/index.json": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+            "assets/art/environments/bar/anim/floor_glint_1.png": "4ebb3f0fd68fee98491d16407244e8442398dfc931cf3aeb9a692d48b2199925",
+            "assets/art/environments/bar/anim/pool_ball_0.png": "f48b5633d19525d6cea237c55c866e33355245597ae823ba262079cad401fa80",
+            "assets/art/environments/bar/background.png": "a870d3652a72d3ebb5067fe9e46b412f3c2a5b938a40e4c3b2cf72e0be7a2408",
+            "assets/art/environments/bar/counters/bar_main_counter.png": "200ff6c98adea5639b2554f12557ff87fd52021644ba1f7157e9c77fe73eda3f",
+            "assets/art/environments/bar/anim/floor_glint_5.png": "5f8eb0ca001a59a0190763483548fa4b95f9e6d7ceb769ea81ad4a9cffd2f0fd",
+            "assets/art/environments/bar/anim/cold_beer_sign.png": "82e0744d3494c5981e793ee704773ae2b2662a45e7600bb8452bb517652e8c20",
+            "assets/art/environments/bar/anim/floor_glint_2.png": "8cc559507bef8f371a3113e7da09008fc64a25d15562748a558029c078540163",
+            "assets/art/environments/bar/anim/floor_glint_3.png": "8547d1531f117941aa1086a666399f09d3c8f47859fabadbdd20e405ae0e5e18",
+            "assets/art/environments/bar/anim/warm_glint.png": "f53471c3653a5822eec093400c6834f935de9a9e516cda18acfecc111548e565",
+            "assets/art/environments/bar/anim/pool_ball_1.png": "8b249c5fb2bd7ad0d347573ab8e6cee8d38f4776af3db425a7e6890e61a0f098",
+            "assets/art/environments/bar/anim/floor_glint_6.png": "c0d147f35b9f3f687ae3c81a9b15abc9538420664b573ddb5839e7736adfe950",
+            "assets/art/environments/bar/anim/floor_glint_4.png": "93d57144a6fda4f92463208f01bc984de04462c40b52467a120b99306d951736",
+            "assets/art/environments/bar/anim/floor_glint_0.png": "3f1932fa38df27385553d892be4a4dfc0e174eb7a8fce69755cac608477bb80b"
+          }
+        },
+        "animation_entries": 17,
+        "prior_approval_superseded": "docs/testing/bar_spatial_v4_art_approval_20261116.json",
+        "historical_served_receipt": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-BARBUILD2-20261116-v4-served/evidence/served.json",
+          "sha256": "b036b1418b2c63c725f97c3bfb962b4f2575d7ea21009db89aab831231b70e4d"
+        },
+        "immutable_TEST_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/7b284648642a896e534c8bfd53c8e7abbc55108d/index.html",
+        "browser_visual_acceptance": "NOT_RUN"
+      },
+      "actual_populated_images_viewed": [
+        {
+          "Path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-BARTRIAL-20261116-v4-settled26/evidence/__none_actual_play.png",
+          "Bytes": 850035,
+          "SHA256": "9c262d62917109b31c566ddaa15a7b8a1d61a2208b5ef3cb334fe4518540a95e"
+        },
+        {
+          "Path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-BARTRIAL-20261116-v4-settled26/evidence/bar_fight_night_actual_play.png",
+          "Bytes": 833366,
+          "SHA256": "96e4f3fb118c1d33038f35d9e596cd51a235dc6c8fad8fa44ba4763acbadf384"
+        },
+        {
+          "Path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-BARTRIAL-20261116-v4-suite-capture/evidence/capture/frame_119.png",
+          "Bytes": 834026,
+          "SHA256": "84d54ccf0ab13e123a49b1950fdcaa0e739409618e7862e9606fa2a3a0b7288f"
+        }
+      ],
+      "capture_metadata": {
+        "Room": "bar",
+        "Path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-BARTRIAL-20261116-v4-suite-capture/evidence/capture/animation_capture.json",
+        "SHA256": "ec3f96e7c3883676e31e32c8406f71f2fd5a13adc922c6104cc524bdeaec28b9",
+        "Scenario": "bar_fight_night",
+        "Frames": 152,
+        "ClockStart": 12.4333333333333,
+        "ClockEnd": 32.5525826666666,
+        "ClockSpan": 20.1192493333333,
+        "ViewedIndex": 119,
+        "ViewedFile": "frame_119.png",
+        "ViewedClock": 28.2918026666666
+      },
+      "concrete_failures": [
+        {
+          "subject": "Pool-table height and floor depth",
+          "observation": "The broad green surface is clearly visible, but the rail/apron assembly dominates and the legs are squat. The wall/floor boundary runs immediately behind the near part of the table; this reads as a low platform against the wall rather than a full pool table standing within floor depth.",
+          "native_witness": {
+            "wall_floor_first_row": 488,
+            "far_rail_approx_y": 376,
+            "near_rail_approx_y": 504,
+            "underside_approx_y": 542,
+            "foot_bottom_exclusive": 588
+          },
+          "interpretation": "The approximate46px drop below the apron is much shorter than the roughly128px projected tabletop depth. These numbers explain the visual imbalance in the whole room; their ratio is not an automatic acceptance rule."
+        },
+        {
+          "subject": "Feet, labels and contact shadows",
+          "observation": "Base shows the small dark feet against similarly dark wood. In Fight Night, Left-side brawler and Right-side brawler labels occupy the same horizontal band, reducing the already weak support silhouette. Existing local black foot/shadow pixels are present, but they do not provide a readable full-height load path at application scale.",
+          "not_claimed": "This is not a claim that support alpha is zero or that every label glyph technically intersects a foot."
+        },
+        {
+          "subject": "Main bar counter mass",
+          "observation": "The front remains a long nearly frontal wooden wall panel under a thin bright ledge. Its painted body ends around468 while floor begins488, leaving a wall strip below it. The stools ground themselves more convincingly than the counter. Strong side/top depth and a cabinet body reaching a credible floor contact are missing.",
+          "native_witness": {
+            "top_approx_y": 356,
+            "painted_front_bottom_exclusive": 468,
+            "floor_y": 488,
+            "replay_native_xywh": [
+              76,
+              356,
+              1096,
+              112
+            ]
+          }
+        }
+      ],
+      "uncertainties": [
+        "Only Base, Fight and one later autonomous Fight full-app frame were viewed for this reassessment; all58 sequence cases were not visually re-reviewed.",
+        "The current bench starts around604native and Fight actors occupy the lower-right floor. Deeper legs cannot be specified responsibly without their actual silhouettes, perspective order and contact shadows in the same composite.",
+        "The present counter replay rectangle and unchanged floor-glint layers may be inadequate for a taller cabinet/body. No new replay bounds, layer change, motion suppression or actor shift is authorized by this review.",
+        "Browser composition remains unobserved; exact served bytes do not remove that limit."
+      ],
+      "one_bounded_composition_correction": {
+        "name": "Recompose the existing lower Bar as one floor/counter/pool-table assembly",
+        "proposed_study_window_native_xywh": [
+          0,
+          340,
+          1800,
+          344
+        ],
+        "window_is_not_blanket_edit_permission": true,
+        "direction": "Keep the existing pool ball paths and Numbers contact on the same supported green plane, but establish floor behind the furniture and a visibly taller continuous apron-to-leg-to-foot mass. In the same composition, give the existing bar a readable top/side and a full cabinet body that reaches that floor. Retain the existing stools and bench as foreground scale/contact references; mask their actual silhouettes instead of shortening new supports to avoid them.",
+        "reopen_prior_art_limits": "The old native588 foot cap and112px counter-front crop must not be treated as proof of credible physical height. If a coherent body needs a broader visual mask or replay treatment, root must approve that exact scope after reviewing the whole populated composition.",
+        "protected_upper_content": "Mirror, signage, dartboard and practical fixture identities remain; no room redesign or new furniture.",
+        "exact_new_horizon_and_foot_coordinates": "UNDECIDED_PENDING_FULL_POPULATED_COMPOSITION_STUDY",
+        "acceptance_required": "At the ordinary application scale, Base and Fight must show an unbroken load path, intentional floor negative space, readable labels and body/contact shadows belonging to the same floor plane. Then cover the original remaining contexts/motion; numerical clearance alone cannot qualify.",
+        "execution_approved": false
+      }
+    },
+    {
+      "environment_id": "grand_casino",
+      "verdict": "VISUAL_FAIL_OWNER_COMPOSITION_REJECTION",
+      "repair_version": "Published V4/V4B public Grand package; native24b8e34b, export25cc8b27.",
+      "source": {
+        "native_commit": "24b8e34bb228335eb17db403757b9ce6f21c7151",
+        "native_tree": "3ab6b78b6cb04b0d6553ec5dd8e55f6bb53c5505",
+        "export_commit": "25cc8b279d35c5ec00d836db150354b77790e825",
+        "export_tree": "1cbbe22e7ff650f331ae79534b7cef97b0b88823",
+        "background_sha256": "5408ef84bc3d8aec92b0814a8bf446210091f4d6b513be9ba8fff5a64565e9ae",
+        "manifest_sha256": "2038f2818cc87a7adbc8ca363caf02ac147f2d84c2122a9e925041ae53bcfe41",
+        "package": {
+          "Room": "grand_casino",
+          "Count": 22,
+          "Seal": "563ef08fec04e980c9cb2e215b2801f3612a22dd8f8250ba6247293c12f069d4",
+          "Files": {
+            "assets/art/environments/grand_casino/anim/casino_light_2.png": "01214d5dbb6d930d9e18d2a3d64971c638bc7b99d60104513a9d8a634102baaa",
+            "assets/art/environments/grand_casino/anim/floor_glint_5.png": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+            "assets/art/environments/grand_casino/background.png": "5408ef84bc3d8aec92b0814a8bf446210091f4d6b513be9ba8fff5a64565e9ae",
+            "assets/art/environments/grand_casino/anim/casino_light_1.png": "95ab08b7a77551ba39dcaf92e19bd84076408cee2d194b86cd4be769f530090f",
+            "assets/art/environments/grand_casino/anim/floor_glint_0.png": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+            "assets/art/environments/grand_casino/anim/floor_glint_1.png": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+            "assets/art/environments/grand_casino/anim/floor_glint_6.png": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+            "data/art/environments/index.json": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+            "assets/art/environments/grand_casino/anim/casino_light_0.png": "0fac3ccc158a14a64b034e55acbb242436e145bf47bc822b8b7ba41aca239595",
+            "assets/art/environments/grand_casino/anim/casino_light_4.png": "49a5df698a902129b82acbbcdb6770e948b707216c39eaff329c79610954bb5d",
+            "assets/art/environments/grand_casino/counters/grand_table_left.png": "953a85b9e9f245f4ab51ce56591516563c045198f5a2adf99b955f562cbe7b2e",
+            "assets/art/environments/grand_casino/anim/casino_sparkle_2.png": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+            "assets/art/environments/grand_casino/counters/grand_table_right.png": "b43a09a913a6699c63c48b2a221533a3b69f51a9b34610d23b9ba50c9cbf2665",
+            "assets/art/environments/grand_casino/anim/floor_glint_4.png": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+            "assets/art/environments/grand_casino/anim/casino_sparkle_1.png": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+            "assets/art/environments/grand_casino/anim/casino_sign_pulse.png": "5ff497464eade3eedceec730833dcff8476ea5e1d78405daf4bd1cf8695353c8",
+            "assets/art/environments/grand_casino/anim/casino_light_3.png": "bbd358040694ce938af2d25e40ef796612c5e10d9369a812a963287cfcd89b38",
+            "assets/art/environments/grand_casino/anim/casino_sparkle_0.png": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+            "data/art/environments/grand_casino.json": "2038f2818cc87a7adbc8ca363caf02ac147f2d84c2122a9e925041ae53bcfe41",
+            "assets/art/environments/grand_casino/anim/floor_glint_3.png": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+            "assets/art/environments/grand_casino/counters/grand_host_station.png": "9c91ded4ea1c15e2d43b3fd7073c24c1868ff96aeb80f7299e47525d11e24ba6",
+            "assets/art/environments/grand_casino/anim/floor_glint_2.png": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b"
+          }
+        },
+        "animation_entries": 16,
+        "existing_simulated_low_detail_entries": 7,
+        "prior_approval_superseded": "docs/testing/grand_spatial_v4_art_approval_20261116.json",
+        "historical_served_receipt": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GRANDBUILD-20261116-v4-served/evidence/served.json",
+          "sha256": "7a0a0728646dc0712399d947ba726625973c43bf77c5827d57614ddd13b0878d"
+        },
+        "immutable_TEST_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/25cc8b279d35c5ec00d836db150354b77790e825/index.html",
+        "browser_visual_acceptance": "NOT_RUN"
+      },
+      "actual_populated_images_viewed": [
+        {
+          "Path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GRANDNATIVE-20261116-v4b-contexts/evidence/__none_actual_play.png",
+          "Bytes": 765122,
+          "SHA256": "602a72215f046de5133d25e59d7aca3c77317baaeba0812c127f299b79ce2947"
+        },
+        {
+          "Path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GRANDNATIVE-20261116-v4b-contexts/evidence/grand_casino_gala_night_actual_play.png",
+          "Bytes": 743668,
+          "SHA256": "1fc248eb6574487eb5abe5a875a850798d7112198d712bd6a0a8c57f804fc39d"
+        },
+        {
+          "Path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GRANDNATIVE-20261116-v4b-contexts/evidence/grand_casino_audit_night_actual_play.png",
+          "Bytes": 746179,
+          "SHA256": "ce1ff1f56c18193e2cbe233d60f4afe5ba6b080c9ed6b7653be57457c5f27869"
+        },
+        {
+          "Path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GRANDNATIVE-20261116-v4b-contexts/evidence/__none_production_board_1800x860.png",
+          "Bytes": 861378,
+          "SHA256": "e4429aeba24fddabb8fb8d5aec9645a89f04a2a769b9986df2fd62d9266ec17f"
+        },
+        {
+          "Path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GRANDNATIVE-20261116-v4b-capture-grand_casino_gala_night/evidence/capture/frame_138.png",
+          "Bytes": 743098,
+          "SHA256": "036395d7ab7487e8fa8e3f3fa91d1727bfbcd985a3950870f9ebc9a3fcc693a4"
+        }
+      ],
+      "capture_metadata": {
+        "Room": "grand_casino",
+        "Path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GRANDNATIVE-20261116-v4b-capture-grand_casino_gala_night/evidence/capture/animation_capture.json",
+        "SHA256": "3dde0c6269c192dbfb6c69945964c2cb9f4722eb64a4e74e4f55efb7425864c0",
+        "Scenario": "grand_casino_gala_night",
+        "Frames": 151,
+        "ClockStart": 12.464542,
+        "ClockEnd": 32.4678433333333,
+        "ClockSpan": 20.0033013333333,
+        "ViewedIndex": 138,
+        "ViewedFile": "frame_138.png",
+        "ViewedClock": 30.8665353333333
+      },
+      "concrete_failures": [
+        {
+          "subject": "Broad tops at the horizon",
+          "observation": "The two wide trapezoids are placed directly across the wall/floor transition. Their perspective identifies a top, but the whole table silhouette still reads as a wall-edge shelf or shallow platform. The floor does not establish enough visible depth behind and beneath the mass.",
+          "native_witness": {
+            "wall_floor_first_row": 492,
+            "far_top_y": 412,
+            "near_contact_y": 516,
+            "table_width": 544,
+            "projected_top_depth": 104
+          }
+        },
+        {
+          "subject": "Compressed central support and body scale",
+          "observation": "Apron and pedestal were fitted into the72px strip below516, with only about52px below the apron. The pedestal is technically connected, but at full-room scale it becomes a small peg under a very wide plane. The negative floor gap is not sufficient evidence of a full-height casino table.",
+          "native_witness": {
+            "apron_y_half_open": [
+              516,
+              536
+            ],
+            "support_y_half_open": [
+              536,
+              588
+            ],
+            "prior_replay_native_xywh_left": [
+              164,
+              516,
+              544,
+              72
+            ],
+            "prior_replay_native_xywh_right": [
+              1092,
+              516,
+              544,
+              72
+            ]
+          }
+        },
+        {
+          "subject": "Scale and shadows with Rourke and the host area",
+          "observation": "In Base and Audit, Rourke stands over the left front edge; Gala moves that comparison to the other side of the left table. The shallow table drop looks low relative to the standing figure. The floor strip/inlay and foreground host desk add horizontal bands, reinforcing a stacked-stage reading. Existing small support/contact shadows do not unify these bands into a credible room-depth composition.",
+          "not_claimed": "No new actor-mask collision, floating-neck gap or missing source alpha is asserted; those were separate earlier concerns."
+        }
+      ],
+      "uncertainties": [
+        "Base, Gala and Audit were viewed; Convention is preserved but was not newly visually re-reviewed in this reassessment.",
+        "Changing legs alone will not fix the relationship between the fixed game paint, table edge, standing Rourke and floor horizon. The fixed516 contact and actual cloth/card paint constrain a revised top; do not move or shrink gameplay to make an illustration fit.",
+        "A taller body may extend beyond the old588 limit and overlap the global604inlay or foreground host zone. Any occlusion must follow an actual furniture silhouette; erasing the floor stripe as a blanket shadow fix is invalid.",
+        "Native and export commits differ. Their recorded source bridge is retained; this review does not make a new Git ancestry or browser-rendering claim."
+      ],
+      "one_bounded_composition_correction": {
+        "name": "Re-establish two full-height tables within a single lower-room floor composition",
+        "proposed_study_window_native_xywh": [
+          0,
+          360,
+          1800,
+          276
+        ],
+        "window_is_not_blanket_edit_permission": true,
+        "direction": "Preserve all Craps/Blackjack paint, Rourke positions, routes, labels and the existing host station. Re-plan the floor setback, tabletop perspective, apron/body depth, substantial supports and local contact shadows together so the tables stand within the floor rather than along its boundary. Use the populated Rourke/host silhouettes as scale and depth references before fitting source pixels.",
+        "reopen_prior_art_limits": "The fixed72px replay strips and588 maximum body depth are implementation history, not a physical-height acceptance target. Review an exact expanded body/occlusion mask if required; preserve every global floor/inlay texel outside the actual new furniture silhouette and recrop any retained foreground from the identical final master.",
+        "exact_new_horizon_and_foot_coordinates": "UNDECIDED_PENDING_BASE_GALA_AUDIT_AND_CONVENTION_COMPOSITION_REVIEW",
+        "acceptance_required": "A coherent complete table must read at1280x720 under every populated placement, with substantial height, contact and negative space. No pasted full-width plinth, disconnected sticks, label-sized color patch, fake floor rectangle or count-only support approval.",
+        "execution_approved": false
+      }
+    },
+    {
+      "environment_id": "grand_casino_high_limit",
+      "verdict": "VISUAL_FAIL_OWNER_COMPOSITION_REJECTION",
+      "repair_version": "Published High Limit spatial V1; nativea9c02a95, exportb35412ac.",
+      "source": {
+        "native_commit": "a9c02a9557abfd644b27f36be392d354fc70c6ef",
+        "native_tree": "edcf685c282567daa2bb82a6ba49d818e5950ed6",
+        "export_commit": "b35412ac003983e2bdce620ec9fd75f4810078cd",
+        "export_tree": "1e9e7c8e8ad2e4fa9543163bfd4d5b5d64294e0d",
+        "background_sha256": "25242d74d442bc99b183845c75b5714983db081100b4020780645976e7f7fb50",
+        "manifest_sha256": "d8e8eb4ca4982d2b87c402c8877a6c463b279f3d127c31bfae96be4b5b29c3d0",
+        "package": {
+          "Room": "grand_casino_high_limit",
+          "Count": 21,
+          "Seal": "481e858ee3c484b06ba6df935983c29979a188e7e59ff5f44eaf22ecdbe020e4",
+          "Files": {
+            "assets/art/environments/grand_casino_high_limit/counters/grand_table_right.png": "bf33dc30e834da33afb18efe481d36baa80ab9b3774d4e7ecc3d31908a88e80a",
+            "assets/art/environments/grand_casino_high_limit/background.png": "25242d74d442bc99b183845c75b5714983db081100b4020780645976e7f7fb50",
+            "assets/art/environments/grand_casino_high_limit/anim/floor_glint_2.png": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+            "data/art/environments/grand_casino_high_limit.json": "d8e8eb4ca4982d2b87c402c8877a6c463b279f3d127c31bfae96be4b5b29c3d0",
+            "assets/art/environments/grand_casino_high_limit/anim/casino_light_1.png": "c4869428e27196ff62d62d49836aec39857370635788e71fa0f08b3fac24ca04",
+            "assets/art/environments/grand_casino_high_limit/anim/floor_glint_0.png": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+            "assets/art/environments/grand_casino_high_limit/anim/casino_light_0.png": "473613f75ffc3efa6152515b258b88026e2595429f88ca09074b6d97d78e1d4c",
+            "assets/art/environments/grand_casino_high_limit/anim/floor_glint_6.png": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+            "assets/art/environments/grand_casino_high_limit/anim/casino_sparkle_2.png": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+            "assets/art/environments/grand_casino_high_limit/anim/casino_sparkle_0.png": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+            "assets/art/environments/grand_casino_high_limit/anim/casino_light_4.png": "689dd52474cd3dfd2df6518a0de2b6253083fdfe26548e25e096ec33141167d3",
+            "assets/art/environments/grand_casino_high_limit/anim/floor_glint_1.png": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+            "assets/art/environments/grand_casino_high_limit/anim/floor_glint_3.png": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+            "assets/art/environments/grand_casino_high_limit/anim/floor_glint_4.png": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+            "assets/art/environments/grand_casino_high_limit/counters/grand_table_left.png": "0735c552b27d382c9a2b5c8992dae675bf9a5b3bd7ca867dfbc04f1e49213f37",
+            "data/art/environments/index.json": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+            "assets/art/environments/grand_casino_high_limit/anim/casino_light_3.png": "eae4a508f749b470a2d68ee535bbe0799a0f48ed84b202e5acc78bf129ad9cfb",
+            "assets/art/environments/grand_casino_high_limit/anim/floor_glint_5.png": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+            "assets/art/environments/grand_casino_high_limit/anim/casino_sign_pulse.png": "6136ec81f0addd0cc0afd4a82d4dfc405182e9a58ed62d982b3062912981ce71",
+            "assets/art/environments/grand_casino_high_limit/anim/casino_sparkle_1.png": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+            "assets/art/environments/grand_casino_high_limit/anim/casino_light_2.png": "2e7f18a18374dd1e7f66f033f9c225b866c0a1a61c10f609cc08f7f0e86c9946"
+          }
+        },
+        "animation_entries": 16,
+        "existing_simulated_low_detail_entries": 7,
+        "prior_approval_superseded": "docs/testing/high_limit_spatial_v1_native_art_approval_20261116.json",
+        "historical_served_receipt": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLBUILD2-20261116-v2-served/evidence/served.json",
+          "sha256": "fab304ee748827a6bbec53b989284bb9df586fadbaa58e054f43b01d98610ce8"
+        },
+        "immutable_TEST_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/b35412ac003983e2bdce620ec9fd75f4810078cd/index.html",
+        "browser_visual_acceptance": "NOT_RUN"
+      },
+      "actual_populated_images_viewed": [
+        {
+          "Path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-contexts/evidence/__none_actual_play.png",
+          "Bytes": 889791,
+          "SHA256": "83e28ce008844a6b7811b64cfafc0eebdbb83ec891dd010e50bdcc40c3735752"
+        },
+        {
+          "Path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-contexts/evidence/__none_production_board_1800x860.png",
+          "Bytes": 951278,
+          "SHA256": "44e4d08dfe38bdfc1bb385dc5f502c3b59ad847eac352397251a3ae35a175306"
+        },
+        {
+          "Path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-capture/evidence/capture/frame_119.png",
+          "Bytes": 890024,
+          "SHA256": "2dc4a29d64cb00c49c4bcbb9c0932b9258181e946edc9a3af58613256c878678"
+        }
+      ],
+      "capture_metadata": {
+        "Room": "grand_casino_high_limit",
+        "Path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLNATIVE-20261116-v4-capture/evidence/capture/animation_capture.json",
+        "SHA256": "81dd282b813f2f6b4e8882c129a86c4bd55580c3683cda024cf165e2fd4b25b6",
+        "Scenario": "__none",
+        "Frames": 152,
+        "ClockStart": 11.7990933333333,
+        "ClockEnd": 31.9166666666666,
+        "ClockSpan": 20.1175733333333,
+        "ViewedIndex": 119,
+        "ViewedFile": "frame_119.png",
+        "ViewedClock": 27.6630613333333
+      },
+      "concrete_failures": [
+        {
+          "subject": "Room depth and table height",
+          "observation": "A large uninterrupted wall field ends at the same band as the near tabletop. Both green planes are broad; below their thin fronts are short straight posts. The whole arrangement reads as low platforms against the wall, even though each pair of posts has a complete pixel silhouette.",
+          "native_witness": {
+            "wall_floor_first_row": 492,
+            "far_top_y": 412,
+            "near_contact_y": 516,
+            "apron_bottom_approx_y": 536,
+            "complete_support_bottom_exclusive": 588,
+            "table_width": 544
+          }
+        },
+        {
+          "subject": "Body, negative space and contact shadow",
+          "observation": "The dark support gap is visible, but is shallow relative to the top and floor width. Darkening the legs successfully avoided the old bright-cap label issue; it did not establish enough height or table mass. Thin local contact shadows blend with the dark floor, while the strong horizontal inlay below reinforces the platform reading."
+        },
+        {
+          "subject": "Actual games and foreground scale",
+          "observation": "The actual Blackjack/Baccarat paint occupies most of the left top and Roulette occupies the right. The independent center Craps paint and the foreground VIP unit/people show that there is floor depth available, but the background tables are compressed into a shallower vertical zone. These components have not been reconciled into a single convincing perspective.",
+          "not_claimed": "The current material audit does not authorize adding a third background table under the live center Craps painter or moving any game/actor."
+        }
+      ],
+      "uncertainties": [
+        "High Limit Base only was newly viewed, plus one later full-app autonomous frame. This does not establish all actions, interactions or full animation-cycle composition.",
+        "The foreground Vega/Kite figures are at different floor depths; their screen height alone cannot define a universal table-height ratio. The FAIL is the combined visual reading, not a numerical height rule.",
+        "The untouched floor inlay at602/603 and lower VIP silhouette constrain deeper supports. Their exact occlusion and the unchanged glints/replay must be reviewed before selecting any new body extent.",
+        "Existing lamp/sign alpha repairs and reanchors are preserved. They cannot be repurposed to hide the floor/body problem."
+      ],
+      "one_bounded_composition_correction": {
+        "name": "Give the two existing High Limit tables credible mass on a recessed floor plane",
+        "proposed_study_window_native_xywh": [
+          0,
+          360,
+          1800,
+          276
+        ],
+        "window_is_not_blanket_edit_permission": true,
+        "direction": "Keep the upper room, all9 Base object anchors, existing game paint and all16 motions. Within the lower-room study, establish a floor behind the tables and a coherent tabletop/body/support/contact-shadow system with a visibly greater vertical load path than the current short posts. Evaluate the two tables, independent center game paint, VIP desk and standing people as one full-room composition.",
+        "reopen_prior_art_limits": "Do not mechanically compress every support into536..588 to preserve the earlier assembly recipe. If a full-height body needs a larger art/replay extent, root must first review that exact mask and its interaction with the602/603inlay, foreground unit and unchanged floor motion. No blanket inlay erasure or added third table.",
+        "exact_new_horizon_and_foot_coordinates": "UNDECIDED_PENDING_FULL_BASE_NORMAL_SELECTED_AND_MOTION_COMPOSITION_REVIEW",
+        "acceptance_required": "At normal application scale, floor depth, height, substantial support, open negative space and shadows must agree under the fixed game/actor paint. Preserve Baccarat/BAC OPEN and other labels without alpha holes or geometry shifts.",
+        "execution_approved": false
+      }
+    }
+  ],
+  "preservation_and_next_action": {
+    "source_bytes_changed": false,
+    "source_artifacts_deleted_or_moved": false,
+    "new_generation_or_candidate_created": false,
+    "engine_or_QA_job_launched": false,
+    "adapters_created_or_run": false,
+    "TEST_or_other_lane_changed": false,
+    "ledger_owner": "Root; this bounded document does not reconcile or close the parent/all20 objective.",
+    "next_action": "Root consolidates this owner FAIL with the disjoint room reviews and approves a renewed full-populated composition direction before any trial execution.",
+    "current_blocker": "The three published repairs do not satisfy the owner's whole-room physical composition requirement. Exact revised horizon/body/foot/shadow masks are not yet approved; browser-rendered visuals remain unobserved."
+  }
+}

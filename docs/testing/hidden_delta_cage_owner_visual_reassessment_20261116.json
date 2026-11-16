@@ -1,0 +1,631 @@
+{
+  "schema": "bth.hidden_delta_cage_owner_visual_reassessment/v1",
+  "task_ids": [
+    "BTH-ENV-SPATIAL-HIDDEN-001",
+    "BTH-ENV-SPATIAL-DELTA-001",
+    "BTH-ENV-SPATIAL-CAGE-001"
+  ],
+  "reviewed_on": "2026-11-16",
+  "reviewer": "/root/high_limit_source_trial",
+  "status": "OWNER_VISUAL_REJECTION_REASSESSMENT_FAILURES_AND_UNCERTAINTIES",
+  "authority": "Owner rejection overrides earlier art approvals. Completed native/static/clearance checks remain technical evidence and do not establish owner visual acceptance.",
+  "scope": [
+    "small_underground_casino",
+    "delta_queen",
+    "grand_casino_cage"
+  ],
+  "method": {
+    "actual_full_room_populated_frames_viewed": 10,
+    "viewed_native_full_app_dimensions": [
+      1280,
+      720
+    ],
+    "frame_scope": "Whole populated app/room images were inspected directly with view_image; no support crop, resized crop, generated overlay or isolated source silhouette was used as the visual verdict.",
+    "version_scope": "Current retained art and latest available candidate populated views are distinguished below. Historical flat captures are comparison-only. Hashes identify the exact viewed frames; they are not visual quality evidence.",
+    "screen_regions_are_approximate": "Any screen-space locations below only locate visible issues in the cited1280x720 frames; they are not proposed new gameplay coordinates or assembly masks."
+  },
+  "visual_acceptance": false,
+  "art_integration_authorized": false,
+  "engine_grant": false,
+  "technical_evidence": {
+    "hidden_completion": "Completed30 observations/29 nominal slots remain valid native technical evidence only.",
+    "hidden_summary_path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HIDCOMPLETE-20261116-v2-completion-summary/evidence/worker-result.json",
+    "hidden_summary_sha256": "6856112b43535c22b234f4c5644a1b8e72d41786e983b2e694a3a7cc9d72375e",
+    "hidden_runtime_source_commit": "8727e4481fd1ca2babe8c803c76d5e210f245f44",
+    "hidden_runtime_identity_sha256": "a8be9f3ecd7916e0135df6fb6a2729890807389eee634fd445b57d1922d1f12c",
+    "hidden_old_v4_failed_supervisor_preserved": true,
+    "technical_counts_are_not_owner_acceptance": true
+  },
+  "rooms": [
+    {
+      "room": "small_underground_casino",
+      "display_name": "Hidden Casino",
+      "visual_gate": "NOT_ACCEPTED_COMPOSITION_REQUIRES_REWORK",
+      "current_art": {
+        "background_sha256": "884b50866cd064e6a04ca3f49f8fae3da5d996d92779eca533a1d743492efb87",
+        "version": "Retained Hidden R2/current D original; upright framed green wall panels",
+        "populated_frame_ids": [
+          "hidden-original"
+        ]
+      },
+      "candidate_art": {
+        "package_sha256": "508b106419ef299aad27d92f4d54c5c4d1f7e6cf353dff546848ed290a273509",
+        "background_sha256": "ab8460c410c07e1ad13ed6bd8ea10db091ff2e3528861f15c06543d2e6199060",
+        "version": "hidden-spatial-r1-assembled-v1, populated in native V4 source8727; unchanged through technical completion V2",
+        "populated_frame_ids": [
+          "hidden-candidate-base",
+          "hidden-candidate-highstakes"
+        ]
+      },
+      "findings": [
+        {
+          "id": "HIDDEN-COMPOSITION-01",
+          "kind": "VISIBLE_FAILURE",
+          "frames": [
+            "hidden-candidate-base",
+            "hidden-candidate-highstakes"
+          ],
+          "region": "Both large felt surfaces across the middle of the full room; left roughlyx180..495/y345..486, rightx624..1010/y340..488.",
+          "observation": "The candidate turns the original green wall panels into large steeply sloped felt quadrilaterals, but almost all visible furniture height is still occupied by the felt surface. The apron and short narrow supports form a shallow strip beneath it. In the full room the objects read as tilted panels or low platforms rather than full-height freestanding gaming tables.",
+          "comparison": "Original upright panels are visibly wrong as tables. Adding visible pegs in the candidate improves the silhouette without resolving the whole-room physical reading."
+        },
+        {
+          "id": "HIDDEN-COMPOSITION-02",
+          "kind": "VISIBLE_FAILURE",
+          "frames": [
+            "hidden-candidate-base"
+          ],
+          "region": "The feet and wall/floor seam aroundscreeny470..487.",
+          "observation": "The feet terminate immediately beside the back wall/floor seam. There is little readable floor extending behind and under the furniture, and no distinct contact-shadow footprint separates each table body from the wall. This reinforces wall attachment even where supports can be counted."
+        },
+        {
+          "id": "HIDDEN-COMPOSITION-03",
+          "kind": "VISIBLE_FAILURE",
+          "frames": [
+            "hidden-candidate-highstakes"
+          ],
+          "region": "Private Table/Vic Mercer and the two high-stakes guards in front of the right felt plane.",
+          "observation": "The unchanged populated actors provide the scale reference: the large rear surface rises behind them like a slanted board, while the table underbody is compressed behind their lower silhouettes. Their presence makes the plane/body imbalance clearer than an isolated empty-table image."
+        }
+      ],
+      "uncertainties": [
+        "The exact body/label occlusion constraints are technically recorded, but a count of contact-clear pixels cannot determine a believable furniture height or room perspective.",
+        "Only the cited Base and high-stakes full-room frames are visually reassessed here; technical31-entry motion proof and30-observation completion are preserved without extending them into a visual pass."
+      ],
+      "next_bounded_composition_correction": {
+        "status": "PROPOSAL_ONLY_NO_EDITS_OR_GENERATION",
+        "scope": "Both existing table modules together with the immediately adjoining back-wall/floor bay; preserve the existing camera, game graphics, labels, actors and interaction positions.",
+        "direction": "Re-establish the tabletop planes around the fixed painted game-contact footprints with a shallower visible top depth. Allocate a substantial, coherent underbody below each near edge, and show its base/feet contacting a continuous floor plane forward of the wall seam. Give the rear and side edges readable separation and cast/contact shadows. Judge the pair beside the unchanged actors in the complete room before tracing any replacement mask.",
+        "guardrail": "Existing narrow module bounds, replay extents and small support-clearance counts are not a design brief for the furniture's height. Any required art/replay-bound change must be proposed separately after the owner sees the whole populated composition; anchors and all31 motions remain fixed."
+      },
+      "preserve": {
+        "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\data\\art\\environments\\small_underground_casino.json",
+        "sha256": "bb4dc0bfb830fc9d7ad73179b8d1b9ee0fb7c0e6e59fafc42f9a54aa78bef568",
+        "animations": 31,
+        "default_low_detail_entries": 31,
+        "counter_ids": [
+          "punchline_right_table"
+        ]
+      }
+    },
+    {
+      "room": "delta_queen",
+      "display_name": "Delta Queen",
+      "visual_gate": "NOT_ACCEPTED_COMPOSITION_REQUIRES_REWORK",
+      "current_art": {
+        "background_sha256": "c928cb461b44b10ab8548250fb5c870ddad4a727de8d724d213ee523a676619f",
+        "version": "Retained ornate R3/current D original; delta_trial_package_identity4313906a binds this background",
+        "populated_frame_ids": [
+          "delta-current-r3"
+        ]
+      },
+      "candidate_art": {
+        "package_sha256": "bcab84b0ebf42baf06d470ff9edfc847a11fe20f58ee0506461f8a1def61ace2",
+        "background_sha256": "70eb1b890d1cca16dbdccd116331c5ed841f5df91236edbdc4b4a00977e2487b",
+        "version": "delta-queen-spatial-r1-assembled-v2. Native V1 contexts captured this exact candidate; native V2 install retains the same candidate art.",
+        "populated_frame_ids": [
+          "delta-candidate-base",
+          "delta-candidate-captains"
+        ]
+      },
+      "findings": [
+        {
+          "id": "DELTA-COMPOSITION-01",
+          "kind": "VISIBLE_FAILURE",
+          "frames": [
+            "delta-current-r3",
+            "delta-candidate-base",
+            "delta-candidate-captains"
+          ],
+          "region": "Left Blackjack/Roulette furniture behind The Crew, roughlyscreenx65..480/y365..510 in candidate Base.",
+          "observation": "The current R3 art has a framed upright green panel. The candidate supplies a sloping felt top, but its broad surface still consumes most of the visible height and its front supports are compressed close to the back floor/trim boundary. Beside Ox and The Crew it reads as a shallow inclined platform rather than a full-height table."
+        },
+        {
+          "id": "DELTA-COMPOSITION-02",
+          "kind": "VISIBLE_FAILURE",
+          "frames": [
+            "delta-candidate-base",
+            "delta-candidate-captains"
+          ],
+          "region": "Long right station under Sable/Ada Pike or Malik Stone/Video Poker; High Roller Invitation graphic lies on its face.",
+          "observation": "The right station is dominated by an almost frontal rectangular cabinet face aligned with the wall panelling. A projecting tabletop/side return and grounded base are not clearly readable. The invitation graphic sits midway down that face, so the full composition needs an explicit physical display/support treatment at its fixed footprint rather than assuming every graphic is resting on a horizontal top."
+        },
+        {
+          "id": "DELTA-COMPOSITION-03",
+          "kind": "VISIBLE_AMBIGUITY",
+          "frames": [
+            "delta-candidate-base",
+            "delta-candidate-captains"
+          ],
+          "region": "Full-width striped deck band immediately in front of the gaming furniture.",
+          "observation": "The dark horizontal band with diagonal gold strips can read as a raised platform or step separating the tables from the foreground planks. The table feet end close to its rear edge. It does not unambiguously establish one continuous believable floor plane under the furniture."
+        }
+      ],
+      "uncertainties": [
+        "The native V2 observer campaign has no new populated context capture, but its installed art seal/background are identical to the V1 candidate shown here. This is an art-composition comparison, not a claim that V2 runtime contexts have been visually qualified.",
+        "Central left-table supports are partly hidden by The Crew. Visible side supports and the whole-room plane/height relationship are sufficient to flag the current reading, but an occluded support count is not a visual approval.",
+        "The old flat capture is retained only as historical comparison and is not misidentified as the current ornate R3 background."
+      ],
+      "next_bounded_composition_correction": {
+        "status": "PROPOSAL_ONLY_NO_EDITS_OR_GENERATION",
+        "scope": "Left gaming-table volume, right service/display station volume, and their shared narrow floor/deck-contact bay. Preserve the ornate riverboat style, windows, framing, every game/actor/label anchor and all26 motions.",
+        "direction": "Reduce the left surface's apparent steepness around the fixed Blackjack/Roulette paint, establish a full-height apron/leg or pedestal volume, and show coherent foot contact and shadows on the deck. Give the right station a projecting top and visible side/cabinet return terminating at a grounded base; resolve the fixed invitation footprint as a physically supported display. Clarify whether the striped band is a flat deck inlay or an actual step, then make every furniture contact consistent with that decision.",
+        "guardrail": "The candidate must be judged at full-room scale with The Crew and the captains-invitational population before numeric source masks or replay crops are frozen. Preserve interaction positions and motion timing; do not solve composition by moving the live actors or game faces."
+      },
+      "preserve": {
+        "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\data\\art\\environments\\delta_queen.json",
+        "sha256": "f8e80a75bbbf552bd339421d19d3b1e2df0359a21ef6aa7d3e232257edd89b70",
+        "animations": 26,
+        "default_low_detail_entries": 26,
+        "counter_ids": [
+          "delta_right_table"
+        ],
+        "retained_trial_identity": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-DELTA-TRIAL-20261115\\delta_trial_package_identity.json",
+          "sha256": "4313906aa900392a93c96616b814f74829cf40acb253f8e7d685e74dda32ae20",
+          "background_binding": [
+            [
+              "/files/assets/art/environments/delta_queen/background.png",
+              "c928cb461b44b10ab8548250fb5c870ddad4a727de8d724d213ee523a676619f"
+            ]
+          ],
+          "scalars": {
+            "seal": "efb3561c8fc4ac00dcefb1191d0db8795c628cada75847cf2c6a54a771780d7d"
+          }
+        }
+      }
+    },
+    {
+      "room": "grand_casino_cage",
+      "display_name": "Grand Cage",
+      "visual_gate": "NOT_ACCEPTED_GROUNDING_AND_LATEST_CANDIDATE_VISUAL_UNCERTAINTY",
+      "current_art": {
+        "background_sha256": "9c6f7bb773711b56fbdbddd65d1318342df397ef0130b83c1565784757c7a2f7",
+        "counter_sha256": "3af64a745fa97b8261d8ac44146086b5afffee339b6f332fa20841a5a3034e4d",
+        "version": "Retained ornate R2/current D original; cage_trial_package_identity0abc8a36 binds the same background",
+        "populated_frame_ids": [
+          "cage-current-r2",
+          "cage-r2-timed-frame"
+        ]
+      },
+      "candidate_art": {
+        "package_sha256": "29610fee672359f3002f31cbf90767c9d5e89ce1f9a9bdbc603dd394e1e66f1a",
+        "background_sha256": "9c6f7bb773711b56fbdbddd65d1318342df397ef0130b83c1565784757c7a2f7",
+        "counter_sha256": "3af64a745fa97b8261d8ac44146086b5afffee339b6f332fa20841a5a3034e4d",
+        "sign_sha256": "f9e0c563b34546dc31f67bc5a963b1d098509ba5f6608388ab959596d59dd661",
+        "version": "cage-spatial-r1-alpha-mask, installed by native V1 file phases; background and counter unchanged, sign alpha only",
+        "latest_candidate_populated_capture": "NOT_AVAILABLE; no fresh candidate contexts/capture engine phase exists in the inspected native campaign.",
+        "populated_frame_ids": []
+      },
+      "findings": [
+        {
+          "id": "CAGE-COMPOSITION-01",
+          "kind": "VISIBLE_DEPTH_FAILURE_OR_UNRESOLVED_OWNER_READ",
+          "frames": [
+            "cage-current-r2",
+            "cage-r2-timed-frame"
+          ],
+          "region": "Central cashout counter beneath Linda and the grille, roughlyscreenx377..913/y484..563.",
+          "observation": "The visible service unit is a long, strongly framed frontal fascia with a very thin cyan/gold top edge. The wall grille is clear, but the counter's projecting horizontal top, side return and load-bearing body are not clearly separated from that wall. At full-room scale it can read as a framed strip attached below the grille rather than a physical counter volume."
+        },
+        {
+          "id": "CAGE-COMPOSITION-02",
+          "kind": "VISIBLE_GROUND_CONTACT_UNCERTAINTY",
+          "frames": [
+            "cage-current-r2",
+            "cage-r2-timed-frame"
+          ],
+          "region": "Counter lower edge and tile floor behind the queue rail.",
+          "observation": "The floor grid starts behind the counter around the wall boundary, while the counter ends in a straight dark framed edge. A distinct plinth/base contact or cast-shadow footprint on the tile plane is not legible. Decorative trim and opaque replay equality do not establish where the cabinet weight meets the floor."
+        },
+        {
+          "id": "CAGE-COMPOSITION-03",
+          "kind": "LATEST_CANDIDATE_EVIDENCE_LIMIT",
+          "frames": [
+            "cage-current-r2"
+          ],
+          "region": "Entire populated room, including THE CAGE sign and counter.",
+          "observation": "The new alpha-only candidate cannot repair the counter/floor composition because its background and counter are byte-identical to this room body. Its corrected glyph-only sign appearance has not been observed in a fresh full-room populated candidate capture, so no visual result for that new alpha state is inferred."
+        }
+      ],
+      "uncertainties": [
+        "Cage is a service-window composition. The next design must make its actual counter volume and floor contact physically readable with the grille/teller anchors fixed; this reassessment does not approve the previous no-geometry-change disposition.",
+        "The latest sign-alpha candidate lacks a fresh populated native frame. The unchanged-body comparison supports the counter concern, not an invented view of the new pulse."
+      ],
+      "next_bounded_composition_correction": {
+        "status": "PROPOSAL_ONLY_NO_EDITS_OR_GENERATION",
+        "scope": "The counter volume and immediately adjacent tile-contact region beneath the fixed teller/grille; retain door, ATM, stock display, queue anchors and the exact gameplay/cashout/teller positions.",
+        "direction": "Give the counter a visible projecting horizontal top, coherent side returns and a full cabinet/base volume that visibly meets the tile plane, with a contact shadow consistent with the room light. Preserve the existing cashout graphic and Linda footprint. Show the complete populated service-window composition to the owner before deriving any new replay extent.",
+        "guardrail": "The existing776x112 native opaque front crop and the glyph-only alpha proof are technical contracts, not evidence of a full-height physical counter. If the necessary body exceeds that crop, propose the art/replay change explicitly after whole-room visual direction; preserve all20 motions and default-low16 membership."
+      },
+      "preserve": {
+        "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\data\\art\\environments\\grand_casino_cage.json",
+        "sha256": "ab70b2d0fc3e7d02a0b8c645cb1b71a0e056e1e63d7d1c029669cbb3f66c1b9e",
+        "animations": 20,
+        "default_low_detail_entries": 16,
+        "counter_ids": [
+          "grand_cage_teller_counter"
+        ],
+        "retained_trial_identity": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-CAGE-TRIAL-20261115\\cage_trial_package_identity.json",
+          "sha256": "0abc8a365d42d0a3cf8fffceae97c51624e8d7d5e36f63a61fdb3372aa3dd06f",
+          "background_binding": [
+            [
+              "/files/assets/art/environments/grand_casino_cage/background.png",
+              "9c6f7bb773711b56fbdbddd65d1318342df397ef0130b83c1565784757c7a2f7"
+            ]
+          ],
+          "scalars": {
+            "seal": "a228a9e91f6d387fd4790703fa6a2e0038e1df03a92762f3be8cfa9602dace0b",
+            "compatibility_commit": "f035e1d5e"
+          }
+        }
+      }
+    }
+  ],
+  "viewed_frames": [
+    {
+      "id": "hidden-original",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIDDENR2-20261114-current4-01\\evidence\\__none_actual_play.png",
+      "sha256": "a41e8bb6d35142fbf6be045bb3ef2d69b4839c5196a60fca1c63ed4edc67785d",
+      "bytes": 806076,
+      "dimensions": [
+        1280,
+        720
+      ],
+      "run": "BTH-ENVART-HIDDENR2-20261114-current4-01",
+      "metadata": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIDDENR2-20261114-current4-01\\evidence\\identity.json",
+          "sha256": "37bee66a5b0b232f3d199d7a15c7ccfd75ec4094d446b18102a4395694f86cd6",
+          "scalars": {
+            "package_sha256": "f5bf6336e1a1c5d981a83ce6e0e8642f687c31f1710d0141a3282ca5ae23556f"
+          }
+        },
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIDDENR2-20261114-current4-01\\evidence\\hidden_r2_initial_metadata.json",
+          "sha256": "bd875f927de43ee9057553f45b270d40b8fdff1cdeaa7573f8c2287c846d2ee0",
+          "scalars": {
+            "commit": "74c85e44577b34eaf7e9c1f857e62b2c999c1fbc"
+          }
+        }
+      ],
+      "actually_viewed": true,
+      "populated_full_room": true,
+      "role": "CURRENT_OR_CANDIDATE_COMPOSITION_EVIDENCE"
+    },
+    {
+      "id": "hidden-candidate-base",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HIDNATIVE-20261116-v4-contexts\\evidence\\__none_actual_play.png",
+      "sha256": "55ca1ec7135f203978e8deffb7eb421683b0bb6648ecc9c1c46996711888b890",
+      "bytes": 831862,
+      "dimensions": [
+        1280,
+        720
+      ],
+      "run": "BTH-ENV-SPATIAL-HIDNATIVE-20261116-v4-contexts",
+      "metadata": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HIDNATIVE-20261116-v4-contexts\\evidence\\phase-result.json",
+          "sha256": "e028a11d54ccb87cc671ad49c35a198c5fdd66380da582bc0890c493e95ff720",
+          "scalars": {
+            "status": "PASS",
+            "source_config_sha256": "5ecb81155171a804b92c9f03a8d0a32b1dc170417f1480fb4a0882e0ec673feb",
+            "source_commit": "8727e4481fd1ca2babe8c803c76d5e210f245f44",
+            "source_tree": "9ebe55d48d5ab06cebde73559b5cbf80541ff9ea"
+          }
+        },
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HIDNATIVE-20261116-v4-contexts\\evidence\\hidden_r2_initial_metadata.json",
+          "sha256": "98b851fd08f07abf617006a83e10436df3ce2399eea589847facc8a5de584830",
+          "scalars": {
+            "commit": "74c85e44577b34eaf7e9c1f857e62b2c999c1fbc"
+          }
+        }
+      ],
+      "actually_viewed": true,
+      "populated_full_room": true,
+      "role": "CURRENT_OR_CANDIDATE_COMPOSITION_EVIDENCE"
+    },
+    {
+      "id": "hidden-candidate-highstakes",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HIDNATIVE-20261116-v4-contexts\\evidence\\punchline_high_stakes_night_actual_play.png",
+      "sha256": "bf7312b64c2c1dcd4247658d910fafc267c39c2c14a0183b580e24763bb20a85",
+      "bytes": 809719,
+      "dimensions": [
+        1280,
+        720
+      ],
+      "run": "BTH-ENV-SPATIAL-HIDNATIVE-20261116-v4-contexts",
+      "metadata": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HIDNATIVE-20261116-v4-contexts\\evidence\\phase-result.json",
+          "sha256": "e028a11d54ccb87cc671ad49c35a198c5fdd66380da582bc0890c493e95ff720",
+          "scalars": {
+            "status": "PASS",
+            "source_config_sha256": "5ecb81155171a804b92c9f03a8d0a32b1dc170417f1480fb4a0882e0ec673feb",
+            "source_commit": "8727e4481fd1ca2babe8c803c76d5e210f245f44",
+            "source_tree": "9ebe55d48d5ab06cebde73559b5cbf80541ff9ea"
+          }
+        },
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HIDNATIVE-20261116-v4-contexts\\evidence\\hidden_r2_initial_metadata.json",
+          "sha256": "98b851fd08f07abf617006a83e10436df3ce2399eea589847facc8a5de584830",
+          "scalars": {
+            "commit": "74c85e44577b34eaf7e9c1f857e62b2c999c1fbc"
+          }
+        }
+      ],
+      "actually_viewed": true,
+      "populated_full_room": true,
+      "role": "CURRENT_OR_CANDIDATE_COMPOSITION_EVIDENCE"
+    },
+    {
+      "id": "delta-historical-flat",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTA-20261115-capture-01\\evidence\\__none_actual_play.png",
+      "sha256": "625d2c65c1c78eecbd2ff4a8e06fff529a3d97a5d9938b712c46b8f944d64030",
+      "bytes": 87721,
+      "dimensions": [
+        1280,
+        720
+      ],
+      "run": "BTH-ENVART-DELTA-20261115-capture-01",
+      "metadata": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTA-20261115-capture-01\\evidence\\source_identity.json",
+          "sha256": "59ca046dfd3414108d428c9b1470806001e02e7bd819ab500b597c590df7e572",
+          "scalars": {
+            "commit": "6400dad73a1fdab0c63387683b2937495ac9c57c"
+          }
+        },
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTA-20261115-capture-01\\evidence\\delta_preart_metadata.json",
+          "sha256": "1c5ea1b3b116597122d55c72953590423c7f985718badbe4927c76c64930e7be",
+          "scalars": {
+            "commit": "6400dad73a1fdab0c63387683b2937495ac9c57c"
+          }
+        }
+      ],
+      "actually_viewed": true,
+      "populated_full_room": true,
+      "role": "OLDER_FLAT_STAGE_COMPARISON_ONLY"
+    },
+    {
+      "id": "delta-current-r3",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTATRIAL-20261115-r3-six-context-trace-01\\evidence\\__none_actual_play.png",
+      "sha256": "466fbdd032e7ffac4d2eb3f9eaf3223321ba53ef8b220beb9f4b182cb9af8d27",
+      "bytes": 733407,
+      "dimensions": [
+        1280,
+        720
+      ],
+      "run": "BTH-ENVART-DELTATRIAL-20261115-r3-six-context-trace-01",
+      "metadata": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTATRIAL-20261115-r3-six-context-trace-01\\evidence\\source_identity.json",
+          "sha256": "59ca046dfd3414108d428c9b1470806001e02e7bd819ab500b597c590df7e572",
+          "scalars": {
+            "commit": "6400dad73a1fdab0c63387683b2937495ac9c57c"
+          }
+        },
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTATRIAL-20261115-r3-six-context-trace-01\\evidence\\delta_preart_metadata.json",
+          "sha256": "bb370b9aa824d278b51e5da1579d9dd64fd965976ed6a4f59245e89892dee645",
+          "scalars": {
+            "commit": "6400dad73a1fdab0c63387683b2937495ac9c57c"
+          }
+        }
+      ],
+      "actually_viewed": true,
+      "populated_full_room": true,
+      "role": "CURRENT_OR_CANDIDATE_COMPOSITION_EVIDENCE"
+    },
+    {
+      "id": "delta-candidate-base",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-DELTANATIVE-20261116-v1-contexts\\evidence\\__none_actual_play.png",
+      "sha256": "a8a6347d7b4ea7a63e1d577d5e02639fa8f74cb41976dedf0ccabad4cab1778a",
+      "bytes": 746392,
+      "dimensions": [
+        1280,
+        720
+      ],
+      "run": "BTH-ENV-SPATIAL-DELTANATIVE-20261116-v1-contexts",
+      "metadata": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-DELTANATIVE-20261116-v1-contexts\\evidence\\phase-result.json",
+          "sha256": "f73184e13e3eab6dad478c7305328624c2b99730363c866dbb7ba711a386366f",
+          "scalars": {
+            "status": "PASS",
+            "source_config_sha256": "90d7c99ec907f9ef68c60497544957020c0e6ec712c440c1c320eb0d37bffe3f",
+            "source_commit": "4010535f41e157820d3c06b44cb3d956a1b5946a",
+            "source_tree": "1870e5be6208e7a0befbc831deb52319792ebc05"
+          }
+        },
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-DELTANATIVE-20261116-v1-contexts\\evidence\\delta_preart_metadata.json",
+          "sha256": "3ad8bdb2cabbcce09e040ab4ef31b7e92b41f327afdc2f40bc6c05b1c8b0eabf",
+          "scalars": {
+            "commit": "6400dad73a1fdab0c63387683b2937495ac9c57c"
+          }
+        }
+      ],
+      "actually_viewed": true,
+      "populated_full_room": true,
+      "role": "CURRENT_OR_CANDIDATE_COMPOSITION_EVIDENCE"
+    },
+    {
+      "id": "delta-candidate-captains",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-DELTANATIVE-20261116-v1-contexts\\evidence\\delta_queen_captains_invitational_actual_play.png",
+      "sha256": "aebc5c1ca4a0fa3e26b3fbeadd0f509fb42fdf8d08173a5e4cd353becaa21133",
+      "bytes": 726298,
+      "dimensions": [
+        1280,
+        720
+      ],
+      "run": "BTH-ENV-SPATIAL-DELTANATIVE-20261116-v1-contexts",
+      "metadata": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-DELTANATIVE-20261116-v1-contexts\\evidence\\phase-result.json",
+          "sha256": "f73184e13e3eab6dad478c7305328624c2b99730363c866dbb7ba711a386366f",
+          "scalars": {
+            "status": "PASS",
+            "source_config_sha256": "90d7c99ec907f9ef68c60497544957020c0e6ec712c440c1c320eb0d37bffe3f",
+            "source_commit": "4010535f41e157820d3c06b44cb3d956a1b5946a",
+            "source_tree": "1870e5be6208e7a0befbc831deb52319792ebc05"
+          }
+        },
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-DELTANATIVE-20261116-v1-contexts\\evidence\\delta_preart_metadata.json",
+          "sha256": "3ad8bdb2cabbcce09e040ab4ef31b7e92b41f327afdc2f40bc6c05b1c8b0eabf",
+          "scalars": {
+            "commit": "6400dad73a1fdab0c63387683b2937495ac9c57c"
+          }
+        }
+      ],
+      "actually_viewed": true,
+      "populated_full_room": true,
+      "role": "CURRENT_OR_CANDIDATE_COMPOSITION_EVIDENCE"
+    },
+    {
+      "id": "cage-historical-flat",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGE-20261115-capture-02\\evidence\\__none_actual_play.png",
+      "sha256": "b6603d676e702bf2570f42fe12fc05db2c67b36cf4ef64726da323e479adbf7c",
+      "bytes": 50620,
+      "dimensions": [
+        1280,
+        720
+      ],
+      "run": "BTH-ENVART-CAGE-20261115-capture-02",
+      "metadata": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGE-20261115-capture-02\\evidence\\source_identity.json",
+          "sha256": "819ccf7f7001a2f650fcb7d45e4814e75179f7c8fbbcb13b21ba71214e6d2642",
+          "scalars": {
+            "commit": "d43772d5151c9079cd2d4c1982290272f9839bff"
+          }
+        },
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGE-20261115-capture-02\\evidence\\grand_casino_cage_preart_metadata.json",
+          "sha256": "b45387682a0435f616a978c79145961db0f4b52137bb2dbc091dde85dcf6e211",
+          "scalars": {
+            "commit": "d43772d5151c9079cd2d4c1982290272f9839bff"
+          }
+        }
+      ],
+      "actually_viewed": true,
+      "populated_full_room": true,
+      "role": "OLDER_FLAT_STAGE_COMPARISON_ONLY"
+    },
+    {
+      "id": "cage-current-r2",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01\\evidence\\__none_actual_play.png",
+      "sha256": "0827417492075f5f81e7df596e7ded7841b8cd0b84b121abb66c39f53e19c2ef",
+      "bytes": 454293,
+      "dimensions": [
+        1280,
+        720
+      ],
+      "run": "BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01",
+      "metadata": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01\\evidence\\source_identity.json",
+          "sha256": "819ccf7f7001a2f650fcb7d45e4814e75179f7c8fbbcb13b21ba71214e6d2642",
+          "scalars": {
+            "commit": "d43772d5151c9079cd2d4c1982290272f9839bff"
+          }
+        },
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01\\evidence\\grand_casino_cage_preart_metadata.json",
+          "sha256": "3ac74bc68b340451de566e0036ab49895d07b22be5b57243f87b548eeccf3917",
+          "scalars": {
+            "commit": "d43772d5151c9079cd2d4c1982290272f9839bff"
+          }
+        }
+      ],
+      "actually_viewed": true,
+      "populated_full_room": true,
+      "role": "CURRENT_OR_CANDIDATE_COMPOSITION_EVIDENCE"
+    },
+    {
+      "id": "cage-r2-timed-frame",
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-video-01\\evidence\\capture\\frame_030.png",
+      "sha256": "bf17639cf3fc564c255b3af90e8a698dc8f32e8ebf73109e4311fd995c484dec",
+      "bytes": 454514,
+      "dimensions": [
+        1280,
+        720
+      ],
+      "run": "BTH-ENVART-CAGETRIAL-20261115-r2-video-01",
+      "metadata": [
+        {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-video-01\\evidence\\source_identity.json",
+          "sha256": "819ccf7f7001a2f650fcb7d45e4814e75179f7c8fbbcb13b21ba71214e6d2642",
+          "scalars": {
+            "commit": "d43772d5151c9079cd2d4c1982290272f9839bff"
+          }
+        }
+      ],
+      "actually_viewed": true,
+      "populated_full_room": true,
+      "role": "CURRENT_OR_CANDIDATE_COMPOSITION_EVIDENCE"
+    }
+  ],
+  "shared_correction_gate": {
+    "owner_visual_acceptance": false,
+    "next_action": "Parent reviews these full-room findings and chooses one bounded composition correction per room before authorizing generation, art assembly, runtime, or release.",
+    "required_visual_evidence_after_any_future_correction": "Full-room populated Base and representative crowded scenario with unchanged camera/anchors, plus actual timed full-app views where available; furniture bodies, floor contact, perspective and shadows must read coherently before support masks or source hash gates are treated as implementation checks.",
+    "preserved_constraints": [
+      "All gameplay/interaction positions",
+      "All actor/game/label anchors",
+      "Camera and framing",
+      "Native/default-low motion membership, timing and autonomous no-input scheduling",
+      "All completed receipts, source files and prior failures"
+    ],
+    "scope_exclusions": [
+      "No engineering adapter or validator change",
+      "No new engine or generation",
+      "No art or manifest edit",
+      "No release/TEST integration",
+      "No save/profile access or migration",
+      "No cleanup, moves or deletion"
+    ],
+    "other_rooms": "GBR, Private and all other rooms remain with their assigned owners; no bed or other-room assessment is claimed here."
+  },
+  "performed_actions": {
+    "read_only_source_metadata_and_full_room_image_inspection": true,
+    "new_engine": false,
+    "generation": false,
+    "art_edits": false,
+    "adapter_edits": false,
+    "release": false,
+    "cleanup": false,
+    "save_access": false,
+    "only_new_output": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/hidden_delta_cage_owner_visual_reassessment_20261116.json"
+  },
+  "output_prewrite": {
+    "utc": "2026-11-16T17:13:40.579518+00:00",
+    "absolute_target_absent": true,
+    "wrong_main_target_absent": true,
+    "ordinary_existing_ancestors": true
+  }
+}

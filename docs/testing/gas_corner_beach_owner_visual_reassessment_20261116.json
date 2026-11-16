@@ -1,0 +1,803 @@
+{
+  "schema": "bth.gas_corner_beach_owner_visual_reassessment/v1",
+  "observed_at": "2026-11-16T17:19:57.346425+00:00",
+  "reviewer": "/root/review_test_adapter",
+  "parent_task": "BTH-ENV-SPATIAL-001",
+  "scope_rooms": [
+    "gas_station_casino",
+    "corner_store",
+    "beach"
+  ],
+  "status": "OWNER_REJECTION_REASSESSMENT_COMPLETE_FINDINGS_OPEN_NO_VISUAL_ACCEPTANCE",
+  "authority": "Owner visual rejection supersedes prior art GOs. Historic PASS/delivery labels below identify evidence only and are not renewed approvals.",
+  "performed": {
+    "opened_existing_local_full_populated_images": true,
+    "hashed_actual_source_evidence_and_images": true,
+    "new_engine_or_QA_job": false,
+    "new_browser_or_network_request": false,
+    "generation_or_pixel_edit": false,
+    "release_preview_code_edit": false,
+    "Git_operation": false,
+    "production_or_TEST_write": false,
+    "cleanup_move_delete_profile_or_save_access": false,
+    "new_art_GO": false
+  },
+  "fixed_art_input_comparison": {
+    "manifest": {
+      "path": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-GBRBUILD-20261116/qa_source/.tmp/web-release-e07ca928/stage/build_manifest.json",
+      "sha256": "00e1251b4e4580429fb57a764831ab8a7d7ad224f81a06b671c75415e467a215",
+      "bytes": 123696
+    },
+    "source_commit": "e07ca9280f4eebc531ef83dd50a79d76ec51ad23",
+    "source_tree": "53f6647622e8b61a8fb50f3494887acd9e5fcd57",
+    "scope": "Only these3 rooms BG/JSON/counter raw bytes were compared to fixed delivered e07 manifest. This is not a fresh full certificate, a current pointer query or proof that historical rendering code equals current code."
+  },
+  "coordinate_policy": "All native1800 region boxes are approximate visual review bounds [x,y,width,height], not pixel-traced repair masks or new gameplay coordinates.",
+  "rooms": {
+    "gas_station_casino": {
+      "current_source_files": {
+        "assets/art/environments/gas_station_casino/background.png": {
+          "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/assets/art/environments/gas_station_casino/background.png",
+          "sha256": "3c197e9935dd80b90faca9f0ae3391adc654625122fc0da648d9f4e62b6e2ec5",
+          "bytes": 368588,
+          "dimensions": [
+            1800,
+            860
+          ],
+          "role": "Current D source bytes, read-only; not a claim of a fresh source commit"
+        },
+        "data/art/environments/gas_station_casino.json": {
+          "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/data/art/environments/gas_station_casino.json",
+          "sha256": "1a09e5939d43c6bd17fba70590693664925aad133986815cd05057af26f4da83",
+          "bytes": 5700,
+          "role": "Current D source bytes, read-only; not a claim of a fresh source commit"
+        },
+        "assets/art/environments/gas_station_casino/counters/gas_station_staff_window.png": {
+          "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/assets/art/environments/gas_station_casino/counters/gas_station_staff_window.png",
+          "sha256": "5115a771fd021170b2ddac2dd4177b90a167fe5be1f100b18625d8ac66ef5cf9",
+          "bytes": 1033,
+          "dimensions": [
+            208,
+            16
+          ],
+          "role": "Current D source bytes, read-only; not a claim of a fresh source commit"
+        }
+      },
+      "current_files_equal_fixed_e07_manifest": true,
+      "recorded_active_package_sha256": "1e9a88be562db041248d4561619d0110d0b267310f42be25acd362bfae64b560",
+      "source_version_limit": "Current bytes were hashed directly. No current HEAD, current pointer or live browser state was queried. Historical screenshots retain their own source/version identities.",
+      "composition_verdict": "RETURN_FOR_COMPOSITION_REWORK; NO_VISUAL_GO",
+      "viewed_full_populated_native": [
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-INTEGRATION-20261114-gas-v3r12-gas-proof-01/evidence/__none_play.png",
+          "sha256": "4d480a9afb7f8669ef0513ad0bcc4c13adb98ce96fc445997b365ca0168ef715",
+          "bytes": 407972,
+          "dimensions": [
+            1280,
+            720
+          ]
+        },
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-INTEGRATION-20261114-gas-v3r12-gas-proof-01/evidence/gas_station_tour_bus_stop_play.png",
+          "sha256": "95aca7108805d473ce2296c7bc15236eac8601161da170c35c8ed8a63c7fd802",
+          "bytes": 419794,
+          "dimensions": [
+            1280,
+            720
+          ]
+        },
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-INTEGRATION-20261114-gas-v3r12-gas-proof-01/evidence/gas_station_road_crew_payday_play.png",
+          "sha256": "58e02aeb109db57833dcba6b790f6796c8112f29e3421a6d12be60bd60e87603",
+          "bytes": 422279,
+          "dimensions": [
+            1280,
+            720
+          ]
+        },
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-INTEGRATION-20261114-gas-v3r12-gas-proof-01/evidence/gas_station_graveyard_shift_play.png",
+          "sha256": "655760ac17122fafcc4115702b98a3a4fd8ac1bdf47c8a604a3f32d2c20017a9",
+          "bytes": 412003,
+          "dimensions": [
+            1280,
+            720
+          ]
+        },
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-INTEGRATION-20261114-gas-v3r12-gas-proof-01/evidence/gas_station_storm_shelter_play.png",
+          "sha256": "3f962ebdeb305e1e7bc9cf469f2dd67a80738bf04287278421d4c88f9a68b2f9",
+          "bytes": 420858,
+          "dimensions": [
+            1280,
+            720
+          ]
+        },
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-INTEGRATION-20261114-gas-v3r12-gas-proof-01/evidence/gas_station_trucker_convoy_play.png",
+          "sha256": "ec6298734aa272bda4335f04757f442e8f509e52041e5e4d8aa3433addaaef15",
+          "bytes": 419547,
+          "dimensions": [
+            1280,
+            720
+          ]
+        }
+      ],
+      "viewed_served_base": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENVART-R12BOUND01-probe-2/evidence/screen.png",
+        "sha256": "7dadae5f31cd1353c20694ba0d470370265deb07d17ef4a29175b1aa50853ce6",
+        "bytes": 469559,
+        "dimensions": [
+          1920,
+          1080
+        ],
+        "role": "Historical actual HTTPS browser screenshot, 1920x1080; opened locally during this review"
+      },
+      "served_version": {
+        "source_commit": "975a107d148433a5bc702dcc8e469523a5d02869",
+        "source_tree": "6d8d4ead01e10e6b0da122e6447221ec8a5251fb",
+        "immutable_url": "https://192.168.0.36:8443/p/beat-the-house/play/test/975a107d148433a5bc702dcc8e469523a5d02869/index.html",
+        "observation": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-R12BOUND01-probe-2/evidence/observation.json",
+          "sha256": "e3db59be4fb2ea5c877d86b86cce86c8a081f1758a8358326c771c1f1316e7d6",
+          "bytes": 2356
+        },
+        "source_of_commit": "Actual retained observation.url; tree and build hashes in immutable historical R12 delivery record. No network request made."
+      },
+      "native_version": {
+        "art_version": "gas_station_casino-v3-r12",
+        "package_sha256": "1e9a88be562db041248d4561619d0110d0b267310f42be25acd362bfae64b560",
+        "provenance": {
+          "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/art/gas_station_casino_v3_r12_provenance.json",
+          "sha256": "1dcdc8ae9c7389b7cfe11777c8b2c2ba4695c5b2bd22c1ff0258ab2207565c17",
+          "bytes": 5945
+        },
+        "report": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-INTEGRATION-20261114-gas-v3r12-gas-proof-01/evidence/gas_proof.json",
+          "sha256": "cef7dcc345970368bdeb840b8a0e05278963e455e9a72fa8ecfead4cc18696e2",
+          "bytes": 2456777
+        },
+        "full_native_code_commit": "NOT_ASSERTED; the old proof does not embed a complete native source commit identity. Exact image and art-source hashes are recorded instead.",
+        "initial_context_limit": "Six Base/scenario initial snapshots; moving/arriving people differ from settled served Base. These are not complete scenario lifecycle or motion acceptance."
+      },
+      "viewed_additional_material_evidence": [
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-INTEGRATION-20261114-gas-v3r12-gas-proof-01/evidence/__none_pack.png",
+          "sha256": "739a7cde92b4d238349078ca1b214dc8d2becce88738298716338df8cb2793f3",
+          "bytes": 329246,
+          "dimensions": [
+            900,
+            430
+          ],
+          "role": "900x430 populated production-board rendering"
+        },
+        {
+          "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/assets/art/environments/gas_station_casino/background.png",
+          "sha256": "3c197e9935dd80b90faca9f0ae3391adc654625122fc0da648d9f4e62b6e2ec5",
+          "bytes": 368588,
+          "dimensions": [
+            1800,
+            860
+          ],
+          "role": "Full 1800x860 static source opened"
+        },
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-INTEGRATION-20261114-gas-v3r12-floor-wrap-01/evidence/floor_wrap_control.png",
+          "sha256": "ad22384883f87fda4f4eb2c7fb8c0f5ae280dca521cc8a75a68bf77a77be7093",
+          "bytes": 388098,
+          "dimensions": [
+            1800,
+            860
+          ],
+          "role": "Original material control, 1800x860"
+        },
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-INTEGRATION-20261114-gas-v3r12-floor-wrap-01/evidence/floor_glint_0_visible_midpoint.png",
+          "sha256": "e04f69484b791bd415ad47b5464a687d1e842ee6d9c74ac00a6e820cef94bff6",
+          "bytes": 388217,
+          "dimensions": [
+            1800,
+            860
+          ],
+          "role": "One isolated visible moving-floor phase, 1800x860"
+        }
+      ],
+      "findings": [
+        {
+          "id": "GAS-COMPOSITION-01",
+          "severity": "HIGH",
+          "confidence": "HIGH",
+          "region_native_1800_approx": {
+            "rear_rail": [
+              200,
+              488,
+              1398,
+              20
+            ],
+            "legs": [
+              225,
+              505,
+              1358,
+              150
+            ],
+            "detached_lower_rail": [
+              200,
+              800,
+              1398,
+              18
+            ]
+          },
+          "observation": "The long metallic surface is a narrow horizontal rail with three very thin visible legs and no joined side return, substantial apron or readable top plane. A second long rail lies much lower in the foreground with no visible support or side connection to the first. In both the served full room and populated native cases it reads as an open barrier/bench assembly, not a coherent gaming counter surface.",
+          "qualification": "Three legs ARE present. This is not a claim that all support pixels are absent; the failures are the disconnected assembly and inadequate mass/depth at actual play scale."
+        },
+        {
+          "id": "GAS-COMPOSITION-02",
+          "severity": "MEDIUM",
+          "confidence": "HIGH_FOR_PIXEL_OVERLAP",
+          "region_native_1800_approx": {
+            "center_support_bands_y": [
+              548,
+              576,
+              604,
+              632
+            ]
+          },
+          "observation": "Moving floor highlights paint over static support material rather than remaining behind it, weakening the support/floor depth separation.",
+          "pixel_witness": {
+            "provided_by": "/root/native_suite_adapter",
+            "pair_locally_opened_and_hashed_by_this_reviewer": true,
+            "per_pixel_comparison_rerun_by_this_reviewer": false,
+            "native_pixel": [
+              902,
+              548
+            ],
+            "control_rgb": [
+              186,
+              152,
+              189
+            ],
+            "midphase_rgb": [
+              193,
+              164,
+              202
+            ],
+            "adjacent_dark_edge_pixel": [
+              904,
+              548
+            ],
+            "control_edge_rgb": [
+              0,
+              0,
+              2
+            ],
+            "midphase_edge_rgb": [
+              6,
+              12,
+              15
+            ],
+            "peer_scope": "All seven isolated midpoint witnesses cross the center-leg bands; reported maximum channel change12..14. The old71 wrap/ReduceMotion checks do not contain a material-depth assertion."
+          }
+        },
+        {
+          "id": "GAS-COMPOSITION-03",
+          "severity": "MEDIUM",
+          "confidence": "MEDIUM",
+          "region_native_1800_approx": {
+            "staff_enclosure": [
+              1315,
+              205,
+              340,
+              253
+            ],
+            "rear_machine_shelf": [
+              812,
+              380,
+              216,
+              34
+            ]
+          },
+          "observation": "The gold staff opening and small machine shelf remain thin outlines/ledges against the brick. The enclosure does not show a convincing lower booth/counter mass or side thickness; the machine stack also lacks a continuous supported work surface. The populated view is needed because labels and machines obscure the few existing depth cues.",
+          "uncertainty": "A service window can intentionally be flush with a wall. The design intent and permitted art-only volume around fixed host anchors need owner review; no new coordinates are approved here."
+        }
+      ],
+      "floor_horizon_and_contacts": "The back-wall/floor boundary is visible near native y480 and the floor lines recede. That alone does not resolve the detached rails or provide cast/contact shadows under their supports. No claim of a new visible tile seam is made.",
+      "next_bounded_correction": [
+        "Prepare a non-active art-only counter composition in the existing long-rail region: define one top plane, connected front/side apron or cabinet mass, readable support spacing and planted contact/cast shadows. Resolve the lower disconnected rail as part of that one physical assembly.",
+        "Review the candidate with the ACTUAL Base and payday/tour-bus populations at1280 and1920, including machine bottoms and labels, before approval. Preserve every gameplay anchor and existing interaction/route geometry.",
+        "Design a reviewed foreground-support occlusion/floor mask so all seven moving floor bands remain animated behind the support material. Do not disable autonomous scheduling, lower liveness or move gameplay to conceal the overlap."
+      ]
+    },
+    "corner_store": {
+      "current_source_files": {
+        "assets/art/environments/corner_store/background.png": {
+          "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/assets/art/environments/corner_store/background.png",
+          "sha256": "54a1650ee9767ea376f3c6724d7ba732eac376d12c9c80e74f3fd1fc5aec59e3",
+          "bytes": 490440,
+          "dimensions": [
+            1800,
+            860
+          ],
+          "role": "Current D source bytes, read-only; not a claim of a fresh source commit"
+        },
+        "data/art/environments/corner_store.json": {
+          "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/data/art/environments/corner_store.json",
+          "sha256": "d0a1e7153d421465390355e028ccc72a1f5049d095ecab7a111aa42e85dd5d28",
+          "bytes": 9558,
+          "role": "Current D source bytes, read-only; not a claim of a fresh source commit"
+        },
+        "assets/art/environments/corner_store/counters/corner_store_register.png": {
+          "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/assets/art/environments/corner_store/counters/corner_store_register.png",
+          "sha256": "8639097e5c3dcd2c5929a44962fa9291a674da996875e3e59329796902f94010",
+          "bytes": 25894,
+          "dimensions": [
+            572,
+            96
+          ],
+          "role": "Current D source bytes, read-only; not a claim of a fresh source commit"
+        }
+      },
+      "current_files_equal_fixed_e07_manifest": true,
+      "recorded_active_package_sha256": "6f1e76d5cb4f44dd73f494e4cf52fcf2eb433a0e849c6ee6bd0c090a36897dcb",
+      "source_version_limit": "Current bytes were hashed directly. No current HEAD, current pointer or live browser state was queried. Historical screenshots retain their own source/version identities.",
+      "composition_verdict": "NOT_ACCEPTED; COUNTER_DEPTH_REWORK_AND_MATERIAL_OCCLUSION_REQUIRED",
+      "viewed_full_populated_native": [
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-CORNER-20261114-r6-scenarios-01/evidence/proof/__none_play.png",
+          "sha256": "1d87fe308d83830e953550ea98e68a114da2bcdcdea8e6e6392bdc297d1ca4be",
+          "bytes": 545365,
+          "dimensions": [
+            1280,
+            720
+          ]
+        },
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-CORNER-20261114-r6-scenarios-01/evidence/proof/corner_store_delivery_day_play.png",
+          "sha256": "1ae7f30a48d9126de6da7e0e468be5a971b4885dff45b5c3b01725a1f4f12867",
+          "bytes": 550222,
+          "dimensions": [
+            1280,
+            720
+          ]
+        },
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-CORNER-20261114-r6-scenarios-01/evidence/proof/corner_store_inventory_night_play.png",
+          "sha256": "8a9b8227adf656268c0b1aaf0ff972221e45bd4c09d128e63e5eb0599305b9d2",
+          "bytes": 548398,
+          "dimensions": [
+            1280,
+            720
+          ]
+        },
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-CORNER-20261114-r6-scenarios-01/evidence/proof/corner_store_aftermath_play.png",
+          "sha256": "491e0a14466fd59b49c5a8893a6b42996ce78184685a61d4e83ff6c5c7a7fce4",
+          "bytes": 553080,
+          "dimensions": [
+            1280,
+            720
+          ]
+        },
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-CORNER-20261114-r6-scenarios-01/evidence/proof/corner_store_dead_shift_play.png",
+          "sha256": "b3473fa91152bc89cfcbf07e1f905683af30e147771cf545671926d376fedc35",
+          "bytes": 540050,
+          "dimensions": [
+            1280,
+            720
+          ]
+        },
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-CORNER-20261114-r6-scenarios-01/evidence/proof/corner_store_lotto_fever_play.png",
+          "sha256": "b1780b58ad617ea18c2ac25938fe252a6d22f5b0695199653a2874c183695369",
+          "bytes": 544235,
+          "dimensions": [
+            1280,
+            720
+          ]
+        }
+      ],
+      "viewed_served": [
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-CORNERWEB04-probe-2/evidence/screen.png",
+          "sha256": "e73136f9f24f19700cf2934b24270f576f2486457f7810431cee3261229b9a1a",
+          "bytes": 506695,
+          "dimensions": [
+            1280,
+            720
+          ],
+          "role": "Historical served populated Base1280"
+        },
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-CORNERWEB01-probe-19/evidence/screen.png",
+          "sha256": "330674a0d7ac642acdf786ecb195343212a241bcea2159a2c66da2b13af4fdc9",
+          "bytes": 641820,
+          "dimensions": [
+            1920,
+            1080
+          ],
+          "role": "Historical served populated Delivery1920"
+        }
+      ],
+      "served_version": {
+        "source_commit": "c5d5d17f691a010ac3173ac2a8c42232777081e5",
+        "source_tree": "647ffc47844e922af901fc976c2afed539c968f5",
+        "package_id": "corner_store-v1-r6",
+        "build_manifest_sha256": "68e60e8d57ccbcb1571f284df139a99a105cdb4dfaf40e44e591e291d6ecb844",
+        "observation": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-CORNERWEB04-probe-2/evidence/observation.json",
+          "sha256": "eb6c3f3660a73298c7e4e9be4398646a4667e5539dede01f2cefc216ff1942bc",
+          "bytes": 2355
+        },
+        "room_identity": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-CORNERWEB04-probe-2/evidence/current-room-identity.json",
+          "sha256": "28cdda5febea06cdaec30fe196dc77d3b1cd87c7517ec548508478cd75ca2d1b",
+          "bytes": 12855
+        },
+        "delivery_record": {
+          "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/corner_store_r6_test_delivery.json",
+          "sha256": "8c00248f4ac6bc56f0acc5a50f6fe5977124d0abc0eae766e21b71ffa18ce429",
+          "bytes": 31340
+        },
+        "historical_only": true
+      },
+      "native_version": {
+        "art_version": "corner_store-v1-r6",
+        "provenance": {
+          "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/art/corner_store_v1_r6_provenance.json",
+          "sha256": "e21cab92394e5cbd7cd21f8eef0ff326b1004f208d3cc00e56875278652c51f2",
+          "bytes": 10850
+        },
+        "report": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-CORNER-20261114-r6-scenarios-01/evidence/proof/corner_proof.json",
+          "sha256": "52fc82077ade84b79a07bbf79ec4306b4b958ec00c66bf4394b93610e01f0623",
+          "bytes": 2258118
+        },
+        "old_report_limit": "The retained45-check scenarios01 report has one closing-grace finding. It is NOT a fully passing suite; later settled-scenarios02 documentation does not erase that failure.",
+        "full_native_code_commit": "NOT_ASSERTED from the old initial-context screenshots; exact image/version/raw art hashes and actual served source are supplied."
+      },
+      "viewed_additional_material_evidence": [
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-CORNER-20261114-r6-scenarios-01/evidence/proof/__none_pack.png",
+          "sha256": "5894f222a7cf164494a7e41fca43851b7a6d7ef1dd749719ede5c75d6a49604d",
+          "bytes": 431357,
+          "dimensions": [
+            900,
+            430
+          ],
+          "role": "900x430 populated production board"
+        },
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-CORNER-20261114-r6-floor-01/evidence/probe/floor_wrap_control.png",
+          "sha256": "3a9e57084520f99db0f83018d9e53ffd22f3644a0250cfee2cd7dab69bbbe1f5",
+          "bytes": 522506,
+          "dimensions": [
+            1800,
+            860
+          ],
+          "role": "1800x860 static material control"
+        },
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-CORNER-20261114-r6-motion-01/evidence/frames/board2x_000.png",
+          "sha256": "3a6b53d6e90eda7e351bb4bfd6c514f5f074f86271ca3274ac6a98c26adb4ca5",
+          "bytes": 527993,
+          "dimensions": [
+            1800,
+            860
+          ],
+          "role": "1800x860 actual normal native animation phase"
+        }
+      ],
+      "findings": [
+        {
+          "id": "CORNER-COMPOSITION-01",
+          "severity": "MEDIUM",
+          "confidence": "MEDIUM_HIGH",
+          "region_native_1800_approx": {
+            "register_front": [
+              674,
+              405,
+              574,
+              105
+            ]
+          },
+          "observation": "The broad service-counter front is almost flush with the wall opening. Its top is a straight narrow rim; a side return, separate cabinet depth and floor/base shadow are not readable. The full1920 Delivery composition still reads as a flat wall panel with the host behind it, not a clearly volumetric shop counter.",
+          "qualification": "This is a depth/readability failure under the owner standard, not proof that a wall-mounted service opening is physically impossible. Do not replace it with an invented unsupported table or change the host position."
+        },
+        {
+          "id": "CORNER-COMPOSITION-02",
+          "severity": "MEDIUM",
+          "confidence": "HIGH_FOR_PIXEL_OVERLAP",
+          "region_native_1800_approx": {
+            "right_table_leg_sample": [
+              498,
+              604,
+              18,
+              4
+            ]
+          },
+          "observation": "A normal animated floor-glint phase crosses the QuarterFalls table right-leg material. The floor effect is being composited over an above-floor support.",
+          "pixel_witness": {
+            "provided_by": "/root/native_suite_adapter",
+            "pair_locally_opened_and_hashed_by_this_reviewer": true,
+            "per_pixel_comparison_rerun_by_this_reviewer": false,
+            "changed_pixels_in_reported_region": 28,
+            "maximum_channel_delta": 9,
+            "native_pixel": [
+              498,
+              604
+            ],
+            "control_rgb": [
+              180,
+              164,
+              163
+            ],
+            "normal_phase_rgb": [
+              186,
+              171,
+              172
+            ],
+            "normal_phase_clock": 0.296090555555555,
+            "native_capture_metadata_sha256": "22a48a81db796226b602b9bdf68cae385165a45027d49eebae1b96074151329c",
+            "scope": "Original80-frame native capture (~10.534s), not the later150-frame62.303s Web capture."
+          }
+        },
+        {
+          "id": "CORNER-COMPOSITION-03",
+          "severity": "LOW_TO_MEDIUM",
+          "confidence": "MEDIUM",
+          "region_native_1800_approx": {
+            "QuarterFalls_support": [
+              338,
+              539,
+              203,
+              146
+            ]
+          },
+          "observation": "QuarterFalls has two clearly visible legs and a shallow framed tabletop, so it is not legless. In the populated view the small source top/cabinet, dark underside and sparse foot contact make it read as a lightweight stand. Recheck its physical scale and contact shadows together with the register-front depth trial.",
+          "qualification": "No new catastrophic floor-plane discontinuity is established here. A relatively coherent wall/floor boundary and existing leg pixels are insufficient for an art approval."
+        }
+      ],
+      "floor_horizon_and_contacts": "The wall/floor line near native y480 is relatively coherent and does not show the Beach-style full-width ramp conflict. Ground texture is mostly uniform in scale/direction and contacts are weak, leaving foreground depth under-described; no count-based or no-severe-defect acceptance is granted.",
+      "next_bounded_correction": [
+        "Produce one non-active register-counter depth trial with a readable top plane/end return and a connected cabinet/base shadow, sized around the same approved host/phone/number-book locations. Keep wall openings and all gameplay positions fixed.",
+        "Separate static table-leg material from moving floor effects using reviewed occlusion or masking while preserving all seven paths, phases, speeds and no-input scheduling.",
+        "Compare actual Base and1920 Delivery plus Inventory/Lotto populations for counter height, machine support, body occlusion and foot contacts. Retain the old closing-grace failure as historical; do not substitute counts or label visibility for visual acceptance."
+      ]
+    },
+    "beach": {
+      "current_source_files": {
+        "assets/art/environments/beach/background.png": {
+          "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/assets/art/environments/beach/background.png",
+          "sha256": "080ab3b56e5f1ac326f4349d559cb793128b1d22fcc14da231996fb31b7e731e",
+          "bytes": 685345,
+          "dimensions": [
+            1800,
+            860
+          ],
+          "role": "Current D source bytes, read-only; not a claim of a fresh source commit"
+        },
+        "data/art/environments/beach.json": {
+          "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/data/art/environments/beach.json",
+          "sha256": "e5d86bd1a3abd4d7ec7353366297180a47f457c27580f3679f293b0d89564596",
+          "bytes": 11241,
+          "role": "Current D source bytes, read-only; not a claim of a fresh source commit"
+        },
+        "assets/art/environments/beach/counters/beach_towel_stall.png": {
+          "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/assets/art/environments/beach/counters/beach_towel_stall.png",
+          "sha256": "38ce7f0d53daf99ca5f0710245ec0ba873aaf644b55626a8382ec9f71d4ebd47",
+          "bytes": 18217,
+          "dimensions": [
+            340,
+            72
+          ],
+          "role": "Current D source bytes, read-only; not a claim of a fresh source commit"
+        }
+      },
+      "current_files_equal_fixed_e07_manifest": true,
+      "recorded_active_package_sha256": "ef5e45f3f6cba547e43f421e506a4c2a64a55bdbec632c217c9ff6dbcdf86bd5",
+      "source_version_limit": "Current bytes were hashed directly. No current HEAD, current pointer or live browser state was queried. Historical screenshots retain their own source/version identities.",
+      "composition_verdict": "RETURN_FOR_GROUND_PIER_SKY_UMBRELLA_RECOMPOSITION; NO_VISUAL_GO",
+      "viewed_full_populated_native": [
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-BEACHTRIAL-20261115-r1-contexts-01/evidence/__none_actual_play.png",
+          "sha256": "6bd368117c06fcc88a02699f32ec3113aa7e57addc93d31c17efb0ee7df0aed4",
+          "bytes": 696259,
+          "dimensions": [
+            1280,
+            720
+          ]
+        },
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-BEACHTRIAL-20261115-r1-contexts-01/evidence/beach_bonfire_night_actual_play.png",
+          "sha256": "92675845cd84dbd13c90ba8cd5543d285d2f947d7e269c024feaf9c28bda2783",
+          "bytes": 679253,
+          "dimensions": [
+            1280,
+            720
+          ]
+        },
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-BEACHTRIAL-20261115-r1-contexts-01/evidence/beach_festival_weekend_actual_play.png",
+          "sha256": "c642a70b6ecbca550c9c3596a90926e41ea8b247376de88742c6c70768682336",
+          "bytes": 682611,
+          "dimensions": [
+            1280,
+            720
+          ]
+        },
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-BEACHTRIAL-20261115-r1-contexts-01/evidence/beach_storm_coming_actual_play.png",
+          "sha256": "f63d4ba4965c0afd2bb58b0dd6dd1214327d786aa01b6a1d7c1d3c1ba985a9c5",
+          "bytes": 676828,
+          "dimensions": [
+            1280,
+            720
+          ]
+        }
+      ],
+      "viewed_additional_evidence": [
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-BEACHTRIAL-20261115-r1-video-01/evidence/capture/frame_000.png",
+          "sha256": "31f51dff0a70aef32d209ffae13b1aff408a319e6129a044d1a80d8a7d3be9f4",
+          "bytes": 696788,
+          "dimensions": [
+            1280,
+            720
+          ],
+          "role": "One original actual full-application preview frame; not a newly played video"
+        },
+        {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-BEACHTRIAL-20261115-r1-contexts-01/evidence/beach_storm_coming_production_board_1800x860.png",
+          "sha256": "d7a58b69537c64d80b3c558700336a3a13e9ba8f3107bae92deb92ddf804b83c",
+          "bytes": 716864,
+          "dimensions": [
+            1800,
+            860
+          ],
+          "role": "Full populated native1800 production board"
+        },
+        {
+          "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/assets/art/environments/beach/background.png",
+          "sha256": "080ab3b56e5f1ac326f4349d559cb793128b1d22fcc14da231996fb31b7e731e",
+          "bytes": 685345,
+          "dimensions": [
+            1800,
+            860
+          ],
+          "role": "Full1800 static source opened"
+        }
+      ],
+      "native_version": {
+        "baseline_source_commit": "04861a3e1d84e9a1de9aa300311d60477a5be786",
+        "baseline_source_tree": "d1cb1782e8f831da6467bbeb380e7abbc62789c8",
+        "baseline_archive_sha256": "89e3a77ef09e5d4a53d76997dcc0d0975287ce1310c20786061e8f32e8272882",
+        "approved_overlay_package_sha256": "ef5e45f3f6cba547e43f421e506a4c2a64a55bdbec632c217c9ff6dbcdf86bd5",
+        "identity": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-BEACHTRIAL-20261115-r1-contexts-01/evidence/source_identity.json",
+          "sha256": "35c9ce918bdb49432f8a8b87339875249472e09a77121f7221eddf4e0b07179c",
+          "bytes": 1073067
+        },
+        "package_identity": {
+          "path": "E:/CodexQA/BTH/workspaces/BTH-ENVART-BEACH-TRIAL-20261115/beach_trial_package_identity.json",
+          "sha256": "b4726147686757ab01894d89be71076496356cf5855d97ed9da57a54b7b795aa",
+          "bytes": 4269
+        },
+        "context_metadata": {
+          "path": "E:/CodexQA/BTH/runs/BTH-ENVART-BEACHTRIAL-20261115-r1-contexts-01/evidence/beach_preart_metadata.json",
+          "sha256": "34caedf088690e549bd3cc30c1e7ea3036f698d0da9e6e30295988417297b599",
+          "bytes": 3037662
+        },
+        "version_explanation": "Native copied source04861a3e plus the recorded non-active R1 package overlay, not export commitdd96 and not current D HEAD."
+      },
+      "historical_served_artifact_identity_only": {
+        "source_commit": "dd96c9dd2da5abc550f0076877cb0c57e370ae52",
+        "build_manifest_sha256": "1790fb9afebda433398a9635847cf69779e738c202ba29294dbc982d370d044e",
+        "delivery_record": {
+          "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/beach_r1_test_delivery.json",
+          "sha256": "4c7c4fc849504ca362911ec41c6c6eac023d41499ef4861594e9116cf2e32d1e",
+          "bytes": 6655
+        },
+        "browser_visual_scenario_gate": "NOT_RUN; no served Beach browser composition was newly observed or inferred from bytes"
+      },
+      "findings": [
+        {
+          "id": "BEACH-COMPOSITION-01",
+          "severity": "HIGH",
+          "confidence": "HIGH",
+          "region_native_1800_approx": {
+            "upper_sand": [
+              0,
+              360,
+              1800,
+              120
+            ],
+            "wood_band": [
+              0,
+              480,
+              1800,
+              152
+            ],
+            "lower_ground": [
+              0,
+              632,
+              1800,
+              228
+            ]
+          },
+          "observation": "The full-width reddish wood strip has a nearly straight upper and lower boundary and repeated slanted divisions. It reads as a steep wall/ramp or barrier, not a receding pier/deck top. It separates bright upper sand from dark lower ground without a visible connecting ramp, steps or coherent continuous walking plane. Bonfire benches/windbreak, storm rentals/skiff/Stranger, and festival rope/exit stand over the wood face rather than on an unambiguous horizontal floor.",
+          "consequence": "The actual populated views expose a ground/prop registration failure that empty source art and object-count/occlusion checks did not resolve."
+        },
+        {
+          "id": "BEACH-COMPOSITION-02",
+          "severity": "HIGH",
+          "confidence": "HIGH",
+          "region_native_1800_approx": {
+            "umbrella": [
+              497,
+              390,
+              214,
+              155
+            ]
+          },
+          "observation": "The umbrella canopy is an almost frontal triangular motif at the upper sand edge. Its bright narrow pole descends into the wooden face and ends there, with no legible planted foot or cast shadow on a horizontal plane. A bonfire bench and storm closing stall sit underneath/alongside the same face, reinforcing the contradictory depth.",
+          "next_visual_requirement": "Canopy underside/top foreshortening, visible pole-to-ground contact and one shadow direction must agree with the repaired deck plane and unchanged nearby population anchors."
+        },
+        {
+          "id": "BEACH-COMPOSITION-03",
+          "severity": "HIGH_FOR_SETTING_READ",
+          "confidence": "HIGH",
+          "region_native_1800_approx": {
+            "sky": [
+              0,
+              0,
+              1800,
+              158
+            ],
+            "floating_bars_y": [
+              52,
+              96
+            ]
+          },
+          "observation": "Long repeated magenta/cyan bars float across the dark sky with no poles, cable, awning or truss. They read as an indoor ceiling-light row. Their repeated scale and flat alignment, together with near-uniform sea strip texture, weaken outdoor horizon depth instead of establishing distance.",
+          "uncertainty": "They could be intended decorative lights, but the actual source contains no supporting structure. A support/rehome/removal choice is an owner composition decision, not approved by this report."
+        },
+        {
+          "id": "BEACH-COMPOSITION-04",
+          "severity": "MEDIUM",
+          "confidence": "MEDIUM_HIGH",
+          "region_native_1800_approx": {
+            "water": [
+              0,
+              158,
+              1800,
+              202
+            ],
+            "towel_counter": [
+              152,
+              396,
+              340,
+              76
+            ]
+          },
+          "observation": "The sea is a broad repeated horizontal strip with little texture-scale falloff. In Storm, the upright late-swimmer portrait is fully drawn above the water with a dry-style base shadow, and the lifeguard stands at the upper sand edge; the current background does not clearly explain these depth anchors. The slot cabinet over the towel fascia also lacks a legible grounded counter body/side return.",
+          "qualification": "Swimming/wading or a raised kiosk can be intentional. Do not move these gameplay anchors to force a prettier image. The corrected art must explain the existing positions, or expose an explicit anchor/design conflict for owner review first."
+        }
+      ],
+      "next_bounded_correction": [
+        "First prepare a single non-active ground/pier composition registered to the full existing four-context anchor envelope. Decide which band is sand, deck top and deck front; create one believable receding top plane, side/underside and sand-to-deck connection. Keep every gameplay object position, route, hit region and scenario definition unchanged.",
+        "Within that ground trial, redraw the umbrella at the same approved anchor with a coherent canopy/pole/foot shadow and give the towel/slot counter a grounded body. Do not generate or accept a whole-room replacement from an empty render.",
+        "Then resolve sky lights and sea-distance cues against that same perspective. Preserve all surf/boat/sign/glint identities and animation timing/liveness; no suppression or pointer-triggered redraw workaround.",
+        "Require personally viewed full populated Base/Bonfire/Festival/Storm1280 compositions and native1800 details plus authentic animated phases. Existing eight-second/full-count and visibility checks are technical evidence only; no corrected art or owner approval exists yet."
+      ]
+    }
+  },
+  "limitations": [
+    "This review opened exact retained images, not live interactive rooms. No new browser admission was obtained or bypassed; no current visual/WASM acceptance is claimed.",
+    "All6 Gas and6 Corner initial compositions and all4 Beach actual native compositions were inspected, plus the specified historical served images and material witnesses. Snapshot inspection does not cover every animation phase, scenario outcome, camera position or lifecycle.",
+    "Gas/Corner floor-glint numeric comparisons are explicitly attributed to NativeSuite. I independently opened/hash-bound the exact pairs; no new pixel-comparison job or decoder was run.",
+    "Corner scenarios01 retains its closing-grace failure. Historic earlier art GOs and no-severe-defect impressions are overridden, not converted into acceptance by counts.",
+    "Current source BG/JSON/counter bytes match the fixed delivered e07 inputs. A corrected populated preview will still be required; no historical screenshot is relabeled as a new source build.",
+    "No comparison or acceptance of any other room is made; root owns other disjoint room reassessments."
+  ],
+  "next_parent_action": "Route one non-active composition correction per room in the recorded order, keeping gameplay/animation contracts intact, then require actual populated visual and authentic animation review before any new art GO, TEST build or approved preview delivery."
+}

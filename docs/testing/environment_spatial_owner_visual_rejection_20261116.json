@@ -1,0 +1,260 @@
+{
+  "schema": "bth.environment_spatial_owner_visual_rejection/v1",
+  "recorded_at": "2026-11-16T17:34:25.966364+00:00",
+  "task_id": "BTH-ENV-SPATIAL-001",
+  "sidebar_task": "6afa5098-a83c-8191-9486-9c03c92ed02a",
+  "status": "OWNER_VISUAL_REJECTION_ALL20_REOPENED",
+  "authority": "Explicit Erik feedback relayed in top-level parent delegation6afaf017-7a04-8191-85b7-f5b4a5869024; previous automated/native results do not establish visual acceptance.",
+  "owner_findings": [
+    "Tables, counters, play surfaces and bed still appear wall-mounted.",
+    "Grand/BackRoom broad felt trapezoids at wall/floor boundary with compressed supports read as shelves or platforms.",
+    "Bar feet merge into floor/labels and counter mass stays flat against wall.",
+    "Home-room full previews show an upright shared bed painter; background floor movement alone cannot establish a horizontal bed."
+  ],
+  "visually_accepted_room_count": 0,
+  "rooms_remaining_for_new_composition_acceptance": 20,
+  "historical_TEST_artifact_delivery_count": 4,
+  "last_verified_TEST_source": "e07ca9280f4eebc531ef83dd50a79d76ec51ad23",
+  "current_TEST_pointer_rechecked_after_feedback": false,
+  "historical_delivery_evidence": "docs/testing/grand_back_room_spatial_test_delivery_20261116.json",
+  "historical_delivery_evidence_sha256": "a4076f22c2e7966fbe47173def682a8661a1d955075d2b4cf2c9a13efdea13ce",
+  "rooms": {
+    "bar": {
+      "state": "NOT_VISUALLY_ACCEPTED",
+      "reassessment": "docs/testing/bar_grand_high_limit_owner_visual_reassessment_20261116.json",
+      "scope": "Actual populated composition fails or has unresolved physical depth/material issues; see exact versioned evidence and candidate limits."
+    },
+    "grand_casino": {
+      "state": "NOT_VISUALLY_ACCEPTED",
+      "reassessment": "docs/testing/bar_grand_high_limit_owner_visual_reassessment_20261116.json",
+      "scope": "Actual populated composition fails or has unresolved physical depth/material issues; see exact versioned evidence and candidate limits."
+    },
+    "grand_casino_high_limit": {
+      "state": "NOT_VISUALLY_ACCEPTED",
+      "reassessment": "docs/testing/bar_grand_high_limit_owner_visual_reassessment_20261116.json",
+      "scope": "Actual populated composition fails or has unresolved physical depth/material issues; see exact versioned evidence and candidate limits."
+    },
+    "small_underground_casino": {
+      "state": "NOT_VISUALLY_ACCEPTED",
+      "reassessment": "docs/testing/hidden_delta_cage_owner_visual_reassessment_20261116.json",
+      "scope": "Actual populated composition fails or has unresolved physical depth/material issues; see exact versioned evidence and candidate limits."
+    },
+    "delta_queen": {
+      "state": "NOT_VISUALLY_ACCEPTED",
+      "reassessment": "docs/testing/hidden_delta_cage_owner_visual_reassessment_20261116.json",
+      "scope": "Actual populated composition fails or has unresolved physical depth/material issues; see exact versioned evidence and candidate limits."
+    },
+    "grand_casino_cage": {
+      "state": "NOT_VISUALLY_ACCEPTED",
+      "reassessment": "docs/testing/hidden_delta_cage_owner_visual_reassessment_20261116.json",
+      "scope": "Actual populated composition fails or has unresolved physical depth/material issues; see exact versioned evidence and candidate limits."
+    },
+    "kitty_cat_lounge": {
+      "state": "NOT_VISUALLY_ACCEPTED",
+      "reassessment": "docs/testing/kitty_jazz_pawn_owner_visual_reassessment_20261116.json",
+      "scope": "Actual populated composition fails or has unresolved physical depth/material issues; see exact versioned evidence and candidate limits."
+    },
+    "jazz_club": {
+      "state": "NOT_VISUALLY_ACCEPTED",
+      "reassessment": "docs/testing/kitty_jazz_pawn_owner_visual_reassessment_20261116.json",
+      "scope": "Actual populated composition fails or has unresolved physical depth/material issues; see exact versioned evidence and candidate limits."
+    },
+    "pawn_shop": {
+      "state": "NOT_VISUALLY_ACCEPTED",
+      "reassessment": "docs/testing/kitty_jazz_pawn_owner_visual_reassessment_20261116.json",
+      "scope": "Actual populated composition fails or has unresolved physical depth/material issues; see exact versioned evidence and candidate limits."
+    },
+    "apartment": {
+      "state": "NOT_VISUALLY_ACCEPTED",
+      "reassessment": "docs/testing/home_rooms_owner_visual_reassessment_20261116.json",
+      "scope": "Actual populated composition fails or has unresolved physical depth/material issues; see exact versioned evidence and candidate limits."
+    },
+    "house": {
+      "state": "NOT_VISUALLY_ACCEPTED",
+      "reassessment": "docs/testing/home_rooms_owner_visual_reassessment_20261116.json",
+      "scope": "Actual populated composition fails or has unresolved physical depth/material issues; see exact versioned evidence and candidate limits."
+    },
+    "motel_room": {
+      "state": "NOT_VISUALLY_ACCEPTED",
+      "reassessment": "docs/testing/home_rooms_owner_visual_reassessment_20261116.json",
+      "scope": "Actual populated composition fails or has unresolved physical depth/material issues; see exact versioned evidence and candidate limits."
+    },
+    "motel": {
+      "state": "NOT_VISUALLY_ACCEPTED",
+      "reassessment": "docs/testing/motel_alley_punchline_owner_visual_reassessment_20261116.json",
+      "scope": "Actual populated composition fails or has unresolved physical depth/material issues; see exact versioned evidence and candidate limits."
+    },
+    "back_alley": {
+      "state": "NOT_VISUALLY_ACCEPTED",
+      "reassessment": "docs/testing/motel_alley_punchline_owner_visual_reassessment_20261116.json",
+      "scope": "Actual populated composition fails or has unresolved physical depth/material issues; see exact versioned evidence and candidate limits."
+    },
+    "punchline_club": {
+      "state": "NOT_VISUALLY_ACCEPTED",
+      "reassessment": "docs/testing/motel_alley_punchline_owner_visual_reassessment_20261116.json",
+      "scope": "Actual populated composition fails or has unresolved physical depth/material issues; see exact versioned evidence and candidate limits."
+    },
+    "gas_station_casino": {
+      "state": "NOT_VISUALLY_ACCEPTED",
+      "reassessment": "docs/testing/gas_corner_beach_owner_visual_reassessment_20261116.json",
+      "scope": "Actual populated composition fails or has unresolved physical depth/material issues; see exact versioned evidence and candidate limits."
+    },
+    "corner_store": {
+      "state": "NOT_VISUALLY_ACCEPTED",
+      "reassessment": "docs/testing/gas_corner_beach_owner_visual_reassessment_20261116.json",
+      "scope": "Actual populated composition fails or has unresolved physical depth/material issues; see exact versioned evidence and candidate limits."
+    },
+    "beach": {
+      "state": "NOT_VISUALLY_ACCEPTED",
+      "reassessment": "docs/testing/gas_corner_beach_owner_visual_reassessment_20261116.json",
+      "scope": "Actual populated composition fails or has unresolved physical depth/material issues; see exact versioned evidence and candidate limits."
+    },
+    "grand_casino_back_room": {
+      "state": "VISUAL_FAIL_OWNER_COMPOSITION_REJECTION",
+      "reassessment": "Root full-room populated preview and owner feedback",
+      "frame": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-capture\\evidence\\capture\\frame_000.png",
+        "sha256": "31b4d60aa78f1a9da2bf87bdc0e7f2e25f2565e691738475b733950f48055f76",
+        "personally_viewed": true
+      }
+    },
+    "punchline_back_room": {
+      "state": "VISUAL_FAIL_OWNER_COMPOSITION_REJECTION",
+      "reassessment": "Root full-room populated preview and owner feedback",
+      "frame": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-contexts\\evidence\\__none_actual_play.png",
+        "sha256": "57b679fb25acf9bde96d143559de51b7f4e3728ef1192cb8ae5fd2fa3f5faea2",
+        "personally_viewed": true
+      }
+    }
+  },
+  "reassessment_documents_sha256": {
+    "docs/testing/bar_grand_high_limit_owner_visual_reassessment_20261116.json": "2f9c223663837e50b675c0295ee31787892f5b22d7a13cec66b459b16f5fe4b4",
+    "docs/testing/hidden_delta_cage_owner_visual_reassessment_20261116.json": "11f26b8211c0aade930d57912252caa30b027c387fa3b5e443b85eaaf72640d4",
+    "docs/testing/kitty_jazz_pawn_owner_visual_reassessment_20261116.json": "94c59b1c0119701131944cd5b6447fd7c84f58cca760644ec642463ea78ffd36",
+    "docs/testing/home_rooms_owner_visual_reassessment_20261116.json": "3d30caed2da7c8d0fa57e58a561c9b02fb285afbf76f1372d9b01c224a9d4ca4",
+    "docs/testing/motel_alley_punchline_owner_visual_reassessment_20261116.json": "8a9d2b3fcb4e3cb97719eb17005d9e59acd7313a520397dbf5fa2f5732b743c1",
+    "docs/testing/gas_corner_beach_owner_visual_reassessment_20261116.json": "96b22b17f93d7a1a6778f9d0a5536b87345e35ceeb80b543997299595a0e3a06"
+  },
+  "superseded_art_approval_records_sha256": {
+    "docs/testing/bar_spatial_v4_art_approval_20261116.json": "a36d1aed3a4db4fe492d949bd9553d80706f8102b517449223d77f9a28e4292b",
+    "docs/testing/grand_back_room_spatial_v2_native_art_approval_20261116.json": "dda141cafab20e7f12db27e83011aa8896cf31f3e3099890ea3463302c7163a9",
+    "docs/testing/grand_spatial_v4_art_approval_20261116.json": "f326256b6fdf9139d667d738069415e54a66789da86b1bb863c91f46027c9930",
+    "docs/testing/high_limit_spatial_v1_native_art_approval_20261116.json": "871b8e811a05b12b40da059732b0e6de94633143fa44ac0bc6cba16149ecea9b",
+    "docs/testing/private_crew_spatial_v3_native_art_approval_20261116.json": "94c93bfbf03b2aad757cd205258885d8b449ff0009de26c0a05625c555de4843"
+  },
+  "private_release_hold": {
+    "reason": "Owner rejected composition; old94c artGO is no longer current authorization.",
+    "approved_source_snapshot_preserved": "f7066d965304916b5b0279efa58e852218ed27a3",
+    "art_review_sha256": "94c93bfbf03b2aad757cd205258885d8b449ff0009de26c0a05625c555de4843",
+    "TEST_build_started": false,
+    "TEST_published": false,
+    "Private_APNG_plan_encode_verify_started": false
+  },
+  "technical_evidence_policy": "Retain every original source/frame/failed and passing Job. Reuse only verification whose exact inputs remain unchanged. Never relabel a failed run or treat counts as owner acceptance. Changed body/mask/painter inputs require explicit new proof.",
+  "technical_progress_retained": {
+    "Private_native": "All21 closedPASS,152frames/20.1249284444445s; old sourceaaef/E4047 unchanged.",
+    "Hidden_continuation": "All8 new phases closedPASS,22 oldPASS retained and old51 separatelyqualified plus fresh246; honest30observations/29slots; oldV4FAIL remains.",
+    "Private_release_tests": "74PASS1.513s Job24692 closed0/zero; no build or publication authority under new owner rejection.",
+    "shared_observer_preflight": "V2 24PASS8.841s/all17 actualarchivepositives; V1 failed22 remains in30ad/976ff.",
+    "Private_preview_contract_tests": "Job37800 closed0; no actualnewpreview encoded or delivered.",
+    "Apartment_V2": "27PASS0.329s and newnonactive244fcf floor+decorativerect trial; no populatedcandidate render; no artGO."
+  },
+  "runtime_state": {
+    "all_owned_engine_jobs_closed": true,
+    "new_engine_slots_added": false,
+    "active_engine_grant": null,
+    "active_job_interrupted": false,
+    "no_global_process_inspection": true
+  },
+  "preview_pages_rejection_annotation_readback": [
+    {
+      "id": "page_0245fc4fdf288191a7f36bf65e490f6e",
+      "url": "https://chatgpt.com/space/page_0245fc4fdf288191a7f36bf65e490f6e",
+      "first_block": "**Owner visual review: failed.** This retained preview shows a rejected composition. Earlier art approvals are superseded; a corrected full-room populated preview is required.",
+      "all_images_preserved": true,
+      "image_count": 4,
+      "edit_sequence": 8
+    },
+    {
+      "id": "page_9fb89b8e42d88191884e9f1bdebcb1a9",
+      "url": "https://chatgpt.com/space/page_9fb89b8e42d88191884e9f1bdebcb1a9",
+      "first_block": "**Owner visual review: failed.** This retained preview shows a rejected composition. Earlier art approvals are superseded; a corrected full-room populated preview is required.",
+      "all_images_preserved": true,
+      "image_count": 1,
+      "edit_sequence": 2
+    },
+    {
+      "id": "page_21f30d95cf108191be81f2f718cb4c60",
+      "url": "https://chatgpt.com/space/page_21f30d95cf108191be81f2f718cb4c60",
+      "first_block": "**Owner visual review: failed.** This retained preview shows a rejected composition. Earlier art approvals are superseded; a corrected full-room populated preview is required.",
+      "all_images_preserved": true,
+      "image_count": 1,
+      "edit_sequence": 3
+    },
+    {
+      "id": "page_2aec5fdabdd88191a22fc77c483c231e",
+      "url": "https://chatgpt.com/space/page_2aec5fdabdd88191a22fc77c483c231e",
+      "first_block": "**Owner visual review: failed.** This retained preview shows a rejected composition. Earlier art approvals are superseded; a corrected full-room populated preview is required.",
+      "all_images_preserved": true,
+      "image_count": 1,
+      "edit_sequence": 3
+    },
+    {
+      "id": "page_df3b22937c9c81918ab5c6d759533382",
+      "url": "https://chatgpt.com/space/page_df3b22937c9c81918ab5c6d759533382",
+      "first_block": "**Owner visual review: failed.** This retained preview shows a rejected composition. Earlier art approvals are superseded; a corrected full-room populated preview is required.",
+      "all_images_preserved": true,
+      "image_count": 1,
+      "edit_sequence": 2
+    }
+  ],
+  "next_bounded_correction": {
+    "room": "grand_casino_back_room",
+    "status": "ONE_NON_ACTIVE_R3_COMPOSITION_STUDY_GENERATED_BY_EXCLUSIVE_ART_OWNER_PRESERVATION_PENDING",
+    "scope": "Jointly rebuild lower-room floor depth, table perspective, full-height bodies and shadows; derive exact furniture-only foreground masks so floor glints continue behind legs.",
+    "fixed_gameplay_authority_native": {
+      "Blackjack_interaction_rect": [
+        356,
+        400,
+        144,
+        96
+      ],
+      "Craps_interaction_rect": [
+        1288,
+        398,
+        144,
+        96
+      ],
+      "Travel_interaction_rect": [
+        8,
+        708,
+        128,
+        144
+      ]
+    },
+    "coordinates_provisional_not_visual_approval": {
+      "floor_back_boundary_native_y": 330,
+      "front_foot_trial_y": [
+        680,
+        700
+      ],
+      "shared_recession_region_native": [
+        900,
+        180
+      ]
+    },
+    "constraints": [
+      "Keep camera, all gameplay anchors/hit/label positions and16animation inputs/timing unchanged.",
+      "Maintain continuous floor behind/between/around tables; no isolated floor platforms.",
+      "Preserve OFFICE foreground and occlude old silverfloor band where physical bodies cross it.",
+      "Use actual full populated candidate scene before renewed art acceptance; raw image/master/counts alone are insufficient."
+    ]
+  },
+  "parallel_home_direction": "Design one shared _draw_bed_prop foreshortened paint prototype paired with MotelRoom backing/floor; no production code edit yet.",
+  "scope_limits": [
+    "Artbranch and TEST only; no main/NEXT/stable/itch merge or publication.",
+    "No original saves/profiles accessed or migrated; no browser/process/control denial bypass.",
+    "Previous wrong-main untrackedmetadata incident remains unresolved awaiting the earlier human answer; no cleanup or guessed restoration."
+  ]
+}

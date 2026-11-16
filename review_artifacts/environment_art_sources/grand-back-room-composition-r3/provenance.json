@@ -1,0 +1,249 @@
+{
+  "schema": "bth.grand_back_room_composition_source_study/v3",
+  "task_id": "BTH-ENV-SPATIAL-GBR-001",
+  "parent_task_id": "BTH-ENV-SPATIAL-001",
+  "recorded_at_utc": "2026-11-16 17:33:21 UTC",
+  "owner": "/root/bar_clearance_audit",
+  "status": "ONE_NON_ACTIVE_RAW_STUDY_PRESERVED_NOT_APPROVED",
+  "source_directory": "review_artifacts/environment_art_sources/grand-back-room-composition-r3",
+  "authorization": {
+    "origin": "Root exclusively authorized ONE new builtin Grand Back Room R3 whole-composition image study after owner rejected the published shelf/platform compositions.",
+    "actual_generation_limit": 1,
+    "fallback_to_last_two_viewed_images_authorized_after_pre_generation_Windows_path_parser_failure": true,
+    "active_art_changes": false,
+    "E_decoder_Jobs_Library_Git_assembly_and_acceptance_owned_by_root": true,
+    "author_scope": "Inspect exact current master and actual UI; create only this new D B64/prompt/provenance source packet. No other agent generating GBR."
+  },
+  "skill": {
+    "package": "e0/.system/imagegen",
+    "resource": "skill://codex-home-skills/C:/Users/theep/.codex/skills/.system/imagegen/SKILL.md",
+    "mode": "Default builtin precise-object-edit",
+    "CLI_used": false
+  },
+  "inputs": {
+    "edit_target": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/assets/art/environments/grand_casino_back_room/background.png",
+      "sha256": "46492785829f659c5869d91a6510d424ea4977e6921b1ece7de1225aa804e6ca",
+      "dimensions": [
+        1800,
+        860
+      ],
+      "role": "SOLE background edit target",
+      "personally_viewed_before_generation": true
+    },
+    "context_only": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-capture/evidence/capture/frame_000.png",
+      "sha256": "31b4d60aa78f1a9da2bf87bdc0e7f2e25f2565e691738475b733950f48055f76",
+      "dimensions": [
+        1280,
+        720
+      ],
+      "actual_scene_clock": 8.45244366666685,
+      "scenario": "__none",
+      "role": "Actual full populated UI for scale/contact context only. Never to be baked into output.",
+      "personally_viewed_before_generation": true,
+      "capture_metadata_path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-capture\\evidence\\capture\\animation_capture.json",
+      "capture_metadata_sha256": "3342ed79ece4a408f567cfae8afbdab01bd1612d441a623e24ed2086e8908afd"
+    },
+    "last_two_images_at_fallback": [
+      "Exact current master46492785...",
+      "Actual populated GBR v3 full UI frame00031b4d60a..."
+    ],
+    "original_logical_source_scope": {
+      "members": 21,
+      "seal": "e20695c6715e4156027cc211b6c7291ff2820e3d52d317dbbfc9b6cc5ca931c7",
+      "seal_law": "SHA256 ordinal-sorted path+SPACE+sha256 lines joinedLF, no trailingLF; globalindex included as separate control",
+      "files": {
+        "assets/art/environments/grand_casino_back_room/counters/grand_table_right.png": "de3a5e82cce15772a929306eb423aaf44b96ff3302cf8c73aec1eb12b7dc0964",
+        "assets/art/environments/grand_casino_back_room/anim/casino_sparkle_0.png": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+        "assets/art/environments/grand_casino_back_room/anim/floor_glint_1.png": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+        "assets/art/environments/grand_casino_back_room/anim/floor_glint_6.png": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+        "assets/art/environments/grand_casino_back_room/anim/floor_glint_5.png": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+        "assets/art/environments/grand_casino_back_room/counters/grand_table_left.png": "9a96841d98e0f5ee53d15563c94881f3ce34ab4569182f7009f6b0609c4dafac",
+        "assets/art/environments/grand_casino_back_room/anim/casino_sparkle_2.png": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+        "assets/art/environments/grand_casino_back_room/anim/casino_sparkle_1.png": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+        "assets/art/environments/grand_casino_back_room/anim/floor_glint_3.png": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+        "assets/art/environments/grand_casino_back_room/anim/casino_light_3.png": "74b88031a6733ffcacbf97bbd910e9e30ba139ac37132f72fd00e62963b40bf1",
+        "assets/art/environments/grand_casino_back_room/background.png": "46492785829f659c5869d91a6510d424ea4977e6921b1ece7de1225aa804e6ca",
+        "assets/art/environments/grand_casino_back_room/anim/casino_light_2.png": "0fac3ccc158a14a64b034e55acbb242436e145bf47bc822b8b7ba41aca239595",
+        "assets/art/environments/grand_casino_back_room/anim/floor_glint_0.png": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+        "assets/art/environments/grand_casino_back_room/anim/casino_light_0.png": "988e0207c99758ba1f5d7f30d4bfa9b7439beb9faf15b3c9ff9a76c55ba27340",
+        "data/art/environments/grand_casino_back_room.json": "cc8553a5856289c7fe6b42754db43b4bd02d07e5c793ca1fea54e7655eca103d",
+        "assets/art/environments/grand_casino_back_room/anim/floor_glint_2.png": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+        "data/art/environments/index.json": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+        "assets/art/environments/grand_casino_back_room/anim/casino_sign_pulse.png": "dceb1dc0df381fa98592cb9c58822e1863512f7a44f64b5c5bdd88faea8d51ed",
+        "assets/art/environments/grand_casino_back_room/anim/casino_light_1.png": "f9e2470a1a73e3ab62b6f3c2f23102ef4184003d7b7b98bf4691d39583221515",
+        "assets/art/environments/grand_casino_back_room/anim/casino_light_4.png": "7964ba8bd36745aeb5b44feeee7cff613d813e1b4a4fd5aebc91deb877663ba9",
+        "assets/art/environments/grand_casino_back_room/anim/floor_glint_4.png": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147"
+      }
+    }
+  },
+  "requested_composition": {
+    "output": "Opaque1800x860 background only, same full framing/camera and upper room identity",
+    "provisional_floor_junction_native_y": 330,
+    "provisional_front_feet_native_y": [
+      680,
+      700
+    ],
+    "old_588_body_cap_superseded": true,
+    "perspective": "Compatible shared room depth near(900,180) provisionally; asymmetric foreshortening rather than two independent centered trapezoids.",
+    "hard_fixed_gameplay_native_rects": {
+      "Blackjack": [
+        356,
+        400,
+        144,
+        96
+      ],
+      "Craps": [
+        1288,
+        398,
+        144,
+        96
+      ]
+    },
+    "all_gameplay_anchors_camera_cards_labels_slots_unchanged": true,
+    "OFFICE": "Preserve existing identity and placement, approximate native x686..1112/y636..730 and existing supporting feet. No invented door or new object.",
+    "lower_left_travel_space_clear": true,
+    "animations_preserved": 16,
+    "replays": "Future root-owned furniture-only replay masks from the exact final master; no replay creation in this source task.",
+    "coordinates_are_study_directions_not_production_approval": true
+  },
+  "generation_counts": {
+    "tool_invocations": 2,
+    "pre_generation_argument_failures": 1,
+    "successful_image_generations": 1,
+    "competing_or_replacement_generations": 0
+  },
+  "attempts": [
+    {
+      "invocation": 1,
+      "tool": "image_gen.imagegen",
+      "mode": "builtin edit",
+      "arguments": {
+        "prompt_reference": "Exact prompt.txt without its single terminalLF",
+        "referenced_image_paths": [
+          "D:/Projects/Beat-The-House/.tmp/environment-art-layers/assets/art/environments/grand_casino_back_room/background.png",
+          "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-capture/evidence/capture/frame_000.png"
+        ],
+        "transparent_background": false
+      },
+      "result": "REJECTED_BEFORE_GENERATION",
+      "exact_error": "AbsolutePathBuf deserialized without a base path at line 1 column 3430",
+      "actual_generation": false
+    },
+    {
+      "invocation": 2,
+      "tool": "image_gen.imagegen",
+      "mode": "builtin edit",
+      "arguments": {
+        "prompt_reference": "Same exact prompt.txt without terminalLF",
+        "num_last_images_to_include": 2,
+        "transparent_background": false
+      },
+      "result": "ONE_GENERATION_SUCCEEDED",
+      "returned_keys": [
+        "image_url"
+      ],
+      "separate_generation_id_returned": false,
+      "actual_generation": true
+    }
+  ],
+  "exact_prompt": {
+    "path": "prompt.txt",
+    "encoding": "UTF-8; exact tool prompt plus oneLF",
+    "bytes": 3261,
+    "sha256": "1a2d585f2958e47db34bc093dd03256235a0e9abfa27ed1ec46adef1f5af951a",
+    "tool_argument": "Use case: precise-object-edit.\nAsset: one opaque BACKGROUND-ONLY pixel-art room study for Beat the House, Grand Casino Back Room. This is a non-active whole-composition source trial, not a finished game screenshot.\nInput roles: Image 1 is the exact current 1800x860 background and the SOLE edit target. Image 2 is the actual populated 1280x720 game UI, supplied ONLY to understand the existing game/actor scale and contacts. NEVER copy any UI, cards, chips, dice, labels, arrows, characters, cyan diagnostic marks or gameplay objects from Image 2 into the output.\n\nKeep the exact Image 1 camera, complete 1800x860 canvas framing, wine/plum and dark timber palette, crisp pixel clusters and upper wall/sign identity. Keep the top cornice, pink horizontal practical light, small upper framed panels and verbatim BACK ROOM and ROURKE'S TABLES in their existing places. Output only the room background, with no border, UI or collage.\n\nCorrect the spatial system as a whole. The existing broad green planes on tiny posts read as wall shelves. Replace them with TWO full-height freestanding casino tables, with substantial dark timber aprons/body below the playing plane, long structurally joined supports, receding rear supports, readable open floor around/between the legs, and restrained contact shadows. Do not merely attach two short sticks or a full-width plinth. Establish a continuous floor extending back behind the tables; provisional back wall/floor junction near native y330, not the old y492. Let the front table feet reach around native y680\u2013700 rather than compressing every body above588. These are study proportions, not a rigid approved production mask.\n\nThe two tabletop planes must share believable room perspective, roughly toward the common depth region near native (900,180); allow asymmetric foreshortening instead of two separately centered identical trapezoids. Keep useful broad green playing areas. HARD GAMEPLAY CONTACT AUTHORITY in the 1800x860 output: the left Blackjack interaction rectangle is native x356..500, y400..496; the right Craps rectangle is x1288..1432, y398..494. Their real game paint will be composited there later and must sit plausibly on felt with safe surrounding rail margins. Do not move, shrink, repaint or bake those game objects. Adjust the physical table silhouette to those fixed contacts, not the camera or gameplay anchors. No cards, symbols or casino layouts painted on the felt.\n\nKeep the existing OFFICE identity and placement at the lower center, approximately native x686..1112/y636..730, with its existing supporting feet and the same text. Make the surrounding floor/body context physically coherent without inventing a new doorway, door opening, desk, chair or prop. Leave the lower-left travel space clear. Existing floor inlay can be naturally occluded by real furniture, but do not invent a raised stage or two different floor levels.\n\nPreserve recognizable room materials and quiet contrast. No photoreal blur, haze, glow veil, global recolor, new fixtures, neon bars, people, gameplay interface, anchors, labels, watermarks or full-room reframing. All existing animation layers, positions and timing remain separate and unchanged; do not bake their pulses/glints into this static background."
+  },
+  "preserved_raw": {
+    "path": "grand-back-room-composition-r3.png.b64",
+    "encoding": "Exact returned ASCII PNG-base64 component plus oneLF; noCR; no payload printed",
+    "base64_file_bytes": 2146845,
+    "base64_file_sha256": "5f8ad82095005b9d4d7237f0e4006580ec2ee7692eae989bd26c8dbc56a32b48",
+    "exact_data_url_prefix": "data:image/png;base64,",
+    "exact_data_url_characters": 2146866,
+    "exact_data_url_sha256": "f3c8db96e0985f8642929ae941fb09a3a7f8ef6c358035b09e9f328634f4d058",
+    "PNG_sha256": "b7bdfde4f88ec32bd5cf21b7b9bc8de1954a5e572a82fb98907cc716b4e6fc7a",
+    "PNG_bytes": 1610131,
+    "PNG_dimensions": [
+      1815,
+      867
+    ],
+    "PNG_bit_depth": 8,
+    "PNG_color_type": 2,
+    "returned_image_identity": "The exact PNG SHA and exact data-URL SHA identify the one returned image. Tool returned only image_url; no separate generation ID is invented.",
+    "metadata_method": "Read saved B64 asASCII, in-memory Base64 bytes/hash/signature/IHDR inspection only; no PNG filesystem output or image reencoding.",
+    "PNG_materialized_by_author": false,
+    "E_decoder_or_job_run_by_author": false,
+    "Library_action_by_author": false,
+    "image_edited_reencoded_or_regenerated_by_author": false
+  },
+  "first_look": {
+    "result": "NOT_APPROVED_AS_FULL_MASTER_REPLACEMENT",
+    "inspection": "Personally inspected the builtin returned image at normal full-room scale. These are source-study visual observations, not a decoded pixel-mask/native composite qualification.",
+    "positive_direction": "Substantially taller table bodies and joined supports extend toward the proposed680..700 front-foot zone, with more open floor/negative space than the published short-post repair.",
+    "limitations": [
+      "Returned raster is1815x867 rather than requested1800x860. Preserve it exactly; any later registration/resampling belongs to a separate reviewed assembly.",
+      "Visual wall/floor junction appears roughly native360..370 rather than330. Rear rails still track that junction, so clear floor setback behind both tables is not demonstrated.",
+      "Left/right tops remain largely mirrored with their own centered foreshortening; the requested compatible shared depth region/asymmetry is not convincingly established.",
+      "Blackjack/Craps actual paint coverage and safe felt margins have not been numerically traced or freshly composited. The front felt margin near the fixed lower paint must be checked after materialization.",
+      "OFFICE identity is recognizable, but exact registration, foreground occlusion, floor-band604 crossing, contact shadows and travel clearance require root's materialized full-composition review.",
+      "Current Base has no standing people beside the tables, so credible adult/table scale remains unproved.",
+      "All16 authored motion PNGs remain source-byte-exact, but their placement over the new static material is unreviewed. No replay/occlusion treatment was assembled."
+    ],
+    "UI_baked_into_generated_output_observed": false,
+    "formal_UI_contamination_or_pixel_registration_test_performed": false,
+    "native_or_gameplay_acceptance": false,
+    "active_candidate_assembled": false,
+    "TEST_updated": false,
+    "regeneration_performed_on_visible_limitations": false
+  },
+  "filesystem_preservation": {
+    "pre_generation_target_absent": true,
+    "pre_generation_ancestor_checks": [
+      {
+        "Path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\review_artifacts\\environment_art_sources",
+        "Ordinary": true
+      },
+      {
+        "Path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\review_artifacts",
+        "Ordinary": true
+      },
+      {
+        "Path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers",
+        "Ordinary": true
+      },
+      {
+        "Path": "D:\\Projects\\Beat-The-House\\.tmp",
+        "Ordinary": true
+      },
+      {
+        "Path": "D:\\Projects\\Beat-The-House",
+        "Ordinary": true
+      },
+      {
+        "Path": "D:\\Projects",
+        "Ordinary": true
+      },
+      {
+        "Path": "D:\\",
+        "Ordinary": true
+      }
+    ],
+    "wrong_main_target": "D:/Projects/Beat-The-House/review_artifacts/environment_art_sources/grand-back-room-composition-r3",
+    "wrong_main_target_absent_before_generation": true,
+    "wrong_main_target_still_absent_before_provenance": true,
+    "all21_original_sources_rehashed_after_B64_prompt_preservation": true,
+    "source_mismatches": [],
+    "context_frame_rehash_after_preservation": "31b4d60aa78f1a9da2bf87bdc0e7f2e25f2565e691738475b733950f48055f76",
+    "existing_sources_evidence_artifacts_preserved": true,
+    "only_new_packet_files": [
+      "grand-back-room-composition-r3.png.b64",
+      "prompt.txt",
+      "provenance.json"
+    ],
+    "no_E_write_decoder_Job_Library_Git_active_art_or_release": true,
+    "no_cleanup_deletion_or_moves": true
+  },
+  "next_action": "Root materializes this exact raw under separately admitted E storage, independently assesses full composition/paint/depth/motion/replay feasibility and decides whether any source material is usable. No replacement generation or assembly is authorized by this provenance."
+}
