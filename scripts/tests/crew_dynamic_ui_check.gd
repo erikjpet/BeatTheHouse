@@ -71,7 +71,39 @@ func contract():
   check(choice.requires_confirm == (expected > 0), "positive repayment confirmation hint matches actual debit " + str(cash))
   check(r.bankroll == cash, "repayment quote consumes no money " + str(cash))
   facts.price_cases.append({"cash":cash,"debit":expected,"text":choice.text,"impact":choice.presentation_consequence_summary})
- facts.fidelity = "SYNTHETIC read-only provider and repayment projection contracts; no captured run altered."
+ # Synthetic Collector ledger: no captured profile or payment is changed.
+ var collector_choice = {"id":"settle_the_marker", "label":"Settle the marker", "text":"The whole note disappears.", "conditions":{"requires_collectible_debt":true}, "consequence_summary":"Authored story flag", "requires_confirm":false, "consequences":{"debt_settlement_discount_percent":25, "flags":{"debt_court_settlement":true}, "resolve_event":true}}
+ var collector = Event.new(); collector.setup({"id":"scenario_debt_court_office_hours", "payload":{"choices":[collector_choice]}})
+ facts.collector_cases = []
+ for price in [{"balance":22,"payment":17}, {"balance":23,"payment":18}, {"balance":1,"payment":1}]:
+  r.bankroll = 100
+  r.debt = [{"id":"collector_projection_note", "lender_id":"motel_friend", "balance":price.balance, "principal":20, "status":"active", "debt_kind":"cash"}]
+  var quote_before = wire({"cash":r.bankroll, "debt":r.debt, "rng":str(r.rng_state), "clock":r.game_clock_minutes, "flags":r.narrative_flags})
+  var choice_before = wire(collector_choice)
+  var quoted = collector.choices(r)[0]
+  check(str(quoted.label).ends_with("($%d)" % int(price.payment)), "Collector button quotes the rounded payment for marker " + str(price.balance))
+  check(str(quoted.text).contains("$%d marker" % int(price.balance)) and str(quoted.text).contains("Pay $%d" % int(price.payment)) and str(quoted.text).contains("25% off"), "Collector prose identifies marker payment and discount " + str(price.balance))
+  check(str(quoted.presentation_consequence_summary).begins_with("Bankroll -%d;" % int(price.payment)), "Collector consequence quotes the same single debit " + str(price.balance))
+  check(wire(quoted.consequences) == wire(collector_choice.consequences) and not quoted.consequences.has("bankroll_delta"), "Collector quote preserves authored settlement without adding a second debit " + str(price.balance))
+  check(wire(collector_choice) == choice_before and wire({"cash":r.bankroll, "debt":r.debt, "rng":str(r.rng_state), "clock":r.game_clock_minutes, "flags":r.narrative_flags}) == quote_before, "Collector projection consumes no cash debt RNG clock or flags " + str(price.balance))
+  check(quoted.id == collector_choice.id and quoted.requires_confirm == false, "Collector identity and existing confirmation behavior retained " + str(price.balance))
+  facts.collector_cases.append({"balance":price.balance,"payment":price.payment,"label":quoted.label,"text":quoted.text,"impact":quoted.presentation_consequence_summary})
+ r.debt[0]["balance"] = 22
+ for authored_state in [{"disabled":true,"disabled_reason":"Authored Collector reason","requires_confirm":false}, {"enabled":false,"requires_confirm":true}, {"enabled":true,"disabled":false,"requires_confirm":false}]:
+  var authored = collector_choice.duplicate(true); authored.merge(authored_state, true)
+  var projected = collector._contextualized_choice(authored, r, {})
+  var preserved = projected.duplicate(true); var authored_expected = authored.duplicate(true)
+  for key in ["label", "text", "presentation_consequence_summary"]:
+   preserved.erase(key); authored_expected.erase(key)
+  check(wire(preserved) == wire(authored_expected), "Collector quote preserves every authored availability reason flag and confirmation field " + str(authored_state))
+ r.bankroll = 0
+ var unaffordable = collector._contextualized_choice(collector_choice, r, {})
+ check(str(unaffordable.label).ends_with("($17)") and not unaffordable.requires_confirm, "unaffordable Collector quote retains actual price and existing confirmation contract")
+ check(r.bankroll == 0 and int(r.debt[0].balance) == 22, "unaffordable Collector projection does not settle the marker")
+ r.debt = []
+ check(wire(collector._contextualized_choice(collector_choice, r, {})) == wire(collector_choice), "Collector no-marker fallback remains unchanged")
+ check(wire(event._collector_settlement_choice(collector_choice, r)) == wire(collector_choice), "unrelated event retains authored choice unchanged")
+ facts.fidelity = "SYNTHETIC read-only provider repayment and Collector projection contracts; no captured run altered."
 func go():
  if not check(OS.get_environment("BTH_QA_RUN_DIR").replace("\\", "/").begins_with("E:/CodexQA/BTH/runs/"), "admitted isolated E QA run required"): return await done()
  var mode = OS.get_cmdline_user_args()[0]; facts.mode = mode

@@ -81,3 +81,7 @@ Every case used admitted E: layouts and manifests, both capacity/launch gates, v
 Total **134/134** in 10 closed native Jobs. Exact GD copies and source/custody/storage/launch/cleanup receipts remain beside each log. Consolidated receipt: `E:\CodexQA\BTH\runs\crew-getaway-final-record-261116\evidence\cases.json`. Manual reconciliation: `E:\CodexQA\BTH\runs\crew-getaway-final-record-261116\evidence\reconciliation.json`.
 
 Accepted source/QA proof commit: `9c3b32b85f1036defb40c29502d6a6602fe0af73`. This bounded native adverse-flow acceptance is Complete; the original broader objective remains Open for continuing scope, route/human pacing and actual browser/WASM acceptance.
+
+<!-- corrected-actual-debt-qualification-20261116 -->
+
+Debt-field qualification: earlier Crew helpers that read snapshot.get("debts", {}) did not inspect the actual singular debt array. Any debt-absence or debt-persistence conclusion relying only on that proxy is withdrawn. Original logs, emitted counts and other actual observations remain unchanged. The [corrected actual-ledger audit](Crew_debt_ledger_revalidation_QA_20261116.md), finding BTH-QA-CREW-DEBT-PROBE-20261116, supplies120 fresh native checks at12 explicit preserved boundaries. It qualifies those named states, including genuine empty arrays and positive Nico markers; it does not retroactively certify every historical intermediate state.

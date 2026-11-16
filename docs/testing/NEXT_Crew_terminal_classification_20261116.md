@@ -38,3 +38,7 @@ All eight workers exited 0, were assigned to capped Jobs before execution, and r
 | crew-sidebar-continuing-side-door-20261116-01 | 8/8 | `a039d0c0dc68db4d77d8234281639cfe9ced232f0d273dde7e11d184668a678b` |
 
 The earlier proof commit a77b2811 was pushed without force and remote refs/heads/main verified at its full SHA. This publishes QA evidence, not browser acceptance. Native continuation and original parent scope remain Open; browser/WASM and human pacing remain unverified.
+
+<!-- corrected-actual-debt-qualification-20261116 -->
+
+Debt-field qualification: earlier Crew helpers that read snapshot.get("debts", {}) did not inspect the actual singular debt array. Any debt-absence or debt-persistence conclusion relying only on that proxy is withdrawn. Original logs, emitted counts and other actual observations remain unchanged. The [corrected actual-ledger audit](Crew_debt_ledger_revalidation_QA_20261116.md), finding BTH-QA-CREW-DEBT-PROBE-20261116, supplies120 fresh native checks at12 explicit preserved boundaries. It qualifies those named states, including genuine empty arrays and positive Nico markers; it does not retroactively certify every historical intermediate state.

@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T08:12:40.546211+00:00",
+  "updated_at": "2026-11-16T09:30:48.721511+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -4944,7 +4944,8 @@
               "id": "adverse-getaway-and-recovery",
               "state": "reviewed",
               "evidence": [
-                "docs/testing/Crew_ordinary_delivery_QA_20261116.md"
+                "docs/testing/Crew_ordinary_delivery_QA_20261116.md",
+                "docs/testing/Crew_scope_and_adverse_getaway_QA_20261116.md"
               ]
             },
             {
@@ -4974,7 +4975,7 @@
         }
       },
       "state": "open",
-      "status": "NATIVE_COLLECTION_BOTH_OUTCOMES_PASS_CORRIDOR_ENCOUNTER_OPEN",
+      "status": "NATIVE_COURT_MARKER_EARNED_COLLECTOR_UI_FIX_TESTED_DELIVERY_PENDING",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -5027,6 +5028,12 @@
           "sha": "965e2398fd78e4c7593722063509cbad29dee356",
           "evidence": [
             "docs/testing/Crew_ordinary_delivery_QA_20261116.md"
+          ]
+        },
+        {
+          "sha": "ab7abfb7c9f898ba500dc2361db3f14640911964",
+          "evidence": [
+            "docs/testing/Crew_collection_and_Corridor_QA_20261116.md"
           ]
         }
       ],
@@ -5093,9 +5100,19 @@
           "summary": "Two actual timed handoffs fulfill both duties with two deferred22 rewards/no cash debt;192cash/100reputation/zero duties cold retained. Distinct actual miss pays nothing, trust5+Heat9 costs14reputation, both duties remain. One six-hour post-miss interval yields actual pushier request disclosing18Heat; actual two-stage refusal applies18 cue after1cooling, ends162cash/33standing/two duties/Heat26, cold retained. Twenty-one positive closed native Jobs253 checks; five original diagnostics retained and independently classified, no new product defect."
         },
         {
+          "kind": "corrected_native_full_debt_ledger_audits",
+          "reference": "docs/testing/Crew_debt_ledger_revalidation_QA_20261116.md",
+          "summary": "120/120 in12 actual native cold/save audits: ten genuinely empty full-ledger boundaries and two positive Nico20/22 monetary controls. Original bad debts-proxy checks explicitly remain unqualified; other observations preserved."
+        },
+        {
+          "kind": "faithful_native_Collector_disclosure_fix",
+          "reference": "docs/testing/Crew_Collector_settlement_UI_QA_20261116.md",
+          "summary": "48 focused synthetic projection checks plus56 actual native checks pass: both already-open and newly opened actual Collector show$17 payment/$22 marker/25%discount, no projection mutation; actual one-click settlement187to170 exactlyonce earnsCourtmarker, full actualdebt arrayempty, twoCrewduties preserved; coldContinue/stalepaymentreject passes. Two productfiles only; preservesauthoredconsequences/availability/confirmation and no scheduler changes. Scoped working-code hashes recorded; not yet claimed committed or deployed."
+        },
+        {
           "kind": "native_collection_corridor_progress",
           "reference": "docs/testing/Crew_collection_and_Corridor_QA_20261116.md",
-          "summary": "Actual FriendlyCollection pickup,0fare/42minGrandMainFloor travel and contact handoff pass. Unsettled checkpoint branches normally to friendly22 payout (185cash/Heat18) and press38 payout+one8Heat cue (201cash/Heat26). Both sharedrep100/two duties/no debt, actual completedjob, exact cold/persistence and both stale-response rejections. Twelve positive closed nativeJobs111checks; three diagnostics retained/excluded, no productregression. Optional Collector/Corridor prerequisite remains genuinely unearned and open."
+          "summary": "Both actual collection outcomes/persistence pass; natural nextopening1680 produced DebtCourt. AdjacentCasino had noeligiblelender; actualMotel9fare ledtoNico20advance/22repayment/fourturn quote, normalconfirmation,9fare return andClubdoor. Correct full actualledger showsNico22active3turns. ActualTalkpriceomission confirmed/fixed separately; one normal17settlement ends170cash/emptyactualdebt/twoCrewduties andCourtmarkerearned, cold/stalepaymentreject passes. Original historical debtsproxyqualificationwithdrawn;120correct nativeaudits documented. Corridor itself remains untested."
         }
       ],
       "implementation_batches": [
@@ -5105,9 +5122,11 @@
         "BTH-QA-CREW-ENDING-001-HOUSE-EDGE-BAG-20261116",
         "BTH-QA-CREW-ENDING-001-GETAWAY-FAILURE-20261116",
         "BTH-QA-CREW-ENDING-001-ORDINARY-DELIVERY-20261116",
-        "BTH-QA-CREW-ENDING-001-COLLECTION-CORRIDOR-20261116"
+        "BTH-QA-CREW-ENDING-001-COLLECTION-CORRIDOR-20261116",
+        "BTH-QA-CREW-DEBT-PROBE-20261116",
+        "CREW-COLLECTOR-SETTLEMENT-DISCLOSURE-20261116"
       ],
-      "next_action": "Continue actual friendly cc13 GrandMainFloor185cash/100reputation/two duties/no cash debt, Countsetup. Investigate naturally reachable Vic cash-marker and Debt Court encounter before Countplay; GrandATM is no_collector and does not qualify. Current Punchline Club had no Collector. Do not borrow a short note before a useful actual settlement opportunity, force scenarios/markers or replay either collection settlement. Browser/human pacing remain open.",
+      "next_action": "Publish the reviewed and tested Collector actual-debit disclosure fix and correct debt-ledger qualification first. Then continue actual once-settled Court-marker cw14 at170cash/two Crew duties/empty actual debt array, Countsetup/Knucklesassociate, toward the optional Corridor through normal schedule/table/escape controls. Preserve unpaidrepro/friendly/pressed/endings and all profile companions; browser/human pacing remain open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -5121,7 +5140,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T08:12:40.546211+00:00"
+      "updated_at": "2026-11-16T09:30:48.721511+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -39021,8 +39040,52 @@
   ],
   "batches": [
     {
-      "id": "BTH-QA-CREW-ENDING-001-COLLECTION-CORRIDOR-20261116",
-      "name": "Crew collection and optional Corridor prerequisites",
+      "id": "CREW-COLLECTOR-SETTLEMENT-DISCLOSURE-20261116",
+      "name": "Collector settlement actual debit disclosure",
+      "aliases": [],
+      "group": "current",
+      "parent_id": "BTH-QA-CREW-ENDING-001",
+      "state": "open",
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "scope": [
+        "Faithful normal native progression: natural Day2 DebtCourt, actual Nico20 advance/22note and actual enabled Collector conversation with17payment quote; preserve all profile companions and unpaid cw12.",
+        "Narrow read-only choice presentation: visible actual payment, balance cleared and discount; preserve authored enabled/disabled/confirmation, RNG/economy/authority and resolution.",
+        "Focused projection and actual native offer/settlement/cold/stale evidence, scoped main commit and exact NEXT identity/assets; browser/WASM remains independently restricted."
+      ],
+      "acceptance_scope": "Current delegated authorization fixes confirmed Crew regressions and lands tested work to main/NEXT. Confirm actual visible debit in captured native controls and the same exact payment once; no Web visual claim without admitted browser access.",
+      "status": "NATIVE_COLLECTOR_DISCLOSURE_AND_EXACT_SETTLEMENT_PASS_AWAITING_MAIN_NEXT",
+      "owner": {
+        "name": "Playtest Crew ending",
+        "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
+        "assignment_state": "assigned"
+      },
+      "evidence": [
+        {
+          "kind": "faithful_native_Collector_disclosure_fix",
+          "reference": "docs/testing/Crew_Collector_settlement_UI_QA_20261116.md",
+          "summary": "48 focused synthetic projection checks plus56 actual native checks pass: both already-open and newly opened actual Collector show$17 payment/$22 marker/25%discount, no projection mutation; actual one-click settlement187to170 exactlyonce earnsCourtmarker, full actualdebt arrayempty, twoCrewduties preserved; coldContinue/stalepaymentreject passes. Two productfiles only; preservesauthoredconsequences/availability/confirmation and no scheduler changes. Scoped working-code hashes recorded; not yet claimed committed or deployed."
+        }
+      ],
+      "next_action": "Commit the reviewed two-file Collector presentation fix and scoped proof, integrate current main while preserving other owners, push under existing authorization and follow the existing NEXT watcher for exact served identity/assets. Continue actual earned Court-marker cw14 at170cash/two Crew duties/no debt, Countsetup, toward optional Corridor through normal actions. Browser gameplay remains restricted/unverified.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-16T09:06:14.481769+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T09:26:51.480358+00:00"
+    },
+    {
+      "id": "BTH-QA-CREW-DEBT-PROBE-20261116",
+      "name": "Crew actual debt-ledger probe revalidation",
       "aliases": [],
       "group": "current",
       "parent_id": "BTH-QA-CREW-ENDING-001",
@@ -39035,12 +39098,63 @@
         "evidence": []
       },
       "scope": [
+        "Correct QA observations to use the full actual debt array with stable ordering and deep copies; never use Collector eligibility as a proxy for monetary debt.",
+        "Retain all historical logs, hashes and emitted counts, withdrawing only their unsupported debt-specific qualification.",
+        "Fresh guarded native cold/save audits of explicit preserved boundaries and Nico positive controls without action replay; record exact limits and restore only supported acceptance."
+      ],
+      "acceptance_scope": "Actual singular snapshot.debt equals live run_state.debt; known empty boundaries must have truly empty full arrays. Positive controls must retain actual Nico20principal/22balance cash marker. Complete after tests, scoped proof commit and manual reconciliation. This is a QA harness defect, not a confirmed product bug.",
+      "status": "ACTUAL_LEDGER_120_CHECKS_PASS_AWAITING_PROOF_COMMIT",
+      "owner": {
+        "name": "Playtest Crew ending",
+        "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
+        "assignment_state": "assigned"
+      },
+      "evidence": [
+        {
+          "kind": "corrected_native_full_debt_ledger_audits",
+          "reference": "docs/testing/Crew_debt_ledger_revalidation_QA_20261116.md",
+          "summary": "120/120 in12 actual native cold/save audits: ten genuinely empty full-ledger boundaries and two positive Nico20/22 monetary controls. Original bad debts-proxy checks explicitly remain unqualified; other observations preserved."
+        }
+      ],
+      "next_action": "Associate this corrected native actual-ledger proof with its scoped commit and accept the bounded finding. Preserve historical bad-proxy limitations and all original profiles; continue actual Collector UI fix and Crew route progression.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-16T08:51:41.214394+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T09:11:26.332221+00:00"
+    },
+    {
+      "id": "BTH-QA-CREW-ENDING-001-COLLECTION-CORRIDOR-20261116",
+      "name": "Crew collection and optional Corridor prerequisites",
+      "aliases": [],
+      "group": "current",
+      "parent_id": "BTH-QA-CREW-ENDING-001",
+      "state": "open",
+      "commits": [
+        {
+          "sha": "ab7abfb7c9f898ba500dc2361db3f14640911964",
+          "evidence": [
+            "docs/testing/Crew_collection_and_Corridor_QA_20261116.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": []
+      },
+      "scope": [
         "Resume intact earlier Count setup from uip14 through paired three-directory custody, preserving completed outcomes and owner saves.",
         "Inspect actual public current-world Crew jobs and optional cash-debt Collector offers; do not roll or inspect future scenario selections.",
         "Pursue reachable normal collection settlement and persistence; earn optional Count Corridor prerequisite only through actual eligible debt settlement before play. Record gates honestly; do not manufacture markers or claim browser/human pacing."
       ],
       "acceptance_scope": "Native normal-control continuation of recovered broader Crew objective; meaningful reachable job/route prerequisite behavior and cold persistence. Optional Corridor acceptance requires actually earned Collector settlement plus Knucklesassociate, before Count play samples the marker. Browser/WASM remains restricted.",
-      "status": "NATIVE_COLLECTION_BOTH_OUTCOMES_PASS_CORRIDOR_ENCOUNTER_OPEN",
+      "status": "NATIVE_COURT_MARKER_EARNED_COLLECTOR_UI_FIX_TESTED_DELIVERY_PENDING",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -39050,10 +39164,10 @@
         {
           "kind": "native_collection_corridor_progress",
           "reference": "docs/testing/Crew_collection_and_Corridor_QA_20261116.md",
-          "summary": "Actual FriendlyCollection pickup,0fare/42minGrandMainFloor travel and contact handoff pass. Unsettled checkpoint branches normally to friendly22 payout (185cash/Heat18) and press38 payout+one8Heat cue (201cash/Heat26). Both sharedrep100/two duties/no debt, actual completedjob, exact cold/persistence and both stale-response rejections. Twelve positive closed nativeJobs111checks; three diagnostics retained/excluded, no productregression. Optional Collector/Corridor prerequisite remains genuinely unearned and open."
+          "summary": "Both actual collection outcomes/persistence pass; natural nextopening1680 produced DebtCourt. AdjacentCasino had noeligiblelender; actualMotel9fare ledtoNico20advance/22repayment/fourturn quote, normalconfirmation,9fare return andClubdoor. Correct full actualledger showsNico22active3turns. ActualTalkpriceomission confirmed/fixed separately; one normal17settlement ends170cash/emptyactualdebt/twoCrewduties andCourtmarkerearned, cold/stalepaymentreject passes. Original historical debtsproxyqualificationwithdrawn;120correct nativeaudits documented. Corridor itself remains untested."
         }
       ],
-      "next_action": "Continue actual friendly cc13 GrandMainFloor185cash/100reputation/two duties/no cash debt, Countsetup. Investigate naturally reachable Vic cash-marker and Debt Court encounter before Countplay; GrandATM is no_collector and does not qualify. Current Punchline Club had no Collector. Do not borrow a short note before a useful actual settlement opportunity, force scenarios/markers or replay either collection settlement. Browser/human pacing remain open.",
+      "next_action": "Publish the reviewed and tested Collector actual-debit disclosure fix and correct debt-ledger qualification first. Then continue actual once-settled Court-marker cw14 at170cash/two Crew duties/empty actual debt array, Countsetup/Knucklesassociate, toward the optional Corridor through normal schedule/table/escape controls. Preserve unpaidrepro/friendly/pressed/endings and all profile companions; browser/human pacing remain open.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -39062,7 +39176,7 @@
         "observed_at": "2026-11-16T07:49:13.948778+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T08:12:40.546211+00:00"
+      "updated_at": "2026-11-16T09:30:48.721511+00:00"
     },
     {
       "id": "BTH-QA-CREW-ENDING-001-ORDINARY-DELIVERY-20261116",
@@ -39070,7 +39184,7 @@
       "aliases": [],
       "group": "current",
       "parent_id": "BTH-QA-CREW-ENDING-001",
-      "state": "complete",
+      "state": "open",
       "commits": [
         {
           "sha": "965e2398fd78e4c7593722063509cbad29dee356",
@@ -39091,7 +39205,7 @@
         "Test offered ordinary delivery terms, single-active behavior, fulfillment/reputation and cold persistence where reachable; retain unobserved and blocked boundaries explicitly."
       ],
       "acceptance_scope": "Continue the broader Crew track after qualified success and adverse endings. Related direct human rules: user:Sentinel_5687a9fdd6e88191a896ed6da2cd72a2 (two obligations, no cash debt, one active delivery, cooldown and pushy retry); user:Sentinel_7c91e909fbbc8191bfa4e51bbb24ddd9 (25% hourly chance after6h, Crew presence only). Read directly this turn. Native operational evidence does not establish browser or human pacing coverage.",
-      "status": "NATIVE_ORDINARY_FLOW_COMPLETE",
+      "status": "NATIVE_ORDINARY_ACTUAL_DEBT_REVALIDATED_AWAITING_COMMIT",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -39102,9 +39216,14 @@
           "kind": "native_ordinary_delivery_progress",
           "reference": "docs/testing/Crew_ordinary_delivery_QA_20261116.md",
           "summary": "Two actual timed handoffs fulfill both duties with two deferred22 rewards/no cash debt;192cash/100reputation/zero duties cold retained. Distinct actual miss pays nothing, trust5+Heat9 costs14reputation, both duties remain. One six-hour post-miss interval yields actual pushier request disclosing18Heat; actual two-stage refusal applies18 cue after1cooling, ends162cash/33standing/two duties/Heat26, cold retained. Twenty-one positive closed native Jobs253 checks; five original diagnostics retained and independently classified, no new product defect."
+        },
+        {
+          "kind": "corrected_native_full_debt_ledger_audits",
+          "reference": "docs/testing/Crew_debt_ledger_revalidation_QA_20261116.md",
+          "summary": "120/120 in12 actual native cold/save audits: ten genuinely empty full-ledger boundaries and two positive Nico20/22 monetary controls. Original bad debts-proxy checks explicitly remain unqualified; other observations preserved."
         }
       ],
-      "next_action": "Preserve successful od21 and missed/refused om5 with all private companions. Native sampled ordinary flow is complete; optional route/prerequisite, human pacing and browser coverage continue in the Open parent/sidebar.",
+      "next_action": "Restore bounded ordinary-flow acceptance against the associated corrected debt-audit proof commit; parent remains Open for Collector/Corridor and browser scope.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -39113,7 +39232,7 @@
         "observed_at": "2026-11-16T05:19:33.396811+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T07:45:44.523907+00:00"
+      "updated_at": "2026-11-16T09:11:26.332221+00:00"
     },
     {
       "id": "BTH-QA-CREW-ENDING-001-GETAWAY-FAILURE-20261116",
@@ -42921,6 +43040,12 @@
           "evidence": [
             "docs/testing/Crew_ordinary_delivery_QA_20261116.md"
           ]
+        },
+        {
+          "sha": "ab7abfb7c9f898ba500dc2361db3f14640911964",
+          "evidence": [
+            "docs/testing/Crew_collection_and_Corridor_QA_20261116.md"
+          ]
         }
       ],
       "deployment": {
@@ -42935,7 +43060,7 @@
         "No duplicate worker or bypass of browser/computer denials."
       ],
       "acceptance_scope": "Owner restart request Sentinel_3464b568ddc48191af59e314081b75ef and sidebar request Sentinel_11391c7e280c81918ac7603758e4721d; transferred intact checkpoint and explicit three-directory custody. Native ending reached and persisted; deployed browser/WASM acceptance remains separately required.",
-      "status": "NATIVE_COLLECTION_BOTH_OUTCOMES_PASS_CORRIDOR_ENCOUNTER_OPEN",
+      "status": "NATIVE_COURT_MARKER_EARNED_COLLECTOR_UI_FIX_TESTED_DELIVERY_PENDING",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -42988,12 +43113,22 @@
           "summary": "Two actual timed handoffs fulfill both duties with two deferred22 rewards/no cash debt;192cash/100reputation/zero duties cold retained. Distinct actual miss pays nothing, trust5+Heat9 costs14reputation, both duties remain. One six-hour post-miss interval yields actual pushier request disclosing18Heat; actual two-stage refusal applies18 cue after1cooling, ends162cash/33standing/two duties/Heat26, cold retained. Twenty-one positive closed native Jobs253 checks; five original diagnostics retained and independently classified, no new product defect."
         },
         {
+          "kind": "corrected_native_full_debt_ledger_audits",
+          "reference": "docs/testing/Crew_debt_ledger_revalidation_QA_20261116.md",
+          "summary": "120/120 in12 actual native cold/save audits: ten genuinely empty full-ledger boundaries and two positive Nico20/22 monetary controls. Original bad debts-proxy checks explicitly remain unqualified; other observations preserved."
+        },
+        {
+          "kind": "faithful_native_Collector_disclosure_fix",
+          "reference": "docs/testing/Crew_Collector_settlement_UI_QA_20261116.md",
+          "summary": "48 focused synthetic projection checks plus56 actual native checks pass: both already-open and newly opened actual Collector show$17 payment/$22 marker/25%discount, no projection mutation; actual one-click settlement187to170 exactlyonce earnsCourtmarker, full actualdebt arrayempty, twoCrewduties preserved; coldContinue/stalepaymentreject passes. Two productfiles only; preservesauthoredconsequences/availability/confirmation and no scheduler changes. Scoped working-code hashes recorded; not yet claimed committed or deployed."
+        },
+        {
           "kind": "native_collection_corridor_progress",
           "reference": "docs/testing/Crew_collection_and_Corridor_QA_20261116.md",
-          "summary": "Actual FriendlyCollection pickup,0fare/42minGrandMainFloor travel and contact handoff pass. Unsettled checkpoint branches normally to friendly22 payout (185cash/Heat18) and press38 payout+one8Heat cue (201cash/Heat26). Both sharedrep100/two duties/no debt, actual completedjob, exact cold/persistence and both stale-response rejections. Twelve positive closed nativeJobs111checks; three diagnostics retained/excluded, no productregression. Optional Collector/Corridor prerequisite remains genuinely unearned and open."
+          "summary": "Both actual collection outcomes/persistence pass; natural nextopening1680 produced DebtCourt. AdjacentCasino had noeligiblelender; actualMotel9fare ledtoNico20advance/22repayment/fourturn quote, normalconfirmation,9fare return andClubdoor. Correct full actualledger showsNico22active3turns. ActualTalkpriceomission confirmed/fixed separately; one normal17settlement ends170cash/emptyactualdebt/twoCrewduties andCourtmarkerearned, cold/stalepaymentreject passes. Original historical debtsproxyqualificationwithdrawn;120correct nativeaudits documented. Corridor itself remains untested."
         }
       ],
-      "next_action": "Continue actual friendly cc13 GrandMainFloor185cash/100reputation/two duties/no cash debt, Countsetup. Investigate naturally reachable Vic cash-marker and Debt Court encounter before Countplay; GrandATM is no_collector and does not qualify. Current Punchline Club had no Collector. Do not borrow a short note before a useful actual settlement opportunity, force scenarios/markers or replay either collection settlement. Browser/human pacing remain open.",
+      "next_action": "Publish the reviewed and tested Collector actual-debit disclosure fix and correct debt-ledger qualification first. Then continue actual once-settled Court-marker cw14 at170cash/two Crew duties/empty actual debt array, Countsetup/Knucklesassociate, toward the optional Corridor through normal schedule/table/escape controls. Preserve unpaidrepro/friendly/pressed/endings and all profile companions; browser/human pacing remain open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -43006,7 +43141,7 @@
           "user:Sentinel_b9ecabacc1848191bed579864eef4f2a"
         ]
       },
-      "updated_at": "2026-11-16T08:12:40.546211+00:00"
+      "updated_at": "2026-11-16T09:30:48.721511+00:00"
     },
     {
       "id": "CREW-NOAUDIT-ENABLED-LOCK-20261116",

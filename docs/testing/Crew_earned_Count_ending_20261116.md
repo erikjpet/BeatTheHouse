@@ -65,3 +65,7 @@ Every worker used admitted E: storage, complete verified save_dir/appdata/locala
 | crew-sidebar-c2r-261116 | `68f55929` | 19/19 | `eee90df12f43e47b961a31aa955a5d443f4e4e12fabfd2a657881b8efa30bef1` |
 
 Total: 152/152 checks in 18 closed native Jobs. Browser/WASM acceptance and untested Crew ending variants remain unqualified.
+
+<!-- corrected-actual-debt-qualification-20261116 -->
+
+Debt-field qualification: earlier Crew helpers that read snapshot.get("debts", {}) did not inspect the actual singular debt array. Any debt-absence or debt-persistence conclusion relying only on that proxy is withdrawn. Original logs, emitted counts and other actual observations remain unchanged. The [corrected actual-ledger audit](Crew_debt_ledger_revalidation_QA_20261116.md), finding BTH-QA-CREW-DEBT-PROBE-20261116, supplies120 fresh native checks at12 explicit preserved boundaries. It qualifies those named states, including genuine empty arrays and positive Nico markers; it does not retroactively certify every historical intermediate state.

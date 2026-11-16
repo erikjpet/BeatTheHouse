@@ -309,6 +309,7 @@ func _contextualized_choice(choice_data: Dictionary, run_state: RunState, enviro
 	resolved = _traveler_context_choice(resolved, run_state)
 	resolved = _reputation_context_choice(resolved, environment)
 	resolved = CharacterChainModelScript.contextualize_choice(get_id(), resolved, run_state)
+	resolved = _collector_settlement_choice(resolved, run_state)
 	return _lender_terms_choice(resolved, run_state)
 
 
@@ -349,6 +350,29 @@ func _choice_disabled_reason(conditions: Dictionary, run_state: RunState) -> Str
 		if not count_reason.is_empty():
 			return count_reason
 	return "That response is not available right now."
+
+
+# Quote the existing Collector payment without changing its authored command.
+# Resolution still obtains and validates its own current settlement preview.
+func _collector_settlement_choice(choice_data: Dictionary, run_state: RunState) -> Dictionary:
+	if get_id() != "scenario_debt_court_office_hours" or str(choice_data.get("id", "")) != "settle_the_marker" or run_state == null:
+		return choice_data
+	var consequences := JsonCoerceScript._copy_dict(choice_data.get("consequences", {}))
+	if not consequences.has("debt_settlement_discount_percent"):
+		return choice_data
+	var preview := run_state.discounted_debt_settlement_preview(int(consequences["debt_settlement_discount_percent"]))
+	if str(preview.get("debt_id", "")).is_empty():
+		return choice_data
+	var payment := int(preview.get("payment", 0))
+	var balance := int(preview.get("balance", 0))
+	var discount := int(preview.get("discount_percent", 0))
+	var resolved := choice_data.duplicate(true)
+	resolved["label"] = "%s ($%d)" % [str(choice_data.get("label", "Settle the marker")), payment]
+	var quote := "Pay $%d to clear the $%d marker at %d%% off." % [payment, balance, discount]
+	var authored_text := str(choice_data.get("text", "")).strip_edges()
+	resolved["text"] = "%s %s" % [quote, authored_text] if not authored_text.is_empty() else quote
+	resolved["presentation_consequence_summary"] = "Bankroll -%d; $%d marker cleared (%d%% off)" % [payment, balance, discount]
+	return resolved
 
 
 func _lender_terms_choice(choice_data: Dictionary, run_state: RunState) -> Dictionary:
