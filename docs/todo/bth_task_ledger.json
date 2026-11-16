@@ -4991,7 +4991,7 @@
         }
       },
       "state": "open",
-      "status": "CONCURRENT_ROUTE_UI_FIX_FOCUSED_PASS_NATIVE_NEXT_PENDING",
+      "status": "CONCURRENT_ROUTE_FIX_NATIVE34_MAIN_NEXT_SERVED_CREW_WEB_OPEN",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -5099,6 +5099,12 @@
           "evidence": [
             "docs/testing/Crew_native_no_copy_adapter_QA_20261116.md"
           ]
+        },
+        {
+          "sha": "ebaa460d5ad41f1c4fb3e481ff7f2a033a42a927",
+          "evidence": [
+            "docs/testing/Crew_concurrent_route_offer_QA_20261116.md"
+          ]
         }
       ],
       "deployment": {
@@ -5202,6 +5208,11 @@
           "kind": "qualified_native_no_copy_forward",
           "reference": "docs/testing/Crew_native_no_copy_adapter_QA_20261116.md",
           "summary": "104 final synthetic guard/lifecycle tests and 82 actual no-copy native checks pass across 7 closed Jobs. Same CJ2 slot/directories continue forward under honest native custody; original evidence retained. No profile copy, New Run, replay or browser-control expansion. Current case crew-native-cj2-committed1-261116."
+        },
+        {
+          "kind": "committed_native34_and_next_checkpoint",
+          "reference": "docs/testing/Crew_concurrent_route_offer_QA_20261116.md",
+          "summary": "Exact committed fix passed34 actual in-place native checks including Board popup only Leave and layer progression, preserving active Rook package. Main ebaa verified; NEXT served same source/tree; Web launch/visual behavior unverified."
         }
       ],
       "implementation_batches": [
@@ -5220,13 +5231,13 @@
         "BTH-QA-CREW-NATIVE-NOCOPY-20261116",
         "CREW-CONCURRENT-ROUTE-OFFER-20261116"
       ],
-      "next_action": "Verify the committed UI fix by normal in-place c2 Continue and actual Board projection with the same active Rook package; publish the tested scoped fix, verify exact NEXT identity, then continue the real Back Alley handoff. Preserve all native custody/history and owner saves; broader Crew/browser/human pacing remain Open.",
+      "next_action": "Verify basic launch/changed Web behavior only through a permitted separate browser capability; continue normal in-place Crew travel to Back Alley after qualifying the narrow actual-UI travel adapter. Broader Crew and human pacing remain Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
         "description": "Native Clean Sweep and terminal persistence qualified on pinned source. Existing inability to control a verified separate browser profile prevents deployed NEXT/WASM acceptance; no existing user browser/profile was used and no denial bypass was attempted.",
         "requires_user_input": false,
-        "observed_at": "2026-11-16T01:02:11.568102+00:00",
+        "observed_at": "2026-11-16T17:04:09.083298+00:00",
         "evidence": [
           "docs/testing/NEXT_intact_Grand_Bishop_QA_20261116.md",
           "user:Sentinel_ee32381a9d248191940c27f9e463769e",
@@ -5234,7 +5245,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T16:26:48.006753+00:00"
+      "updated_at": "2026-11-16T17:04:09.083298+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -43736,13 +43747,22 @@
       "aliases": [],
       "group": "current",
       "parent_id": "BTH-QA-CREW-ENDING-001",
-      "state": "open",
-      "commits": [],
+      "state": "complete",
+      "commits": [
+        {
+          "sha": "ebaa460d5ad41f1c4fb3e481ff7f2a033a42a927",
+          "evidence": [
+            "docs/testing/Crew_concurrent_route_offer_QA_20261116.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "ebaa460d5ad41f1c4fb3e481ff7f2a033a42a927",
+        "evidence": [
+          "docs/testing/Crew_concurrent_route_offer_QA_20261116.md"
+        ]
       },
       "scope": [
         "Fix the confirmed native Job Board enabled-offer mismatch for a shared active route slot.",
@@ -43750,7 +43770,7 @@
         "Use exact-source synthetic projection checks and the existing c2 native no-copy forward campaign; preserve browser restrictions and original evidence."
       ],
       "acceptance_scope": "Actual enabled Friendly Collection card/button while Rook package is active; normal press is rejected with no public state mutation. Bounded correction needs focused tests and native/NEXT evidence; broader Crew/browser acceptance remains on the parent.",
-      "status": "CONCURRENT_ROUTE_UI_FIX_FOCUSED_PASS_NATIVE_NEXT_PENDING",
+      "status": "CONCURRENT_ROUTE_UI_FIXED_NATIVE_NEXT_VERIFIED",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -43766,18 +43786,25 @@
           "kind": "focused_ui_projection_and_exact_build_bridge",
           "reference": "docs/testing/Crew_concurrent_route_offer_QA_20261116.md",
           "summary": "Two UI projections corrected without changing acceptance.87 synthetic projection/authority checks pass;112 guard/lifecycle/build-compatibility checks pass. Exactly audited product0b159b5a includes only two UI-function edits and the new regression. Fixed-build native/NEXT pending."
+        },
+        {
+          "kind": "committed_native34_and_next_checkpoint",
+          "reference": "docs/testing/Crew_concurrent_route_offer_QA_20261116.md",
+          "summary": "Exact committed fix passed34 actual in-place native checks including Board popup only Leave and layer progression, preserving active Rook package. Main ebaa verified; NEXT served same source/tree; Web launch/visual behavior unverified."
         }
       ],
-      "next_action": "Verify the committed UI fix by normal in-place c2 Continue and actual Board projection with the same active Rook package; publish the tested scoped fix, verify exact NEXT identity, then continue the real Back Alley handoff. Preserve all native custody/history and owner saves; broader Crew/browser/human pacing remain Open.",
+      "next_action": "Preserve the faithful enabled-card/safe-rejection baseline, 87 focused checks, 112 build/guard checks and 34 committed native checks with exact NEXT delivery. Bounded projection fix is Complete; broader Crew routes, Web startup/visual play and human pacing remain on the Open parent. Continue the in-place Back Alley route through a qualified actual-UI travel adapter.",
       "blocker": {
         "state": "none",
         "kind": null,
         "description": "",
         "requires_user_input": false,
-        "observed_at": "2026-11-16T15:44:56.885355+00:00",
-        "evidence": []
+        "observed_at": "2026-11-16T17:04:09.083298+00:00",
+        "evidence": [
+          "docs/testing/Crew_concurrent_route_offer_QA_20261116.md"
+        ]
       },
-      "updated_at": "2026-11-16T16:26:48.006753+00:00"
+      "updated_at": "2026-11-16T17:04:09.083298+00:00"
     },
     {
       "id": "BTH-QA-CREW-NATIVE-NOCOPY-20261116",
@@ -43939,6 +43966,12 @@
           "evidence": [
             "docs/testing/Crew_native_no_copy_adapter_QA_20261116.md"
           ]
+        },
+        {
+          "sha": "ebaa460d5ad41f1c4fb3e481ff7f2a033a42a927",
+          "evidence": [
+            "docs/testing/Crew_concurrent_route_offer_QA_20261116.md"
+          ]
         }
       ],
       "deployment": {
@@ -43953,7 +43986,7 @@
         "No duplicate worker or bypass of browser/computer denials."
       ],
       "acceptance_scope": "Owner restart request Sentinel_3464b568ddc48191af59e314081b75ef and sidebar request Sentinel_11391c7e280c81918ac7603758e4721d; transferred intact checkpoint and explicit three-directory custody. Native ending reached and persisted; deployed browser/WASM acceptance remains separately required.",
-      "status": "CONCURRENT_ROUTE_UI_FIX_FOCUSED_PASS_NATIVE_NEXT_PENDING",
+      "status": "CONCURRENT_ROUTE_FIX_NATIVE34_MAIN_NEXT_SERVED_CREW_WEB_OPEN",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -44044,22 +44077,27 @@
           "kind": "qualified_native_no_copy_forward",
           "reference": "docs/testing/Crew_native_no_copy_adapter_QA_20261116.md",
           "summary": "104 final synthetic guard/lifecycle tests and 82 actual no-copy native checks pass across 7 closed Jobs. Same CJ2 slot/directories continue forward under honest native custody; original evidence retained. No profile copy, New Run, replay or browser-control expansion. Current case crew-native-cj2-committed1-261116."
+        },
+        {
+          "kind": "committed_native34_and_next_checkpoint",
+          "reference": "docs/testing/Crew_concurrent_route_offer_QA_20261116.md",
+          "summary": "Exact committed fix passed34 actual in-place native checks including Board popup only Leave and layer progression, preserving active Rook package. Main ebaa verified; NEXT served same source/tree; Web launch/visual behavior unverified."
         }
       ],
-      "next_action": "Verify the committed UI fix by normal in-place c2 Continue and actual Board projection with the same active Rook package; publish the tested scoped fix, verify exact NEXT identity, then continue the real Back Alley handoff. Preserve all native custody/history and owner saves; broader Crew/browser/human pacing remain Open.",
+      "next_action": "Verify basic launch/changed Web behavior only through a permitted separate browser capability; continue normal in-place Crew travel to Back Alley after qualifying the narrow actual-UI travel adapter. Broader Crew and human pacing remain Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
         "description": "Native Clean Sweep and terminal persistence qualified on pinned source. Existing inability to control a verified separate browser profile prevents deployed NEXT/WASM acceptance; no existing user browser/profile was used and no denial bypass was attempted.",
         "requires_user_input": false,
-        "observed_at": "2026-11-16T01:02:11.568102+00:00",
+        "observed_at": "2026-11-16T17:04:09.083298+00:00",
         "evidence": [
           "docs/testing/NEXT_intact_Grand_Bishop_QA_20261116.md",
           "user:Sentinel_ee32381a9d248191940c27f9e463769e",
           "user:Sentinel_b9ecabacc1848191bed579864eef4f2a"
         ]
       },
-      "updated_at": "2026-11-16T16:26:48.006753+00:00"
+      "updated_at": "2026-11-16T17:04:09.083298+00:00"
     },
     {
       "id": "CREW-NOAUDIT-ENABLED-LOCK-20261116",
