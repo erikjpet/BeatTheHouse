@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T01:20:05.995418+00:00",
+  "updated_at": "2026-11-16T02:07:06.670668+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -38045,7 +38045,7 @@
       "name": "Audit and correct all-room spatial support and seams",
       "group": "current",
       "state": "open",
-      "status": "BAR_PREPARATION_PASS_LIBRARY_WINDOWS_BLOCKED",
+      "status": "ACTIVE_BAR_R2_WALL_SEAM_REVISION",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38077,21 +38077,28 @@
           "kind": "verified_preparation",
           "reference": "docs/testing/bar_spatial_preparation_20261116.json",
           "summary": "Fresh E source/harness, cold import and no-pointer baseline PASS; candidate-check regressions and unchanged R4 baseline PASS. R1 source remains uninspected due official Library helper Windows metadata failure; no art/TEST changes."
+        },
+        {
+          "kind": "supported_source_review",
+          "reference": "https://chatgpt.com/space/page_0245fc4fdf288191a7f36bf65e490f6e",
+          "summary": "Supported Page reference reader returned exact R1 PNG pixels and matching ccf4b51c SHA; root visually inspected. Original preserved. Windows helper transfer not retried or patched. Localized R2 correction proceeds."
+        },
+        {
+          "kind": "independent_static_review",
+          "reference": "docs/testing/bar_spatial_r2_static_review_v1_20261116.json",
+          "summary": "V1 table volume/painted felt/feet/style pass static review; full candidate rejected for local wall joins. V2 wall-only correction active. No candidate native/TEST activation."
         }
       ],
-      "next_action": "Receive exact preserved R1 through supported materialization or original-generator local source; inspect actual pixels and revise one separate table patch. Prepared E trial source, native harness, no-pointer baseline and all-frame/clearance/framing preflight are ready; audit exact candidate before TEST.",
+      "next_action": "Correct v1 wall-material joins inside the same envelope while preserving accepted table pixels; independently re-audit static composition, then run exact native/scenario/motion qualification and TEST delivery after PASS.",
       "blocker": {
-        "state": "active",
-        "kind": "library_materialization_runtime",
-        "description": "Existing R1 is preserved in Library. Official transfer helper on Windows failed at os.setxattr (AttributeError); no candidate file installed. Need supported materialization or original-generator local source to inspect before correction. No competing generation or helper/raw-download workaround.",
+        "state": "none",
+        "kind": "none",
+        "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T01:20:05.995418+00:00",
-        "evidence": [
-          "docs/art/briefs/bar_spatial_repair_20261116.md",
-          "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-BARTRIAL-20261116-library08/evidence/job.json"
-        ]
+        "observed_at": "2026-11-16T01:33:32.332629+00:00",
+        "evidence": []
       },
-      "updated_at": "2026-11-16T01:20:05.995418+00:00",
+      "updated_at": "2026-11-16T02:07:06.670668+00:00",
       "scope": [
         "Audit all environment art packages for seams, grounded supports, perspective and live object clearance; preserve existing animations and gameplay geometry."
       ],
@@ -38123,7 +38130,7 @@
       "name": "Correct Bar pool-table support and perspective",
       "group": "current",
       "state": "open",
-      "status": "BAR_PREPARATION_PASS_LIBRARY_WINDOWS_BLOCKED",
+      "status": "ACTIVE_BAR_R2_WALL_SEAM_REVISION",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38155,21 +38162,28 @@
           "kind": "verified_preparation",
           "reference": "docs/testing/bar_spatial_preparation_20261116.json",
           "summary": "Fresh E source/harness, cold import and no-pointer baseline PASS; candidate-check regressions and unchanged R4 baseline PASS. R1 source remains uninspected due official Library helper Windows metadata failure; no art/TEST changes."
+        },
+        {
+          "kind": "supported_source_review",
+          "reference": "https://chatgpt.com/space/page_0245fc4fdf288191a7f36bf65e490f6e",
+          "summary": "Supported Page reference reader returned exact R1 PNG pixels and matching ccf4b51c SHA; root visually inspected. Original preserved. Windows helper transfer not retried or patched. Localized R2 correction proceeds."
+        },
+        {
+          "kind": "independent_static_review",
+          "reference": "docs/testing/bar_spatial_r2_static_review_v1_20261116.json",
+          "summary": "V1 table volume/painted felt/feet/style pass static review; full candidate rejected for local wall joins. V2 wall-only correction active. No candidate native/TEST activation."
         }
       ],
-      "next_action": "Receive exact preserved R1 through supported materialization or original-generator local source; inspect actual pixels and revise one separate table patch. Prepared E trial source, native harness, no-pointer baseline and all-frame/clearance/framing preflight are ready; audit exact candidate before TEST.",
+      "next_action": "Correct v1 wall-material joins inside the same envelope while preserving accepted table pixels; independently re-audit static composition, then run exact native/scenario/motion qualification and TEST delivery after PASS.",
       "blocker": {
-        "state": "active",
-        "kind": "library_materialization_runtime",
-        "description": "Existing R1 is preserved in Library. Official transfer helper on Windows failed at os.setxattr (AttributeError); no candidate file installed. Need supported materialization or original-generator local source to inspect before correction. No competing generation or helper/raw-download workaround.",
+        "state": "none",
+        "kind": "none",
+        "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T01:20:05.995418+00:00",
-        "evidence": [
-          "docs/art/briefs/bar_spatial_repair_20261116.md",
-          "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-BARTRIAL-20261116-library08/evidence/job.json"
-        ]
+        "observed_at": "2026-11-16T01:33:32.332629+00:00",
+        "evidence": []
       },
-      "updated_at": "2026-11-16T01:20:05.995418+00:00",
+      "updated_at": "2026-11-16T02:07:06.670668+00:00",
       "scope": [
         "Repair Bar decorative pool-table rails, apron, legs and shadow in y264-294, preserving all17 motions, ball paths and live geometry; require visual audit before TEST delivery."
       ],

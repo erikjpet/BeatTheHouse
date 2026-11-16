@@ -1,0 +1,39 @@
+{
+  "schema": "bth.generated_bar_source/v1",
+  "task_id": "BTH-ENV-SPATIAL-BAR-001",
+  "version": "R2 raw source, non-active",
+  "generated_by": "built-in imagegen",
+  "prompt": "Use case: precise-object-edit. Asset: a crisp pixel-art Godot Bar environment background, original 1800 x 860 master. Input image 1 is the earlier 1815 x 867 pool-table trial: use ONLY the table's shallow top, burgundy/teal/brass apron and short supported legs as construction/style reference. Input image 2 is the original 1800 x 860 background and is the EDIT TARGET; preserve its room framing, mirror, main bar, six stools, pendant, both neon signs, dartboard, booth, wall and floor. Change only its pool table in the right middle, currently an upright green framed panel. Reconstruct the complete physical pool table with a clearly horizontal, shallow trapezoid of dark green felt, separate near rail and differently shaded vertical wooden apron, then short sturdy legs and subtle contact shadows. Target bounds in original image pixels: whole repair x1196..1644 and y376..592. Back tabletop edge approximately y378..392; near FELT edge y496, never y462. Apron approximately y498..534, supports ending y588, leaving a gap above the booth beginning y604. The table must fit inside those x bounds. Crucial fixed live animation locations: first ball's path is around pixel (1284,444), including roughly x1260..1310/y434..456; second around (1512,464). Keep the ENTIRE rectangle x1488..1536/y452..476 comfortably inside unbroken visible dark green felt with clearance from rails and pockets. Do not paint either ball: they are animated separately. Keep the felt dark and quiet around y462..492 for game labels. Six pockets may lie only at the edges, never cut either ball region. Use the reference trial's perspective and supported volume, with a LONGER top plane that contains both existing ball paths. Retain worn teal timber, burgundy wood, small golden edge highlights and green felt, crisp pixel clusters and hard edges; match original scale and lighting. No extra furniture, people, text, balls, equipment, platforms, haze, blur, camera movement, whole-room rescale or color grade. Output the original 1800 x 860 composition. Outside-table pixels should stay unchanged; final integration will retain the original non-table master exactly.",
+  "inputs": [
+    {
+      "role": "construction reference only",
+      "library_file_id": "libfile_fde3_f-8b73a47a85e48191ab2e38cf4ff50ebd_b2e6deecb030819197ad6510125a1c29",
+      "file_id": "file_00000000073881fdb72053065c0723aa",
+      "sha256": "ccf4b51cce8fec70ea93b937995b80b886712d2273755d3b72a74bfa3c453613",
+      "pixels_read_via": "Pages read_page_reference",
+      "review_page": "https://chatgpt.com/space/page_0245fc4fdf288191a7f36bf65e490f6e"
+    },
+    {
+      "role": "edit target and immutable final-assembly master",
+      "path": "assets/art/environments/bar/background.png",
+      "sha256": "22cc647f3766b0391ba6912836b933774d1872d9080425cf5f71e74384e7674f"
+    }
+  ],
+  "output": {
+    "raw_png_sha256": "a850b1bc8f36ea62db85cba4f80233cc10591353b8fb0d8a0a82c9998aec16c7",
+    "raw_png_bytes": 1881206,
+    "dimensions": [
+      1815,
+      867
+    ],
+    "encoded_source": "bar-spatial-r2-source.png.b64",
+    "preserved_png": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-BARTRIAL-20261116/candidate_sources/bar-spatial-r2-raw.png"
+  },
+  "status": "NON_ACTIVE_REQUIRES_BOUNDED_ASSEMBLY_AND_INDEPENDENT_QUALIFICATION",
+  "notes": [
+    "The original R1 remains unchanged in Library.",
+    "The raw full-room generation is not installed; its non-table changes cannot enter the active master.",
+    "Final assembly mechanically fits only generated table pixels into fixed source coordinates and preserves original non-table pixels.",
+    "Raw PNG is retained verbatim as base64 project source and decoded under guarded E storage; no image pixels are changed by decoding."
+  ]
+}

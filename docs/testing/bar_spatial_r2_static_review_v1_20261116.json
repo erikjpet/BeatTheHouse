@@ -1,0 +1,27 @@
+{
+  "task_id": "BTH-ENV-SPATIAL-BAR-001",
+  "reviewer": "/root/audit_spatial_handoff",
+  "candidate": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-BARTRIAL-20261116/candidate_sources/bar-spatial-r2-assembled-v1.png",
+  "candidate_sha256": "a03fc77eeb06c841ef43ab3b7e68e84c324d7e4d9814825a050ffd68bfaa9de6",
+  "verdict": "NEEDS_REVISION_BEFORE_NATIVE_TRIAL",
+  "static_findings_passed": [
+    "Converging horizontal felt, separate near rail/apron and plausible supporting feet.",
+    "Declared polygon conservatively matches actual painted felt and contains both sweeps and requested clearance.",
+    "Palette, room identity and crisp pixel rendering remain coherent."
+  ],
+  "required_revision": {
+    "kind": "rectangular_wall_splice",
+    "regions_native_pixels": [
+      "x1196 and x1644, approximately y376..488",
+      "y376, approximately x1196..1248 and x1595..1644 outside the far rail"
+    ],
+    "description": "Generated wall material/weathering changes abruptly at the envelope edges without physical trim.",
+    "scope": "Correct wall fill and edge continuity only; retain improved table and all external R4 pixels."
+  },
+  "limits": [
+    "Static review only; not package approval.",
+    "Actor/label clearance, floor movers,17motion entries,ReduceMotion,replay,liveness and TEST/Web remain separate gates."
+  ],
+  "active_art_changed": false,
+  "native_candidate_trial_started": false
+}
