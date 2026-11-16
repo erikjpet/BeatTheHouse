@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T06:40:51.213598+00:00",
+  "updated_at": "2026-11-16T06:42:52.278875+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -38584,16 +38584,16 @@
       ],
       "next_action": "Retain exact-build Web startup/rendered acceptance as open under existing browser-control restriction; exact runtime source is unchanged in verified NEXT43f2ffca.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": null,
+        "state": "active",
+        "kind": "browser_control_restriction",
+        "description": "Only exact-build browser startup/rendered Web acceptance remains for this delivered fix. It is unverified under the retained browser-control restriction; no browser action or bypass was attempted in this task. Native/HTTP verification is complete within its stated limits.",
         "requires_user_input": false,
-        "observed_at": "2026-11-16T06:40:51.213598+00:00",
+        "observed_at": "2026-11-16T06:42:52.278875+00:00",
         "evidence": [
           "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T06:40:51.213598+00:00",
+      "updated_at": "2026-11-16T06:42:52.278875+00:00",
       "planned_app_changes": []
     },
     {
@@ -38978,16 +38978,16 @@
       ],
       "next_action": "Retain exact-build Web startup/rendered acceptance as open under existing browser-control restriction; exact runtime source is unchanged in verified NEXT43f2ffca.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": null,
+        "state": "active",
+        "kind": "browser_control_restriction",
+        "description": "Only exact-build browser startup/rendered Web acceptance remains for this delivered fix. It is unverified under the retained browser-control restriction; no browser action or bypass was attempted in this task. Native/HTTP verification is complete within its stated limits.",
         "requires_user_input": false,
-        "observed_at": "2026-11-16T06:40:51.213598+00:00",
+        "observed_at": "2026-11-16T06:42:52.278875+00:00",
         "evidence": [
           "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T06:40:51.213598+00:00",
+      "updated_at": "2026-11-16T06:42:52.278875+00:00",
       "planned_app_changes": []
     }
   ],
