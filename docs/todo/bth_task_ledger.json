@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T04:40:44.061421+00:00",
+  "updated_at": "2026-11-16T05:06:20.770577+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -4860,26 +4860,112 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": null,
-        "source": null,
-        "scope_confirmed": false,
+        "text": "Continue an independent Beat the House Crew-heist playtesting track through genuine ordinary progression and endings, including Crew reputation/entry, terms, recruitment and jobs, setup, live play, getaway consequences and save/continue. Keep routing confirmed regressions into tested fixes and delivery, retain played-versus-unplayed evidence and meaningful route/balance observations, and keep the broader track active beyond a simple bounded deliverable. Qualify native alongside the requested Web testing without substituting headless evidence for browser acceptance. General mechanics, both Grand endings and code/performance audits retain their separate owners; this objective covers the Crew track.",
+        "source": "Retained user-authored request user:Sentinel_766117b121e881919d6608f000bc2431 (2026-10-27T14:36:52Z); related Crew reputation direction user:Sentinel_52dad59a8d5081918ac42055af7126b0 (2026-10-26); explicit continued parallel Crew playtest and native/Web direction in user voice transcript Sentinel_b30f039bd0748191a0cb7c9fce291fc8 (2026-11-04). Read directly with user_message_read in this turn; excerpts and source limits retained in docs/testing/Crew_scope_and_adverse_getaway_QA_20261116.md and E:\\CodexQA\\BTH\\runs\\crew-scope-recovery-261116\\evidence\\recovered-sources.json. Current parent delegation continues the broader objective and forbids bypassing browser restrictions.",
+        "scope_confirmed": true,
         "acceptance": [
           {
-            "id": "original-scope",
-            "description": "Recover the full original requested outcome and required acceptance from the retained source records; title/status alone is insufficient.",
+            "id": "ordinary-crew-progression-ending",
+            "description": "Genuine ordinary Crew progression reaches actual heist ending; authored prerequisites and costs are preserved, with sampled-path limits explicit.",
             "required": true,
-            "state": "unknown",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/NEXT_intact_Grand_Bishop_QA_20261116.md",
+              "docs/testing/Crew_earned_Count_ending_20261116.md"
+            ]
+          },
+          {
+            "id": "native-persistence-and-reward",
+            "description": "Native warm/cold Save-Continue preserves earned ending, wallet and exactly-once reward settlement.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/NEXT_Crew_terminal_classification_20261116.md",
+              "docs/testing/Crew_House_Edge_Bag_QA_20261116.md"
+            ]
+          },
+          {
+            "id": "confirmed-regressions-tested-and-delivered",
+            "description": "Observed Crew regressions have IDs, faithful reproduction, focused fixes and delivery evidence; this does not certify untested behavior.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/Crew_dynamic_choice_UI_fixes_20261116.md"
+            ]
+          },
+          {
+            "id": "continuing-failure-recovery-and-balance",
+            "description": "Continue useful distinct Crew coverage beyond delivered successes; investigate reachable adverse-flow consequences and report route/cost/wait and remaining human-pacing limits.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/Crew_scope_and_adverse_getaway_QA_20261116.md"
+            ]
+          },
+          {
+            "id": "web-native-acceptance",
+            "description": "Native gameplay evidence and actual separate-profile NEXT browser/WASM acceptance remain distinct; required Web runtime acceptance has not been observed.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/NEXT_intact_Grand_Bishop_QA_20261116.md",
+              "docs/testing/Crew_scope_and_adverse_getaway_QA_20261116.md"
+            ]
           }
         ],
         "coverage": {
-          "required": false,
+          "required": true,
           "complete": false,
-          "areas": []
+          "areas": [
+            {
+              "id": "ordinary-entry-recruitment-jobs",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/NEXT_Crew_terms_and_stake_QA_20261116.md",
+                "docs/testing/Crew_dynamic_choice_UI_fixes_20261116.md"
+              ]
+            },
+            {
+              "id": "count-setup-live-success",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/Crew_earned_Count_ending_20261116.md",
+                "docs/testing/NEXT_intact_Grand_Bishop_QA_20261116.md"
+              ]
+            },
+            {
+              "id": "terminal-and-earned-bag-persistence",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/Crew_House_Edge_Bag_QA_20261116.md"
+              ]
+            },
+            {
+              "id": "adverse-getaway-and-recovery",
+              "state": "remaining",
+              "evidence": [
+                "docs/testing/Crew_scope_and_adverse_getaway_QA_20261116.md"
+              ]
+            },
+            {
+              "id": "remaining-route-prerequisites-and-human-pacing",
+              "state": "remaining",
+              "evidence": [
+                "docs/testing/Crew_scope_and_adverse_getaway_QA_20261116.md"
+              ]
+            },
+            {
+              "id": "next-browser-wasm-runtime",
+              "state": "remaining",
+              "evidence": [
+                "docs/testing/Crew_scope_and_adverse_getaway_QA_20261116.md"
+              ]
+            }
+          ]
         }
       },
       "state": "open",
-      "status": "NATIVE_HOUSE_EDGE_BAG_LIFECYCLE_PASS_WEB_OPEN",
+      "status": "NATIVE_PINCHED_TERMINAL_PASS_RECOVERY_ACTIVE_WEB_OPEN",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -4974,15 +5060,21 @@
           "kind": "native_earned_bag_lifecycle",
           "reference": "docs/testing/Crew_House_Edge_Bag_QA_20261116.md",
           "summary": "Normal report claim and Home Shelf Open consume earned House Edge bag5 exactly once for blue Payout Pamphlet6. Natural/Skip/exit-before-reveal and cold Save-Continue retain one item, Roadside bag3, gold0 and terminal1063cash/16chips. Numeric JSON roundoff independently bounded at3.33e-16 with unchanged mint condition/25gold quote. Final nine native Jobs161 checks including post-integration cold on42195e50; four original diagnostics retained/excluded, no product regression confirmed."
+        },
+        {
+          "kind": "recovered_crew_scope_and_native_adverse_flow",
+          "reference": "docs/testing/Crew_scope_and_adverse_getaway_QA_20261116.md",
+          "summary": "Recovered actual retained user Crew scope/source and explicit continued native/Web direction. Normal Package Duck+four Holds reach caught pursuit12/limit11, genuine warm Somebody Got Pinched720 payout to883cash/16chips;21 cold/report checks and14 actual Roadside claim checks pass. Both bag3 and newbag5 persist. No product regression established; New Run recovery active and full browser/route scope remains Open."
         }
       ],
       "implementation_batches": [
         "BTH-QA-CREW-ENDING-001-SIDEBAR-20261116",
         "CREW-NOAUDIT-ENABLED-LOCK-20261116",
         "CREW-STAKE-REPAY-DISCLOSURE-20261116",
-        "BTH-QA-CREW-ENDING-001-HOUSE-EDGE-BAG-20261116"
+        "BTH-QA-CREW-ENDING-001-HOUSE-EDGE-BAG-20261116",
+        "BTH-QA-CREW-ENDING-001-GETAWAY-FAILURE-20261116"
       ],
-      "next_action": "Preserve native Out Hot c2r and main settled bag checkpoint crew-sidebar-b13-261116 ($1063/16chips,Payout Pamphlet#6,Roadside bag#3 unopened). Bounded bag lifecycle complete in its child batch. Continue broader distinct Crew and isolated browser/WASM acceptance when control is available; historical parent scope/source remains Open.",
+      "next_action": "From preserved gf8 claimed Somebody Got Pinched ending, use actual New Run and verify cold recovery: no stale heist/getaway/duties/payout, with both earned Roadside bags retained. Preserve gf7/gf8, c2r and b13. Parent full scope/source is recovered, but ongoing route/pacing and browser/WASM acceptance remain Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -4996,7 +5088,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T04:40:44.061421+00:00"
+      "updated_at": "2026-11-16T05:06:20.770577+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -38648,6 +38740,50 @@
   ],
   "batches": [
     {
+      "id": "BTH-QA-CREW-ENDING-001-GETAWAY-FAILURE-20261116",
+      "name": "Native failed-getaway consequences and persistence",
+      "aliases": [],
+      "group": "current",
+      "parent_id": "BTH-QA-CREW-ENDING-001",
+      "state": "open",
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": []
+      },
+      "scope": [
+        "Inspect a fresh three-directory copy of earned c2p active-getaway checkpoint using current pinned source.",
+        "Choose actual enabled ordinary routes/actions to exercise an adverse getaway boundary and preserve original success checkpoints.",
+        "Verify actual consequence, wallet/report, exactly-once settlement and cold persistence; classify genuine blockers and regressions."
+      ],
+      "acceptance_scope": "Continue useful broader Crew QA through a distinct reachable adverse flow, without forced state, hidden-outcome selection, owner-save access or browser-denial bypass. Scope/source recovery and this native batch do not close the parent.",
+      "status": "NATIVE_PINCHED_TERMINAL_PASS_RECOVERY_ACTIVE_WEB_OPEN",
+      "owner": {
+        "name": "Playtest Crew ending",
+        "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
+        "assignment_state": "assigned"
+      },
+      "evidence": [
+        {
+          "kind": "recovered_crew_scope_and_native_adverse_flow",
+          "reference": "docs/testing/Crew_scope_and_adverse_getaway_QA_20261116.md",
+          "summary": "Recovered actual retained user Crew scope/source and explicit continued native/Web direction. Normal Package Duck+four Holds reach caught pursuit12/limit11, genuine warm Somebody Got Pinched720 payout to883cash/16chips;21 cold/report checks and14 actual Roadside claim checks pass. Both bag3 and newbag5 persist. No product regression established; New Run recovery active and full browser/route scope remains Open."
+        }
+      ],
+      "next_action": "From preserved gf8 claimed Somebody Got Pinched ending, use actual New Run and verify cold recovery: no stale heist/getaway/duties/payout, with both earned Roadside bags retained. Preserve gf7/gf8, c2r and b13. Parent full scope/source is recovered, but ongoing route/pacing and browser/WASM acceptance remain Open.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-16T04:51:26.884062+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T05:06:20.770577+00:00"
+    },
+    {
       "id": "BTH-QA-CREW-ENDING-001-HOUSE-EDGE-BAG-20261116",
       "name": "Earned House Edge Blue Bag claim and opening",
       "aliases": [],
@@ -42404,7 +42540,7 @@
         "No duplicate worker or bypass of browser/computer denials."
       ],
       "acceptance_scope": "Owner restart request Sentinel_3464b568ddc48191af59e314081b75ef and sidebar request Sentinel_11391c7e280c81918ac7603758e4721d; transferred intact checkpoint and explicit three-directory custody. Native ending reached and persisted; deployed browser/WASM acceptance remains separately required.",
-      "status": "NATIVE_HOUSE_EDGE_BAG_LIFECYCLE_PASS_WEB_OPEN",
+      "status": "NATIVE_PINCHED_TERMINAL_PASS_RECOVERY_ACTIVE_WEB_OPEN",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -42445,9 +42581,14 @@
           "kind": "native_earned_bag_lifecycle",
           "reference": "docs/testing/Crew_House_Edge_Bag_QA_20261116.md",
           "summary": "Normal report claim and Home Shelf Open consume earned House Edge bag5 exactly once for blue Payout Pamphlet6. Natural/Skip/exit-before-reveal and cold Save-Continue retain one item, Roadside bag3, gold0 and terminal1063cash/16chips. Numeric JSON roundoff independently bounded at3.33e-16 with unchanged mint condition/25gold quote. Final nine native Jobs161 checks including post-integration cold on42195e50; four original diagnostics retained/excluded, no product regression confirmed."
+        },
+        {
+          "kind": "recovered_crew_scope_and_native_adverse_flow",
+          "reference": "docs/testing/Crew_scope_and_adverse_getaway_QA_20261116.md",
+          "summary": "Recovered actual retained user Crew scope/source and explicit continued native/Web direction. Normal Package Duck+four Holds reach caught pursuit12/limit11, genuine warm Somebody Got Pinched720 payout to883cash/16chips;21 cold/report checks and14 actual Roadside claim checks pass. Both bag3 and newbag5 persist. No product regression established; New Run recovery active and full browser/route scope remains Open."
         }
       ],
-      "next_action": "Preserve native Out Hot c2r and main settled bag checkpoint crew-sidebar-b13-261116 ($1063/16chips,Payout Pamphlet#6,Roadside bag#3 unopened). Bounded bag lifecycle complete in its child batch. Continue broader distinct Crew and isolated browser/WASM acceptance when control is available; historical parent scope/source remains Open.",
+      "next_action": "From preserved gf8 claimed Somebody Got Pinched ending, use actual New Run and verify cold recovery: no stale heist/getaway/duties/payout, with both earned Roadside bags retained. Preserve gf7/gf8, c2r and b13. Parent full scope/source is recovered, but ongoing route/pacing and browser/WASM acceptance remain Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -42460,7 +42601,7 @@
           "user:Sentinel_b9ecabacc1848191bed579864eef4f2a"
         ]
       },
-      "updated_at": "2026-11-16T04:40:44.061421+00:00"
+      "updated_at": "2026-11-16T05:06:20.770577+00:00"
     },
     {
       "id": "CREW-NOAUDIT-ENABLED-LOCK-20261116",
