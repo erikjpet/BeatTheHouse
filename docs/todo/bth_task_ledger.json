@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T11:15:43.019619+00:00",
+  "updated_at": "2026-11-16T11:23:08.008954+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -4959,7 +4959,8 @@
               "state": "remaining",
               "evidence": [
                 "docs/testing/Crew_scope_and_adverse_getaway_QA_20261116.md",
-                "docs/testing/Crew_collection_and_Corridor_QA_20261116.md"
+                "docs/testing/Crew_collection_and_Corridor_QA_20261116.md",
+                "docs/testing/Crew_abandonment_and_replacement_QA_20261116.md"
               ]
             },
             {
@@ -4981,7 +4982,7 @@
         }
       },
       "state": "open",
-      "status": "NATIVE_COLLECTION_CORRIDOR_ENDING_VERIFIED",
+      "status": "NATIVE_ABANDONMENT_REPLACEMENT_VERIFIED_NEXT_9B9D_BROWSER_OPEN",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -5058,6 +5059,12 @@
           "sha": "b59969cc395b839cf95cfba49483b63c6b4c8640",
           "evidence": [
             "docs/testing/Crew_collection_and_Corridor_QA_20261116.md"
+          ]
+        },
+        {
+          "sha": "18feafe9665d72bbc542199c8426642ae365176b",
+          "evidence": [
+            "docs/testing/Crew_abandonment_and_replacement_QA_20261116.md"
           ]
         }
       ],
@@ -5137,6 +5144,11 @@
           "kind": "native_collection_corridor_progress",
           "reference": "docs/testing/Crew_collection_and_Corridor_QA_20261116.md",
           "summary": "Actual friendly and pressed collections, natural Debt Court, eligible Nico marker and17settlement earned the Corridor guard. Normal schedule/cart,Hold/Sit/Corridor and three legal hands survived Eye in the Sky quiet response; actual Delta Queen arrival Clean Sweep paid1150once,cash1315/chips16. Cold ending, pending House Edge entitlement, once-only claim and cold collection persistence passed. Five diagnostics retained/excluded; old debts-proxy qualification remains withdrawn outside explicit actual-ledger audits."
+        },
+        {
+          "kind": "native_Crew_abandonment_replacement_and_NEXT_reverification",
+          "reference": "docs/testing/Crew_abandonment_and_replacement_QA_20261116.md",
+          "summary": "Actual Ditch fails collection with one reputation5 loss, no cash/duty/debt/action/Heat changes; cold/stale ditch and both settlements reject. Actual two-press post-miss replacement acceptance and7fare trip retain unpaid reward. Normal76129ms wait reaches2130; real Alley handoff pays22once,cash177/reputation81/duties1/debt[],postmissfalse/cooldown2490. Cold completion and duplicate active acceptance guards pass. NEXT exact9b9d BUILD/manifest/REF/version and all five fresh immutable asset hashes/sizes/MIME verified; no browser coverage."
         }
       ],
       "implementation_batches": [
@@ -5148,9 +5160,10 @@
         "BTH-QA-CREW-ENDING-001-ORDINARY-DELIVERY-20261116",
         "BTH-QA-CREW-ENDING-001-COLLECTION-CORRIDOR-20261116",
         "BTH-QA-CREW-DEBT-PROBE-20261116",
-        "CREW-COLLECTOR-SETTLEMENT-DISCLOSURE-20261116"
+        "CREW-COLLECTOR-SETTLEMENT-DISCLOSURE-20261116",
+        "BTH-QA-CREW-ENDING-001-ABANDONMENT-REPLACEMENT-20261116"
       ],
-      "next_action": "Preserve cr19/cr20 unclaimed and cr21/cr22 once-claimed Clean Sweep:1315cash/16chips/twoCrewduties/emptyactualdebt. Bounded collection/Court/Corridor route passed normal ending,1150payout and cold reward persistence. Associate the scoped proof commit, then keep broader browser/WASM acceptance, route balance and human pacing Open under the existing browser restriction.",
+      "next_action": "Preserve abandoned collection ar1/ar2 (163cash/92reputation/two duties), successful replacement ar5/ar6 (177cash/81reputation/one duty), and active duplicate-accept guard ar7. Bounded native routes pass with actual full debt arrays and cold/stale checks; NEXT9b9d identity/five fresh assets verified. Associate scoped proof commit while broader browser/WASM, route balance and human pacing remain Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -5164,7 +5177,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T10:47:08.913702+00:00"
+      "updated_at": "2026-11-16T11:16:16.518384+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -39442,6 +39455,58 @@
   ],
   "batches": [
     {
+      "id": "BTH-QA-CREW-ENDING-001-ABANDONMENT-REPLACEMENT-20261116",
+      "name": "Crew collection abandonment and post-miss replacement",
+      "aliases": [],
+      "group": "current",
+      "parent_id": "BTH-QA-CREW-ENDING-001",
+      "state": "complete",
+      "commits": [
+        {
+          "sha": "18feafe9665d72bbc542199c8426642ae365176b",
+          "evidence": [
+            "docs/testing/Crew_abandonment_and_replacement_QA_20261116.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": []
+      },
+      "scope": [
+        "Use all three copied directories from intact unresolved cc9 and om3 checkpoints; preserve owner saves and completed outcomes.",
+        "Exercise actual carried collection-note Ditch action and inspect resulting physical route/job/standing/duties without injecting or repairing state.",
+        "Pursue actual post-miss replacement confirmation and normal appointment success, reward, loan-duty reduction and cold persistence.",
+        "Observe existing NEXT identity and immutable served assets at or after9b9d13ae; no browser or watcher/export fallback."
+      ],
+      "acceptance_scope": "Bounded native adverse collection and post-miss recovery routes, real debt-array invariants, once-only consequences and cold persistence. Broader route balance, human pacing and browser/WASM remain Open.",
+      "status": "NATIVE_ABANDONMENT_REPLACEMENT_COMPLETE_NEXT_9B9D_VERIFIED",
+      "owner": {
+        "name": "Playtest Crew ending",
+        "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
+        "assignment_state": "assigned"
+      },
+      "evidence": [
+        {
+          "kind": "native_Crew_abandonment_replacement_and_NEXT_reverification",
+          "reference": "docs/testing/Crew_abandonment_and_replacement_QA_20261116.md",
+          "summary": "Actual Ditch fails collection with one reputation5 loss, no cash/duty/debt/action/Heat changes; cold/stale ditch and both settlements reject. Actual two-press post-miss replacement acceptance and7fare trip retain unpaid reward. Normal76129ms wait reaches2130; real Alley handoff pays22once,cash177/reputation81/duties1/debt[],postmissfalse/cooldown2490. Cold completion and duplicate active acceptance guards pass. NEXT exact9b9d BUILD/manifest/REF/version and all five fresh immutable asset hashes/sizes/MIME verified; no browser coverage."
+        }
+      ],
+      "next_action": "Preserve the abandoned collection, active replacement duplicate-guard and successful replacement checkpoints. Bounded native adverse/recovery acceptance is Complete; parent/sidebar remain Open for broader route balance, human pacing and restricted browser/WASM acceptance.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-16T10:56:52.913630+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T11:16:16.518384+00:00"
+    },
+    {
       "id": "CREW-COLLECTOR-SETTLEMENT-DISCLOSURE-20261116",
       "name": "Collector settlement actual debit disclosure",
       "aliases": [],
@@ -39460,14 +39525,21 @@
           "evidence": [
             "docs/testing/Crew_Collector_settlement_UI_QA_20261116.md"
           ]
+        },
+        {
+          "sha": "9b9d13ae130fc88a07b02d967690b814950b6843",
+          "evidence": [
+            "docs/testing/Crew_Collector_settlement_UI_QA_20261116.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "verified",
-        "commit": "c2b9a2310a633ef15312ed31ac899ca6c43d4825",
+        "commit": "9b9d13ae130fc88a07b02d967690b814950b6843",
         "evidence": [
-          "docs/testing/Crew_Collector_settlement_UI_QA_20261116.md"
+          "docs/testing/Crew_Collector_settlement_UI_QA_20261116.md",
+          "docs/testing/Crew_abandonment_and_replacement_QA_20261116.md"
         ]
       },
       "scope": [
@@ -39476,7 +39548,7 @@
         "Focused projection and actual native offer/settlement/cold/stale evidence, scoped main commit and exact NEXT identity/assets; browser/WASM remains independently restricted."
       ],
       "acceptance_scope": "Current delegated authorization fixes confirmed Crew regressions and lands tested work to main/NEXT. Confirm actual visible debit in captured native controls and the same exact payment once; no Web visual claim without admitted browser access.",
-      "status": "COLLECTOR_DISCLOSURE_FIXED_NATIVE_AND_NEXT_IDENTITY_VERIFIED",
+      "status": "COLLECTOR_DISCLOSURE_REVERIFIED_NEXT_9B9D13AE_BROWSER_OPEN",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -39487,9 +39559,14 @@
           "kind": "faithful_native_Collector_disclosure_fix",
           "reference": "docs/testing/Crew_Collector_settlement_UI_QA_20261116.md",
           "summary": "Fixb59969cc integrated/publishedasmainc2b9a231; exactsameUIblobhashes and committed-source nativeprice/persistence pass.131focusedchecks (48synthetic+83actualnative) pass. NEXTmetadata/redirect/BUILD/manifest/REF/version/source-tree agree; currentPCK124983432bytes andchangednativewasmstreamed/hashmatched maintainedstage, unchangedenginebytes reused by exactmatchingreceipts. One17settlementlegitimately earnsCourtmarker, cash170/actualdebt[]/twoCrewduties. No browserstartup or Webgameplayclaim; broaderCorridorcontinues."
+        },
+        {
+          "kind": "subsequent_exact_NEXT_reverification",
+          "reference": "docs/testing/Crew_Collector_settlement_UI_QA_20261116.md",
+          "summary": "Exact9b9d13ae served by both trusted endpoints; clean BUILD/manifest/REF/VERSION/entry agree. Five fresh immutable HTTP asset hashes/sizes/MIME match the publication manifest. Product/test blobs retain reviewed fix hashes. Browser runtime/visual acceptance remains Open."
         }
       ],
-      "next_action": "Preserve the unpaid repro, priced offers and actual once-settled Court-marker profiles. Continue normal Crew/Corridor play and the separately restricted browser scope in the Open parent.",
+      "next_action": "Preserve the original unpaid/priced/once-settled Collector profiles and subsequent exact9b9d13ae NEXT identity plus five freshly hashed served assets. Native collection/Corridor acceptance remains Complete; continued adverse/replacement coverage is separate. Browser/WASM/input/visual acceptance remains Open under the existing restriction.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -39498,7 +39575,7 @@
         "observed_at": "2026-11-16T09:06:14.481769+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T10:04:35.591436+00:00"
+      "updated_at": "2026-11-16T11:09:13.513109+00:00"
     },
     {
       "id": "BTH-QA-CREW-DEBT-PROBE-20261116",
@@ -43506,6 +43583,12 @@
           "evidence": [
             "docs/testing/Crew_collection_and_Corridor_QA_20261116.md"
           ]
+        },
+        {
+          "sha": "18feafe9665d72bbc542199c8426642ae365176b",
+          "evidence": [
+            "docs/testing/Crew_abandonment_and_replacement_QA_20261116.md"
+          ]
         }
       ],
       "deployment": {
@@ -43520,7 +43603,7 @@
         "No duplicate worker or bypass of browser/computer denials."
       ],
       "acceptance_scope": "Owner restart request Sentinel_3464b568ddc48191af59e314081b75ef and sidebar request Sentinel_11391c7e280c81918ac7603758e4721d; transferred intact checkpoint and explicit three-directory custody. Native ending reached and persisted; deployed browser/WASM acceptance remains separately required.",
-      "status": "NATIVE_COLLECTION_CORRIDOR_ENDING_VERIFIED",
+      "status": "NATIVE_ABANDONMENT_REPLACEMENT_VERIFIED_NEXT_9B9D_BROWSER_OPEN",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -43586,9 +43669,14 @@
           "kind": "native_collection_corridor_progress",
           "reference": "docs/testing/Crew_collection_and_Corridor_QA_20261116.md",
           "summary": "Actual friendly and pressed collections, natural Debt Court, eligible Nico marker and17settlement earned the Corridor guard. Normal schedule/cart,Hold/Sit/Corridor and three legal hands survived Eye in the Sky quiet response; actual Delta Queen arrival Clean Sweep paid1150once,cash1315/chips16. Cold ending, pending House Edge entitlement, once-only claim and cold collection persistence passed. Five diagnostics retained/excluded; old debts-proxy qualification remains withdrawn outside explicit actual-ledger audits."
+        },
+        {
+          "kind": "native_Crew_abandonment_replacement_and_NEXT_reverification",
+          "reference": "docs/testing/Crew_abandonment_and_replacement_QA_20261116.md",
+          "summary": "Actual Ditch fails collection with one reputation5 loss, no cash/duty/debt/action/Heat changes; cold/stale ditch and both settlements reject. Actual two-press post-miss replacement acceptance and7fare trip retain unpaid reward. Normal76129ms wait reaches2130; real Alley handoff pays22once,cash177/reputation81/duties1/debt[],postmissfalse/cooldown2490. Cold completion and duplicate active acceptance guards pass. NEXT exact9b9d BUILD/manifest/REF/version and all five fresh immutable asset hashes/sizes/MIME verified; no browser coverage."
         }
       ],
-      "next_action": "Preserve cr19/cr20 unclaimed and cr21/cr22 once-claimed Clean Sweep:1315cash/16chips/twoCrewduties/emptyactualdebt. Bounded collection/Court/Corridor route passed normal ending,1150payout and cold reward persistence. Associate the scoped proof commit, then keep broader browser/WASM acceptance, route balance and human pacing Open under the existing browser restriction.",
+      "next_action": "Preserve abandoned collection ar1/ar2 (163cash/92reputation/two duties), successful replacement ar5/ar6 (177cash/81reputation/one duty), and active duplicate-accept guard ar7. Bounded native routes pass with actual full debt arrays and cold/stale checks; NEXT9b9d identity/five fresh assets verified. Associate scoped proof commit while broader browser/WASM, route balance and human pacing remain Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -43601,7 +43689,7 @@
           "user:Sentinel_b9ecabacc1848191bed579864eef4f2a"
         ]
       },
-      "updated_at": "2026-11-16T10:47:08.913702+00:00"
+      "updated_at": "2026-11-16T11:16:16.518384+00:00"
     },
     {
       "id": "CREW-NOAUDIT-ENABLED-LOCK-20261116",
