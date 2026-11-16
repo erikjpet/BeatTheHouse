@@ -1,0 +1,398 @@
+{
+  "schema": "bth.hidden_spatial_source_trial/v1",
+  "task_id": "BTH-ENV-SPATIAL-HIDDEN-001",
+  "parent_id": "BTH-ENV-SPATIAL-001",
+  "environment_id": "small_underground_casino",
+  "view_key": "small_underground_casino:casino",
+  "status": "RAW_SOURCE_PRESERVED_NOT_APPROVED",
+  "generation": {
+    "tool": "Built-in image_gen.imagegen",
+    "intent": "precise-object-edit",
+    "calls": 1,
+    "target": "assets/art/environments/small_underground_casino/background.png",
+    "target_sha256": "884b50866cd064e6a04ca3f49f8fae3da5d996d92779eca533a1d743492efb87",
+    "target_size": [
+      1800,
+      860
+    ],
+    "reference_roles": [
+      {
+        "path": "assets/art/travel/exteriors/small_underground_casino.png",
+        "sha256": "49bb1047afd6729579f563fc9eeaea30443646c5e0bf276f138e8231d4c53f69",
+        "role": "Own shared building identity only; no signage/street/wet exterior copied"
+      },
+      {
+        "path": "assets/art/travel/exteriors/delta_queen.png",
+        "sha256": "4414fe5c94f850fb233c3f0e14cabed29291aac08b881823c12db4cdf4241767",
+        "role": "Owner-approved pixel craftsmanship only"
+      },
+      {
+        "path": "assets/art/environments/small_underground_casino/background.png",
+        "sha256": "884b50866cd064e6a04ca3f49f8fae3da5d996d92779eca533a1d743492efb87",
+        "role": "Exact current edit target"
+      }
+    ],
+    "prompt_file": "prompt.txt",
+    "prompt_sha256": "e72e6eaf13d4ccc49bf89907c4218693c4bac3b2d1aa3d493d1ed6dcffdf338e",
+    "output_png": "hidden-spatial-r1.png",
+    "output_png_sha256": "8a46e49c462f741b75c79099bf6480092fb11a498bd138fc5e9498be5a3bee99",
+    "output_png_bytes": 2000540,
+    "output_size": [
+      1815,
+      867
+    ],
+    "output_opaque": true,
+    "output_base64": "hidden-spatial-r1.png.b64",
+    "output_base64_sha256": "8a3543591309ef2cbd4b6c35e7edf7f0ffee95f0124e79a6b4d74dce3023a6f3",
+    "preserved_immediately": true,
+    "whole_generated_image_replacement_permitted": false
+  },
+  "current_source": {
+    "file_count": 30,
+    "seal_sha256": "4c43fd48d180010a801f511c885d44b983c67c2fbb7fb4eac25c94fbdab027ff",
+    "seal_algorithm": "SHA256(sorted(relative path + space + file SHA256) joined by LF, no trailing LF)",
+    "manifest_sha256": "bb4dc0bfb830fc9d7ad73179b8d1b9ee0fb7c0e6e59fafc42f9a54aa78bef568",
+    "global_index_sha256": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+    "background_sha256": "884b50866cd064e6a04ca3f49f8fae3da5d996d92779eca533a1d743492efb87",
+    "native_motion_entries": 31,
+    "unique_animation_pngs": 26,
+    "low_detail_entries": 31,
+    "low_detail_basis": "No manifest web_low_detail overrides; EnvironmentArtPack.Entry default and parser default are true",
+    "moving_families": {
+      "string_cores": 10,
+      "long_pink_drifts": 6,
+      "thin_bobbing_ribbons": 5,
+      "teal_material_glints": 3,
+      "dry_floor_movers": 7
+    },
+    "static_housings": 12,
+    "steady_final_housings": 2,
+    "architectural_sign": false,
+    "counter": {
+      "id": "punchline_right_table",
+      "native_master_crop": [
+        876,
+        284,
+        572,
+        196
+      ],
+      "opaque": true,
+      "exact_current_master_crop": true,
+      "sha256": "6cdb4a34f3aeb5262cbac4ee81d2728f7c3d3454953dbcbd668c575d7cecc701"
+    },
+    "no_left_foreground_replay": true
+  },
+  "retained_initial_contexts": {
+    "root": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-current4-01/evidence",
+    "job": {
+      "pid": 30936,
+      "exit_code": 0,
+      "active_at_release": 0
+    },
+    "counts": {
+      "__none": 12,
+      "punchline_high_stakes_night": 20,
+      "punchline_greased_week": 20,
+      "punchline_new_muscle": 19
+    },
+    "total_objects": 71,
+    "rows": [
+      {
+        "id": "__none",
+        "png_sha256": "a41e8bb6d35142fbf6be045bb3ef2d69b4839c5196a60fca1c63ed4edc67785d",
+        "metadata_sha256": "1cbfa7c63863037d78f333033d4e9d1099453c53bc7ebb6ba28ff7ddc9034b78"
+      },
+      {
+        "id": "punchline_high_stakes_night",
+        "png_sha256": "a2334dd13aaa0ea2704e182373c42bdeebb07a15fc1b0520c0e851fa5c5e4ac2",
+        "metadata_sha256": "e14df994cbe3c3e9690b7942e8c9f56ede1b5af71d9154d397d961d97c1ebde6"
+      },
+      {
+        "id": "punchline_greased_week",
+        "png_sha256": "1b588d771eb6a775c5759c855a06e2e224c6a0bdc047313e5e03ba3f75259a75",
+        "metadata_sha256": "ba3b8713b2403b2502ead169aa7506714ccf13a9778c482921e5f79888ba77aa"
+      },
+      {
+        "id": "punchline_new_muscle",
+        "png_sha256": "cfac02a29969941f2d8f3eced599437debfdc96cb087ff0fd13ccd023358b683",
+        "metadata_sha256": "60af7f66674271527391d8673b3f79c4ef6b970268f2a578f7d5455b71e1c664"
+      }
+    ],
+    "all_four_actual_pngs_viewed": true,
+    "source_paint_report": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-source-paint01/evidence/hidden_source_paint.json",
+    "source_paint_report_sha256": "602db8c2193be06f398e1a00ec1be82893c812025af54afc0b201c0370038058",
+    "no_global_process_or_current_host_zero_claim": true,
+    "no_fresh_spatial_candidate_found_in_scoped_sources": true
+  },
+  "geometry_and_contact_proposals": {
+    "original_board_bodies": {
+      "left": [
+        100,
+        154,
+        242,
+        86
+      ],
+      "right": [
+        438,
+        142,
+        286,
+        98
+      ]
+    },
+    "fixed_body_top_contacts": {
+      "left": 154,
+      "right": 142
+    },
+    "proposed_painted_near_rails": {
+      "left": 222,
+      "right": 220
+    },
+    "near_rail_basis": "Projection proposals derived from original procedural felt guides; not new runtime geometry fields or final art approval",
+    "floor_horizon_board": 245,
+    "proposed_complete_support_floor_contact": 255,
+    "proposed_dark_support_centers_board": {
+      "left": [
+        180,
+        270
+      ],
+      "right": [
+        474,
+        694
+      ]
+    },
+    "proposed_leg_width": 12,
+    "fitting_risk": "Raw left/right far edges about323/313, near rails about428, feet about540 native. Each table requires separate local traced fitting; never global resize.",
+    "source_paint_bbox_method": "Conservative alpha>=64 body PNG bounds, board coordinates; glows may extend farther",
+    "strong_body_bounds": {
+      "Sable": [
+        284,
+        129.5,
+        334,
+        194
+      ],
+      "Ox": [
+        460,
+        92,
+        515,
+        163
+      ],
+      "Vic_Mercer": [
+        393.5,
+        188,
+        462,
+        252
+      ],
+      "high_stakes_guard": [
+        533.5,
+        186,
+        599.5,
+        249
+      ],
+      "table_runner": [
+        611,
+        190,
+        661,
+        251
+      ],
+      "new_guard_lead": [
+        566,
+        203.5,
+        632,
+        265
+      ],
+      "checkpoint_rover": [
+        484.5,
+        205.5,
+        550.5,
+        268
+      ]
+    },
+    "important_layers": {
+      "Sable": -1,
+      "Ox": -1,
+      "Vic_Mercer": 1,
+      "guards_and_runners": 0
+    },
+    "right_support_reason": "Narrow support around474 avoids Vic ending462; around694 avoids guard533.5..599.5 and runner611..661 feet249/251. NewMuscle feet265/268 remain below proposed255 contact.",
+    "actor_caveat": "Behind-counter Sable paint ends194 with no left replay; assess actual dealer-body interpretation in populated views, do not infer standing floor contact from its bbox",
+    "mapped_right_caveat": "Keep far plane covering Ox painted x460..515 at y142..163; opaque replay must not hide him against an unexplained restored-plaster corner",
+    "protected_native_cart": {
+      "body": [
+        80,
+        376,
+        140,
+        164
+      ],
+      "top": [
+        96,
+        336,
+        108,
+        40
+      ]
+    },
+    "protected_native_door": [
+      1488,
+      176,
+      216,
+      356
+    ],
+    "protected_cart_priority": "Preserve original cart pixels even where its body overlaps left-table bounding box",
+    "no_new_replay_or_transparency_holes": true
+  },
+  "own_underlay_provenance": {
+    "archive": "review_artifacts/environment_art_sources/small_underground_casino-v1-r2/small_underground_casino-v1-r2-source.zip",
+    "archive_sha256": "6ed40caf03d5a694bbef49f338dd26f5e4f4f61341a9166c04121312632c938f",
+    "recipe_member": "recipe/assemble_hidden_v1r2.py",
+    "recipe_member_sha256": "d21ddb8deb31b105d390df54f6fdfdd79f3f146fcbf6436188da9da0d3173768",
+    "raw_member": "source/background-guide-v1.png",
+    "raw_sha256": "27156ddb75d7a70f41d1e78fb333f4ef8dba2a56184104ce1c5b4181bfbb341d",
+    "floor_member": "source/floor-material-v1.png",
+    "floor_sha256": "159b69b0466557a9b4d3140deb635d80032d4396f948d51ad73676dad18c437c",
+    "prewarp_old_fixture_rects_board": [
+      [
+        98,
+        149,
+        247,
+        95
+      ],
+      [
+        432,
+        137,
+        298,
+        112
+      ]
+    ],
+    "wall_healing": "Original recipe chooses nearest same-row source x+47*k outside all old fixture footprints; this is donor selection, not a universal wall texture period",
+    "piecewise_source_y": [
+      0,
+      22,
+      34,
+      44,
+      60,
+      66,
+      69,
+      78,
+      104,
+      113,
+      249,
+      267
+    ],
+    "piecewise_target_y": [
+      0,
+      26,
+      34,
+      42,
+      56,
+      62,
+      68,
+      76,
+      102,
+      110,
+      236,
+      245
+    ],
+    "source_bulb_columns": [
+      96,
+      169,
+      240,
+      311,
+      383,
+      455,
+      527,
+      600,
+      671,
+      744,
+      816,
+      888
+    ],
+    "target_bulb_columns": [
+      96,
+      168,
+      240,
+      312,
+      384,
+      456,
+      528,
+      600,
+      672,
+      744,
+      816,
+      888
+    ],
+    "original_floor_plate_crop_native": [
+      7,
+      150,
+      1800,
+      370
+    ],
+    "floor_placement_board": [
+      0,
+      245,
+      900,
+      185
+    ],
+    "floor_sampling": "Original crop1800x370 ->nearest900x185 ->nearest1800x370, not repeated or stretched to fill depth",
+    "floor_policy": "Existing same-coordinate original floor below native490 is available beneath proposed legs; preserve visible floor between legs. Reconstruct own healed pre-table wall underlay only where old table paint must be removed.",
+    "no_grand_wall_or_floor_period_reuse": true,
+    "fringe_policy": "Trace current outer table/frame/shadow fringe from own prewarp healing and piecewise mapping; do not treat prewarp rectangles as approved target masks",
+    "do_not_move_horizon_or_paint_floor_onto_wall": true
+  },
+  "motion_preservation": {
+    "manifest_or_textures_edited": false,
+    "reanchors_proposed": [],
+    "preserve_original_bulb_hardware_and_all31_entries": true,
+    "no_new_sign_or_lamp": true,
+    "middle_glint_rect": [
+      531,
+      132,
+      8,
+      8
+    ],
+    "middle_glint_native_changing_pixel_bbox": [
+      1064,
+      266,
+      12,
+      10
+    ],
+    "middle_glint_caveat": "Existing40-pixel R2 reflection above right-table far142 must retain its original plaster support and current30X correction; no higher rail halo",
+    "other_glint_rects": [
+      [
+        150,
+        130,
+        8,
+        8
+      ],
+      [
+        768,
+        138,
+        8,
+        8
+      ]
+    ],
+    "floor_tracks_board_y": [
+      278,
+      292,
+      306,
+      320,
+      278,
+      292,
+      306
+    ],
+    "support_shadow_limit": "New supports/contact shadows should finish well before first278 floor track",
+    "depth_policy": "The full right572x196 replay remains opaque and exactly cut from final master; no left replay and no source-painted holes"
+  },
+  "required_remaining": [
+    "Exact guarded E fitting and immutable source custody",
+    "Independent static plus all4 populated actor/label/depth review",
+    "All31 normal/low-detail moving/RM/wrap/liveness and source-specific contexts as required",
+    "Authentic preview/scoped commit/TEST artifact and served proof",
+    "Browser acceptance only through qualified admitted capability"
+  ],
+  "production_art_or_json_changed": false,
+  "gameplay_coordinates_changed": false,
+  "qa_or_engine_launched": false,
+  "e_volume_written": false,
+  "ledger_or_git_changed": false,
+  "art_approval": false,
+  "test_updated": false
+}

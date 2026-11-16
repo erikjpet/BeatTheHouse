@@ -1,0 +1,115 @@
+{
+  "schema": "bth.grand_spatial_preview_delivery/v1",
+  "page_id": "page_9fb89b8e42d88191884e9f1bdebcb1a9",
+  "url": "https://chatgpt.com/space/page_9fb89b8e42d88191884e9f1bdebcb1a9",
+  "title": "Grand Casino spatial repair preview",
+  "scope": "Private Page creation, exact asset upload and Markdown readback; rendered layout and APNG playback were not visually confirmed.",
+  "edit_receipt": {
+    "new_sequence": 1,
+    "through_sequence": 1,
+    "operation_results": [
+      {
+        "operation_index": 0,
+        "preceding_block_id": "ec581925-b042-4794-8528-6f41ddb96740",
+        "created_block_ids": [
+          "d7c86931-6f03-4bc7-ac23-ec8350494647"
+        ],
+        "continuation_position": {
+          "block_id": "d7c86931-6f03-4bc7-ac23-ec8350494647",
+          "relative_position_base64": "AMSdwpgFkgFB"
+        },
+        "affected_blocks": [
+          {
+            "block_id": "d7c86931-6f03-4bc7-ac23-ec8350494647",
+            "hash": "3cf200abd5a1131ccffcd2f4e931fe33402c3ddf9f17d2190e8b8b6b1284e822"
+          }
+        ]
+      },
+      {
+        "operation_index": 1,
+        "preceding_block_id": "386584e6-c6ce-4ff7-9baf-6646261cb702",
+        "created_block_ids": [],
+        "continuation_position": {
+          "block_id": "026566c4-14e8-4f4c-9c49-b91200912416",
+          "relative_position_base64": "AO6ymJ4NxQpB"
+        },
+        "affected_blocks": [
+          {
+            "block_id": "026566c4-14e8-4f4c-9c49-b91200912416",
+            "hash": "b2134ba8e2c3fd1525a4db0180762703692b0eac4cbb60d7eaf876b498ef6ebf"
+          }
+        ]
+      }
+    ]
+  },
+  "uploaded_asset": {
+    "page_id": "page_9fb89b8e42d88191884e9f1bdebcb1a9",
+    "reference": "library-file:fde1_bGliZmlsZV8yNkY4My1nTWl3TTVLNXpueUZqNUtB_FileDrive_b2e6deecb030819197ad6510125a1c29",
+    "file_name": "grand-spatial-gala-first75-excerpt-3dde0c6269c1-900-3552bc905a214e019930aa332331279e.png",
+    "mime_type": "image/png",
+    "byte_size": 5614984,
+    "sha256": "ada209bfe7bf94d6b95ef4dbdd79b2e2c891abea1d1c19d20701dab49c7769b1",
+    "file_access_confirmed": true,
+    "is_image": true,
+    "markdown": "![Grand Casino native animation excerpt](library-file:fde1_bGliZmlsZV8yNkY4My1nTWl3TTVLNXpueUZqNUtB_FileDrive_b2e6deecb030819197ad6510125a1c29)",
+    "inserted": false,
+    "next_step": "Read the Page and use edit_page with its fresh guards to insert markdown."
+  },
+  "readback": {
+    "title": "Grand Casino spatial repair preview",
+    "blocks": [
+      {
+        "id": "7bcb7390-3122-43aa-a1eb-2211bf548e19",
+        "hash": "5ba5e219978d21c5244032899e5cbf87b37844645918534f6ea7ebad45028138",
+        "markdown": "The Grand Casino table repair is published on [art TEST](https://192.168.0.36:8443/p/beat-the-house/play/test/). The tables now have shallow aprons, visible supports and clear floor below them. The Bar repair remains included."
+      },
+      {
+        "id": "ec581925-b042-4794-8528-6f41ddb96740",
+        "hash": "d9630d84122e033dd0c6280a1d38c82198809326ac507c28c81f13b6a00a76fd",
+        "markdown": "# Animated preview"
+      },
+      {
+        "id": "d7c86931-6f03-4bc7-ac23-ec8350494647",
+        "hash": "3cf200abd5a1131ccffcd2f4e931fe33402c3ddf9f17d2190e8b8b6b1284e822",
+        "markdown": "![Grand Casino native animation excerpt](library-file:fde1_bGliZmlsZV8yNkY4My1nTWl3TTVLNXpueUZqNUtB_FileDrive_b2e6deecb030819197ad6510125a1c29)"
+      },
+      {
+        "id": "e3908a08-61bc-4d1c-87b9-0bbde91754bb",
+        "hash": "a78ec1386fc653489288ac6c13bce3016e7325c4697cc09d032c631a1a53c24c",
+        "markdown": "This lossless preview contains the first 75 recorded frames: 9.855 seconds at native 900 × 430 resolution, using the actual scene clocks. All 151 frames of the 20.003-second original recording are preserved."
+      },
+      {
+        "id": "7ddafc8d-4d67-4231-8fc8-da386217d861",
+        "hash": "d8845ff994d1653353e512d8fccbc30286bf4965a25e2f3c79efdd6e685948e9",
+        "markdown": "# What changed"
+      },
+      {
+        "id": "f5f4e404-59ff-4247-920b-5a7f0406845e",
+        "hash": "aadd842d6a530532cb7c6b4188a4ffebb364032971420fa3ff38668640f954aa",
+        "markdown": "Two table bodies and their exact foreground replays were rebuilt without moving gameplay anchors. Practical light pulses now follow the existing gold fixtures and sign underline. The right pedestal’s lower collar uses quiet timber so Blackjack’s label stays readable."
+      },
+      {
+        "id": "ea7188d9-9fdf-438a-ad4c-925455254244",
+        "hash": "25b36c2e494a33967e8eeaaaaa8674ecc9b9cd44b773ad2186c9cb6d269e5336",
+        "markdown": "# Verification"
+      },
+      {
+        "id": "386584e6-c6ce-4ff7-9baf-6646261cb702",
+        "hash": "abdeb928ece9a5cd2ededc059b24f64901ed7ccc4b5db7d87fe1b87e9f010b2f",
+        "markdown": "All four populated contexts passed 19,167 checks, with 98 paint comparisons and 40 distinct objects. All 16 native motions, seven simulated low-detail motions, Reduce Motion checks and no-input liveness passed. Independent review covered all four stills and sampled frames from the complete recording."
+      },
+      {
+        "id": "026566c4-14e8-4f4c-9c49-b91200912416",
+        "hash": "b2134ba8e2c3fd1525a4db0180762703692b0eac4cbb60d7eaf876b498ef6ebf",
+        "markdown": "All 13 served TEST files match the verified build over HTTPS. The Web build preserves all 1,605 UID bindings and every unrelated script, scene and room payload; NEXT was unchanged during this publication. Browser startup, served Web visuals and gameplay remain unverified. The recording does not span the longest 57.778-second animation loop."
+      }
+    ],
+    "metadata_sequence": 1,
+    "has_exact_image_reference": true
+  },
+  "file_access_confirmed": true,
+  "apng_sha256": "ada209bfe7bf94d6b95ef4dbdd79b2e2c891abea1d1c19d20701dab49c7769b1",
+  "rendered_page_visually_inspected": false,
+  "browser_game_acceptance": "NOT_RUN",
+  "sharing_changed": false
+}

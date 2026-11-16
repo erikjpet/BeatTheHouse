@@ -1,0 +1,1120 @@
+{
+  "schema": "BTH_ENV_SPATIAL_SOURCE_TRIAL_V1",
+  "tracking_id": "BTH-ENV-SPATIAL-PRIVATE-001",
+  "room_id": "punchline_back_room",
+  "context": "small_underground_casino:back_room",
+  "map_alias": "crew_back_room",
+  "date": "2026-11-16",
+  "status": "FROZEN_NON_ACTIVE_SOURCE_TRIAL_NOT_APPROVED",
+  "owner_task": "/root/high_limit_source_trial",
+  "parent_task": "/root",
+  "generation": {
+    "tool": "built-in image_gen.imagegen",
+    "calls": 1,
+    "mode": "precise-object-edit",
+    "input_order": [
+      "current punchline_back_room background",
+      "own small_underground_casino building facade",
+      "approved Delta Queen exterior craft reference"
+    ],
+    "num_last_images_to_include": 3,
+    "transparent_background": false,
+    "prompt_path": "prompt.txt",
+    "prompt_sha256": "da997f23a22ec21a5b403fff31fe76dea920fcdf89308f0476dd5e63c1ae7751",
+    "png_path": "private-crew-spatial-r1.png",
+    "png_sha256": "ac34392a170633b5fd8bebb987c2b81de9adc007c7a951fe41c008d5053b34aa",
+    "png_bytes": 1823374,
+    "dimensions": [
+      1815,
+      867
+    ],
+    "opaque": true,
+    "b64_path": "private-crew-spatial-r1.png.b64",
+    "b64_file_sha256": "0223177475b84ea6c165010eddf4453da4239cf3e4b88427899fd58b2bd82af6",
+    "preservation": "Data URI preserved immediately with apply_patch as .png.b64, then decoded losslessly to a new exclusive PNG under this D: source-artifact folder. No image processing or active asset replacement."
+  },
+  "current": {
+    "files": {
+      "data/art/environments/punchline_back_room.json": "c8734f4d3a00a0e3620167216e18faabdfb87551ee1d8f05fd89a5ed47cbc059",
+      "assets/art/environments/punchline_back_room/anim/floor_glint_0.png": "4a6d0f35054fff1e66e5d208c04579315ef9e177a695da98903745f4b2d4fcc0",
+      "assets/art/environments/punchline_back_room/anim/floor_glint_1.png": "90c802a9dda2dc591e1d3faed2ae5e17f1cbd93451480ac6dfb2422039925016",
+      "assets/art/environments/punchline_back_room/anim/floor_glint_2.png": "95cf2166aaf1a3be8fa0379b7e051f2278e8f29be18ed50766e11bf0c45c1e3d",
+      "assets/art/environments/punchline_back_room/anim/floor_glint_3.png": "5df5b9a1483ed57014a5cb2e09e8b0a7f0d8566fafa5ee66bb0e90dec4d68472",
+      "assets/art/environments/punchline_back_room/anim/floor_glint_4.png": "7fe35aa3eb2b6df3bd307a2c04d9212a59b7cbe481c3dc94612d5d87f48172ba",
+      "assets/art/environments/punchline_back_room/anim/floor_glint_5.png": "cdec42943461d79b19283e18037b0c28eac2781607c0d46b7287c835475a0abe",
+      "assets/art/environments/punchline_back_room/anim/floor_glint_6.png": "6d3a46e2613d871e0e4783bfb519b34f737d4fdf0a4c317c25385c4b75855748",
+      "assets/art/environments/punchline_back_room/background.png": "0913167ca23cb0422a11e8fa7a7be429e04ff19c0ead3ddfb6a751598029f4ee"
+    },
+    "seal": "c8882f6f7fee3d1514b94f3a3834e04f47bbf4e10413ce0ef53b27fc824dd733",
+    "seal_scheme": "sha256(sorted relative_path + space + sha256, joined LF; no trailing LF)",
+    "file_count": 9,
+    "counters": {},
+    "animations": [
+      {
+        "id": "floor_glint_0",
+        "type": "mover",
+        "texture": "anim/floor_glint_0.png",
+        "size": [
+          72,
+          2
+        ],
+        "from": [
+          -90,
+          274
+        ],
+        "to": [
+          950,
+          274
+        ],
+        "duration": 57.77777777777778,
+        "phase": 0,
+        "opacity": 0.08,
+        "blend": "add",
+        "still": "hide"
+      },
+      {
+        "id": "floor_glint_1",
+        "type": "mover",
+        "texture": "anim/floor_glint_1.png",
+        "size": [
+          68,
+          2
+        ],
+        "from": [
+          -90,
+          288
+        ],
+        "to": [
+          950,
+          288
+        ],
+        "duration": 50.73170731707317,
+        "phase": 6.682926829268292,
+        "opacity": 0.08,
+        "blend": "add",
+        "still": "hide"
+      },
+      {
+        "id": "floor_glint_2",
+        "type": "mover",
+        "texture": "anim/floor_glint_2.png",
+        "size": [
+          64,
+          2
+        ],
+        "from": [
+          -90,
+          302
+        ],
+        "to": [
+          950,
+          302
+        ],
+        "duration": 45.21739130434783,
+        "phase": 11.91304347826087,
+        "opacity": 0.08,
+        "blend": "add",
+        "still": "hide"
+      },
+      {
+        "id": "floor_glint_3",
+        "type": "mover",
+        "texture": "anim/floor_glint_3.png",
+        "size": [
+          60,
+          2
+        ],
+        "from": [
+          -90,
+          316
+        ],
+        "to": [
+          950,
+          316
+        ],
+        "duration": 40.78431372549019,
+        "phase": 16.11764705882353,
+        "opacity": 0.08,
+        "blend": "add",
+        "still": "hide"
+      },
+      {
+        "id": "floor_glint_4",
+        "type": "mover",
+        "texture": "anim/floor_glint_4.png",
+        "size": [
+          56,
+          2
+        ],
+        "from": [
+          -90,
+          274
+        ],
+        "to": [
+          950,
+          274
+        ],
+        "duration": 37.142857142857146,
+        "phase": 19.571428571428573,
+        "opacity": 0.08,
+        "blend": "add",
+        "still": "hide"
+      },
+      {
+        "id": "floor_glint_5",
+        "type": "mover",
+        "texture": "anim/floor_glint_5.png",
+        "size": [
+          52,
+          2
+        ],
+        "from": [
+          -90,
+          288
+        ],
+        "to": [
+          950,
+          288
+        ],
+        "duration": 34.09836065573771,
+        "phase": 22.459016393442624,
+        "opacity": 0.08,
+        "blend": "add",
+        "still": "hide"
+      },
+      {
+        "id": "floor_glint_6",
+        "type": "mover",
+        "texture": "anim/floor_glint_6.png",
+        "size": [
+          48,
+          2
+        ],
+        "from": [
+          -90,
+          302
+        ],
+        "to": [
+          950,
+          302
+        ],
+        "duration": 31.515151515151516,
+        "phase": 24.90909090909091,
+        "opacity": 0.08,
+        "blend": "add",
+        "still": "hide"
+      }
+    ]
+  },
+  "references": {
+    "assets/art/environments/punchline_back_room/background.png": {
+      "path": "assets/art/environments/punchline_back_room/background.png",
+      "sha256": "0913167ca23cb0422a11e8fa7a7be429e04ff19c0ead3ddfb6a751598029f4ee",
+      "bytes": 716679,
+      "dimensions": [
+        1800,
+        860
+      ]
+    },
+    "assets/art/travel/exteriors/small_underground_casino.png": {
+      "path": "assets/art/travel/exteriors/small_underground_casino.png",
+      "sha256": "49bb1047afd6729579f563fc9eeaea30443646c5e0bf276f138e8231d4c53f69",
+      "bytes": 1604996,
+      "dimensions": [
+        1774,
+        887
+      ]
+    },
+    "assets/art/travel/exteriors/delta_queen.png": {
+      "path": "assets/art/travel/exteriors/delta_queen.png",
+      "sha256": "4414fe5c94f850fb233c3f0e14cabed29291aac08b881823c12db4cdf4241767",
+      "bytes": 1586008,
+      "dimensions": [
+        1774,
+        887
+      ]
+    },
+    "docs/art/briefs/punchline_back_room.md": {
+      "path": "docs/art/briefs/punchline_back_room.md",
+      "sha256": "7610b29be9332a8212073022a227f15ac43bd96b1a811544212acf38b1b3658f",
+      "bytes": 9824
+    },
+    "docs/art/environment_spatial_rework_direction.md": {
+      "path": "docs/art/environment_spatial_rework_direction.md",
+      "sha256": "9a438875d8c5b4d923e1f5938caa9d900e5433aed0e27f3836907284245e579b",
+      "bytes": 12314
+    },
+    "scripts/ui/pixel_scene_canvas.gd": {
+      "path": "scripts/ui/pixel_scene_canvas.gd",
+      "sha256": "c2ce2abee8827372d66fd6c9647a74e06f5db8fed520bbd812b8c7eb29f4af38",
+      "bytes": 566959
+    },
+    "scripts/ui/environment_art_pack.gd": {
+      "path": "scripts/ui/environment_art_pack.gd",
+      "sha256": "067cf5f9673bd85705f4971e9c4db70aaafcfe1cec912b926ed9edc685fb5d8f",
+      "bytes": 28671
+    },
+    "scripts/ui/environment_art_renderer.gd": {
+      "path": "scripts/ui/environment_art_renderer.gd",
+      "sha256": "900b44af05602f6259eed0a2cb33a45d1899cb30bd71aaaed5a744bcc9ccad96",
+      "bytes": 5158
+    }
+  },
+  "old_source_recipe": {
+    "E:/CodexQA/BTH/workspaces/BTH-ENVART-ARTIST-20261115/sources/private-room-source-r1.png": {
+      "sha256": "c877cf57857cc33f75f61c1accc1959c5e71ef566b3d1d209133371400082686",
+      "bytes": 1908864
+    },
+    "E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261115/assemble_private_r4.py": {
+      "sha256": "5da164be8dbd27cab12537464b69428dc96924ad56f4c87208dbd0218a5df561",
+      "bytes": 6531
+    },
+    "E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261115/packages/punchline_back_room-v1-r4/package-seal.json": {
+      "sha256": "4202ee8e7d919ea7d5e718aae0e9d3fede8a5f6f495e22d24da1e849e7d549fa",
+      "bytes": 6001
+    }
+  },
+  "retained_evidence": {
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-base-01/evidence/private_preart_metadata.json": {
+      "sha256": "97339a1c53e9180a18f7126b11a49669834c6ff112620811bdf44fea85657e31",
+      "bytes": 620621
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-base-01/evidence/__none_actual_play.png": {
+      "sha256": "5230f00933e3c3b0a7532463658c625e4ca771c7a6b5a1fb2c22ab026e59642c",
+      "bytes": 736353
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/private_lifecycle_result.json": {
+      "sha256": "af1ef1dcee2b505d8af0d3392f24c77477968ff23256290552760133c58c6b44",
+      "bytes": 3235364
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-video-01/evidence/capture/frame_000.png": {
+      "sha256": "e951dfc07d3d426c1421cd2d6765f774330f1330e0ec59ec019105a7aceef89c",
+      "bytes": 736235
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C1_marker_actual_play.png": {
+      "sha256": "06120be7dc115557530be2890f62174516b119070b648876671889986f3da918",
+      "bytes": 742284
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C2_associate_0_actual_play.png": {
+      "sha256": "0ea3a2e28cfd5b5c2a46afcdb8625811cb470842df46cfcbabf937198a800aae",
+      "bytes": 734827
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C2_associate_2_actual_play.png": {
+      "sha256": "0436d74f1624658597621824c6bc4e938cd1355f343533cbdc71574cd3181c40",
+      "bytes": 735191
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C2_associate_5_actual_play.png": {
+      "sha256": "246b850f17c93511ca53671bca7ee805f2d7654eacf619033ccfea601b74551c",
+      "bytes": 735684
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C4_silas_actual_play.png": {
+      "sha256": "96ee90700093c684ea871b606601a93cc232ac109e4207eff8c045de9744d7d1",
+      "bytes": 732720
+    }
+  },
+  "mask_evidence": {
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-base-01/evidence/private_host_0_body.png": {
+      "object_id": "event:crew_job_board",
+      "kind": "body_png",
+      "sha256": "9b3aeb9f2ef9bf7cc6450789df88adf996d75db18ff4788ab7e717ebb907d5e7"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-base-01/evidence/private_host_0_adorn.png": {
+      "object_id": "event:crew_job_board",
+      "kind": "adorn_png",
+      "sha256": "8002ee5fd15ef8856c5a0abbafc8a70b7622f6bbdd7de1b9b3763c3b316801ad"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-base-01/evidence/private_host_1_body.png": {
+      "object_id": "event:crew_planning_table",
+      "kind": "body_png",
+      "sha256": "b97e1d875aa50574fa143d0cae2da7eed5a95e14fc36ab299a7b6012c08f1f8b"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-base-01/evidence/private_host_1_adorn.png": {
+      "object_id": "event:crew_planning_table",
+      "kind": "adorn_png",
+      "sha256": "36f1ceb90472f69321424bc018b26ab02e2b674fea6f0d9f6763ac8dcfe665cd"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-base-01/evidence/private_host_2_body.png": {
+      "object_id": "event:numbers_desk",
+      "kind": "body_png",
+      "sha256": "913923da8eddc24f0d46352af16db1aff2816a22ab0d997a58cc49c9b29bca35"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-base-01/evidence/private_host_2_adorn.png": {
+      "object_id": "event:numbers_desk",
+      "kind": "adorn_png",
+      "sha256": "20cb8e100e5faa9204ab43f5345a72a42e8a90331c646db64edbf291ec2b1832"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-base-01/evidence/private_host_3_body.png": {
+      "object_id": "event:crew_mags_bench",
+      "kind": "body_png",
+      "sha256": "03642255e6b40b37d95695a68b8e0c696ab3dbfc5ca9b5a1382df141b3aa09a1"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-base-01/evidence/private_host_3_adorn.png": {
+      "object_id": "event:crew_mags_bench",
+      "kind": "adorn_png",
+      "sha256": "0c3ca96406fdf4e99a1ff7e70e97ecc10d7be59702fa1163d935ba6b9912f255"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-base-01/evidence/private_host_4_body.png": {
+      "object_id": "event:crew_rook_ride",
+      "kind": "body_png",
+      "sha256": "d4b6d19e73bba48043c2e6b0d5701c411a75907565ce04482f5bf01a532cbf0c"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-base-01/evidence/private_host_4_adorn.png": {
+      "object_id": "event:crew_rook_ride",
+      "kind": "adorn_png",
+      "sha256": "193ee5b3eefacff9776b923c8e8cc705293182974ac85ffdca3d09434ff48026"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-base-01/evidence/private_host_5_body.png": {
+      "object_id": "event:crew_practice_rig",
+      "kind": "body_png",
+      "sha256": "cf94e774ec4d02e103c1dafdbf75746106185604f222cc1f068b0a5f4576227e"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-base-01/evidence/private_host_5_adorn.png": {
+      "object_id": "event:crew_practice_rig",
+      "kind": "adorn_png",
+      "sha256": "68f097938c39bfa2b6dcff0dc57f1b9d7369a2df743412e0c88c4c128a3534c9"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C1_marker_character_0_body.png": {
+      "object_id": "crew_presence:crew_switch",
+      "kind": "body_png",
+      "sha256": "6e3d7779bc6a9cb3d311cc81fe40bfcea8fd599509ff2f4dbde6858c742eb9d8"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C1_marker_character_0_adorn.png": {
+      "object_id": "crew_presence:crew_switch",
+      "kind": "adorn_png",
+      "sha256": "0514c0c49dc1cc88d55d82692d3d18d5c1da7bbb81638b33da3b39e013bf1c70"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C1_marker_character_1_body.png": {
+      "object_id": "crew_presence:crew_velvet",
+      "kind": "body_png",
+      "sha256": "489debb91e0c9c39d3e0002b270261a8eb6bb1938a4d09f2efdd702a7d23ec09"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C1_marker_character_1_adorn.png": {
+      "object_id": "crew_presence:crew_velvet",
+      "kind": "adorn_png",
+      "sha256": "fd7f2d6e750ac879fb23e6c9953a62bf9e49ca02a9147adf77d423c9a4a6b8d9"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C1_marker_character_2_body.png": {
+      "object_id": "crew_presence:crew_lucky",
+      "kind": "body_png",
+      "sha256": "39ee6e07c15937e016c3fcd488e6199bc4773fe26b1bf480d8d940d7e6920e13"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C1_marker_character_2_adorn.png": {
+      "object_id": "crew_presence:crew_lucky",
+      "kind": "adorn_png",
+      "sha256": "e3b19a61f54a2821aa8d4003f0273436d9e80fbc90ed202d3ad07451c2c82e66"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C1_marker_character_3_body.png": {
+      "object_id": "crew_presence:crew_bishop",
+      "kind": "body_png",
+      "sha256": "3f904094036d14544b3acd9ac16f04e469d07a6090bdca7fe4de14f82f79f0cf"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C1_marker_character_3_adorn.png": {
+      "object_id": "crew_presence:crew_bishop",
+      "kind": "adorn_png",
+      "sha256": "5191c8ed8918f95cefcedd6ffba9718f74a83666b535d48d80f3184fafe70ab4"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C2_associate_0_character_0_body.png": {
+      "object_id": "event:crew_contact_switch",
+      "kind": "body_png",
+      "sha256": "fa389ee694c5bcc642ba673b88ae6c00e145b6c42b8e7e37c7451854582e5e97"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C2_associate_0_character_0_adorn.png": {
+      "object_id": "event:crew_contact_switch",
+      "kind": "adorn_png",
+      "sha256": "c76f27bedde1e9ae4e03b07f3170be899093ad57291b4ffc850fa3b89f070bdc"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C2_associate_0_character_1_body.png": {
+      "object_id": "event:crew_contact_velvet",
+      "kind": "body_png",
+      "sha256": "2a8d3ce5c36a07249e211708dc98f7e1bed8d035bf0f6d64eafc8bd605188da6"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C2_associate_0_character_1_adorn.png": {
+      "object_id": "event:crew_contact_velvet",
+      "kind": "adorn_png",
+      "sha256": "346ea1446249218e59dd0fb89c734ff012a9d3b28088293041c45848f7581fbf"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C2_associate_0_character_2_body.png": {
+      "object_id": "event:crew_contact_lucky",
+      "kind": "body_png",
+      "sha256": "6cee287bea870e96941f6da23a7b8c729d0fb0b1da37594d4479b556744ff196"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C2_associate_0_character_2_adorn.png": {
+      "object_id": "event:crew_contact_lucky",
+      "kind": "adorn_png",
+      "sha256": "7b612ad3dd5ecc87b83e1bf673d8c95d2a898c1b187faec24a9a47e7c17effb8"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C2_associate_0_character_3_body.png": {
+      "object_id": "event:crew_contact_bishop",
+      "kind": "body_png",
+      "sha256": "369f4e64bf31407bc77b9e47198e161ed572202b7bfa3728d4df43696979dc73"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C2_associate_0_character_3_adorn.png": {
+      "object_id": "event:crew_contact_bishop",
+      "kind": "adorn_png",
+      "sha256": "bffc1a6b24cec08e81438d9bb620d9c268027163475b5fca235d7ac5fb06742d"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C2_associate_2_character_0_body.png": {
+      "object_id": "event:crew_contact_velvet",
+      "kind": "body_png",
+      "sha256": "7bcd9d5aedf257eacdd793ab9fe2e80209727704b71567d7380fab9e4fe76d1b"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C2_associate_2_character_0_adorn.png": {
+      "object_id": "event:crew_contact_velvet",
+      "kind": "adorn_png",
+      "sha256": "10eb049c032f046b39e1338b455e955660394efd3ad71131bde5fdafb26c3e6a"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C2_associate_2_character_1_body.png": {
+      "object_id": "event:crew_contact_rook",
+      "kind": "body_png",
+      "sha256": "0d146e86d672860772eb99a2ab195ab76eb5b07029e9e1a2ed8c06c8dce6134c"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C2_associate_2_character_1_adorn.png": {
+      "object_id": "event:crew_contact_rook",
+      "kind": "adorn_png",
+      "sha256": "ef7ee9b6095d28e7bdb63fbc08ab1d3637a1ed0edb6ecaba2d56cd034483b460"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C2_associate_2_character_2_body.png": {
+      "object_id": "event:crew_contact_lucky",
+      "kind": "body_png",
+      "sha256": "d2307fea5f278d87afc74b07eba26982ba672b383e033f3b45de12b157c895d5"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C2_associate_2_character_2_adorn.png": {
+      "object_id": "event:crew_contact_lucky",
+      "kind": "adorn_png",
+      "sha256": "43dede2c808c81eeedca31f0bed5962f40f99669fa07b34e3771ad9e2fbebbf2"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C2_associate_5_character_0_body.png": {
+      "object_id": "event:crew_contact_velvet",
+      "kind": "body_png",
+      "sha256": "ddd9447aae7064cf45d531a7c78627ebe3fd565f9d22a1cb9dec42264d5d7ffd"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C2_associate_5_character_0_adorn.png": {
+      "object_id": "event:crew_contact_velvet",
+      "kind": "adorn_png",
+      "sha256": "cdea8399c3ecf185829893fd1fd07e1e2795d064b6b1cbaad2d0f7eb487c8e73"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C2_associate_5_character_1_body.png": {
+      "object_id": "event:crew_contact_lucky",
+      "kind": "body_png",
+      "sha256": "e2866ef50c3351f7d4e12906fcf656c16b0d36f8c9798ede34e0f154388e4753"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C2_associate_5_character_1_adorn.png": {
+      "object_id": "event:crew_contact_lucky",
+      "kind": "adorn_png",
+      "sha256": "91db8331b9c8edde30ce2ef754cb2f1096cf5cfdf9f2790e16f21a5529c46b03"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C2_associate_5_character_2_body.png": {
+      "object_id": "event:crew_contact_knuckles",
+      "kind": "body_png",
+      "sha256": "3db9ecc739c05810ca00c2733cef5aa0a59d279b1c57ff550ce54f36f031e32b"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C2_associate_5_character_2_adorn.png": {
+      "object_id": "event:crew_contact_knuckles",
+      "kind": "adorn_png",
+      "sha256": "f0214d44a33e85d802b3711278e20ecc2978d26e1e18c0fe80d721c14cf95e1b"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C4_silas_character_0_body.png": {
+      "object_id": "event:crew_contact_switch",
+      "kind": "body_png",
+      "sha256": "fa389ee694c5bcc642ba673b88ae6c00e145b6c42b8e7e37c7451854582e5e97"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C4_silas_character_0_adorn.png": {
+      "object_id": "event:crew_contact_switch",
+      "kind": "adorn_png",
+      "sha256": "c76f27bedde1e9ae4e03b07f3170be899093ad57291b4ffc850fa3b89f070bdc"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C4_silas_character_1_body.png": {
+      "object_id": "event:crew_contact_velvet",
+      "kind": "body_png",
+      "sha256": "2a8d3ce5c36a07249e211708dc98f7e1bed8d035bf0f6d64eafc8bd605188da6"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C4_silas_character_1_adorn.png": {
+      "object_id": "event:crew_contact_velvet",
+      "kind": "adorn_png",
+      "sha256": "346ea1446249218e59dd0fb89c734ff012a9d3b28088293041c45848f7581fbf"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C4_silas_character_2_body.png": {
+      "object_id": "event:crew_contact_lucky",
+      "kind": "body_png",
+      "sha256": "6cee287bea870e96941f6da23a7b8c729d0fb0b1da37594d4479b556744ff196"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C4_silas_character_2_adorn.png": {
+      "object_id": "event:crew_contact_lucky",
+      "kind": "adorn_png",
+      "sha256": "7b612ad3dd5ecc87b83e1bf673d8c95d2a898c1b187faec24a9a47e7c17effb8"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C4_silas_character_3_body.png": {
+      "object_id": "numbers:silas",
+      "kind": "body_png",
+      "sha256": "770a1fe6c14df13e686f26f774bbd9afa869224b33966ace2072d4aa64723d93"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C4_silas_character_3_adorn.png": {
+      "object_id": "numbers:silas",
+      "kind": "adorn_png",
+      "sha256": "309f3628cc574494e40bbbef6079fd23065d870042311e10603b3e8c9c88887f"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C4_silas_character_4_body.png": {
+      "object_id": "event:crew_contact_bishop",
+      "kind": "body_png",
+      "sha256": "369f4e64bf31407bc77b9e47198e161ed572202b7bfa3728d4df43696979dc73"
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-PRIVATETRIAL-20261115-r4-lifecycle-01/evidence/C4_silas_character_4_adorn.png": {
+      "object_id": "event:crew_contact_bishop",
+      "kind": "adorn_png",
+      "sha256": "bffc1a6b24cec08e81438d9bb620d9c268027163475b5fca235d7ac5fb06742d"
+    }
+  },
+  "observed_object_counts": {
+    "Base": 10,
+    "C1_marker": 15,
+    "C2_associate_0": 14,
+    "C2_associate_2": 13,
+    "C2_associate_5": 13,
+    "C4_silas": 15
+  },
+  "artifacts": {
+    "private-crew-spatial-r1.png": {
+      "sha256": "ac34392a170633b5fd8bebb987c2b81de9adc007c7a951fe41c008d5053b34aa",
+      "bytes": 1823374
+    },
+    "private-crew-spatial-r1.png.b64": {
+      "sha256": "0223177475b84ea6c165010eddf4453da4239cf3e4b88427899fd58b2bd82af6",
+      "bytes": 2431169
+    },
+    "prompt.txt": {
+      "sha256": "da997f23a22ec21a5b403fff31fe76dea920fcdf89308f0476dd5e63c1ae7751",
+      "bytes": 3180
+    }
+  },
+  "coordinate_system": {
+    "board": [
+      900,
+      430
+    ],
+    "production_png": [
+      1800,
+      860
+    ],
+    "pixel_scale": 2,
+    "raw_trial_png": [
+      1815,
+      867
+    ],
+    "rectangles": "Unless named xyxy, rectangle arrays are x,y,width,height. Pixel contour observations are approximate raw PNG coordinates and require independent tracing before assembly."
+  },
+  "physical_fixtures_board": {
+    "planning_support": [
+      264,
+      151,
+      372,
+      74
+    ],
+    "planning_inset": [
+      282,
+      162,
+      336,
+      44
+    ],
+    "planning_inner": [
+      382,
+      170,
+      136,
+      28
+    ],
+    "floor_start": 245,
+    "coherent_floor_transition": [
+      245,
+      250
+    ],
+    "job_board": [
+      42,
+      54,
+      170,
+      104
+    ],
+    "numbers_desk": [
+      42,
+      184,
+      170,
+      52
+    ],
+    "ruled_paper": [
+      58,
+      173,
+      64,
+      30
+    ],
+    "adding_machine": [
+      142,
+      168,
+      46,
+      36
+    ],
+    "mags_shelf": [
+      680,
+      62,
+      154,
+      46
+    ],
+    "right_rig": [
+      674,
+      142,
+      172,
+      82
+    ],
+    "door": [
+      790,
+      70,
+      80,
+      174
+    ],
+    "door_handle": [
+      808,
+      158
+    ],
+    "static_words": [
+      "THE BACK ROOM",
+      "WORK",
+      "MAGS",
+      "RIG"
+    ],
+    "stage_count": 0,
+    "counter_foreground_replay_count": 0,
+    "notes": "Only the planning table is assigned for physical repair. Existing desk/board/shelf/rig remain authored wall fixtures. Keep the door's later overlap over shelf/rig."
+  },
+  "source_painter": {
+    "path": "scripts/ui/pixel_scene_canvas.gd",
+    "function": "_draw_game_prop",
+    "line": 9698,
+    "generic_card_table_rect": [
+      272,
+      135,
+      144,
+      96
+    ],
+    "generic_game_body_rect": [
+      272,
+      169.56,
+      144,
+      40.32
+    ],
+    "generic_game_highlight_rect": [
+      282,
+      177.24,
+      124,
+      19.2
+    ],
+    "card_back_rects": [
+      [
+        298,
+        141,
+        20,
+        28
+      ],
+      [
+        326,
+        147,
+        20,
+        28
+      ],
+      [
+        354,
+        141,
+        20,
+        28
+      ]
+    ],
+    "notes": "All live props/cards/icons remain runtime-owned. Do not bake any into source. Generic painter dark body is #12503a and inner highlight #1c8a62. The complete game rect and label/hit data remain unchanged."
+  },
+  "mask_observations_alpha_gte_64_board_xyxy": {
+    "base_planning_body": [
+      517.5,
+      126,
+      608.5,
+      196
+    ],
+    "base_planning_adornment": [
+      518.5,
+      95,
+      607.5,
+      188.5
+    ],
+    "base_job_body": [
+      76,
+      91.5,
+      135,
+      141
+    ],
+    "base_job_adornment": [
+      75,
+      79,
+      127,
+      138
+    ],
+    "base_numbers_body": [
+      60,
+      151.5,
+      118,
+      203
+    ],
+    "base_numbers_adornment": [
+      42,
+      163.5,
+      135,
+      217
+    ],
+    "base_mags_bench_body": [
+      27,
+      215.5,
+      93,
+      279
+    ],
+    "base_mags_bench_adornment": [
+      23,
+      275,
+      83,
+      287
+    ],
+    "base_rook_ride_body": [
+      776,
+      219.5,
+      830,
+      277
+    ],
+    "base_rook_ride_adornment": [
+      767,
+      199,
+      822,
+      208
+    ],
+    "base_practice_body": [
+      116,
+      292.5,
+      190.5,
+      361.5
+    ],
+    "base_practice_adornment": [
+      105,
+      304.5,
+      191,
+      373
+    ],
+    "C1_switch_body": [
+      453.5,
+      286,
+      498.5,
+      292
+    ],
+    "C1_switch_adornment": [
+      454.5,
+      230,
+      497.5,
+      303
+    ],
+    "C1_velvet_body": [
+      537.5,
+      299,
+      582.5,
+      305
+    ],
+    "C1_velvet_adornment": [
+      538.5,
+      206,
+      581.5,
+      280.5
+    ],
+    "C1_lucky_body": [
+      382.5,
+      324,
+      427.5,
+      330
+    ],
+    "C1_lucky_adornment": [
+      383.5,
+      268,
+      426.5,
+      344
+    ],
+    "C1_bishop_body": [
+      305.5,
+      337,
+      350.5,
+      343
+    ],
+    "C1_bishop_adornment": [
+      306.5,
+      244,
+      349.5,
+      318.5
+    ],
+    "C2_switch_body": [
+      443.5,
+      229.5,
+      507,
+      292
+    ],
+    "C2_switch_adornment": [
+      461,
+      294,
+      492,
+      303
+    ],
+    "C2_velvet_body": [
+      526.5,
+      243,
+      591.5,
+      305
+    ],
+    "C2_velvet_adornment": [
+      536.5,
+      206,
+      583.5,
+      295
+    ],
+    "C2_lucky_body": [
+      372.5,
+      269,
+      437,
+      330
+    ],
+    "C2_lucky_adornment": [
+      381.5,
+      261.5,
+      428.5,
+      344
+    ],
+    "C2_bishop_body": [
+      292.5,
+      280,
+      360.5,
+      343
+    ],
+    "C2_bishop_adornment": [
+      304.5,
+      244,
+      351.5,
+      333
+    ],
+    "C2_rook_body": [
+      372,
+      266,
+      439,
+      330
+    ],
+    "C2_rook_adornment": [
+      381.5,
+      261.5,
+      428.5,
+      341
+    ],
+    "C2_knuckles_body": [
+      305,
+      278,
+      350.5,
+      343
+    ],
+    "C2_knuckles_adornment": [
+      304.5,
+      244,
+      351.5,
+      333
+    ],
+    "C4_silas_body": [
+      225,
+      256.5,
+      277,
+      330
+    ],
+    "C4_silas_adornment": [
+      227,
+      332,
+      276,
+      341
+    ]
+  },
+  "source_ownership_trace": {
+    "original_source_dimensions": [
+      1815,
+      867
+    ],
+    "old_source_normalized_to": [
+      900,
+      430
+    ],
+    "old_planning_raw_board_crop_xyxy": [
+      263,
+      152,
+      634,
+      224
+    ],
+    "old_planning_target": [
+      264,
+      151,
+      372,
+      74
+    ],
+    "old_clear_box_xyxy": [
+      262,
+      151,
+      635,
+      226
+    ],
+    "wall_heal_donor_rule": "For each board x, candidates x+41*k (k=-23..23), restricted to 216<=donor_x<262 or 638<=donor_x<670; choose minimum abs displacement; preserve same y. The step41 is the original donor-column phase, not a verified global texture repeat.",
+    "floor_raw_crop_xyxy": [
+      7,
+      497,
+      1807,
+      867
+    ],
+    "floor_nearest_fit": [
+      900,
+      185
+    ],
+    "floor_paste_origin": [
+      0,
+      245
+    ],
+    "floor_transition_repair": "Floor-relative rows5..9 copy same-column rows10..14, i.e. board250..254 from255..259. Preserve this same final master floor, do not regenerate or import Grand/HL floor.",
+    "old_cast_shadow_observation": {
+      "approx_board_xyxy": [
+        267,
+        226,
+        633,
+        236
+      ],
+      "strong_core_rows": [
+        226,
+        227,
+        228,
+        229,
+        230
+      ],
+      "core_row_central_median_red": [
+        13,
+        19,
+        22.5,
+        25,
+        26
+      ],
+      "same_row_side_wall_median_red": [
+        45,
+        44,
+        43,
+        44,
+        44
+      ],
+      "notes": "R4 clear box ends at226 exclusive, leaving a dark old-table shadow below the body. By231 central red39 vs side43; by236 both41. Descriptive bounds, not an approved binary mask. Preserve panel moulding, gold studs at240, trim244 and existing floor245+. Do not crop a rectangle of regenerated floor around new legs."
+    }
+  },
+  "trial_observations_raw_png": {
+    "table_outer_approx_xyxy": [
+      480,
+      305,
+      1317,
+      450
+    ],
+    "far_rim_approx_xyxy": [
+      550,
+      305,
+      1248,
+      322
+    ],
+    "near_rim_y_range": [
+      408,
+      424
+    ],
+    "felt_near_y_range": [
+      390,
+      400
+    ],
+    "left_leg_wood_core_xyxy": [
+      528,
+      438,
+      560,
+      516
+    ],
+    "left_foot_approx_xyxy": [
+      522,
+      516,
+      565,
+      530
+    ],
+    "right_leg_wood_core_xyxy": [
+      1236,
+      438,
+      1268,
+      516
+    ],
+    "right_foot_approx_xyxy": [
+      1231,
+      516,
+      1274,
+      530
+    ],
+    "notes": "Actual raw pixels were inspected. Width grew and near rim shifted upward relative to production. No uniform whole-room resize or replacement. All raw wall/floor/non-table pixels are excluded from assembly."
+  },
+  "bounded_assembly_proposal": {
+    "status": "UNAPPLIED_NOT_APPROVED",
+    "retain_fixed_contacts": true,
+    "painted_near_contact_board_y": 225,
+    "apron_board_y_range": [
+      225,
+      237
+    ],
+    "feet_end_board_y": 260,
+    "left_support_center_board_x": 286,
+    "right_support_center_board_x": 614,
+    "left_foot_max_board_xyxy": [
+      278,
+      252,
+      294,
+      260
+    ],
+    "right_foot_max_board_xyxy": [
+      606,
+      252,
+      622,
+      260
+    ],
+    "first_motion_board_y": 274,
+    "notes": [
+      "Fit isolated table top and apron independently to production contact footprint. New shallow apron and complete feet may extend below old visual rectangle; no gameplay/hit/label changes.",
+      "Trace table/leg/foot silhouettes, not regenerated bounding-box floor. Heal removed old table and its cast shadow using the original source's same-row wall donors, with explicit table-owned mask. Preserve all original non-table pixels and inlay.",
+      "Target source feet must remain dark. Left foot is close to Silas body maxx277 (1-board-unit gap to proposedmin278) and Knuckles title rect minx298.8. Independent source/actor review must confirm both; narrower/shifted local fit may be needed without moving actors.",
+      "No foreground counter/replay exists or is added. All bodies continue to draw in their existing order above background.",
+      "No motion, timing, sign, practical mask or reanchor changes proposed."
+    ]
+  },
+  "animation_inventory": {
+    "entries": 7,
+    "unique_texture_count": 7,
+    "normal_entries": 7,
+    "web_low_detail_entries": 7,
+    "web_low_detail_source": "environment_art_pack.gd uses value.get('web_low_detail',true), all seven omit field.",
+    "types": {
+      "mover": 7
+    },
+    "static_light_words_only": true,
+    "animated_lamp_or_sign_masks": 0,
+    "geometry": "all movers x-90..950, y274/288/302/316, size widths72/68/64/60/56/52/48 and height2, add opacity0.08, still hide",
+    "preserve": "All current animations and texture bytes, duration, phase, opacity, blend, still handling, normal/low-detail membership and autonomous scheduling."
+  },
+  "limitations": [
+    "Source preparation only; no static approval, integration, fresh native QA, TEST or Web acceptance.",
+    "Viewed retained Base and all five bounded lifecycle actual scenes; prior states are historical, not new runtime runs.",
+    "No Mags/C3 coverage; no UI-earned lifecycle, save/revisit or all-members/jobs claim.",
+    "One built-in generation only; further generation requires parent coordination."
+  ],
+  "mutation_scope": {
+    "new_source_artifact_folder": "review_artifacts/environment_art_sources/private-crew-spatial-r1",
+    "new_brief": "docs/art/briefs/private_crew_spatial_repair_20261116.md",
+    "production_files_written": false,
+    "E_writes": false,
+    "engine_or_browser_launches": false,
+    "QA_workers": false,
+    "profiles_or_saves_touched": false,
+    "ledger_written": false,
+    "git_operations": false,
+    "old_frozen_files_changed": false
+  }
+}

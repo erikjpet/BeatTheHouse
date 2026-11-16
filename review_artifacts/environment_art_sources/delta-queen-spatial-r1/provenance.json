@@ -1,0 +1,1609 @@
+{
+  "schema": "BTH_ENV_SPATIAL_SOURCE_TRIAL_V1",
+  "tracking_id": "BTH-ENV-SPATIAL-DELTA-001",
+  "room_id": "delta_queen",
+  "context": "delta_queen",
+  "date": "2026-11-16",
+  "status": "FROZEN_NON_ACTIVE_SOURCE_TRIAL_NOT_APPROVED",
+  "owner_task": "/root/high_limit_source_trial",
+  "parent_task": "/root",
+  "readonly_numeric_audit_task": "/root/high_limit_source_trial/delta_contact_trace",
+  "generation": {
+    "tool": "built-in image_gen.imagegen",
+    "calls": 1,
+    "mode": "precise-object-edit",
+    "input_order": [
+      "current delta_queen background edit target",
+      "approved Delta Queen exterior own identity/craft reference"
+    ],
+    "num_last_images_to_include": 2,
+    "transparent_background": false,
+    "prompt_path": "prompt.txt",
+    "prompt_sha256": "7355122b0b57564d5ea4a7591ebeff4e589b1f8acb49ac6d0089c8b4c9a97511",
+    "png_path": "delta-queen-spatial-r1.png",
+    "png_sha256": "a4b3b127e2194c5fe24a9636e1f608277ee9b5d9b0caac53a6c02a2a0176c61d",
+    "png_bytes": 1828099,
+    "dimensions": [
+      1815,
+      867
+    ],
+    "opaque": true,
+    "b64_path": "delta-queen-spatial-r1.png.b64",
+    "b64_file_sha256": "a3ca51f10e452e1ad8ed6fa784fcf789e5cda4ff1bbe3c5df2e9678afc51a116",
+    "preservation": "Image data immediately preserved through apply_patch as .png.b64; losslessly decoded to new exclusive .png under this D: source-artifact directory. No active asset overwritten."
+  },
+  "current": {
+    "file_count": 29,
+    "seal": "ca8ecad1e0d4205f4921765aabe099321509116196684c4e459c77a9d9fca41e",
+    "files": {
+      "data/art/environments/delta_queen.json": "f8e80a75bbbf552bd339421d19d3b1e2df0359a21ef6aa7d3e232257edd89b70",
+      "assets/art/environments/delta_queen/anim/background_river_reflection_0.png": "426b7df98945330f99471df9ad18f0711977303e503262c38667aeecf41839c6",
+      "assets/art/environments/delta_queen/anim/background_river_reflection_1.png": "426b7df98945330f99471df9ad18f0711977303e503262c38667aeecf41839c6",
+      "assets/art/environments/delta_queen/anim/background_river_reflection_2.png": "426b7df98945330f99471df9ad18f0711977303e503262c38667aeecf41839c6",
+      "assets/art/environments/delta_queen/anim/background_river_reflection_3.png": "426b7df98945330f99471df9ad18f0711977303e503262c38667aeecf41839c6",
+      "assets/art/environments/delta_queen/anim/background_river_reflection_4.png": "426b7df98945330f99471df9ad18f0711977303e503262c38667aeecf41839c6",
+      "assets/art/environments/delta_queen/anim/background_river_reflection_5.png": "426b7df98945330f99471df9ad18f0711977303e503262c38667aeecf41839c6",
+      "assets/art/environments/delta_queen/anim/background_river_reflection_6.png": "426b7df98945330f99471df9ad18f0711977303e503262c38667aeecf41839c6",
+      "assets/art/environments/delta_queen/anim/delta_sign_pulse.png": "e94fe83afcb03bacef55dcf66c2311e9c96caa02f1663877882a78a8e1cf488d",
+      "assets/art/environments/delta_queen/anim/dock_light_and_stem.png": "23441fca9d290a408754b8a18c6e686bd856d28c8985c840dfc76765040f8c63",
+      "assets/art/environments/delta_queen/anim/floor_glint_0.png": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+      "assets/art/environments/delta_queen/anim/floor_glint_1.png": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+      "assets/art/environments/delta_queen/anim/floor_glint_2.png": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+      "assets/art/environments/delta_queen/anim/floor_glint_3.png": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+      "assets/art/environments/delta_queen/anim/floor_glint_4.png": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+      "assets/art/environments/delta_queen/anim/floor_glint_5.png": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+      "assets/art/environments/delta_queen/anim/floor_glint_6.png": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+      "assets/art/environments/delta_queen/anim/scene_life_river_reflection_0.png": "6f72d50a34596c763bcf8e096a1ee2e341b781bb616f339295314e5317e06d70",
+      "assets/art/environments/delta_queen/anim/scene_life_river_reflection_1.png": "6f72d50a34596c763bcf8e096a1ee2e341b781bb616f339295314e5317e06d70",
+      "assets/art/environments/delta_queen/anim/scene_life_river_reflection_2.png": "6f72d50a34596c763bcf8e096a1ee2e341b781bb616f339295314e5317e06d70",
+      "assets/art/environments/delta_queen/anim/scene_life_river_reflection_3.png": "6f72d50a34596c763bcf8e096a1ee2e341b781bb616f339295314e5317e06d70",
+      "assets/art/environments/delta_queen/anim/scene_life_river_reflection_4.png": "6f72d50a34596c763bcf8e096a1ee2e341b781bb616f339295314e5317e06d70",
+      "assets/art/environments/delta_queen/anim/scene_life_river_reflection_5.png": "6f72d50a34596c763bcf8e096a1ee2e341b781bb616f339295314e5317e06d70",
+      "assets/art/environments/delta_queen/anim/scene_life_river_reflection_6.png": "6f72d50a34596c763bcf8e096a1ee2e341b781bb616f339295314e5317e06d70",
+      "assets/art/environments/delta_queen/anim/window_sparkle_0.png": "fa805ad67901011130c32a60b053aa470e5cbfe35715c34638ec8a5936dc8bbb",
+      "assets/art/environments/delta_queen/anim/window_sparkle_1.png": "fa805ad67901011130c32a60b053aa470e5cbfe35715c34638ec8a5936dc8bbb",
+      "assets/art/environments/delta_queen/anim/window_sparkle_2.png": "fa805ad67901011130c32a60b053aa470e5cbfe35715c34638ec8a5936dc8bbb",
+      "assets/art/environments/delta_queen/background.png": "c928cb461b44b10ab8548250fb5c870ddad4a727de8d724d213ee523a676619f",
+      "assets/art/environments/delta_queen/counters/delta_right_table.png": "b44cf1297406c399ab8fd599cad625de0990d5ceceef9139c3583d7130146b2e"
+    },
+    "seal_scheme": "sha256(sorted relative_path + space + sha256, LF joined, no trailing LF)",
+    "animations": [
+      {
+        "id": "background_river_reflection_0",
+        "type": "frames",
+        "texture": "anim/background_river_reflection_0.png",
+        "rect": [
+          0,
+          348,
+          900,
+          20
+        ],
+        "frames": 4,
+        "fps": 1.336901521971921,
+        "loop": "pingpong",
+        "phase": 1.121997376282069,
+        "opacity": 0.13,
+        "blend": "add",
+        "still": "first"
+      },
+      {
+        "id": "background_river_reflection_1",
+        "type": "frames",
+        "texture": "anim/background_river_reflection_1.png",
+        "rect": [
+          0,
+          357,
+          900,
+          20
+        ],
+        "frames": 4,
+        "fps": 1.336901521971921,
+        "loop": "pingpong",
+        "phase": 1.8362830905677834,
+        "opacity": 0.13,
+        "blend": "add",
+        "still": "first"
+      },
+      {
+        "id": "background_river_reflection_2",
+        "type": "frames",
+        "texture": "anim/background_river_reflection_2.png",
+        "rect": [
+          0,
+          366,
+          900,
+          20
+        ],
+        "frames": 4,
+        "fps": 1.336901521971921,
+        "loop": "pingpong",
+        "phase": 2.550568804853498,
+        "opacity": 0.13,
+        "blend": "add",
+        "still": "first"
+      },
+      {
+        "id": "background_river_reflection_3",
+        "type": "frames",
+        "texture": "anim/background_river_reflection_3.png",
+        "rect": [
+          0,
+          375,
+          900,
+          20
+        ],
+        "frames": 4,
+        "fps": 1.336901521971921,
+        "loop": "pingpong",
+        "phase": 3.264854519139212,
+        "opacity": 0.13,
+        "blend": "add",
+        "still": "first"
+      },
+      {
+        "id": "background_river_reflection_4",
+        "type": "frames",
+        "texture": "anim/background_river_reflection_4.png",
+        "rect": [
+          0,
+          384,
+          900,
+          20
+        ],
+        "frames": 4,
+        "fps": 1.336901521971921,
+        "loop": "pingpong",
+        "phase": 3.979140233424926,
+        "opacity": 0.13,
+        "blend": "add",
+        "still": "first"
+      },
+      {
+        "id": "background_river_reflection_5",
+        "type": "frames",
+        "texture": "anim/background_river_reflection_5.png",
+        "rect": [
+          0,
+          393,
+          900,
+          20
+        ],
+        "frames": 4,
+        "fps": 1.336901521971921,
+        "loop": "pingpong",
+        "phase": 4.693425947710641,
+        "opacity": 0.13,
+        "blend": "add",
+        "still": "first"
+      },
+      {
+        "id": "background_river_reflection_6",
+        "type": "frames",
+        "texture": "anim/background_river_reflection_6.png",
+        "rect": [
+          0,
+          402,
+          900,
+          20
+        ],
+        "frames": 4,
+        "fps": 1.336901521971921,
+        "loop": "pingpong",
+        "phase": 5.4077116619963554,
+        "opacity": 0.13,
+        "blend": "add",
+        "still": "first"
+      },
+      {
+        "id": "scene_life_river_reflection_0",
+        "type": "frames",
+        "texture": "anim/scene_life_river_reflection_0.png",
+        "rect": [
+          0,
+          349,
+          900,
+          21
+        ],
+        "frames": 4,
+        "fps": 1.6233804195373325,
+        "loop": "pingpong",
+        "phase": 0.9239978392911157,
+        "opacity": 0.1,
+        "blend": "add",
+        "still": "first"
+      },
+      {
+        "id": "scene_life_river_reflection_1",
+        "type": "frames",
+        "texture": "anim/scene_life_river_reflection_1.png",
+        "rect": [
+          0,
+          359,
+          900,
+          21
+        ],
+        "frames": 4,
+        "fps": 1.6233804195373325,
+        "loop": "pingpong",
+        "phase": 1.5122331334087626,
+        "opacity": 0.1,
+        "blend": "add",
+        "still": "first"
+      },
+      {
+        "id": "scene_life_river_reflection_2",
+        "type": "frames",
+        "texture": "anim/scene_life_river_reflection_2.png",
+        "rect": [
+          0,
+          369,
+          900,
+          21
+        ],
+        "frames": 4,
+        "fps": 1.6233804195373325,
+        "loop": "pingpong",
+        "phase": 2.1004684275264096,
+        "opacity": 0.1,
+        "blend": "add",
+        "still": "first"
+      },
+      {
+        "id": "scene_life_river_reflection_3",
+        "type": "frames",
+        "texture": "anim/scene_life_river_reflection_3.png",
+        "rect": [
+          0,
+          379,
+          900,
+          21
+        ],
+        "frames": 4,
+        "fps": 1.6233804195373325,
+        "loop": "pingpong",
+        "phase": 2.688703721644057,
+        "opacity": 0.1,
+        "blend": "add",
+        "still": "first"
+      },
+      {
+        "id": "scene_life_river_reflection_4",
+        "type": "frames",
+        "texture": "anim/scene_life_river_reflection_4.png",
+        "rect": [
+          0,
+          389,
+          900,
+          21
+        ],
+        "frames": 4,
+        "fps": 1.6233804195373325,
+        "loop": "pingpong",
+        "phase": 3.276939015761704,
+        "opacity": 0.1,
+        "blend": "add",
+        "still": "first"
+      },
+      {
+        "id": "scene_life_river_reflection_5",
+        "type": "frames",
+        "texture": "anim/scene_life_river_reflection_5.png",
+        "rect": [
+          0,
+          399,
+          900,
+          21
+        ],
+        "frames": 4,
+        "fps": 1.6233804195373325,
+        "loop": "pingpong",
+        "phase": 3.865174309879351,
+        "opacity": 0.1,
+        "blend": "add",
+        "still": "first"
+      },
+      {
+        "id": "scene_life_river_reflection_6",
+        "type": "frames",
+        "texture": "anim/scene_life_river_reflection_6.png",
+        "rect": [
+          0,
+          409,
+          900,
+          21
+        ],
+        "frames": 4,
+        "fps": 1.6233804195373325,
+        "loop": "pingpong",
+        "phase": 4.453409603996998,
+        "opacity": 0.1,
+        "blend": "add",
+        "still": "first"
+      },
+      {
+        "id": "delta_sign_pulse",
+        "type": "pulse",
+        "texture": "anim/delta_sign_pulse.png",
+        "rect": [
+          254,
+          46,
+          372,
+          52
+        ],
+        "min_opacity": 0.14,
+        "max_opacity": 0.28,
+        "period": 0.8975979010256552,
+        "phase": 0.7257142857142858,
+        "blend": "add",
+        "still": "first"
+      },
+      {
+        "id": "dock_light_and_stem",
+        "type": "mover",
+        "texture": "anim/dock_light_and_stem.png",
+        "size": [
+          52,
+          50
+        ],
+        "from": [
+          -60,
+          108
+        ],
+        "to": [
+          900,
+          108
+        ],
+        "duration": 34.285714285714285,
+        "opacity": 0.32,
+        "blend": "add",
+        "still": "hide"
+      },
+      {
+        "id": "window_sparkle_0",
+        "type": "pulse",
+        "texture": "anim/window_sparkle_0.png",
+        "rect": [
+          124,
+          92,
+          8,
+          8
+        ],
+        "min_opacity": 0.16,
+        "max_opacity": 0.32,
+        "period": 0.7479982508547126,
+        "phase": 0,
+        "blend": "add",
+        "still": "first"
+      },
+      {
+        "id": "window_sparkle_1",
+        "type": "pulse",
+        "texture": "anim/window_sparkle_1.png",
+        "rect": [
+          444,
+          92,
+          8,
+          8
+        ],
+        "min_opacity": 0.16,
+        "max_opacity": 0.32,
+        "period": 0.7479982508547126,
+        "phase": 0.4047619047619047,
+        "blend": "add",
+        "still": "first"
+      },
+      {
+        "id": "window_sparkle_2",
+        "type": "pulse",
+        "texture": "anim/window_sparkle_2.png",
+        "rect": [
+          740,
+          92,
+          8,
+          8
+        ],
+        "min_opacity": 0.16,
+        "max_opacity": 0.32,
+        "period": 0.7479982508547126,
+        "phase": 0.8095238095238094,
+        "blend": "add",
+        "still": "first"
+      },
+      {
+        "id": "floor_glint_0",
+        "type": "mover",
+        "texture": "anim/floor_glint_0.png",
+        "size": [
+          72,
+          2
+        ],
+        "from": [
+          -90,
+          274
+        ],
+        "to": [
+          950,
+          274
+        ],
+        "duration": 57.77777777777778,
+        "phase": 0,
+        "opacity": 0.08,
+        "blend": "add",
+        "still": "hide"
+      },
+      {
+        "id": "floor_glint_1",
+        "type": "mover",
+        "texture": "anim/floor_glint_1.png",
+        "size": [
+          68,
+          2
+        ],
+        "from": [
+          -90,
+          288
+        ],
+        "to": [
+          950,
+          288
+        ],
+        "duration": 50.73170731707317,
+        "phase": 6.682926829268292,
+        "opacity": 0.08,
+        "blend": "add",
+        "still": "hide"
+      },
+      {
+        "id": "floor_glint_2",
+        "type": "mover",
+        "texture": "anim/floor_glint_2.png",
+        "size": [
+          64,
+          2
+        ],
+        "from": [
+          -90,
+          302
+        ],
+        "to": [
+          950,
+          302
+        ],
+        "duration": 45.21739130434783,
+        "phase": 11.91304347826087,
+        "opacity": 0.08,
+        "blend": "add",
+        "still": "hide"
+      },
+      {
+        "id": "floor_glint_3",
+        "type": "mover",
+        "texture": "anim/floor_glint_3.png",
+        "size": [
+          60,
+          2
+        ],
+        "from": [
+          -90,
+          316
+        ],
+        "to": [
+          950,
+          316
+        ],
+        "duration": 40.78431372549019,
+        "phase": 16.11764705882353,
+        "opacity": 0.08,
+        "blend": "add",
+        "still": "hide"
+      },
+      {
+        "id": "floor_glint_4",
+        "type": "mover",
+        "texture": "anim/floor_glint_4.png",
+        "size": [
+          56,
+          2
+        ],
+        "from": [
+          -90,
+          274
+        ],
+        "to": [
+          950,
+          274
+        ],
+        "duration": 37.142857142857146,
+        "phase": 19.571428571428573,
+        "opacity": 0.08,
+        "blend": "add",
+        "still": "hide"
+      },
+      {
+        "id": "floor_glint_5",
+        "type": "mover",
+        "texture": "anim/floor_glint_5.png",
+        "size": [
+          52,
+          2
+        ],
+        "from": [
+          -90,
+          288
+        ],
+        "to": [
+          950,
+          288
+        ],
+        "duration": 34.09836065573771,
+        "phase": 22.459016393442624,
+        "opacity": 0.08,
+        "blend": "add",
+        "still": "hide"
+      },
+      {
+        "id": "floor_glint_6",
+        "type": "mover",
+        "texture": "anim/floor_glint_6.png",
+        "size": [
+          48,
+          2
+        ],
+        "from": [
+          -90,
+          302
+        ],
+        "to": [
+          950,
+          302
+        ],
+        "duration": 31.515151515151516,
+        "phase": 24.90909090909091,
+        "opacity": 0.08,
+        "blend": "add",
+        "still": "hide"
+      }
+    ],
+    "counters": {
+      "delta_right_table": {
+        "texture": "counters/delta_right_table.png"
+      }
+    }
+  },
+  "references": {
+    "assets/art/environments/delta_queen/background.png": {
+      "path": "assets/art/environments/delta_queen/background.png",
+      "sha256": "c928cb461b44b10ab8548250fb5c870ddad4a727de8d724d213ee523a676619f",
+      "bytes": 734370,
+      "dimensions": [
+        1800,
+        860
+      ]
+    },
+    "assets/art/environments/delta_queen/counters/delta_right_table.png": {
+      "path": "assets/art/environments/delta_queen/counters/delta_right_table.png",
+      "sha256": "b44cf1297406c399ab8fd599cad625de0990d5ceceef9139c3583d7130146b2e",
+      "bytes": 51756,
+      "dimensions": [
+        540,
+        184
+      ]
+    },
+    "assets/art/travel/exteriors/delta_queen.png": {
+      "path": "assets/art/travel/exteriors/delta_queen.png",
+      "sha256": "4414fe5c94f850fb233c3f0e14cabed29291aac08b881823c12db4cdf4241767",
+      "bytes": 1586008,
+      "dimensions": [
+        1774,
+        887
+      ]
+    },
+    "data/art/environments/delta_queen.json": {
+      "path": "data/art/environments/delta_queen.json",
+      "sha256": "f8e80a75bbbf552bd339421d19d3b1e2df0359a21ef6aa7d3e232257edd89b70",
+      "bytes": 10844
+    },
+    "data/environments/placement_surfaces.json": {
+      "path": "data/environments/placement_surfaces.json",
+      "sha256": "9caa123fb96816777328ad88f022fe05defb74ef5b4f645b7a15bcac67c25cf1",
+      "bytes": 854475
+    },
+    "docs/art/briefs/delta_queen.md": {
+      "path": "docs/art/briefs/delta_queen.md",
+      "sha256": "f67f54cf7b2719f90ccde269b7f72027c061de8e367f520704ca633518149c31",
+      "bytes": 8768
+    },
+    "docs/art/environment_spatial_rework_direction.md": {
+      "path": "docs/art/environment_spatial_rework_direction.md",
+      "sha256": "9a438875d8c5b4d923e1f5938caa9d900e5433aed0e27f3836907284245e579b",
+      "bytes": 12314
+    },
+    "scripts/ui/pixel_scene_canvas.gd": {
+      "path": "scripts/ui/pixel_scene_canvas.gd",
+      "sha256": "c2ce2abee8827372d66fd6c9647a74e06f5db8fed520bbd812b8c7eb29f4af38",
+      "bytes": 566959
+    },
+    "scripts/ui/environment_art_pack.gd": {
+      "path": "scripts/ui/environment_art_pack.gd",
+      "sha256": "067cf5f9673bd85705f4971e9c4db70aaafcfe1cec912b926ed9edc685fb5d8f",
+      "bytes": 28671
+    },
+    "scripts/ui/environment_art_renderer.gd": {
+      "path": "scripts/ui/environment_art_renderer.gd",
+      "sha256": "900b44af05602f6259eed0a2cb33a45d1899cb30bd71aaaed5a744bcc9ccad96",
+      "bytes": 5158
+    }
+  },
+  "retained_evidence": {
+    "E:/CodexQA/BTH/runs/BTH-ENVART-DELTATRIAL-20261115-r3-six-context-trace-01/evidence/delta_preart_metadata.json": {
+      "sha256": "bb370b9aa824d278b51e5da1579d9dd64fd965976ed6a4f59245e89892dee645",
+      "bytes": 8599213
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-DELTATRIAL-20261115-r3-six-context-trace-01/evidence/job.json": {
+      "sha256": "beebe3009746eb22804d2124f5fa007611066c5489df3b74e84e3c07cb2f18c8",
+      "bytes": 8472
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-DELTATRIAL-20261115-r3-six-context-trace-01/evidence/__none_actual_play.png": {
+      "sha256": "466fbdd032e7ffac4d2eb3f9eaf3223321ba53ef8b220beb9f4b182cb9af8d27",
+      "bytes": 733407
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-DELTATRIAL-20261115-r3-six-context-trace-01/evidence/delta_queen_captains_invitational_actual_play.png": {
+      "sha256": "f6d9ec4d12835bdd57965669f12580414c1b6b39eb5ae657d1a1a13372bb7b92",
+      "bytes": 717042
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-DELTATRIAL-20261115-r3-six-context-trace-01/evidence/delta_queen_engine_trouble_actual_play.png": {
+      "sha256": "b03616e09ad5c6580c1c83d089f2e079d89a7dadeb78b156d0e50ca7ea80e309",
+      "bytes": 717473
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-DELTATRIAL-20261115-r3-six-context-trace-01/evidence/delta_queen_fog_delay_actual_play.png": {
+      "sha256": "4635b752b2e1ade0007fbe1f2cae413dfb7c3629ace79e06a4bbd12c5db591ce",
+      "bytes": 720394
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-DELTATRIAL-20261115-r3-six-context-trace-01/evidence/delta_queen_wedding_charter_actual_play.png": {
+      "sha256": "0e113c3090483300d7d1f7b2b914c29473d86505aab945078ebd677fbb820a63",
+      "bytes": 720955
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-DELTATRIAL-20261115-r3-six-context-trace-01/evidence/delta_queen_whale_aboard_actual_play.png": {
+      "sha256": "a78d069702ea26ae7430f25f7a15e3f7caaf412f2313e4eedf2a55b619f8476a",
+      "bytes": 721708
+    }
+  },
+  "observed_object_counts": {
+    "__none": 15,
+    "delta_queen_captains_invitational": 20,
+    "delta_queen_engine_trouble": 21,
+    "delta_queen_fog_delay": 20,
+    "delta_queen_wedding_charter": 19,
+    "delta_queen_whale_aboard": 21
+  },
+  "typed_mask_evidence": {
+    "root": "E:/CodexQA/BTH/runs/BTH-ENVART-DELTATRIAL-20261115-r3-six-context-trace-01/evidence",
+    "all_file_count": 232,
+    "all_filename_sha256_set_seal": "1ec2d8396838f03d0b056ba385a20fbe682d5d49e9df9bb72fb5def9b4c94f74",
+    "relevant_file_count": 58,
+    "relevant_files": {
+      "__none_host_6_body.png": {
+        "object_id": "staff:delta_deck_boss",
+        "context": "__none",
+        "kind": "body_png",
+        "sha256": "f1fc074f8d03ba0f8a0ed29d995257e0277ae64b9412e9ef9bdfade1dc58aa17"
+      },
+      "__none_host_6_adorn.png": {
+        "object_id": "staff:delta_deck_boss",
+        "context": "__none",
+        "kind": "adorn_png",
+        "sha256": "2158afd9eaf317c4c1ceaf38fc432ae2b78774792b34f2d53fb7dfd641a0cafb"
+      },
+      "__none_host_8_body.png": {
+        "object_id": "game:blackjack",
+        "context": "__none",
+        "kind": "body_png",
+        "sha256": "d112172e5f1638c686d753588f06e87e9ac507b0d68e56e0fad8504a06c7e5c6"
+      },
+      "__none_host_8_adorn.png": {
+        "object_id": "game:blackjack",
+        "context": "__none",
+        "kind": "adorn_png",
+        "sha256": "52a2b32d04dbca702c1d3b66a04fbd3991ff8400a264a0afffcae4e4accaeff2"
+      },
+      "__none_host_9_body.png": {
+        "object_id": "game:roulette",
+        "context": "__none",
+        "kind": "body_png",
+        "sha256": "aff807629e10f4900823159f794e376614572b79fd05d97f3da7482dd4c9d587"
+      },
+      "__none_host_9_adorn.png": {
+        "object_id": "game:roulette",
+        "context": "__none",
+        "kind": "adorn_png",
+        "sha256": "5608e2aebc493169f1e82f8c47cdf259853643922b670117d1c8a8d4b736b6eb"
+      },
+      "__none_host_11_body.png": {
+        "object_id": "lender:the_crew",
+        "context": "__none",
+        "kind": "body_png",
+        "sha256": "c08400c660fb279b2780976d6b12377928dfb95192d4db10d1727aafa38a6759"
+      },
+      "__none_host_11_adorn.png": {
+        "object_id": "lender:the_crew",
+        "context": "__none",
+        "kind": "adorn_png",
+        "sha256": "4aabd7c5bf2c852f59dc71cd65fa8f4c9c7650301b8d75dc90be356f4567f6a0"
+      },
+      "__none_host_12_body.png": {
+        "object_id": "event:side_door",
+        "context": "__none",
+        "kind": "body_png",
+        "sha256": "16f932b07b5a63ed333304c14cab6f767ebe1ecb4989a52882356ce4678c4dfd"
+      },
+      "__none_host_12_adorn.png": {
+        "object_id": "event:side_door",
+        "context": "__none",
+        "kind": "adorn_png",
+        "sha256": "d492bbc901be0d3a6cddb8f6521ea2171eb678c263eee81ad805dccd992a1ac6"
+      },
+      "delta_queen_captains_invitational_host_3_body.png": {
+        "object_id": "staff:delta_deck_boss",
+        "context": "delta_queen_captains_invitational",
+        "kind": "body_png",
+        "sha256": "fd2b2052428f5cac176d31ff5b33004074a33210e959dcba88031ccd974d7e74"
+      },
+      "delta_queen_captains_invitational_host_3_adorn.png": {
+        "object_id": "staff:delta_deck_boss",
+        "context": "delta_queen_captains_invitational",
+        "kind": "adorn_png",
+        "sha256": "fe473a1d6eaab8671fe830e5abffedb5bfcd29702f77e8ea15b21e88ad8eebcd"
+      },
+      "delta_queen_captains_invitational_host_7_body.png": {
+        "object_id": "game:blackjack",
+        "context": "delta_queen_captains_invitational",
+        "kind": "body_png",
+        "sha256": "1088ee604efd8eb99d3846ad40a0d72a9b7a952b1edd108c2b0480f4e9160f0c"
+      },
+      "delta_queen_captains_invitational_host_7_adorn.png": {
+        "object_id": "game:blackjack",
+        "context": "delta_queen_captains_invitational",
+        "kind": "adorn_png",
+        "sha256": "52a2b32d04dbca702c1d3b66a04fbd3991ff8400a264a0afffcae4e4accaeff2"
+      },
+      "delta_queen_captains_invitational_host_8_body.png": {
+        "object_id": "game:roulette",
+        "context": "delta_queen_captains_invitational",
+        "kind": "body_png",
+        "sha256": "51e059820adf91c788bd172cdb32d295d126164c94bcc2c0989061f6880025ee"
+      },
+      "delta_queen_captains_invitational_host_8_adorn.png": {
+        "object_id": "game:roulette",
+        "context": "delta_queen_captains_invitational",
+        "kind": "adorn_png",
+        "sha256": "8c55049008d7f8c4db64e9913129a969bbe1e85ebe282836bf9672e5b3d97191"
+      },
+      "delta_queen_captains_invitational_host_10_body.png": {
+        "object_id": "lender:the_crew",
+        "context": "delta_queen_captains_invitational",
+        "kind": "body_png",
+        "sha256": "00c971976769a2937fe9d55f83683e476d62a182480146c94bb5dfac6ba68397"
+      },
+      "delta_queen_captains_invitational_host_10_adorn.png": {
+        "object_id": "lender:the_crew",
+        "context": "delta_queen_captains_invitational",
+        "kind": "adorn_png",
+        "sha256": "495168aa4fb511f0f93ac19694146fee1d564c8e0e96feac0f9b3c81aa02fdd5"
+      },
+      "delta_queen_engine_trouble_host_2_body.png": {
+        "object_id": "staff:delta_deck_boss",
+        "context": "delta_queen_engine_trouble",
+        "kind": "body_png",
+        "sha256": "a30c2f382cdd5024cc989dce6cae65dc1b174fcdcf746e1a5d09dc24cce74215"
+      },
+      "delta_queen_engine_trouble_host_2_adorn.png": {
+        "object_id": "staff:delta_deck_boss",
+        "context": "delta_queen_engine_trouble",
+        "kind": "adorn_png",
+        "sha256": "2158afd9eaf317c4c1ceaf38fc432ae2b78774792b34f2d53fb7dfd641a0cafb"
+      },
+      "delta_queen_engine_trouble_host_4_body.png": {
+        "object_id": "event:chain06_dave_same_bus",
+        "context": "delta_queen_engine_trouble",
+        "kind": "body_png",
+        "sha256": "cb0de0429ff495c15d6f05ba3c6f001d1c70e4d0e5ea6b392810162926ad5925"
+      },
+      "delta_queen_engine_trouble_host_4_adorn.png": {
+        "object_id": "event:chain06_dave_same_bus",
+        "context": "delta_queen_engine_trouble",
+        "kind": "adorn_png",
+        "sha256": "397d05d175be39fe2fb0fb88a2b02dd3ca1aab133b194a019204228fd10615b3"
+      },
+      "delta_queen_engine_trouble_host_7_body.png": {
+        "object_id": "game:blackjack",
+        "context": "delta_queen_engine_trouble",
+        "kind": "body_png",
+        "sha256": "daeb286ba005651156eb2903f4706db087da57001ace1742c357b346fa236e15"
+      },
+      "delta_queen_engine_trouble_host_7_adorn.png": {
+        "object_id": "game:blackjack",
+        "context": "delta_queen_engine_trouble",
+        "kind": "adorn_png",
+        "sha256": "52a2b32d04dbca702c1d3b66a04fbd3991ff8400a264a0afffcae4e4accaeff2"
+      },
+      "delta_queen_engine_trouble_host_8_body.png": {
+        "object_id": "game:roulette",
+        "context": "delta_queen_engine_trouble",
+        "kind": "body_png",
+        "sha256": "cc774b6b8f21a7d9b9387075c41a7cc972767261d3e4920d1eeb9838f9cb9018"
+      },
+      "delta_queen_engine_trouble_host_8_adorn.png": {
+        "object_id": "game:roulette",
+        "context": "delta_queen_engine_trouble",
+        "kind": "adorn_png",
+        "sha256": "26f45eff2fea475df59dd4ab9c542dd9156d5e39f62fd6cdf6c231204f933965"
+      },
+      "delta_queen_engine_trouble_host_10_body.png": {
+        "object_id": "lender:the_crew",
+        "context": "delta_queen_engine_trouble",
+        "kind": "body_png",
+        "sha256": "6824dc12ad426ad593ec9d5fd2b10975894c39c402f473d006b11f4b2b0b5872"
+      },
+      "delta_queen_engine_trouble_host_10_adorn.png": {
+        "object_id": "lender:the_crew",
+        "context": "delta_queen_engine_trouble",
+        "kind": "adorn_png",
+        "sha256": "63e2d290d1f25fb224fd0f8ec65179aa41abf26a709d4176bd972489619679fb"
+      },
+      "delta_queen_fog_delay_host_3_body.png": {
+        "object_id": "staff:delta_deck_boss",
+        "context": "delta_queen_fog_delay",
+        "kind": "body_png",
+        "sha256": "8197fa1f90103b509c3ea2b09d3e310a732c0304183e34569d60ce70fd8f1db1"
+      },
+      "delta_queen_fog_delay_host_3_adorn.png": {
+        "object_id": "staff:delta_deck_boss",
+        "context": "delta_queen_fog_delay",
+        "kind": "adorn_png",
+        "sha256": "2158afd9eaf317c4c1ceaf38fc432ae2b78774792b34f2d53fb7dfd641a0cafb"
+      },
+      "delta_queen_fog_delay_host_7_body.png": {
+        "object_id": "game:blackjack",
+        "context": "delta_queen_fog_delay",
+        "kind": "body_png",
+        "sha256": "3435d16707a1b66b7f5620965c1877cf99940bbd200fc4e514ac82eaccfbaa57"
+      },
+      "delta_queen_fog_delay_host_7_adorn.png": {
+        "object_id": "game:blackjack",
+        "context": "delta_queen_fog_delay",
+        "kind": "adorn_png",
+        "sha256": "c78a2d5556282beddbb18f9f24eb312374a366a8c6ee42f3854835394a57ce8a"
+      },
+      "delta_queen_fog_delay_host_8_body.png": {
+        "object_id": "game:roulette",
+        "context": "delta_queen_fog_delay",
+        "kind": "body_png",
+        "sha256": "a5ae96afe2dd91380dca084a39e14a29099266a08352b7f7f65985b3b92ca381"
+      },
+      "delta_queen_fog_delay_host_8_adorn.png": {
+        "object_id": "game:roulette",
+        "context": "delta_queen_fog_delay",
+        "kind": "adorn_png",
+        "sha256": "c2c619e15f821b3dee766ac998dea9238d52621afbad91d726d5d440673bdb7c"
+      },
+      "delta_queen_fog_delay_host_10_body.png": {
+        "object_id": "lender:the_crew",
+        "context": "delta_queen_fog_delay",
+        "kind": "body_png",
+        "sha256": "d4f669e86dc90c3605e49afcf0fe83c01a4cdb43c3d29930830b9ea7c07a0f8c"
+      },
+      "delta_queen_fog_delay_host_10_adorn.png": {
+        "object_id": "lender:the_crew",
+        "context": "delta_queen_fog_delay",
+        "kind": "adorn_png",
+        "sha256": "5cda22ccbcf2e33263a572679d456a3698c4212d5c2890a61c28c77d218238df"
+      },
+      "delta_queen_fog_delay_host_18_body.png": {
+        "object_id": "scenario::delta_queen_fog_delay_deck_officer",
+        "context": "delta_queen_fog_delay",
+        "kind": "body_png",
+        "sha256": "2f89c0b78c20dc4b48a8d12f29672ce4097286854988c2fa235474039dc85ba3"
+      },
+      "delta_queen_fog_delay_host_18_adorn.png": {
+        "object_id": "scenario::delta_queen_fog_delay_deck_officer",
+        "context": "delta_queen_fog_delay",
+        "kind": "adorn_png",
+        "sha256": "16cee74e70e9be27f07af4550fd3249d42a99dc91559731db36706d6963a33bc"
+      },
+      "delta_queen_wedding_charter_host_2_body.png": {
+        "object_id": "staff:delta_deck_boss",
+        "context": "delta_queen_wedding_charter",
+        "kind": "body_png",
+        "sha256": "068d5a758ba5660c54179101f6f159d2a17bba1d283d11aa227a13fec33a8985"
+      },
+      "delta_queen_wedding_charter_host_2_adorn.png": {
+        "object_id": "staff:delta_deck_boss",
+        "context": "delta_queen_wedding_charter",
+        "kind": "adorn_png",
+        "sha256": "2158afd9eaf317c4c1ceaf38fc432ae2b78774792b34f2d53fb7dfd641a0cafb"
+      },
+      "delta_queen_wedding_charter_host_5_body.png": {
+        "object_id": "game:blackjack",
+        "context": "delta_queen_wedding_charter",
+        "kind": "body_png",
+        "sha256": "fd3318dde1e587f7f8d9952855bc5074dfb77d34148bd238fa262c83df9a92d1"
+      },
+      "delta_queen_wedding_charter_host_5_adorn.png": {
+        "object_id": "game:blackjack",
+        "context": "delta_queen_wedding_charter",
+        "kind": "adorn_png",
+        "sha256": "52a2b32d04dbca702c1d3b66a04fbd3991ff8400a264a0afffcae4e4accaeff2"
+      },
+      "delta_queen_wedding_charter_host_6_body.png": {
+        "object_id": "game:roulette",
+        "context": "delta_queen_wedding_charter",
+        "kind": "body_png",
+        "sha256": "641e6a6f936f8dc7cd2185e5c83121c9bcebfbef8702a57a9de3d9e9dd255559"
+      },
+      "delta_queen_wedding_charter_host_6_adorn.png": {
+        "object_id": "game:roulette",
+        "context": "delta_queen_wedding_charter",
+        "kind": "adorn_png",
+        "sha256": "26f45eff2fea475df59dd4ab9c542dd9156d5e39f62fd6cdf6c231204f933965"
+      },
+      "delta_queen_wedding_charter_host_8_body.png": {
+        "object_id": "lender:the_crew",
+        "context": "delta_queen_wedding_charter",
+        "kind": "body_png",
+        "sha256": "2601fe26fbc053c968184e5369daa43775729eedc45f8f393f816f095090e36b"
+      },
+      "delta_queen_wedding_charter_host_8_adorn.png": {
+        "object_id": "lender:the_crew",
+        "context": "delta_queen_wedding_charter",
+        "kind": "adorn_png",
+        "sha256": "495168aa4fb511f0f93ac19694146fee1d564c8e0e96feac0f9b3c81aa02fdd5"
+      },
+      "delta_queen_whale_aboard_host_3_body.png": {
+        "object_id": "staff:delta_deck_boss",
+        "context": "delta_queen_whale_aboard",
+        "kind": "body_png",
+        "sha256": "068d5a758ba5660c54179101f6f159d2a17bba1d283d11aa227a13fec33a8985"
+      },
+      "delta_queen_whale_aboard_host_3_adorn.png": {
+        "object_id": "staff:delta_deck_boss",
+        "context": "delta_queen_whale_aboard",
+        "kind": "adorn_png",
+        "sha256": "2158afd9eaf317c4c1ceaf38fc432ae2b78774792b34f2d53fb7dfd641a0cafb"
+      },
+      "delta_queen_whale_aboard_host_5_body.png": {
+        "object_id": "event:chain06_dave_same_bus",
+        "context": "delta_queen_whale_aboard",
+        "kind": "body_png",
+        "sha256": "cb0de0429ff495c15d6f05ba3c6f001d1c70e4d0e5ea6b392810162926ad5925"
+      },
+      "delta_queen_whale_aboard_host_5_adorn.png": {
+        "object_id": "event:chain06_dave_same_bus",
+        "context": "delta_queen_whale_aboard",
+        "kind": "adorn_png",
+        "sha256": "397d05d175be39fe2fb0fb88a2b02dd3ca1aab133b194a019204228fd10615b3"
+      },
+      "delta_queen_whale_aboard_host_7_body.png": {
+        "object_id": "event:side_door",
+        "context": "delta_queen_whale_aboard",
+        "kind": "body_png",
+        "sha256": "0d02da38831aa04f9390d9e2f51d18f4e498ce92a338f9684fe2f9c6383f2b28"
+      },
+      "delta_queen_whale_aboard_host_7_adorn.png": {
+        "object_id": "event:side_door",
+        "context": "delta_queen_whale_aboard",
+        "kind": "adorn_png",
+        "sha256": "93e794ae567a7dcb858446be286a00cb31ba0c9081762f3a3941f93077b558cf"
+      },
+      "delta_queen_whale_aboard_host_8_body.png": {
+        "object_id": "game:blackjack",
+        "context": "delta_queen_whale_aboard",
+        "kind": "body_png",
+        "sha256": "daeb286ba005651156eb2903f4706db087da57001ace1742c357b346fa236e15"
+      },
+      "delta_queen_whale_aboard_host_8_adorn.png": {
+        "object_id": "game:blackjack",
+        "context": "delta_queen_whale_aboard",
+        "kind": "adorn_png",
+        "sha256": "4eca559c10489a225bef301e1c08d775d9b51fc69042bd23cd0bc939582592d9"
+      },
+      "delta_queen_whale_aboard_host_9_body.png": {
+        "object_id": "game:roulette",
+        "context": "delta_queen_whale_aboard",
+        "kind": "body_png",
+        "sha256": "590026618e74d349107740479dbb6b8b08a9d72ac59eb540178c3b6857c5bb78"
+      },
+      "delta_queen_whale_aboard_host_9_adorn.png": {
+        "object_id": "game:roulette",
+        "context": "delta_queen_whale_aboard",
+        "kind": "adorn_png",
+        "sha256": "26f45eff2fea475df59dd4ab9c542dd9156d5e39f62fd6cdf6c231204f933965"
+      },
+      "delta_queen_whale_aboard_host_11_body.png": {
+        "object_id": "lender:the_crew",
+        "context": "delta_queen_whale_aboard",
+        "kind": "body_png",
+        "sha256": "de7cc5d02a819fec03eae472089f4d919195d1a1d088757ea48cd0a2ce606426"
+      },
+      "delta_queen_whale_aboard_host_11_adorn.png": {
+        "object_id": "lender:the_crew",
+        "context": "delta_queen_whale_aboard",
+        "kind": "adorn_png",
+        "sha256": "63e2d290d1f25fb224fd0f8ec65179aa41abf26a709d4176bd972489619679fb"
+      }
+    },
+    "seal_scheme": "sha256(sorted basename + space + file sha256, LF joined, no trailing LF)"
+  },
+  "old_source_recipe": {
+    "E:/CodexQA/BTH/workspaces/BTH-ENVART-ARTIST-20261115/sources/delta-queen-source-r1.png": {
+      "sha256": "9f54bb4d2b79ea469087de9f62abbae5ba11384f897fd499d93a9515c634d1a3",
+      "bytes": 1998220
+    },
+    "E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261115/assemble_delta_v1r3.py": {
+      "sha256": "29f8d1506549efc0d6d0187fdae0825c392aa8c989fcdde8e1c228fe26fe10d7",
+      "bytes": 9001
+    },
+    "E:/CodexQA/BTH/runs/BTH-ENVART-DELTA-20261115-source-title-01/evidence/delta_queen_source_title_1800x860.png": {
+      "sha256": "229105f65570187f7c15a66dfbef3120ed73db66a0a77697e9fec8e99027756b",
+      "bytes": 12633
+    }
+  },
+  "artifacts": {
+    "delta-queen-spatial-r1.png": {
+      "sha256": "a4b3b127e2194c5fe24a9636e1f608277ee9b5d9b0caac53a6c02a2a0176c61d",
+      "bytes": 1828099
+    },
+    "delta-queen-spatial-r1.png.b64": {
+      "sha256": "a3ca51f10e452e1ad8ed6fa784fcf789e5cda4ff1bbe3c5df2e9678afc51a116",
+      "bytes": 2437469
+    },
+    "prompt.txt": {
+      "sha256": "7355122b0b57564d5ea4a7591ebeff4e589b1f8acb49ac6d0089c8b4c9a97511",
+      "bytes": 3226
+    }
+  },
+  "coordinate_system": {
+    "board": [
+      900,
+      430
+    ],
+    "production_png": [
+      1800,
+      860
+    ],
+    "pixel_scale": 2,
+    "raw_trial_png": [
+      1815,
+      867
+    ],
+    "rectangles": "x,y,width,height unless named xyxy; raw image contour estimates are approximate and require independent tracing."
+  },
+  "fixed_contracts_board": {
+    "left_counter": {
+      "id": "left_table",
+      "x_range": [
+        64,
+        302
+      ],
+      "top_y": 178,
+      "front_y": 262,
+      "foreground_art_id": null
+    },
+    "right_counter": {
+      "id": "right_table",
+      "x_range": [
+        330,
+        600
+      ],
+      "top_y": 170,
+      "front_y": 262,
+      "foreground_art_id": "delta_right_table",
+      "rect": [
+        330,
+        170,
+        270,
+        92
+      ],
+      "png_size": [
+        540,
+        184
+      ],
+      "opaque_texels": 99360,
+      "all_texels": 99360,
+      "same_final_master_native_crop_xyxy": [
+        660,
+        340,
+        1200,
+        524
+      ],
+      "independent_crop_equality": "Exact RGBA equality verified read-only by delta_contact_trace; preserve exact bytes in left-only assembly."
+    },
+    "floor_band": [
+      16,
+      246,
+      868,
+      168
+    ],
+    "floor_contact_y_range": [
+      246,
+      414
+    ],
+    "left_seat": [
+      184,
+      270
+    ],
+    "right_seat": [
+      466,
+      270
+    ],
+    "wall_ends": 246,
+    "brass_rail": {
+      "x_range": [
+        42,
+        858
+      ],
+      "top_y": 278,
+      "front_y": 328
+    },
+    "fitted_foreground_rail": [
+      0,
+      276,
+      900,
+      54
+    ],
+    "deck_strips": [
+      [
+        100,
+        346,
+        550,
+        6
+      ],
+      [
+        700,
+        346,
+        150,
+        6
+      ]
+    ],
+    "first_floor_glint_y": 274,
+    "window_bays": {
+      "count": 9,
+      "x_origin": 42,
+      "x_step": 92,
+      "rect_size": [
+        58,
+        112
+      ],
+      "y": 54
+    },
+    "top_rail_y_range": [
+      28,
+      36
+    ],
+    "upper_window_rail": [
+      42,
+      46,
+      816,
+      8
+    ],
+    "lower_window_rail": [
+      42,
+      146,
+      816,
+      8
+    ],
+    "wordmark_origin": [
+      266,
+      62
+    ],
+    "stage_count": 0,
+    "notes": "These mapping/authority values remain unchanged. New painted physical silhouette may extend only as separately reviewed source-assembly proposal. Lower deck is dry varnished floor, not water."
+  },
+  "source_painter": {
+    "path": "scripts/ui/pixel_scene_canvas.gd",
+    "generic_card_function": "_draw_game_prop",
+    "generic_card_line": 9698,
+    "roulette_function": "_draw_roulette_room_prop",
+    "roulette_line": 10378,
+    "blackjack_rect": [
+      61,
+      175,
+      92,
+      64
+    ],
+    "blackjack_generic_body_rect": [
+      61,
+      198.04,
+      92,
+      26.88
+    ],
+    "blackjack_generic_highlight_rect": [
+      71,
+      203.16,
+      72,
+      12.8
+    ],
+    "roulette_rect": [
+      227,
+      160.99997,
+      108,
+      72
+    ],
+    "roulette_table_rect": [
+      233.48,
+      195.55997,
+      95.04,
+      21.6
+    ],
+    "roulette_wheel_center": [
+      259.4,
+      188.35997
+    ],
+    "roulette_wheel_radius": 14.4,
+    "notes": "All live cards, wheel, table/game faces, icon/runtime effects and selected outlines remain owned by unchanged runtime. Do not bake them. Roulette actual paint extends to329.5 beyond old staticleft302; preserve that contact/coverage risk explicitly."
+  },
+  "alpha_gte_64_board_xyxy": {
+    "crew_body_union": [
+      139,
+      222.5,
+      248.5,
+      289
+    ],
+    "crew_adornment": [
+      170,
+      290,
+      215,
+      299
+    ],
+    "dave_engine_and_whale_body": [
+      242.5,
+      235.5,
+      310,
+      302
+    ],
+    "dave_adornment": [
+      235,
+      304,
+      314,
+      316
+    ],
+    "ox_body": [
+      166,
+      128.5,
+      216,
+      199
+    ],
+    "ox_draw_layer": -1,
+    "blackjack_body": [
+      61,
+      181,
+      163,
+      238
+    ],
+    "whale_blackjack_adornment": [
+      74.5,
+      187.5,
+      139.5,
+      256
+    ],
+    "roulette_body": [
+      232.5,
+      168,
+      329.5,
+      233
+    ],
+    "side_door_body": [
+      13,
+      247.5,
+      69,
+      305
+    ],
+    "side_door_adornment": [
+      8.5,
+      255.5,
+      55.5,
+      338
+    ],
+    "fog_officer_body": [
+      36,
+      301.5,
+      102,
+      363
+    ],
+    "fog_officer_title_paint": [
+      39,
+      266,
+      97,
+      275
+    ],
+    "notes": "Actual typed normal source-paint bounds, conservative AABBs rather than collision shapes. Crew has no new foreground replay. Proposed support stays in background, never changes actor order."
+  },
+  "relevant_mask_audit": {
+    "typed_records": 29,
+    "file_count": 58,
+    "filename_sha256_set_seal": "f458a5332f8e2252583905aa48a8335ee2a6ea5f14e9aaac351d8e0ea50270f1",
+    "ids": [
+      "staff:delta_deck_boss",
+      "game:blackjack",
+      "game:roulette",
+      "lender:the_crew",
+      "event:side_door",
+      "event:chain06_dave_same_bus",
+      "scenario::delta_queen_fog_delay_deck_officer"
+    ],
+    "audit_scope": "Read all six actual_canvas/source_paint contexts,116 typed records; decoded relevant unique mask variants. Parent source owner personally viewed all six actual scenes; child personally viewed Base/current BG/original source."
+  },
+  "own_source_construction": {
+    "original_raw_dimensions": [
+      1815,
+      867
+    ],
+    "normalized_board": [
+      900,
+      430
+    ],
+    "resampling": "nearest",
+    "left_source_crop_xyxy": [
+      62,
+      176,
+      305,
+      264
+    ],
+    "left_target": [
+      64,
+      178,
+      238,
+      84
+    ],
+    "right_source_crop_xyxy": [
+      326,
+      166,
+      603,
+      264
+    ],
+    "right_target": [
+      330,
+      170,
+      270,
+      92
+    ],
+    "first_dry_deck_donor_crop_xyxy": [
+      0,
+      358,
+      900,
+      376
+    ],
+    "first_dry_deck_target_origin": [
+      0,
+      246
+    ],
+    "later_dry_deck_donor_crop_xyxy": [
+      0,
+      360,
+      900,
+      420
+    ],
+    "later_dry_deck_target_origin": [
+      0,
+      274
+    ],
+    "left_overhang_heals": [
+      {
+        "target_xyxy": [
+          62,
+          176,
+          64,
+          246
+        ],
+        "donor_xyxy": [
+          56,
+          176,
+          58,
+          246
+        ]
+      },
+      {
+        "target_xyxy": [
+          302,
+          176,
+          305,
+          246
+        ],
+        "donor_xyxy": [
+          310,
+          176,
+          313,
+          246
+        ]
+      }
+    ],
+    "right_overhang_heals": [
+      {
+        "target_xyxy": [
+          326,
+          166,
+          330,
+          246
+        ],
+        "donor_xyxy": [
+          320,
+          166,
+          324,
+          246
+        ]
+      },
+      {
+        "target_xyxy": [
+          600,
+          166,
+          603,
+          246
+        ],
+        "donor_xyxy": [
+          616,
+          166,
+          619,
+          246
+        ]
+      }
+    ],
+    "foreground_rail_source_xyxy": [
+      0,
+      275,
+      900,
+      333
+    ],
+    "foreground_rail_target": [
+      0,
+      276,
+      900,
+      54
+    ],
+    "period_claim": "NONE. Narrow R3 source donors heal only old overhang strips and do not prove a full hidden wall reconstruction or global texture repeat. Exposed corners under a new trapezoid need separately reviewed same-material panel donors.",
+    "old_shadow_trace": {
+      "current_old_table_bottom_board_rows": [
+        259,
+        261
+      ],
+      "row262": "Normal deck; left median RGB83.5/41.5/24 vs clear74/40/24.",
+      "row263": "GLOBAL FLOOR SEAM. Left median20/17/17 vs clear22/18/19. Not proven local table shadow; do not erase.",
+      "row264": "Small local difference left39/17/15 vs clear44/23/18, not a proven large shadow mask.",
+      "rows265_plus": "Similar dry-deck material.",
+      "prohibition": "Do not transfer Private Crew shadow mask or erase a broad row263 rectangle."
+    }
+  },
+  "trial_actual_observations_raw_png": {
+    "table_outer_approx_xyxy": [
+      107,
+      360,
+      648,
+      530
+    ],
+    "far_rim_approx_xyxy": [
+      171,
+      362,
+      582,
+      372
+    ],
+    "felt_near_y_range": [
+      438,
+      446
+    ],
+    "near_rim_and_green_vertical_edge_y_range": [
+      446,
+      462
+    ],
+    "redwood_apron_approx_xyxy": [
+      123,
+      464,
+      630,
+      490
+    ],
+    "recessed_base_approx_xyxy": [
+      129,
+      490,
+      626,
+      528
+    ],
+    "notes": "Crisp horizontal top and compact grounded dark base are present. Raw near edge/base do not match proposal exactly; non-table composition was regenerated. Only individually traced table modules may be fitted. Whole raw room/counter/floor never activate."
+  },
+  "bounded_assembly_proposal": {
+    "status": "UNAPPLIED_NOT_APPROVED",
+    "scope": "LEFT TABLE ONLY",
+    "painted_usable_top_board_x_range": [
+      58,
+      330
+    ],
+    "painted_far_top_board_y": 178,
+    "painted_near_top_board_y": 240,
+    "apron_board_y_range": [
+      240,
+      258
+    ],
+    "compact_recessed_support_board_y_range": [
+      258,
+      270
+    ],
+    "maximum_new_repair_board_y": 272,
+    "fixed_mapping_front_y": 262,
+    "fixed_mapping_unchanged": true,
+    "candidate_quiet_left_support_edge_board_xyxy": [
+      108,
+      258,
+      126,
+      270
+    ],
+    "candidate_quiet_right_support_edge_board_xyxy": [
+      314,
+      258,
+      328,
+      270
+    ],
+    "notes": [
+      "Local module fit must preserve all live BJ/Roulette coverage while retaining source data top178/front262. Painted extension beyond oldstaticx302 is proposed for existing Roulette coverage, not a layout edit, and needs independent art/contact review.",
+      "Keep fixed right counter master/replay pixel-exact. No extra replay or new furniture.",
+      "Recover only table-owned old panel/overhang pixels. Any exposed wall corner needs its own same-material donor proof; R3 narrow strips are not a general reconstruction rule.",
+      "Current row263 deck seam is protected. Use original dry-deck pixels; no rectangular crop of generated floor. New contact shadows must be small and shaped.",
+      "Left support x108..126 avoids Fog titlex39..97 and Crewmin139. Right edge314..328 lies beyond Davebodymax310 but near Daveadornmentmax314; verify full masks, selected names and all phases.",
+      "No new repair at274+, preserving first floor glint274 and fitted boatrail276..330. No motion, mask, timing or reanchor change proposed."
+    ]
+  },
+  "animation_inventory": {
+    "entries": 26,
+    "unique_texture_file_count": 26,
+    "normal_entries": 26,
+    "web_low_detail_entries": 26,
+    "types": {
+      "frames": 14,
+      "mover": 8,
+      "pulse": 4
+    },
+    "river_families": {
+      "background": 7,
+      "scene_life": 7,
+      "poses": 4,
+      "loop": "pingpong",
+      "source_approximation": "Four-pose translation approximates source sine; no new changes."
+    },
+    "other_motifs": [
+      "glyph/practical-shaped sign pulse",
+      "combined moving dock light+stem",
+      "three window sparkle pulses",
+      "seven common dry-floor movers"
+    ],
+    "existing_alpha_positive_texels": {
+      "delta_sign_pulse": 11492,
+      "dock_light_and_stem": 2672,
+      "each_window_sparkle": 112
+    },
+    "no_mask_correction_needed_for_left_only_scope": true,
+    "preserve": "All26 texture bytes, frames, rects, durations/fps/periods, phases, opacity, blend, still/reduced-motion handling, low-detail membership and autonomous liveness."
+  },
+  "historical_job_receipt": {
+    "path": "E:/CodexQA/BTH/runs/BTH-ENVART-DELTATRIAL-20261115-r3-six-context-trace-01/evidence/job.json",
+    "sha256": "beebe3009746eb22804d2124f5fa007611066c5489df3b74e84e3c07cb2f18c8",
+    "job_id": 13124,
+    "exit_code": 0,
+    "active_processes": 0,
+    "cpu_percent": 12,
+    "memory_gib": 2,
+    "kill_on_close": true,
+    "scope": "Retained historical receipt only. No current process inspection or launch."
+  },
+  "limitations": [
+    "One non-active source trial only; no source approval, integration, new native QA, TEST/Web or delivery claim.",
+    "Retained six initial constructed contexts are historical and do not prove later lifecycle, open-hours, UI-earned progression or save/revisit.",
+    "Painted footprint/near-top/pedestal fit and exposed wall donors require independent review before assembly. Full regenerated room must never activate."
+  ],
+  "mutation_scope": {
+    "new_source_artifact_folder": "review_artifacts/environment_art_sources/delta-queen-spatial-r1",
+    "new_brief": "docs/art/briefs/delta_queen_spatial_repair_20261116.md",
+    "production_files_written": false,
+    "E_writes": false,
+    "engine_or_browser_launches": false,
+    "QA_workers": false,
+    "profiles_or_saves_touched": false,
+    "ledger_written": false,
+    "git_operations": false,
+    "other_frozen_files_changed": false
+  }
+}

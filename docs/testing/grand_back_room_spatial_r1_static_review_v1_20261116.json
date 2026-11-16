@@ -1,0 +1,119 @@
+{
+  "schema": "bth.grand_back_room_spatial_static_review/v1",
+  "task_id": "BTH-ENV-SPATIAL-GBR-001",
+  "candidate": "grand-back-room-spatial-r1-assembled-v1",
+  "decision": "NEEDS_REVISION",
+  "native_trial_approved": false,
+  "production_activation_approved": false,
+  "test_delivery_approved": false,
+  "independent_reviewer": "/root/audit_spatial_handoff",
+  "review_date": "2026-11-16",
+  "candidate_root": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-GBRTRIAL-20261116/candidate_sources/grand-back-room-spatial-r1-assembled-v1",
+  "package_21_file_sha256": "15d88d5b7438aaebad295dcf6d0748a0a04cf64b3f3f08193be35e1f002b9f04",
+  "background_sha256": "6e2d5531f378339da91ee269ae2c0c70f4f013e608b28c190fd5df48a5dd2fb9",
+  "baseline_21_file_sha256": "065a5f98dfabb2b435bc31af76a0273921a370d1ebb9d9887ce6283c3231fbbb",
+  "baseline_background_sha256": "f9d2ca14641e3ac7dd67c92af9453ce4993f0a7dec22156b4f96d6f046f8fcdf",
+  "raw_source_sha256": "91fbde8eb4ebc2c007646eb506dc01bc5b1c8c40cc4baa4d71d088afd7b9ec8d",
+  "executed_recipe_sha256": "2dc30990563c5881b9b7546e306cbf1479867e20275ffee8d4cc342a94156ac3",
+  "assembly_proof": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRTRIAL-20261116-assemble01/evidence/grand-back-room-spatial-r1-assembly.json",
+  "assembly_proof_sha256": "a1d3e98397eba9a9c33119aa5f9103f58dc948abb6f4f57aa5ce1e45599eb206",
+  "assembly_job": {
+    "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRTRIAL-20261116-assemble01/evidence/job.json",
+    "sha256": "49417b4f3dbf2515eaf778411131219d4190eee44b6ad7a3edeaa82107e40c7c",
+    "pid": 1880,
+    "exit_code": 0,
+    "active_at_release": 0,
+    "assigned_before_execution": true,
+    "timed_out": false,
+    "error": null,
+    "cleanup_errors": [],
+    "cpu_rate": 1200,
+    "job_memory_limit_bytes": 2147483648,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "storage_gates_before_job_and_child_present": true
+  },
+  "independent_custody": {
+    "actual_candidate_exact_21_path_set_hashes_and_recomputed_seal": true,
+    "baseline_logical_files": 21,
+    "baseline_physical_files": 22,
+    "baseline_extra_file": ".gdignore",
+    "unknown_baseline_or_candidate_payload_files": [],
+    "explicit_auxiliary_sentinels": [
+      "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-GBRTRIAL-20261116/source_baseline/.gdignore",
+      "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-GBRTRIAL-20261116/candidate_sources/.gdignore"
+    ],
+    "both_sentinel_sha256": "5fc569e3a3c8e2f0ab6bd6d048bb5f87ca6af7b2bb0d8a7b3e39f08346aecf2c",
+    "sentinel_text": "# Non-active Grand Back Room source/candidates; exclude from Godot discovery.\n",
+    "all_recorded_source_before_after_hashes_equal_current_read_only_inputs": true,
+    "all_eight_historical_fixture_hashes_authenticated": true
+  },
+  "independent_pixel_invariants": {
+    "outside_exact_v1_traced_union_pixels_equal_original": true,
+    "outside_union_decoded_bgra_sha256": "c0a0692299de3ced8a61e8a8ef01bc7d7171a1b13901302adf82bf7eb63ee5ab",
+    "all_native_rows602_through859_equal_original": true,
+    "rows602_onward_decoded_bgra_sha256": "bc122ab0d509ad715a6f23545d11579bf4c2baf3d746f9598a8b8295da4bdc3b",
+    "decoded_hash_method": "System.Drawing Format32bppArgb memory bytes (BGRA, stride7200). SHA256 of preserved outside-union spans in row order; separate hash of complete rows602..859. These are decoded-pixel hashes, not PNG file hashes.",
+    "both_counter_replays_exact_same_final_master_crops": true,
+    "counter_crops_native_xywh": {
+      "grand_table_left": [164, 516, 544, 72],
+      "grand_table_right": [1092, 516, 544, 72]
+    },
+    "no_third_foreground_replay": true,
+    "office_text_desk_notices_and_global_inlays_retained": true,
+    "four_generated_support_native_bounds_x0_y0_x1_y1": [
+      [270, 538, 328, 588],
+      [542, 538, 600, 588],
+      [1198, 538, 1256, 588],
+      [1469, 538, 1526, 588]
+    ],
+    "static_visible_complete_foot_bases": true,
+    "fixed_near_contact_rail_native_y": 516
+  },
+  "motion_source_review": {
+    "sole_typed_json_semantic_delta": "casino_light_2.rect[0] integer450 to integer448",
+    "all_other_manifest_fields_unchanged": true,
+    "native_entries": 16,
+    "simulated_low_detail_entries": 7,
+    "mask_nonzero_alpha_counts_lamp0_to4_then_sign": [32, 32, 32, 48, 64, 1632],
+    "actual_original_material_predicates_independently_rechecked": true,
+    "all_original_texture_rgb_preserved": true,
+    "alpha_only_original_or_zero": true,
+    "sign_material": "ROURKE'S TABLES subtitle glyphs; not BACK ROOM title",
+    "visible_motion_reduce_motion_and_no_pointer_liveness": "NOT_RUN_FOR_CANDIDATE"
+  },
+  "historical_contact_scope": {
+    "metadata": "E:/CodexQA/BTH/runs/BTH-ENVART-GRANDBACKTRIAL-20261115-r1-contexts-01/evidence/__none_metadata.json",
+    "metadata_sha256": "34cf4a43fd7d4389e1a42d91e34248018d93fb9a1b06266da04a8bea5394e792",
+    "actual_play_sha256": "f33106111a565f899abe1dc7ae06fbc5b43b0bb2dbfc7142523488250363dbce",
+    "objects": [
+      {"id":"game:craps","actual_draw_layer":0,"strong_body_board_x0_y0_x1_y1":[649,204,711,247],"strong_adorn_board_x0_y0_x1_y1":[666,185,694,197],"body_alpha_gt0_hits_in_all_four_support_bounding_rectangles":0,"adorn_alpha_gt0_hits_in_all_four_support_bounding_rectangles":0},
+      {"id":"game:blackjack","actual_draw_layer":0,"strong_body_board_x0_y0_x1_y1":[178,200.5,280,248],"strong_adorn_board_x0_y0_x1_y1":[188,186,240,245],"body_alpha_gt0_hits_in_all_four_support_bounding_rectangles":0,"adorn_alpha_gt0_hits_in_all_four_support_bounding_rectangles":0},
+      {"id":"travel:leave","actual_draw_layer":0,"strong_body_board_x0_y0_x1_y1":[13,363,59,409],"strong_adorn_board_x0_y0_x1_y1":[12.5,340,59.5,420.5],"body_alpha_gt0_hits_in_all_four_support_bounding_rectangles":0,"adorn_alpha_gt0_hits_in_all_four_support_bounding_rectangles":0}
+    ],
+    "strong_paint_threshold": "alpha>=64; support intersection independently checked for every alpha>0 pixel inside all four complete support bounding rectangles",
+    "no_rourke_actor_in_fixture": true,
+    "limit": "Historical three-object Base paint only. No fresh candidate composition or later Rourke/boss/showdown/heist/lifecycle/save/revisit acceptance. Fresh Blackjack/Craps support, labels and replay/glint behavior remain required."
+  },
+  "visual_rejection": {
+    "finding": "Detached original outer near-rail cap/post nubs and attached dark shadows remain beyond both new table rails. Observed in the actual full master and exact nearest-neighbor4x corner crops. Raw generated furniture has no corresponding detached nubs.",
+    "required_additional_original_trace_native_xywh": [[708,504,4,20],[1636,504,6,20]],
+    "total_original_remnant_texels": 200,
+    "all200_candidate_texels_equal_original": true,
+    "all200_differ_from_own_original_same_row_x_mod128_floor_donor": true,
+    "adjacent_left_x712_onward_right_x1642_onward_and_same_x_rows500_503_already_equal_floor_donor": true,
+    "warm_subset": {
+      "rows_inclusive": [[506,509],[518,519]],
+      "left_x_inclusive": [708,711],
+      "left_count": 24,
+      "right_x_inclusive": [1636,1641],
+      "right_count": 36,
+      "left_examples_rgba": ["#9E4F30FF","#9B4E2EFF","#B35338FF","#B25136FF"],
+      "right_examples_rgba": ["#89422DFF","#8E442EFF","#AF4C32FF","#AD4D32FF"]
+    },
+    "bounded_correction": "Copy only these200 proven old-nub/shadow texels from the room's original same-y x%128 floor donor. Preserve all generated furniture/support pixels, all other V1 pixels, six masks and JSON. V1 y524+ side-shadow repair already covers the continuation; no blanket table-envelope expansion or generated extension is justified.",
+    "replay_consequence": "Both additional footprints lie beyond existing replay right bounds708/1636 exclusive. Re-cropping from the corrected master should leave both replay PNG pixels and bytes unchanged under the same encoder.",
+    "otherwise_observed": "Horizontal felt planes, shallow aprons and complete dark feet read coherently. No other visible cabinet shadow frame, broad donor patch, floor-plane break or602-inlay alteration was found in this static review."
+  },
+  "scope": "Immutable V1 rejection only. Re-audit actual separately assembled V2 pixels and closed receipt before any native trial. No active art, runtime, save, branch integration, build or TEST acceptance is granted. No E writes or QA jobs were performed by this reviewer."
+}

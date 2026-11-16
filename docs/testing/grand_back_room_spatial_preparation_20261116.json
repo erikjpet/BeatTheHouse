@@ -1,0 +1,36 @@
+{
+  "schema": "bth.grand_back_room_spatial_preparation/v1",
+  "task_id": "BTH-ENV-SPATIAL-GBR-001",
+  "observed_at": "2026-11-16T09:27:55.991746+00:00",
+  "status": "V2_STATIC_NATIVE_GO_CANONICAL_METADATA_VERIFIED",
+  "candidate_background_sha256": "46492785829f659c5869d91a6510d424ea4977e6921b1ece7de1225aa804e6ca",
+  "candidate_package_21_file_sha256": "e20695c6715e4156027cc211b6c7291ff2820e3d52d317dbbfc9b6cc5ca931c7",
+  "static_review": "docs/testing/grand_back_room_spatial_r1_static_review_v2_20261116.json",
+  "static_review_sha256": "0e90b08babcd94cc42638154190b63ce49de5f663c138a16df48ceafffd33d9e",
+  "canonical_metadata": {
+    "state": "EXACT_NINE_ADDITIONS_APPLIED_AND_VERIFIED",
+    "independent_reviewer": "/root/audit_spatial_handoff",
+    "before_job": 42696,
+    "before_worker_log_sha256": "fccc83b3e8df5f1cf4b93f462cc7a6a6a39c2b78b569e3a7b4fc84be1dd26fbc",
+    "root_authenticated_before_job_command_verifier_storage_and_claim": true,
+    "after_job": 32924,
+    "after_worker_log_sha256": "acaa1c001d0cefe7020db40cde9917394709e951c24498341375fa50da9cbe71",
+    "patch_sha256": "76887aa11aa57b1243d203be44ce9d96a27cefc3c9dd1c48eef0b8400b96e487",
+    "provenance_sha256": "9032aebe05e7e15394b2577cb0aa236ca42290847ec10a516a964d576e58df16",
+    "verifier_sha256": "177cade088c2d5fbd3803206c37bc7bf5620fc487a90f851aebe272d9454b1c0",
+    "uid_bindings": 1605,
+    "preserved_scope": "All19 GBR PNGs/fullroomJSON/globalindex and everypriorfile underGBR art prefix; notwhole-repository bytes."
+  },
+  "retained_failed_application_check": {
+    "state": "NO_SIDECARS_HAD_BEEN_APPLIED",
+    "reason": "Reviewed artifact uses apply_patch format. git apply --check and git apply rejected it as No valid patches in input; no source mutation occurred. The after03 verifier then correctly failed on absent sidecars.",
+    "after03_pid": 40876,
+    "after03_exit_code": 1,
+    "active_at_release": 0,
+    "correction": "Applied the unchanged reviewed artifact using apply_patch with absolute art-worktree targets; fresh after04 passed. No allow-empty flag, old evidence rewrite or security change."
+  },
+  "next_action": "Commit nine exact canonical sidecars and finalized native profile/runner, then qualify fresh selected-source Base3/2N+41,16/7 motion66, liveness and actual animation capture. Future TEST must preserve alreadydelivered Grand/Bar.",
+  "native_runtime_launched": false,
+  "production_png_or_json_changed": false,
+  "test_updated": false
+}

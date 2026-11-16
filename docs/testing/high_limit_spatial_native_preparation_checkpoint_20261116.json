@@ -1,0 +1,73 @@
+{
+  "schema": "bth.high_limit_spatial_native_preparation_checkpoint/v1",
+  "task_id": "BTH-ENV-SPATIAL-HL-001",
+  "observed_at": "2026-11-16T09:37:24.500912+00:00",
+  "status": "V3_TRANSPORT_FIX_REVIEWED_24_REGRESSIONS_PASS_FRESH_RUN_NEXT",
+  "source_commit": "25cc8b279d35c5ec00d836db150354b77790e825",
+  "source_tree": "1cbbe22e7ff650f331ae79534b7cef97b0b88823",
+  "candidate_package_21_file_sha256": "481e858ee3c484b06ba6df935983c29979a188e7e59ff5f44eaf22ecdbe020e4",
+  "first_readonly_v1_stop": "Baseline physicalinventory includes exact assembler-created73-byte .gdignore beyond21 logicalpayloads. No firstphase job launched bythat plan.",
+  "v2_auxiliary_policy": "Exact known35de260e sentinel SHA/size/mtime/fileID authenticated separately before/after everyphase; unknownextra paths rejected; logical21seal unchanged; no sentinel removal or copy intoqa_source.",
+  "v2_phases": {
+    "source-identity": {
+      "pid": 24892,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "job_sha256": "0481b6d65641158cdcb6db08a549eca2d1f3b665210d2cbf56ce7aaa3298e095",
+      "worker_log_sha256": "9877faf6a8c254d96886bc4e7f2a6c6f13221db4c3b14d7b04eb10378ca15bf1"
+    },
+    "tree": {
+      "pid": 25052,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "job_sha256": "6269d10c02a550804e3ad5ef6e67c4a7d829b1974a5d07a0e787c41da3a89b6a",
+      "worker_log_sha256": "243895b79688c70b109efa5b7403b6e2b405d0b2c38bb37bd2af41c1d3e45f17"
+    },
+    "baseline-tree": {
+      "pid": 30608,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "job_sha256": "fc84b6a4872bf20e7f5bf795352034a0f6eed58851a5d08c79730209ceb0767c",
+      "worker_log_sha256": "2d10cb875de127677736b61e6cd9a8cf79a47d042c0caff04474eeef8bfaad2b"
+    },
+    "select": {
+      "pid": 21052,
+      "exit_code": 1,
+      "active_at_release": 0,
+      "job_sha256": "e9ff027e79320916a6db8daa19a38abcb9c258362eae5e28ee039f387fb8252c",
+      "worker_log_sha256": "eb19704e69c32ed262f21789235b2443b28cfb9630875f83218dfe656548bced"
+    }
+  },
+  "selection_gate_error": "Prior exact guarded phase is not qualified: source-identity",
+  "next_action": "Commit the reviewed v3 runner/tests, then run a fresh admitted v3 selected-source campaign. Do not reuse v2 phase IDs or weaken any receipt, sentinel, UID, geometry or liveness check.",
+  "selected_archive_created": false,
+  "qa_source_created": false,
+  "native_runtime_launched": false,
+  "production_art_written": false,
+  "test_updated": false,
+  "confirmed_transport_cause": {
+    "supervisor_duration_type": "int20",
+    "worker_CLI_duration_type": "float20.0",
+    "supervisor_config_sha256": "c47e881ae2126d9aa791069ceba64ec63d59410861d6aafdfd3549522abb2e4e",
+    "worker_config_sha256": "6751a90bb3bc774c5baacd47ccea6fee26308902e1693a6f711b4a5115609934",
+    "effect": "Equal numeric duration values serialize differently and correctly fail the unchanged prior-phase fingerprint gate."
+  },
+  "v3_fix": {
+    "runner": "tools/high_limit_spatial_native_trial_v3.py",
+    "runner_sha256": "78d0d3a448734cd84a1eb76ba2eb9ce4f046cad94ba6c44c32f9ee5c720784e2",
+    "tests": "tools/test_high_limit_spatial_native_trial_v3.py",
+    "tests_sha256": "d51d12630c9a2c25aba0a06595d2fda4abe4e28d9fd4c25abb69af97386773d5",
+    "independent_static_reviewer": "/root/bar_clearance_audit",
+    "change": "Normalize the float CLI duration at defaults and config construction; common prior/verify_prepared custody APIs remain unchanged.",
+    "guarded_tests": {
+      "run_id": "BTH-ENV-SPATIAL-HLNATIVE-V3-20261116-tests01",
+      "methods": 24,
+      "pid": 12980,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "seconds": 0.095,
+      "worker_log_sha256": "f99a0afd98c556be15a0810801faa7d97ff0935661d0234161f405458d3d1377"
+    },
+    "original_versions_preserved": true
+  }
+}
