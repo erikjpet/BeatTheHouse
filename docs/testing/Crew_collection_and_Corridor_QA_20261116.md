@@ -56,6 +56,12 @@ Tracked **`CREW-COLLECTOR-SETTLEMENT-DISCLOSURE-20261116`** now has a reviewed n
 
 The original source profiles for all47 positive cases in the first custody recheck remain unchanged across all141 save_dir/appdata/localappdata comparisons. Receipt `E:/CodexQA/BTH/runs/crew-custody-recheck1-261116/evidence/custody-recheck.json`; scope excludes owner saves and later cases not in that run. No original profile was migrated, repaired or overwritten.
 
+## Earned-marker Count continuation on exact main/NEXT source
+
+The Collector fix is published as scopedb59969cc/integratedc2b9a231 and verified at exact NEXT identity/served assets; see its proof for131 focused checks and Web-startup limit. Correct debt-ledger audits are accepted against the published proof. Ordinary acceptance is restored only with those actual-array boundaries, leaving old invalid proxy predicates explicitly unqualified.
+
+On exact **c2b9a231**, the genuinely settled campaign returned normally through Casino/BackRoom doors (cr1:14/14), then inspected the actual Planning Table (cr2:6/6). It still shows Countsetup, identityready, no missingstars, and a disabled BeginPlay because preparation remains incomplete. **Watch the schedule** is actually enabled and says to hold the GrandCage atHeat55orlower; direct transport is covered. Normal response (cr3:7/7) starts one hold `heist:the_count:schedule`,12total/11remaining actions, one requiredhold, with Courtmarkertrue and170cash. Actual freeGrand travel (cr4:9/9) reachesMainFloor, clock1842,Heat23/10actions; actual freeCage door (cr5:9/9) retainsHeat23/10actions and shows enabled **Hold Sightline**. Courtflag, twoCrewduties and actual empty debt array persist across normal Continue boundaries. No schedule completion, cart or Corridor success is claimed yet. Current checkpoint **`crew-sidebar-cr5-261116`**.
+
 
 ## Native worker evidence
 
@@ -86,5 +92,10 @@ Every case used admitted E: layouts and manifests, both capacity/launch gates, v
 | crew-sidebar-cw9-261116 | `ab7abfb7` | 9/9 | `f05ecefa83651cc80124303b8415131364107778a03a763266c635b2e4e28c38` |
 | crew-sidebar-cw10-261116 | `ab7abfb7` | 7/7 | `1f3756e9ee173b5480f8324d203c7d7da5c341dfc30206f875f5659fbf39ba7d` |
 | crew-sidebar-cw12-261116 | `ab7abfb7` | 6/6 | `2d4a303d4efe3bdc24db3fd1129cd9c743f36eac8c936d4d4e67a05b05eb8aa4` |
+| crew-sidebar-cr1-261116 | `c2b9a231` | 14/14 | `57c0eea293335365fce84779fa3c34b91f2cc3a9c16ff9a6a7ab3ce88c2e5e7e` |
+| crew-sidebar-cr2-261116 | `c2b9a231` | 6/6 | `5cbb23d60972790d3bb7ccc250efede8105664833872952f197f12ee76185158` |
+| crew-sidebar-cr3-261116 | `c2b9a231` | 7/7 | `aacf58082ac2987a2a46ae25dffb3ecd47a8c3221335d557526a4ea7cf3528cc` |
+| crew-sidebar-cr4-261116 | `c2b9a231` | 9/9 | `922cd55a54963bebe956a0dd621c197e28bb94548e728620ff0a43f9105ab7ac` |
+| crew-sidebar-cr5-261116 | `c2b9a231` | 9/9 | `0103b6ee9cd9e3e83c029f76da59f1d7ce4ea68b6006d63f37cb69a5ef37f64a` |
 
-Total **210/210** in 23 closed native Jobs. Exact GD copies and source/custody/storage/launch/cleanup receipts remain beside each log. Consolidated receipt: `E:\CodexQA\BTH\runs\crew-collection-record3-261116\evidence\cases.json`. Manual reconciliation: `E:\CodexQA\BTH\runs\crew-collection-record3-261116\evidence\reconciliation.json`.
+Total **255/255** in 28 closed native Jobs. Exact GD copies and source/custody/storage/launch/cleanup receipts remain beside each log. Consolidated receipt: `E:\CodexQA\BTH\runs\crew-collection-record4-261116\evidence\cases.json`. Manual reconciliation: `E:\CodexQA\BTH\runs\crew-collection-record4-261116\evidence\reconciliation.json`.

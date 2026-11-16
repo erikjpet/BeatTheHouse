@@ -34,6 +34,18 @@ The separate QA-harness finding `BTH-QA-CREW-DEBT-PROBE-20261116` corrected the 
 
 No browser/WASM startup, physical pointer/visual parity, packaged Steam or full-route acceptance is claimed. Existing browser restriction remains in force. The genuine Court marker now permits normal future Count/Corridor investigation, but Corridor itself has not yet been exercised.
 
+## Committed main and exact NEXT artifact follow-through
+
+Scoped fix/proof commit **`b59969cc395b839cf95cfba49483b63c6b4c8640`** was normally integrated with the already published Roulette changes as **`c2b9a2310a633ef15312ed31ac899ca6c43d4825`**, tree **`971bfd99d59fd1a33158d6d3d17726f73b7b6654`**. Only the root ledger timestamp conflicted; all other bytes/foreign rows were preserved. Outgoing history contained only this fix and its normal merge. GitHub main was pushed and exact-remote verified. The product/test hashes remain exactly those reviewed and tested above.
+
+On exact committed c2b9a231, fresh **cf3** again verified the actual visible priced unpaid conversation and Save/Continue (16/16); fresh **cw15** loaded the actually settled result, retained the Court marker/empty full ledger and rejected stale payment (11/11). No settlement was replayed. This adds27 committed-source native checks: total **131/131**,48 synthetic plus83 actual native, seven closed focused Jobs.
+
+The existing NEXT watcher alone built/promoted this SHA. Source metadata from trusted LAN HTTPS and local HTTP, immutable entry redirect, BUILD.json, build_manifest.json, REF and VERSION agree on exact c2b9a231/tree971bfd99, with source_dirtyfalse and no watcher/build/mirror error. Version0.6.0-dev+c2b9a2310a63. Receipt: `E:/CodexQA/BTH/runs/crew-collector-next-probe3-261116/evidence/next-probe.json`. Archive:119065600bytes, SHA256 **3c86f3f64f0f5d3e101f858fb05064f0c00e4fa44f261e922339d2cb408a9305**.
+
+Changed **index.pck** was freshly streamed from that immutable served build:200/application/octet-stream,124983432bytes, SHA256 **bfd7d44fb04e53b4feac9f0141ef144baec5adc55eb2566fa49b0576d6022308**, matching the maintained verified stage manifest. Current nativeCoinPusher v3_10 wasm was also freshly streamed because its path differed from the prior receipt:340415bytes, SHA256ab85e905307e46b09e00462b93a481e87533961c65d6874cbd060dbc9bd7839a, application/wasm, exactmatch. Unchanged index.js/index.wasm/index.side.wasm payloads reused their prior exact HTTP byte/hash receipts after matching every expected path/size/MIME/hash to this current verified publication stage; no new download is claimed for those three. Asset receipt: `E:/CodexQA/BTH/runs/crew-collector-next-assets1-261116/evidence/assets.json`, closed worker0owned.
+
+This establishes **committed/published fix, exact built/promoted/served identity and assets, and native changed behavior**. It does **not** establish basic Web launch or browser/WASM gameplay; existing separate-profile browser access remains restricted and was not retried/bypassed. Stable/itch/audience, security and watcher machinery were unchanged. The bounded UI finding can complete with these explicit limits; the broader parent remains Open. Native exploration has already continued through actual Count **Watch the schedule**, now active atcr3 with the legitimately earned Court marker,170cash and bothCrewduties, without claiming Corridor success yet.
+
 
 ## Native worker evidence
 
@@ -46,5 +58,9 @@ Every case used admitted E: layouts and manifests, both capacity/launch gates, v
 | crew-sidebar-cf2-261116 | `ab7abfb7` + scoped working diff | 17/17 | `576b3a302a1d5f4d87bce447c997aa4c06fd7c2585289c4abb3e70e1cdf7b70a` |
 | crew-sidebar-cw13-261116 | `ab7abfb7` + scoped working diff | 12/12 | `91a6296dafd869e8c6b19da296ddca759a63cca4c322060ea1062d45a6f7eaf2` |
 | crew-sidebar-cw14-261116 | `ab7abfb7` + scoped working diff | 11/11 | `51b8db8e8dd945ae9ff3357edab0c7902e3df1c32f3223b0b8d2f2b070f5ece3` |
+| crew-sidebar-cf3-261116 | `c2b9a231` | 16/16 | `ea1296087b5b5985961a70f650c372310b100ade7c683cef07a4bf7c228ad227` |
+| crew-sidebar-cw15-261116 | `c2b9a231` | 11/11 | `51b8db8e8dd945ae9ff3357edab0c7902e3df1c32f3223b0b8d2f2b070f5ece3` |
 
-Total **104/104** in 5 closed native Jobs. Exact GD copies and source/custody/storage/launch/cleanup receipts remain beside each log. Consolidated receipt: `E:\CodexQA\BTH\runs\crew-collector-record1-261116\evidence\cases.json`. Manual reconciliation: `E:\CodexQA\BTH\runs\crew-collector-record1-261116\evidence\reconciliation.json`.
+Total **131/131** in 7 closed native Jobs. Exact GD copies and source/custody/storage/launch/cleanup receipts remain beside each log. Consolidated receipt: `E:\CodexQA\BTH\runs\crew-collector-accept3-261116\evidence\cases.json`. Manual reconciliation: `E:\CodexQA\BTH\runs\crew-collector-accept3-261116\evidence\reconciliation.json`.
+
+Accepted source/QA proof commit: `c2b9a2310a633ef15312ed31ac899ca6c43d4825`. This bounded native Collector disclosure fix and required exact NEXT delivery are complete. Broader Crew route/Corridor, human pacing and browser/WASM acceptance remain Open in the parent.
