@@ -50,7 +50,7 @@ The dedicated terminal verifier requires the successful closed gf6 worker, captu
 
 The earned Roadside reward was then claimed through the actual report button on another copy. It adds exactly one new unopened **Roadside bag#5**, preserves older **Roadside bag#3**, owned items and gold, retains883cash/16chips and the exact earned ending, rejects a stale duplicate claim, unlocks New Run and persists on Continue. Neither bag was opened or sold.
 
-Preserved ending before claim: `crew-sidebar-gf7-261116`. Preserved claimed ending: `crew-sidebar-gf8-261116`. The next operation is normal New Run and cold recovery qualification; that result is not yet claimed in this checkpoint.
+Preserved ending before claim: `crew-sidebar-gf7-261116`. Preserved claimed ending: `crew-sidebar-gf8-261116`. The actual now-unlocked New Run control creates a genuine generated ordinary campaign at Back Alley with100cash/0chips, no inherited heist/payout/getaway or Crew duties, valid active room/private authority and no stale Live Table object. Both earned unopened Roadside bags3/5 and the exact meta store remain. Official Save/Continue and another OS process compare the actual fresh warm result, then repeat Save/Continue without resurrecting the caught mission or awarding cash. All38 New Run/cold checks pass. Latest recovered active campaign: **`crew-sidebar-gf10-261116`**. These last two workers use source `9c3b32b85f1036defb40c29502d6a6602fe0af73`, which adds only this scope/proof and two ledger changes to3cbeefa7; no product code changed.
 
 ## Scope reconciliation outcome
 
@@ -58,7 +58,7 @@ The parent now records the recovered independent Crew objective and source refer
 
 The same directly read November4 user transcript also says: "Web has become our main testing ground" and asks to ensure things are not slipping "on the native version." This corroborates the explicit native/Web distinction; the quoted retained message is `Sentinel_b30f039bd0748191a0cb7c9fce291fc8`. No browser or computer-control restriction was retried or bypassed.
 
-No new product regression is established by these passing observations. There is no product patch or new release claim. The three native payout classes now have retained actual evidence: Clean Sweep1150, Out Hot900 and Somebody Got Pinched720, each with its own path/platform/source limits. This comparison does not prove exhaustive endings, optional Corridor dependencies, human pacing or browser parity.
+No new product regression is established by these passing observations. There is no product patch or new release claim. The three native payout classes now have retained actual evidence: Clean Sweep1150, Out Hot900 and Somebody Got Pinched720, each with its own path/platform/source limits. This comparison does not prove exhaustive endings, optional Corridor dependencies, ordinary package fulfillment/cooldown/reputation consequences, human pacing or browser parity. The prior ordinary entry/recruitment/jobs review covers sampled terms, recruitment and stake behavior; it does not certify all package jobs. Ordinary Crew delivery/reputation/cooldown remains an explicit next native area, so this bounded adverse-flow result does not end the broader track.
 
 
 ## Native worker evidence
@@ -75,5 +75,9 @@ Every case used admitted E: layouts and manifests, both capacity/launch gates, v
 | crew-sidebar-gf6-261116 | `3cbeefa7` | 12/12 | `8bd5ca0d3a363c27912608cdac71ce2869d817cfa98f4a83d865ff0358066f02` |
 | crew-sidebar-gf7-261116 | `3cbeefa7` | 21/21 | `42df7242497ada3ab525d55df1801585cd6c0987b182f9ee9fa1ccb18c2ccef2` |
 | crew-sidebar-gf8-261116 | `3cbeefa7` | 14/14 | `ffa75884752958ce496c8592a0f0f7f207fd368f1c7558d5963668b658f79f39` |
+| crew-sidebar-gf9-261116 | `9c3b32b8` | 20/20 | `f0aaebbb7a966733b187c229ffc04f34eb1c19306db4f93ce8a14f171ddef967` |
+| crew-sidebar-gf10-261116 | `9c3b32b8` | 18/18 | `649d759efcaea81c0d17cb3c432bb82388fb0b1de2d05db58c68eb0b1dc23683` |
 
-Total **96/96** in 8 closed native Jobs. Exact GD copies and source/custody/storage/launch/cleanup receipts remain beside each log. Consolidated receipt: `E:\CodexQA\BTH\runs\crew-getaway-record1-261116\evidence\cases.json`. Manual reconciliation: `E:\CodexQA\BTH\runs\crew-getaway-record1-261116\evidence\reconciliation.json`.
+Total **134/134** in 10 closed native Jobs. Exact GD copies and source/custody/storage/launch/cleanup receipts remain beside each log. Consolidated receipt: `E:\CodexQA\BTH\runs\crew-getaway-final-record-261116\evidence\cases.json`. Manual reconciliation: `E:\CodexQA\BTH\runs\crew-getaway-final-record-261116\evidence\reconciliation.json`.
+
+Accepted source/QA proof commit: `9c3b32b85f1036defb40c29502d6a6602fe0af73`. This bounded native adverse-flow acceptance is Complete; the original broader objective remains Open for continuing scope, route/human pacing and actual browser/WASM acceptance.
