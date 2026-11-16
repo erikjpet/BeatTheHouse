@@ -1,0 +1,1154 @@
+{
+  "schema": "bth.environment_spatial_observer_catalog/v1",
+  "scope": "Pinned actual serialized positive contracts; pending cases remain explicit and never grant engine/art/release approval.",
+  "cases": [
+    {
+      "case_id": "private-v3-contexts",
+      "room": "private_crew",
+      "phase": "contexts",
+      "status": "PINNED_ACTUAL_ARCHIVE",
+      "fixture": false,
+      "report": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-contexts\\evidence\\private_preart_metadata.json",
+        "sha256": "c70b13d520d4d39ea3927c2bfd98ff00fda5b0fdd0efda77f3cc82e65a5247d0"
+      },
+      "producer": {
+        "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-PRIVATETRIAL2-20261116\\qa_source\\tools\\envart_private_preart_metadata.gd",
+        "sha256": "291b74fc89d041b9a5d5709c8feb23583d73f30bff3ef3785b55983d669f9e69"
+      },
+      "job": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-contexts\\evidence\\job.json",
+        "sha256": "afbd8cec500f7b90d6b4d5f1dcffb6bbfcc2c8f356924709bfcffb81b430d663"
+      },
+      "log": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-contexts\\evidence\\worker.log",
+        "sha256": "3850756790d984ca0bcfed6260cf7c3aa49adce0aa6e2b344dcbd65f4fe1e715"
+      },
+      "actual_written_filename": "private_preart_metadata.json",
+      "producer_write_witness": "var file := FileAccess.open(out_dir.path_join(\"private_preart_metadata.json\"),FileAccess.WRITE)",
+      "producer_script_argument": "res://tools/envart_private_preart_metadata.gd",
+      "actual_schema": null,
+      "validator": {
+        "source": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\private_crew_spatial_native_profile_v3.py",
+          "sha256": "2bd508738aeeb4bdc0f07f793aaca1d3d54399e8dab65164b45abbbc8e8554b7"
+        },
+        "function": "report_contract",
+        "args_before_report": [
+          "contexts"
+        ],
+        "kwargs": {
+          "source_files": 4047
+        }
+      },
+      "serialized_shapes": [
+        {
+          "path": [
+            "views",
+            "*",
+            "actual_view",
+            "objects",
+            "*",
+            "position"
+          ],
+          "type": "string",
+          "count": 10,
+          "representation": "SERIALIZED_JSON_ONLY"
+        }
+      ],
+      "provenance": {
+        "phase-result": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-contexts\\evidence\\phase-result.json",
+          "sha256": "99bb137b5423bdfd7998f54c6865c1f0ed558fbeb970744260020475ff2f22c7"
+        },
+        "prepared-source": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-PRIVATETRIAL2-20261116\\qa_source\\qa_reference\\prepared-source.json",
+          "sha256": "daaa576bc8e50d3c2592bf1a736577ff2d11386e0cc43257a341bdfc89425d16"
+        },
+        "native-type-probe": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-PRIVATETRIAL2-20261116\\qa_source\\tools\\envart_private_spatial_probe.gd",
+          "sha256": "134f5442b6c27e8e79cfd936c5d56011094d1fddf4ff524eb37bde3faa35c774"
+        }
+      },
+      "scope": "Actual current PrivateV3 positive; this gate does not requalify its21-phase cohort or grant native/release approval.",
+      "exact_values": [
+        {
+          "path": [
+            "checks"
+          ],
+          "value": 8184
+        }
+      ]
+    },
+    {
+      "case_id": "private-v3-motion",
+      "room": "private_crew",
+      "phase": "motion",
+      "status": "PINNED_ACTUAL_ARCHIVE",
+      "fixture": false,
+      "report": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-motion\\evidence\\private_animation_probe.json",
+        "sha256": "c34a0993041fd262bfa665cf59efb0b0344e00125efe4e7d8fd8cd3a631e3bc5"
+      },
+      "producer": {
+        "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-PRIVATETRIAL2-20261116\\qa_source\\tools\\envart_private_animation_probe.gd",
+        "sha256": "481c531307561dfb44a96a92265bf24f9d3c044a43d0b817b63a3f6a8f47955c"
+      },
+      "job": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-motion\\evidence\\job.json",
+        "sha256": "40195e51c1c6b43d67cc4122dc06160a40885d2c48c9f1d44f45fcb61d57425a"
+      },
+      "log": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-motion\\evidence\\worker.log",
+        "sha256": "adb4939d8b6f1c08af30f3df302b01cd2bfe15bbe7d21008ecc727ddefc290c9"
+      },
+      "actual_written_filename": "private_animation_probe.json",
+      "producer_write_witness": "var file := FileAccess.open(output.path_join(\"private_animation_probe.json\"),FileAccess.WRITE)",
+      "producer_script_argument": "res://tools/envart_private_animation_probe.gd",
+      "actual_schema": null,
+      "validator": {
+        "source": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\private_crew_spatial_native_profile_v3.py",
+          "sha256": "2bd508738aeeb4bdc0f07f793aaca1d3d54399e8dab65164b45abbbc8e8554b7"
+        },
+        "function": "report_contract",
+        "args_before_report": [
+          "motion"
+        ],
+        "kwargs": {}
+      },
+      "serialized_shapes": [],
+      "provenance": {
+        "phase-result": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-motion\\evidence\\phase-result.json",
+          "sha256": "0db2a3190f03e3587001d11d16f2a00d18761048209d662942b4801d33903aca"
+        },
+        "prepared-source": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-PRIVATETRIAL2-20261116\\qa_source\\qa_reference\\prepared-source.json",
+          "sha256": "daaa576bc8e50d3c2592bf1a736577ff2d11386e0cc43257a341bdfc89425d16"
+        },
+        "native-type-probe": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-PRIVATETRIAL2-20261116\\qa_source\\tools\\envart_private_spatial_probe.gd",
+          "sha256": "134f5442b6c27e8e79cfd936c5d56011094d1fddf4ff524eb37bde3faa35c774"
+        }
+      },
+      "scope": "Actual current PrivateV3 positive; this gate does not requalify its21-phase cohort or grant native/release approval.",
+      "exact_values": [
+        {
+          "path": [
+            "checks"
+          ],
+          "value": 15
+        }
+      ]
+    },
+    {
+      "case_id": "private-v3-lifecycle",
+      "room": "private_crew",
+      "phase": "lifecycle",
+      "status": "PINNED_ACTUAL_ARCHIVE",
+      "fixture": false,
+      "report": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-lifecycle\\evidence\\private_lifecycle_result.json",
+        "sha256": "0c09e6fed5f528035c2c05be58d904b2a83878f2206c237513d6dc292993fc0a"
+      },
+      "producer": {
+        "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-PRIVATETRIAL2-20261116\\qa_source\\tools\\envart_private_lifecycle_detail_recovery.gd",
+        "sha256": "9e282365f4111dca5b16ca88202520b5f91829c08b716e8918ff6662a4c2d071"
+      },
+      "job": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-lifecycle\\evidence\\job.json",
+        "sha256": "f3a4a58b14626cc857d305b7824fb9d3f76c8a1fc1814b2e833e2221207757bb"
+      },
+      "log": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-lifecycle\\evidence\\worker.log",
+        "sha256": "8e2b32a6234ad0fe40666822eaf8e13a8e4494037e8ae477f3efcbd1638d148d"
+      },
+      "actual_written_filename": "private_lifecycle_result.json",
+      "producer_write_witness": "var f:=FileAccess.open(out_dir.path_join(\"private_lifecycle_result.json\"),FileAccess.WRITE);f.store_string(JSON.stringify(report,\"  \"));f.close()",
+      "producer_script_argument": "res://tools/envart_private_lifecycle_detail_recovery.gd",
+      "actual_schema": null,
+      "validator": {
+        "source": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\private_crew_spatial_native_profile_v3.py",
+          "sha256": "2bd508738aeeb4bdc0f07f793aaca1d3d54399e8dab65164b45abbbc8e8554b7"
+        },
+        "function": "report_contract",
+        "args_before_report": [
+          "lifecycle"
+        ],
+        "kwargs": {}
+      },
+      "serialized_shapes": [],
+      "provenance": {
+        "phase-result": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-lifecycle\\evidence\\phase-result.json",
+          "sha256": "76975345fba390c39903eed66e6105279536f8002077354d89522807c29ca65a"
+        },
+        "prepared-source": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-PRIVATETRIAL2-20261116\\qa_source\\qa_reference\\prepared-source.json",
+          "sha256": "daaa576bc8e50d3c2592bf1a736577ff2d11386e0cc43257a341bdfc89425d16"
+        },
+        "native-type-probe": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-PRIVATETRIAL2-20261116\\qa_source\\tools\\envart_private_spatial_probe.gd",
+          "sha256": "134f5442b6c27e8e79cfd936c5d56011094d1fddf4ff524eb37bde3faa35c774"
+        }
+      },
+      "scope": "Actual current PrivateV3 positive; this gate does not requalify its21-phase cohort or grant native/release approval.",
+      "exact_values": [
+        {
+          "path": [
+            "checks"
+          ],
+          "value": 246
+        }
+      ]
+    },
+    {
+      "case_id": "private-v3-lucky-glyph",
+      "room": "private_crew",
+      "phase": "lucky-glyph",
+      "status": "PINNED_ACTUAL_ARCHIVE",
+      "fixture": false,
+      "report": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-lucky-glyph\\evidence\\private_spatial_acceptance.json",
+        "sha256": "88ee6f79a12af164364469c9886aaec3d6e19060b231374baa1a878a00608ec4"
+      },
+      "producer": {
+        "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-PRIVATETRIAL2-20261116\\qa_source\\tools\\envart_private_spatial_lucky_acceptance.gd",
+        "sha256": "f85e382f0d33db68af9972948b3777a0e355d50d08a5f7900a645861c9d3f822"
+      },
+      "job": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-lucky-glyph\\evidence\\job.json",
+        "sha256": "b12cc1c972118643fe5c080021fd437413036bcc5c046cf6443d0f69736de560"
+      },
+      "log": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-lucky-glyph\\evidence\\worker.log",
+        "sha256": "bc07309949133cb9fad661334443ed6825fc1c503ec4e58d47496bd2b5fc8332"
+      },
+      "actual_written_filename": "private_spatial_acceptance.json",
+      "producer_write_witness": "var file := FileAccess.open(out_dir.path_join(\"private_spatial_acceptance.json\"),FileAccess.WRITE)",
+      "producer_script_argument": "res://tools/envart_private_spatial_lucky_acceptance.gd",
+      "actual_schema": "bth.private_spatial_acceptance/v1",
+      "validator": {
+        "source": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\private_crew_spatial_native_profile_v3.py",
+          "sha256": "2bd508738aeeb4bdc0f07f793aaca1d3d54399e8dab65164b45abbbc8e8554b7"
+        },
+        "function": "report_contract",
+        "args_before_report": [
+          "lucky-glyph"
+        ],
+        "kwargs": {}
+      },
+      "serialized_shapes": [
+        {
+          "path": [
+            "lucky_object",
+            "position"
+          ],
+          "type": "string",
+          "count": 1,
+          "representation": "SERIALIZED_JSON_ONLY"
+        },
+        {
+          "path": [
+            "native_target_binding",
+            "native_position_type"
+          ],
+          "type": "string",
+          "count": 1,
+          "representation": "NATIVE_WITNESS_DECLARATION_CHECKED_BY_ROOM_VALIDATOR"
+        }
+      ],
+      "provenance": {
+        "phase-result": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-lucky-glyph\\evidence\\phase-result.json",
+          "sha256": "f037de4fb2efa5987689fbf155e72b0c469ba1bb8f6b3f7b73b947d3b3bf19ec"
+        },
+        "prepared-source": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-PRIVATETRIAL2-20261116\\qa_source\\qa_reference\\prepared-source.json",
+          "sha256": "daaa576bc8e50d3c2592bf1a736577ff2d11386e0cc43257a341bdfc89425d16"
+        },
+        "native-type-probe": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-PRIVATETRIAL2-20261116\\qa_source\\tools\\envart_private_spatial_probe.gd",
+          "sha256": "134f5442b6c27e8e79cfd936c5d56011094d1fddf4ff524eb37bde3faa35c774"
+        }
+      },
+      "scope": "Actual current PrivateV3 positive; this gate does not requalify its21-phase cohort or grant native/release approval.",
+      "exact_values": [
+        {
+          "path": [
+            "checks"
+          ],
+          "value": 9
+        }
+      ]
+    },
+    {
+      "case_id": "private-v3-capture",
+      "room": "private_crew",
+      "phase": "capture",
+      "status": "PINNED_ACTUAL_ARCHIVE",
+      "fixture": false,
+      "report": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-capture\\evidence\\capture\\animation_capture.json",
+        "sha256": "d4b09c4fbbd1339d67aadb3c201d2c4f4d1eb1d204fef1cb1ea89e6bf357e52c"
+      },
+      "producer": {
+        "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-PRIVATETRIAL2-20261116\\qa_source\\tools\\envart_private_animation_capture.gd",
+        "sha256": "af765a536b6015fbfc4dd3182e446a8f43de913c44b251ef3d0d75ffddf6a122"
+      },
+      "job": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-capture\\evidence\\job.json",
+        "sha256": "19034264a0ad9966a6bc946d0d66ea26c7177716cf00b171bb433f223c3f96c2"
+      },
+      "log": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-capture\\evidence\\worker.log",
+        "sha256": "e557e6a3ab998f2210926d71354b6c7d03b9128e1f33d218dfbfc43398ad0ad3"
+      },
+      "actual_written_filename": "animation_capture.json",
+      "producer_write_witness": "var file := FileAccess.open(out_dir.path_join(\"animation_capture.json\"), FileAccess.WRITE)",
+      "producer_script_argument": "res://tools/envart_private_animation_capture.gd",
+      "actual_schema": null,
+      "validator": {
+        "source": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\private_crew_spatial_native_trial_v3.py",
+          "sha256": "c62aafc0a1eabc8f9786e14c138176d5add5e2022df89f1993a389816606fe3e"
+        },
+        "function": "capture_contract",
+        "args_before_report": [],
+        "kwargs": {}
+      },
+      "serialized_shapes": [],
+      "provenance": {
+        "phase-result": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-capture\\evidence\\phase-result.json",
+          "sha256": "3a0e15c90299178cbde5976117039cbb385660dc091d5c2f717b5d8e3bfce554"
+        },
+        "prepared-source": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-PRIVATETRIAL2-20261116\\qa_source\\qa_reference\\prepared-source.json",
+          "sha256": "daaa576bc8e50d3c2592bf1a736577ff2d11386e0cc43257a341bdfc89425d16"
+        },
+        "native-type-probe": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-PRIVATETRIAL2-20261116\\qa_source\\tools\\envart_private_spatial_probe.gd",
+          "sha256": "134f5442b6c27e8e79cfd936c5d56011094d1fddf4ff524eb37bde3faa35c774"
+        }
+      },
+      "scope": "Actual current PrivateV3 positive; this gate does not requalify its21-phase cohort or grant native/release approval.",
+      "exact_values": [
+        {
+          "path": [
+            "measured_frame_count"
+          ],
+          "value": 152
+        }
+      ]
+    },
+    {
+      "case_id": "kitty-original-contexts",
+      "room": "kitty",
+      "phase": "contexts",
+      "status": "PINNED_ACTUAL_ARCHIVE",
+      "fixture": false,
+      "report": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r5-capture-01\\evidence\\kitty_preart_metadata.json",
+        "sha256": "2159cd06068bad11d6741d483c75a98b184ae29adc8d5bb3d2db3bf36203eedf"
+      },
+      "producer": {
+        "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-KITTY-TRIAL-20261115\\tools\\envart_kitty_preart_metadata.gd",
+        "sha256": "51c191725faffeb4b9467e15dc41b4e0ace14d28d91d04214b952ba10c1c4a38"
+      },
+      "job": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r5-capture-01\\evidence\\job.json",
+        "sha256": "4822b29258ff76ead7c909321cb6242e7975aa48fb9b3f2947ea87aefe61fafb"
+      },
+      "log": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r5-capture-01\\evidence\\worker.log",
+        "sha256": "71bcf113ef2e7b23cb3eddb863e8babdd7cfca8c03fded567ed0805ff287c675"
+      },
+      "actual_written_filename": "kitty_preart_metadata.json",
+      "producer_write_witness": "var file := FileAccess.open(out_dir.path_join(\"kitty_preart_metadata.json\"),FileAccess.WRITE)",
+      "producer_script_argument": "res://tools/envart_kitty_preart_metadata.gd",
+      "actual_schema": null,
+      "validator": {
+        "source": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\kitty_spatial_native_profile.py",
+          "sha256": "df8966a354390bf60c5725fd74142d5f781499fc1ba02aeb78de81a2b04a5762"
+        },
+        "function": "report_contract",
+        "args_before_report": [
+          "contexts"
+        ],
+        "kwargs": {
+          "source_files": 7215
+        }
+      },
+      "serialized_shapes": [
+        {
+          "path": [
+            "views",
+            "*",
+            "actual_view",
+            "objects",
+            "*",
+            "position"
+          ],
+          "type": "string",
+          "count": 93,
+          "representation": "SERIALIZED_JSON_ONLY"
+        }
+      ],
+      "provenance": {
+        "envart_kitty_preart_metadata.gd": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-KITTY-TRIAL-20261115\\tools\\envart_kitty_preart_metadata.gd",
+          "sha256": "51c191725faffeb4b9467e15dc41b4e0ace14d28d91d04214b952ba10c1c4a38"
+        },
+        "envart_kitty_animation_probe.gd": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-KITTY-TRIAL-20261115\\tools\\envart_kitty_animation_probe.gd",
+          "sha256": "ef4b1b7ab50340543c358bd8d27c383ae1c2c991f6c8015a72307f0de1c32da1"
+        },
+        "envart_kitty_animation_capture.gd": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-KITTY-TRIAL-20261115\\tools\\envart_kitty_animation_capture.gd",
+          "sha256": "b75c8b8f09b0ba6e77a69b9c9a9e6ecaa290582d457667b4d46f2a8c2235abfa"
+        },
+        "environment_art_baseline_capture.gd": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-KITTY-TRIAL-20261115\\tools\\environment_art_baseline_capture.gd",
+          "sha256": "89d7ae812bedd203f49830bf367863bced32d08cfcc5e0327ebaf4450317de8f"
+        },
+        "environment_layout_screenshots.gd": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-KITTY-TRIAL-20261115\\tools\\environment_layout_screenshots.gd",
+          "sha256": "eadf8f113aff55113ecf59e764503fd5bc2e4a64d00689573e0b56489b1a78e5"
+        },
+        "75-and135-qualification": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\docs\\testing\\kitty_spatial_native_adapter_qualification_20261116.json",
+          "sha256": "f0601e90811fa010200a78ac686ecfacaa6d9aa073b6702cec83d95a77d2be0f"
+        },
+        "75tests-job": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-KITTY-NATIVE-20261116-tests01\\evidence\\job.json",
+          "sha256": "3a24cec73bf6880829575fff9c62362a565c006b55c0c09a80363acf32367765"
+        },
+        "135parity-job": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-KITTY-PARITY-20261116-reference01\\evidence\\job.json",
+          "sha256": "e62e0df2e797dd14d72b3d8fbe8ed0c01755e42dd7a1e60ce34e2e8a338dd3a5"
+        },
+        "135parity-proof": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-KITTY-PARITY-20261116-reference01\\evidence\\historical-parity.json",
+          "sha256": "92fb21db89dcd0089a81bbc48b95c45ea3b6b8893200434edf7e76bdeafb0c1f"
+        }
+      },
+      "scope": "Retained original serialized report contract only; no fresh native or art approval.",
+      "exact_values": [
+        {
+          "path": [
+            "checks"
+          ],
+          "value": 15164
+        }
+      ]
+    },
+    {
+      "case_id": "kitty-original-motion",
+      "room": "kitty",
+      "phase": "motion",
+      "status": "PINNED_ACTUAL_ARCHIVE",
+      "fixture": false,
+      "report": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r6-motion-01\\evidence\\kitty_animation_probe.json",
+        "sha256": "d336eaae07a2d7e414032250c5e68c210d5a265f9e6d76c552774147a9a20565"
+      },
+      "producer": {
+        "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-KITTY-TRIAL-20261115\\tools\\envart_kitty_animation_probe.gd",
+        "sha256": "ef4b1b7ab50340543c358bd8d27c383ae1c2c991f6c8015a72307f0de1c32da1"
+      },
+      "job": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r6-motion-01\\evidence\\job.json",
+        "sha256": "fc073da753a28848672c1fb3968b897c18639c5a0681d2439e51ded7becda735"
+      },
+      "log": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r6-motion-01\\evidence\\worker.log",
+        "sha256": "5d9fa221f919e571b73be95b986489fb8b127063a63bc7430fa4e87c6720db98"
+      },
+      "actual_written_filename": "kitty_animation_probe.json",
+      "producer_write_witness": "var file := FileAccess.open(output.path_join(\"kitty_animation_probe.json\"),FileAccess.WRITE)",
+      "producer_script_argument": "res://tools/envart_kitty_animation_probe.gd",
+      "actual_schema": null,
+      "validator": {
+        "source": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\kitty_spatial_native_profile.py",
+          "sha256": "df8966a354390bf60c5725fd74142d5f781499fc1ba02aeb78de81a2b04a5762"
+        },
+        "function": "report_contract",
+        "args_before_report": [
+          "motion"
+        ],
+        "kwargs": {}
+      },
+      "serialized_shapes": [],
+      "provenance": {
+        "envart_kitty_preart_metadata.gd": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-KITTY-TRIAL-20261115\\tools\\envart_kitty_preart_metadata.gd",
+          "sha256": "51c191725faffeb4b9467e15dc41b4e0ace14d28d91d04214b952ba10c1c4a38"
+        },
+        "envart_kitty_animation_probe.gd": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-KITTY-TRIAL-20261115\\tools\\envart_kitty_animation_probe.gd",
+          "sha256": "ef4b1b7ab50340543c358bd8d27c383ae1c2c991f6c8015a72307f0de1c32da1"
+        },
+        "envart_kitty_animation_capture.gd": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-KITTY-TRIAL-20261115\\tools\\envart_kitty_animation_capture.gd",
+          "sha256": "b75c8b8f09b0ba6e77a69b9c9a9e6ecaa290582d457667b4d46f2a8c2235abfa"
+        },
+        "environment_art_baseline_capture.gd": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-KITTY-TRIAL-20261115\\tools\\environment_art_baseline_capture.gd",
+          "sha256": "89d7ae812bedd203f49830bf367863bced32d08cfcc5e0327ebaf4450317de8f"
+        },
+        "environment_layout_screenshots.gd": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-KITTY-TRIAL-20261115\\tools\\environment_layout_screenshots.gd",
+          "sha256": "eadf8f113aff55113ecf59e764503fd5bc2e4a64d00689573e0b56489b1a78e5"
+        },
+        "75-and135-qualification": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\docs\\testing\\kitty_spatial_native_adapter_qualification_20261116.json",
+          "sha256": "f0601e90811fa010200a78ac686ecfacaa6d9aa073b6702cec83d95a77d2be0f"
+        },
+        "75tests-job": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-KITTY-NATIVE-20261116-tests01\\evidence\\job.json",
+          "sha256": "3a24cec73bf6880829575fff9c62362a565c006b55c0c09a80363acf32367765"
+        },
+        "135parity-job": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-KITTY-PARITY-20261116-reference01\\evidence\\job.json",
+          "sha256": "e62e0df2e797dd14d72b3d8fbe8ed0c01755e42dd7a1e60ce34e2e8a338dd3a5"
+        },
+        "135parity-proof": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-KITTY-PARITY-20261116-reference01\\evidence\\historical-parity.json",
+          "sha256": "92fb21db89dcd0089a81bbc48b95c45ea3b6b8893200434edf7e76bdeafb0c1f"
+        }
+      },
+      "scope": "Retained original serialized report contract only; no fresh native or art approval.",
+      "exact_values": [
+        {
+          "path": [
+            "checks"
+          ],
+          "value": 55
+        }
+      ]
+    },
+    {
+      "case_id": "delta-original-contexts",
+      "room": "delta",
+      "phase": "contexts",
+      "status": "PINNED_ACTUAL_ARCHIVE",
+      "fixture": false,
+      "report": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTATRIAL-20261115-r3-six-context-trace-01\\evidence\\delta_preart_metadata.json",
+        "sha256": "bb370b9aa824d278b51e5da1579d9dd64fd965976ed6a4f59245e89892dee645"
+      },
+      "producer": {
+        "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-DELTA-TRIAL-20261115\\tools\\envart_delta_six_context_trace.gd",
+        "sha256": "ef5be47124bdf336a65e33fc278d18a67a86d436b7d3f97bf69fa5efe72e33e6"
+      },
+      "job": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTATRIAL-20261115-r3-six-context-trace-01\\evidence\\job.json",
+        "sha256": "beebe3009746eb22804d2124f5fa007611066c5489df3b74e84e3c07cb2f18c8"
+      },
+      "log": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTATRIAL-20261115-r3-six-context-trace-01\\evidence\\worker.log",
+        "sha256": "9781cf9891617c92ab83b2d1271fad04a04dd9e6bba858039f718595c3067b28"
+      },
+      "actual_written_filename": "delta_preart_metadata.json",
+      "producer_write_witness": "var file := FileAccess.open(out_dir.path_join(\"delta_preart_metadata.json\"),FileAccess.WRITE)",
+      "producer_script_argument": "res://tools/envart_delta_six_context_trace.gd",
+      "actual_schema": null,
+      "validator": {
+        "source": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\delta_queen_spatial_native_profile_v2.py",
+          "sha256": "a1b72b0272dc7dbb4e1990d051b0b3689a7a834d315beae8fa22857959c25116"
+        },
+        "function": "report_contract",
+        "args_before_report": [
+          "contexts"
+        ],
+        "kwargs": {
+          "source_files": 7250
+        }
+      },
+      "serialized_shapes": [
+        {
+          "path": [
+            "views",
+            "*",
+            "actual_view",
+            "objects",
+            "*",
+            "position"
+          ],
+          "type": "string",
+          "count": 116,
+          "representation": "SERIALIZED_JSON_ONLY"
+        }
+      ],
+      "provenance": {
+        "original-source-identity": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-DELTA-TRIAL-20261115\\delta_source_identity.json",
+          "sha256": "59ca046dfd3414108d428c9b1470806001e02e7bd819ab500b597c590df7e572"
+        }
+      },
+      "scope": "Retained original serialized report contract only; no fresh native or art approval.",
+      "exact_values": [
+        {
+          "path": [
+            "checks"
+          ],
+          "value": 15411
+        }
+      ]
+    },
+    {
+      "case_id": "delta-original-motion",
+      "room": "delta",
+      "phase": "motion",
+      "status": "PINNED_ACTUAL_ARCHIVE",
+      "fixture": false,
+      "report": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTATRIAL-20261115-r3-motion-01\\evidence\\delta_animation_probe.json",
+        "sha256": "d2bc1cc6267fa8eee6e1dcd46f64b0d0e7d0f2f2f78536a8937b434b2eef1bbe"
+      },
+      "producer": {
+        "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-DELTA-TRIAL-20261115\\tools\\envart_delta_animation_probe.gd",
+        "sha256": "b83d37a87af482ebaebfba27622109cfbbb26f406ed655416cb53e7cb60f3cbc"
+      },
+      "job": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTATRIAL-20261115-r3-motion-01\\evidence\\job.json",
+        "sha256": "d42c5b7ef45625a85a23f5d3b557ac49cfa8f359009dd5b58087f0c25d1276b0"
+      },
+      "log": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTATRIAL-20261115-r3-motion-01\\evidence\\worker.log",
+        "sha256": "a151ffc3e4d60c06cadb3505667cd1e98881f51cdfb4f9d2d1ba25646840cb34"
+      },
+      "actual_written_filename": "delta_animation_probe.json",
+      "producer_write_witness": "var file := FileAccess.open(output.path_join(\"delta_animation_probe.json\"),FileAccess.WRITE)",
+      "producer_script_argument": "res://tools/envart_delta_animation_probe.gd",
+      "actual_schema": null,
+      "validator": {
+        "source": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\delta_queen_spatial_native_profile_v2.py",
+          "sha256": "a1b72b0272dc7dbb4e1990d051b0b3689a7a834d315beae8fa22857959c25116"
+        },
+        "function": "report_contract",
+        "args_before_report": [
+          "motion"
+        ],
+        "kwargs": {}
+      },
+      "serialized_shapes": [],
+      "provenance": {
+        "original-source-identity": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-DELTA-TRIAL-20261115\\delta_source_identity.json",
+          "sha256": "59ca046dfd3414108d428c9b1470806001e02e7bd819ab500b597c590df7e572"
+        }
+      },
+      "scope": "Retained original serialized report contract only; no fresh native or art approval.",
+      "exact_values": [
+        {
+          "path": [
+            "checks"
+          ],
+          "value": 53
+        }
+      ]
+    },
+    {
+      "case_id": "cage-original-contexts",
+      "room": "cage",
+      "phase": "contexts",
+      "status": "PINNED_ACTUAL_ARCHIVE",
+      "fixture": false,
+      "report": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01\\evidence\\grand_casino_cage_preart_metadata.json",
+        "sha256": "3ac74bc68b340451de566e0036ab49895d07b22be5b57243f87b548eeccf3917"
+      },
+      "producer": {
+        "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-CAGE-TRIAL-20261115\\tools\\envart_cage_preart_metadata.gd",
+        "sha256": "b55cb09928731bf6934230412ea2cbb766eb4fb08f99e674ab60395394ede325"
+      },
+      "job": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01\\evidence\\job.json",
+        "sha256": "0d2c54d30350c4d335cc2fd6d0e701d3db6cffc2f4fc8ed7a87fd4689fa92cc0"
+      },
+      "log": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-contexts-01\\evidence\\worker.log",
+        "sha256": "9200db0ffeb6d2aa117d565cf908a4b9bbdc57ba229b626bac14a1b8a2c74434"
+      },
+      "actual_written_filename": "grand_casino_cage_preart_metadata.json",
+      "producer_write_witness": "var file := FileAccess.open(out_dir.path_join(\"grand_casino_cage_preart_metadata.json\"),FileAccess.WRITE)",
+      "producer_script_argument": "res://tools/envart_cage_preart_metadata.gd",
+      "actual_schema": null,
+      "validator": {
+        "source": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\cage_spatial_native_profile.py",
+          "sha256": "7ea51f64b7e6657fc20994b118e0cfa75d9a48adc5c837fb1294932f44b2373a"
+        },
+        "function": "report_contract",
+        "args_before_report": [
+          "contexts"
+        ],
+        "kwargs": {
+          "source_files": 7393
+        }
+      },
+      "serialized_shapes": [
+        {
+          "path": [
+            "views",
+            "*",
+            "actual_view",
+            "objects",
+            "*",
+            "position"
+          ],
+          "type": "string",
+          "count": 5,
+          "representation": "SERIALIZED_JSON_ONLY"
+        }
+      ],
+      "provenance": {
+        "original-source-identity": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-CAGE-TRIAL-20261115\\cage_source_identity.json",
+          "sha256": "819ccf7f7001a2f650fcb7d45e4814e75179f7c8fbbcb13b21ba71214e6d2642"
+        }
+      },
+      "scope": "Retained original serialized report contract only; no fresh native or art approval.",
+      "exact_values": [
+        {
+          "path": [
+            "checks"
+          ],
+          "value": 14840
+        }
+      ]
+    },
+    {
+      "case_id": "cage-original-motion",
+      "room": "cage",
+      "phase": "motion",
+      "status": "PINNED_ACTUAL_ARCHIVE",
+      "fixture": false,
+      "report": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-motion-01\\evidence\\grand_casino_cage_animation_probe.json",
+        "sha256": "9529d04a00798f4dc88c42cc7a4c32115d046166aeb25b5298599476efe11ea7"
+      },
+      "producer": {
+        "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-CAGE-TRIAL-20261115\\tools\\envart_cage_animation_probe.gd",
+        "sha256": "37547f23d23ef2ecb6490799ef5d64e3dbe8e191f92549d08f803c45ddece634"
+      },
+      "job": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-motion-01\\evidence\\job.json",
+        "sha256": "48536d34c85190dd765a476eb83eb285076e79f90ff7b993845c364777cc7d4b"
+      },
+      "log": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r2-motion-01\\evidence\\worker.log",
+        "sha256": "e123ad8e5cc74c08aaa44b926cfd8f808ef323b1979b69e6f39959a37449af75"
+      },
+      "actual_written_filename": "grand_casino_cage_animation_probe.json",
+      "producer_write_witness": "var file := FileAccess.open(output.path_join(\"grand_casino_cage_animation_probe.json\"),FileAccess.WRITE)",
+      "producer_script_argument": "res://tools/envart_cage_animation_probe.gd",
+      "actual_schema": null,
+      "validator": {
+        "source": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\cage_spatial_native_profile.py",
+          "sha256": "7ea51f64b7e6657fc20994b118e0cfa75d9a48adc5c837fb1294932f44b2373a"
+        },
+        "function": "report_contract",
+        "args_before_report": [
+          "motion"
+        ],
+        "kwargs": {}
+      },
+      "serialized_shapes": [],
+      "provenance": {
+        "original-source-identity": {
+          "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-CAGE-TRIAL-20261115\\cage_source_identity.json",
+          "sha256": "819ccf7f7001a2f650fcb7d45e4814e75179f7c8fbbcb13b21ba71214e6d2642"
+        }
+      },
+      "scope": "Retained original serialized report contract only; no fresh native or art approval.",
+      "exact_values": [
+        {
+          "path": [
+            "checks"
+          ],
+          "value": 82
+        }
+      ]
+    },
+    {
+      "case_id": "hidden-r2-work-highstakes",
+      "room": "hidden",
+      "phase": "work-highstakes",
+      "status": "PINNED_ACTUAL_ARCHIVE",
+      "fixture": false,
+      "report": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIDDENR2-20261114-sequence-highstakes-01\\evidence\\hidden_sequence_live_proof.json",
+        "sha256": "e20bfa292ed0342f49f805f54fb416a7d4682c8e2216766cfc17d0b785714726"
+      },
+      "producer": {
+        "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-INTEGRATION-20261114\\tools\\envart_hidden_sequence_proof_r2.gd",
+        "sha256": "ddfeea5fe92cdab79839ca1c2870f09751b4f544e42ce8fb219688fce61f4225"
+      },
+      "job": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIDDENR2-20261114-sequence-highstakes-01\\evidence\\job.json",
+        "sha256": "7b86c3b17083daa8ddbce4bfaa9db144438585a618612db23c69faa8ffb0be20"
+      },
+      "log": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIDDENR2-20261114-sequence-highstakes-01\\evidence\\worker.log",
+        "sha256": "6574bc75ca1253f7dc2a48e5d568ba3c7cf8859feaca5e9fc1510a20a7178e7d"
+      },
+      "actual_written_filename": "hidden_sequence_live_proof.json",
+      "producer_write_witness": "var file:=FileAccess.open(out_dir.path_join(\"hidden_sequence_live_proof.json\"),FileAccess.WRITE)",
+      "producer_script_argument": "res://tools/envart_hidden_sequence_proof_r2.gd",
+      "actual_schema": null,
+      "validator": {
+        "source": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\hidden_spatial_native_completion_profile_v2.py",
+          "sha256": "c3bd15b0e3ebc582f282f060a30f773c5e5924cba941c5c3dc0ad56c698897ae"
+        },
+        "function": "remaining_contract",
+        "args_before_report": [
+          "work-highstakes"
+        ],
+        "kwargs": {}
+      },
+      "serialized_shapes": [],
+      "provenance": {
+        "transport-catalog": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\hidden_spatial_native_completion_transports.json",
+          "sha256": "658cda3e2e3802f122db431fd1835b05cdc9a44dfe104ab4777b5b9ef46063f9"
+        }
+      },
+      "scope": "Actual historical HiddenR2 positive only; c3bd completion validator is new source and its own parent review remains required.",
+      "exact_values": [
+        {
+          "path": [
+            "checks"
+          ],
+          "value": 964
+        }
+      ]
+    },
+    {
+      "case_id": "hidden-r2-work-greased",
+      "room": "hidden",
+      "phase": "work-greased",
+      "status": "PINNED_ACTUAL_ARCHIVE",
+      "fixture": false,
+      "report": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIDDENR2-20261114-sequence-greased-01\\evidence\\hidden_sequence_live_proof.json",
+        "sha256": "5b316d3ea3d7d6f34206812a3769fa7d3419595d2ddd165fb903ac9d189ec8bb"
+      },
+      "producer": {
+        "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-INTEGRATION-20261114\\tools\\envart_hidden_sequence_proof_r2.gd",
+        "sha256": "ddfeea5fe92cdab79839ca1c2870f09751b4f544e42ce8fb219688fce61f4225"
+      },
+      "job": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIDDENR2-20261114-sequence-greased-01\\evidence\\job.json",
+        "sha256": "1af26688add32d1b284c0e2024be96bc662d6a1ad3ebd5e2a8771d25feed5e68"
+      },
+      "log": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIDDENR2-20261114-sequence-greased-01\\evidence\\worker.log",
+        "sha256": "d7cf6df5ee2b7f0714be2a5919648fd589d1197862da042ac139fce8bfe7734c"
+      },
+      "actual_written_filename": "hidden_sequence_live_proof.json",
+      "producer_write_witness": "var file:=FileAccess.open(out_dir.path_join(\"hidden_sequence_live_proof.json\"),FileAccess.WRITE)",
+      "producer_script_argument": "res://tools/envart_hidden_sequence_proof_r2.gd",
+      "actual_schema": null,
+      "validator": {
+        "source": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\hidden_spatial_native_completion_profile_v2.py",
+          "sha256": "c3bd15b0e3ebc582f282f060a30f773c5e5924cba941c5c3dc0ad56c698897ae"
+        },
+        "function": "remaining_contract",
+        "args_before_report": [
+          "work-greased"
+        ],
+        "kwargs": {}
+      },
+      "serialized_shapes": [],
+      "provenance": {
+        "transport-catalog": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\hidden_spatial_native_completion_transports.json",
+          "sha256": "658cda3e2e3802f122db431fd1835b05cdc9a44dfe104ab4777b5b9ef46063f9"
+        }
+      },
+      "scope": "Actual historical HiddenR2 positive only; c3bd completion validator is new source and its own parent review remains required.",
+      "exact_values": [
+        {
+          "path": [
+            "checks"
+          ],
+          "value": 1097
+        }
+      ]
+    },
+    {
+      "case_id": "hidden-r2-work-muscle",
+      "room": "hidden",
+      "phase": "work-muscle",
+      "status": "PINNED_ACTUAL_ARCHIVE",
+      "fixture": false,
+      "report": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIDDENR2-20261114-sequence-muscle-01\\evidence\\hidden_sequence_live_proof.json",
+        "sha256": "67a8ca522b28789115283ddacdc2b3845cefb99cddf0ed309ba0fadcf74c5723"
+      },
+      "producer": {
+        "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-INTEGRATION-20261114\\tools\\envart_hidden_sequence_proof_r2.gd",
+        "sha256": "ddfeea5fe92cdab79839ca1c2870f09751b4f544e42ce8fb219688fce61f4225"
+      },
+      "job": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIDDENR2-20261114-sequence-muscle-01\\evidence\\job.json",
+        "sha256": "6806a3e38719d8a78ab2b43cf26fe1023c2191a6029154f751272b084a8ca969"
+      },
+      "log": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIDDENR2-20261114-sequence-muscle-01\\evidence\\worker.log",
+        "sha256": "61b5dc63420f3784ed7d1ce635328be7ff7a579977e03eca751fe69ae1ba8994"
+      },
+      "actual_written_filename": "hidden_sequence_live_proof.json",
+      "producer_write_witness": "var file:=FileAccess.open(out_dir.path_join(\"hidden_sequence_live_proof.json\"),FileAccess.WRITE)",
+      "producer_script_argument": "res://tools/envart_hidden_sequence_proof_r2.gd",
+      "actual_schema": null,
+      "validator": {
+        "source": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\hidden_spatial_native_completion_profile_v2.py",
+          "sha256": "c3bd15b0e3ebc582f282f060a30f773c5e5924cba941c5c3dc0ad56c698897ae"
+        },
+        "function": "remaining_contract",
+        "args_before_report": [
+          "work-muscle"
+        ],
+        "kwargs": {}
+      },
+      "serialized_shapes": [],
+      "provenance": {
+        "transport-catalog": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\hidden_spatial_native_completion_transports.json",
+          "sha256": "658cda3e2e3802f122db431fd1835b05cdc9a44dfe104ab4777b5b9ef46063f9"
+        }
+      },
+      "scope": "Actual historical HiddenR2 positive only; c3bd completion validator is new source and its own parent review remains required.",
+      "exact_values": [
+        {
+          "path": [
+            "checks"
+          ],
+          "value": 1061
+        }
+      ]
+    },
+    {
+      "case_id": "hidden-r2-effective-hits",
+      "room": "hidden",
+      "phase": "effective-hits",
+      "status": "PINNED_ACTUAL_ARCHIVE",
+      "fixture": false,
+      "report": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIDDENR2-20261114-hits02\\evidence\\hidden_effective_hit_proof.json",
+        "sha256": "c09d5ab7545c2ebddd0a6501267cab47a6b25bc442ccbf1c6221a4cddb928972"
+      },
+      "producer": {
+        "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-INTEGRATION-20261114\\tools\\envart_hidden_effective_hits_r2b.gd",
+        "sha256": "d70e95ae6f00579eadd3c25d9666941140119cf793b058fad95d0747d98d4de6"
+      },
+      "job": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIDDENR2-20261114-hits02\\evidence\\job.json",
+        "sha256": "36233f71766fcb0cc2f28ad259224f980e0a033e44450b9353b457d69beb6ec8"
+      },
+      "log": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIDDENR2-20261114-hits02\\evidence\\worker.log",
+        "sha256": "53a0d7314d0d72614a5fac7344b628a6286190e34d3e6cedf834b3c43844cc9c"
+      },
+      "actual_written_filename": "hidden_effective_hit_proof.json",
+      "producer_write_witness": "var f:=FileAccess.open(output.path_join(\"hidden_effective_hit_proof.json\"),FileAccess.WRITE)",
+      "producer_script_argument": "res://tools/envart_hidden_effective_hits_r2b.gd",
+      "actual_schema": null,
+      "validator": {
+        "source": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\hidden_spatial_native_completion_profile_v2.py",
+          "sha256": "c3bd15b0e3ebc582f282f060a30f773c5e5924cba941c5c3dc0ad56c698897ae"
+        },
+        "function": "remaining_contract",
+        "args_before_report": [
+          "effective-hits"
+        ],
+        "kwargs": {}
+      },
+      "serialized_shapes": [],
+      "provenance": {
+        "transport-catalog": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\hidden_spatial_native_completion_transports.json",
+          "sha256": "658cda3e2e3802f122db431fd1835b05cdc9a44dfe104ab4777b5b9ef46063f9"
+        }
+      },
+      "scope": "Actual historical HiddenR2 positive only; c3bd completion validator is new source and its own parent review remains required.",
+      "exact_values": [
+        {
+          "path": [
+            "checks"
+          ],
+          "value": 9461
+        }
+      ]
+    },
+    {
+      "case_id": "hidden-r2-placement-closing",
+      "room": "hidden",
+      "phase": "placement",
+      "status": "PINNED_ACTUAL_ARCHIVE",
+      "fixture": false,
+      "report": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIDDENR2-20261114-placement01\\evidence\\hidden_placement_closing.json",
+        "sha256": "4f208faa008afb998f0660e39f6d22cdeef61f5026a0c1385f4f14b1ddc81a33"
+      },
+      "producer": {
+        "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-INTEGRATION-20261114\\tools\\envart_hidden_placement_closing_r2.gd",
+        "sha256": "4a1abbf6a3bda75ee7e036da04306c8e36a9c243fe5f781affe432bc404f412b"
+      },
+      "job": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIDDENR2-20261114-placement01\\evidence\\job.json",
+        "sha256": "278383c6031b395272d2d7dedb835c7fb872471d2b16889d0ffe0e7db1dd32b9"
+      },
+      "log": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIDDENR2-20261114-placement01\\evidence\\worker.log",
+        "sha256": "96d7ec7d3f4a9ca9cc90dd0aa51c925fe642a5b112519d40e7c0e78e52949277"
+      },
+      "actual_written_filename": "hidden_placement_closing.json",
+      "producer_write_witness": "var f := FileAccess.open(out_dir.path_join(\"hidden_placement_closing.json\"),FileAccess.WRITE)",
+      "producer_script_argument": "res://tools/envart_hidden_placement_closing_r2.gd",
+      "actual_schema": null,
+      "validator": {
+        "source": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\hidden_spatial_native_completion_profile_v2.py",
+          "sha256": "c3bd15b0e3ebc582f282f060a30f773c5e5924cba941c5c3dc0ad56c698897ae"
+        },
+        "function": "remaining_contract",
+        "args_before_report": [
+          "placement"
+        ],
+        "kwargs": {}
+      },
+      "serialized_shapes": [],
+      "provenance": {
+        "transport-catalog": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\hidden_spatial_native_completion_transports.json",
+          "sha256": "658cda3e2e3802f122db431fd1835b05cdc9a44dfe104ab4777b5b9ef46063f9"
+        }
+      },
+      "scope": "Actual historical HiddenR2 positive only; c3bd completion validator is new source and its own parent review remains required.",
+      "exact_values": [
+        {
+          "path": [
+            "checks"
+          ],
+          "value": 9
+        }
+      ]
+    },
+    {
+      "case_id": "hidden-r2-thin-strong",
+      "room": "hidden",
+      "phase": "thin-strong",
+      "status": "PINNED_ACTUAL_ARCHIVE",
+      "fixture": false,
+      "report": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIDDENR2-20261114-thin-wrap02\\evidence\\thin_wrap_probe.json",
+        "sha256": "7192ce8120fd59eb7578f1599dd91ce235cf031b3b80abd141bc28541c2e911a"
+      },
+      "producer": {
+        "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-INTEGRATION-20261114\\tools\\envart_hidden_thin_wrap_r2c.gd",
+        "sha256": "865149f08afbabd2d8d74d0ce1e898324a127c266d17b59f260c5beb02ee4d8c"
+      },
+      "job": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIDDENR2-20261114-thin-wrap02\\evidence\\job.json",
+        "sha256": "feceed4f8d54194f6a3af198e875c88e83946040d5b054beea94f622259c44dd"
+      },
+      "log": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIDDENR2-20261114-thin-wrap02\\evidence\\worker.log",
+        "sha256": "a83e41c2ee0b8e1437abb72e3c19f72055b8e466ca7bb4d3c7b1e89c0b8ec527"
+      },
+      "actual_written_filename": "thin_wrap_probe.json",
+      "producer_write_witness": "var file := FileAccess.open(output.path_join(\"thin_wrap_probe.json\"),FileAccess.WRITE)",
+      "producer_script_argument": "res://tools/envart_hidden_thin_wrap_r2c.gd",
+      "actual_schema": null,
+      "validator": {
+        "source": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\hidden_spatial_native_completion_profile_v2.py",
+          "sha256": "c3bd15b0e3ebc582f282f060a30f773c5e5924cba941c5c3dc0ad56c698897ae"
+        },
+        "function": "strong_thin_contract",
+        "args_before_report": [],
+        "kwargs": {}
+      },
+      "serialized_shapes": [],
+      "provenance": {
+        "transport-catalog": {
+          "path": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\hidden_spatial_native_completion_transports.json",
+          "sha256": "658cda3e2e3802f122db431fd1835b05cdc9a44dfe104ab4777b5b9ef46063f9"
+        },
+        "raw-unchanged-manifest": {
+          "path": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-HIDDENTRIAL3-20261116/qa_source/data/art/environments/small_underground_casino.json",
+          "sha256": "bb4dc0bfb830fc9d7ad73179b8d1b9ee0fb7c0e6e59fafc42f9a54aa78bef568"
+        },
+        "pinned-same-serialized-witness": {
+          "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIDDENR2-20261114-thin-wrap02\\evidence\\thin_wrap_probe.json",
+          "sha256": "7192ce8120fd59eb7578f1599dd91ce235cf031b3b80abd141bc28541c2e911a"
+        }
+      },
+      "scope": "Historical246 strong observer positive; exact rawbb4 manifest and pinned7192 Godot-serialized source-entry witness are checked by unchanged c3bd validator. No raw-Python-float equality, epsilon,51check substitution, or fresh-engine acceptance.",
+      "exact_values": [
+        {
+          "path": [
+            "checks"
+          ],
+          "value": 246
+        }
+      ]
+    },
+    {
+      "case_id": "delta-v2-native-clock-composites",
+      "room": "delta",
+      "status": "NOT_YET_PRODUCED",
+      "reason": "NOT_YET_PRODUCED: new V2 binary64 witnesses are not replaced by failed V1 composites or67 test fixtures."
+    },
+    {
+      "case_id": "cage-spatial-fresh-acceptance",
+      "room": "cage",
+      "status": "NOT_YET_PRODUCED",
+      "reason": "NOT_YET_PRODUCED: current file-prepared candidate has no fresh native matched-clock/depth-glyph report."
+    },
+    {
+      "case_id": "kitty-spatial-fresh-native",
+      "room": "kitty",
+      "status": "NOT_YET_PRODUCED",
+      "reason": "NOT_YET_PRODUCED:75 unit tests/135 historical parity do not create fresh native capture or acceptance."
+    },
+    {
+      "case_id": "hidden-completion-v2-fresh-native",
+      "room": "hidden",
+      "status": "CONTINUATION_COHORT_NOT_COMPLETELY_QUALIFIED_HERE",
+      "reason": "Fresh thin-strong246 is produced/PASS in the controller cohort; its outer Python-worker/child provenance is outside this first direct-engine-archive catalog. Remaining continuation phases are not inferred."
+    }
+  ],
+  "validator_review_scope": {
+    "hidden": "Static source GO plus parent guarded63 tests PASS; no fresh V2 native observation."
+  },
+  "outside_catalog_actual_observations": [
+    {
+      "case": "hidden-v2-current-thin-strong",
+      "status": "PARENT_QUALIFIED_CURRENT_OBSERVATION_NOT_REQUALIFIED_BY_THIS_GATE",
+      "report": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HIDCOMPLETE-20261116-v2-thin-strong/evidence/thin_wrap_probe.json",
+        "sha256": "054e095357f3283d3c6407beccb7638de6cb0a22d329f537e8e8a4794a6e9583"
+      },
+      "job_sha256": "0786dcc3bd1af5c27440a8373f55db7c301e40ced4282d8921f344d84aa84d79",
+      "reason": "Original controller remains authority for its nested file-worker/engine provenance; no basename or Job substitution."
+    }
+  ]
+}

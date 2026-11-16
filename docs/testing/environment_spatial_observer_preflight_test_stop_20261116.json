@@ -1,0 +1,47 @@
+{
+  "schema": "bth.environment_spatial_observer_preflight_test_stop/v1",
+  "recorded_at": "2026-11-16T16:44:40.956988+00:00",
+  "status": "FAILED_TWO_JOB_FLAG_NEGATIVES_PRESERVED",
+  "source_files": {
+    "tools/environment_spatial_observer_preflight.py": {
+      "sha256": "cc88ac9abb159c448e3d2616d12058e87bd1d12c7122ab31e2d443935dd80d37",
+      "bytes": 13894
+    },
+    "tools/test_environment_spatial_observer_preflight.py": {
+      "sha256": "5a4e0af329d48e0a398122ba9b9fc4a525848282f3ef2eb3db1c8f664e8a13fc",
+      "bytes": 13613
+    },
+    "tools/environment_spatial_observer_preflight.README.md": {
+      "sha256": "4a104555a1172ffb191de2040eb59779f1eaedaf112e5eed2f20a70204f609ab",
+      "bytes": 5148
+    },
+    "review_artifacts/environment_art_sources/environment-spatial-observer-preflight/catalog.json": {
+      "sha256": "47bc3bd41c5713a46925034fbea3875acff62e18a882175fb04c96ed20433345",
+      "bytes": 52002
+    }
+  },
+  "actual_positives_validated_in_setup": 17,
+  "test_count": 22,
+  "seconds": 7.888,
+  "failures": 2,
+  "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-OBSERVER-PREFLIGHT-20261116-tests01\\evidence",
+  "job_sha256": "3140e040f300edb98f000aba6bc706eccfaefbec5a6611051ce48cc164c8be4c",
+  "log_sha256": "a089cb5894717156e81f1609f05810a585170c66cf304d90efba7e1e4fd74d1b",
+  "pid": 39596,
+  "exit_code": 1,
+  "active_at_release": 0,
+  "limits": {
+    "control_flags": 5,
+    "cpu_rate": 1200,
+    "aggregate_job_cpu_percent": 12.0,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "job_memory_limit_bytes": 2147483648,
+    "active_processes": 0
+  },
+  "manifest_sha256": "6fe0f5eca027677dd054d9124d8c1bc061b965443870d8beaec5490a05724864",
+  "claim_sha256": "e6c68872f652392361e2360b9be141e6c0f3037c3da31ea33d37fba29dc8f75d",
+  "actual_log": ".....................\n======================================================================\nFAIL: test_closed_job_state_caps_cleanup_and_complete_logs_required (__main__.ObserverPreflightChecks) (limit='kill_on_close')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\test_environment_spatial_observer_preflight.py\", line 141, in test_closed_job_state_caps_cleanup_and_complete_logs_required\n    with self.subTest(limit=key),self.assertRaises(ValueError):\nAssertionError: ValueError not raised\n\n======================================================================\nFAIL: test_closed_job_state_caps_cleanup_and_complete_logs_required (__main__.ObserverPreflightChecks) (limit='breakaway_allowed')\n----------------------------------------------------------------------\nTraceback (most recent call last):\n  File \"D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\tools\\test_environment_spatial_observer_preflight.py\", line 141, in test_closed_job_state_caps_cleanup_and_complete_logs_required\n    with self.subTest(limit=key),self.assertRaises(ValueError):\nAssertionError: ValueError not raised\n\n----------------------------------------------------------------------\nRan 22 tests in 7.888s\n\nFAILED (failures=2)\n",
+  "finding": "Frozen guard.qualified_job does not reject contradictory kill_on_close=False or breakaway_allowed=True. All actual17 archived Jobs have the correct flags; no unsafeJob ran. The new generic gate must explicitly require strict bool True/False without changing frozenhelpers.",
+  "next_action": "NewV2 module/tests/README with narrow explicit checks, all17 actualpositive controls and missing/nonbool regressions; keep executedV1/catalog/rawreceipts unchanged. No engine admission follows a failed preflight."
+}
