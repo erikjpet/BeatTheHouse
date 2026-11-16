@@ -38178,11 +38178,13 @@
       ],
       "deployment": {
         "required": true,
-        "state": "partial",
+        "state": "verified",
         "evidence": [
           "E:/CodexQA/BTH/runs/perf-next-delivery-20261116-01/evidence/receipt.json",
           "E:/CodexQA/BTH/runs/perf-test-served-20261116-02/evidence/served.json"
-        ]
+        ],
+        "commit": "ca6c646f1170f99122efbfde9e7f7be2749ec626",
+        "test_commit": "0ef525e012df485bc3312e0d2ea89e3aa05b4d55"
       },
       "evidence": [
         {
