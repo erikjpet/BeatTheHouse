@@ -4991,7 +4991,7 @@
         }
       },
       "state": "open",
-      "status": "FRESH_ENTRY_NATIVE_PASS_CONCURRENT_CARD_OPEN_CONTINUATION_ADAPTER_NEEDED",
+      "status": "NATIVE_NO_COPY_QUALIFIED_CREW_COVERAGE_CONTINUES",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -5191,6 +5191,11 @@
           "kind": "fresh_ordinary_concurrent_job_native",
           "reference": "docs/testing/Crew_fresh_concurrent_job_QA_20261116.md",
           "summary": "All 20 fresh native checks pass on 6bfbecfb. PLAY starts First Night; confirmed Skip Lessons returns to PLAY, then a generated ordinary run starts at Back Alley with $100. The two-stage Crew Accept grants $70 and two duties, with an empty actual debt array. Follow the tip, the quoted $9 / 42-minute Punchline journey, Try the word, Keep it simple and Follow the order reach the Back Room with $161 and 87 standing. An 85.536-second unpaused wait advances clock 765 to 893 without a package request. Final Save writes the unique CREW-FRESH-CJ2-261116 slot. Continue and the concurrent card remain untested. Job PID 39668 closed with exit 0 and active 0; product hashes are unchanged. No new product defect is confirmed."
+        },
+        {
+          "kind": "qualified_native_no_copy_forward",
+          "reference": "docs/testing/Crew_native_no_copy_adapter_QA_20261116.md",
+          "summary": "104 final synthetic guard/lifecycle tests and 72 actual no-copy native checks pass across 6 closed Jobs. Same CJ2 slot/directories continue forward under honest native custody; original evidence retained. No profile copy, New Run, replay or browser-control expansion. Current case crew-native-cj2-board-reject1-261116."
         }
       ],
       "implementation_batches": [
@@ -5205,9 +5210,11 @@
         "CREW-COLLECTOR-SETTLEMENT-DISCLOSURE-20261116",
         "BTH-QA-CREW-ENDING-001-ABANDONMENT-REPLACEMENT-20261116",
         "BTH-QA-CREW-ENDING-001-SWITCH-ROUTE-STASH-20261116",
-        "CREW-STASH-RETURN-ROUTE-HIDDEN-20261116"
+        "CREW-STASH-RETURN-ROUTE-HIDDEN-20261116",
+        "BTH-QA-CREW-NATIVE-NOCOPY-20261116",
+        "CREW-CONCURRENT-ROUTE-OFFER-20261116"
       ],
-      "next_action": "Preserve crew-fresh-cj2-261116 in place at Punchline Back Room: $161, standing 87, two duties, no debt, clock 893. Next is ordinary forward Continue under a qualified native no-copy resident adapter, then an actually displayed Crew request and Friendly Collection card inspection while that route remains active. Existing resident admission requires browser custody; the current native adapter is fresh-only. Reusing a launch claim or fabricating browser receipts is unsupported. Alternative needs explicit narrow authorization for one complete save_dir/appdata/localappdata copy of this new QA-only profile into a fresh guarded run. Historical checkpoint replay and slot overwrite remain unapproved. Browser and human pacing remain Open.",
+      "next_action": "Publish the qualified native no-copy adapter and preserve its same-profile custody chain. Continue the active c2 carried package at Punchline Back Room: $161, reputation87, two duties, clock1080, deadline1260, target Back Alley. Correct confirmed CREW-CONCURRENT-ROUTE-OFFER-20261116 through focused UI projection checks and separately qualified exact-new-build native compatibility, without copying or replaying the campaign. Broader Crew/browser/human pacing remain Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -5221,7 +5228,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T14:34:54.441666+00:00"
+      "updated_at": "2026-11-16T15:47:59.048880+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -43718,6 +43725,94 @@
       ]
     },
     {
+      "id": "CREW-CONCURRENT-ROUTE-OFFER-20261116",
+      "name": "Hide Crew route offers while another route is active",
+      "aliases": [],
+      "group": "current",
+      "parent_id": "BTH-QA-CREW-ENDING-001",
+      "state": "open",
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "scope": [
+        "Fix the confirmed native Job Board enabled-offer mismatch for a shared active route slot.",
+        "Preserve the authoritative one-route guard, normal economy, RNG, ranks and package-only encounter/timing rules; retain independent stake work.",
+        "Use exact-source synthetic projection checks and the existing c2 native no-copy forward campaign; preserve browser restrictions and original evidence."
+      ],
+      "acceptance_scope": "Actual enabled Friendly Collection card/button while Rook package is active; normal press is rejected with no public state mutation. Bounded correction needs focused tests and native/NEXT evidence; broader Crew/browser acceptance remains on the parent.",
+      "status": "CONFIRMED_NATIVE_OFFER_GUARD_MISMATCH_FIX_IN_PROGRESS",
+      "owner": {
+        "name": "Playtest Crew ending",
+        "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
+        "assignment_state": "assigned"
+      },
+      "evidence": [
+        {
+          "kind": "actual_native_enabled_card_safe_rejection",
+          "reference": "docs/testing/Crew_concurrent_route_offer_QA_20261116.md",
+          "summary": "Natural loan request at1080 starts carried Rook package. Actual Collection boardcard enabled/no reason; one real press preserves exact161cash/87standing/two duties/RNG950800549/action10/debt[]/single original job and delivery. Fourteen integrity/control checks pass; this is a confirmed UI defect, not a successful collection acceptance."
+        }
+      ],
+      "next_action": "Suppress competing route offers in board and timed-choice projections using is_route_kind while preserving package-only encounter/quote constraints, stake offers and authoritative rejection. Add focused projection regressions, qualify exact new-build compatibility for native in-place continuation, then verify the same active c2 route and NEXT identity without copying or replaying saves.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-16T15:44:56.885355+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T15:44:56.885355+00:00"
+    },
+    {
+      "id": "BTH-QA-CREW-NATIVE-NOCOPY-20261116",
+      "name": "Qualify native no-copy Crew continuation",
+      "aliases": [],
+      "group": "current",
+      "parent_id": "BTH-QA-CREW-ENDING-001",
+      "state": "open",
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": []
+      },
+      "scope": [
+        "Qualify a separate native no-copy admission and capped launcher for the exact already-created crew-fresh-cj2-261116 profile and CREW-FRESH-CJ2-261116 slot.",
+        "Preserve fresh and browser admission rules, exact source/product identity, original directory identity, exclusive custody/lease, E-only output isolation, normal Continue/forward-only actions, CPU12%/2GiB caps, assignment before execution and verified zero-process closure.",
+        "No copy, migration, replay, New Run/slot replacement, owner-save access, denial bypass or browser-control expansion."
+      ],
+      "acceptance_scope": "Current parent delegation explicitly authorizes qualifying a technical no-copy adapter if existing permissions support it; continuous Crew objective and owner-save restrictions retained. Target is only the agent-created cj2 campaign; this does not approve profile copying or a different saved run.",
+      "status": "NATIVE_ADAPTER_QUALIFIED_NATIVE_FORWARD_VERIFIED",
+      "owner": {
+        "name": "Playtest Crew ending",
+        "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
+        "assignment_state": "assigned"
+      },
+      "evidence": [
+        {
+          "kind": "qualified_native_no_copy_forward",
+          "reference": "docs/testing/Crew_native_no_copy_adapter_QA_20261116.md",
+          "summary": "104 final synthetic guard/lifecycle tests and 72 actual no-copy native checks pass across 6 closed Jobs. Same CJ2 slot/directories continue forward under honest native custody; original evidence retained. No profile copy, New Run, replay or browser-control expansion. Current case crew-native-cj2-board-reject1-261116."
+        }
+      ],
+      "next_action": "Publish the qualified native no-copy adapter and preserve its same-profile custody chain. Continue the active c2 carried package at Punchline Back Room: $161, reputation87, two duties, clock1080, deadline1260, target Back Alley. Correct confirmed CREW-CONCURRENT-ROUTE-OFFER-20261116 through focused UI projection checks and separately qualified exact-new-build native compatibility, without copying or replaying the campaign. Broader Crew/browser/human pacing remain Open.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-16T14:43:33.444199+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T15:47:59.048880+00:00"
+    },
+    {
       "id": "BTH-QA-CREW-ENDING-001-SIDEBAR-20261116",
       "name": "Resume intact Crew campaign in sidebar",
       "aliases": [],
@@ -43834,7 +43929,7 @@
         "No duplicate worker or bypass of browser/computer denials."
       ],
       "acceptance_scope": "Owner restart request Sentinel_3464b568ddc48191af59e314081b75ef and sidebar request Sentinel_11391c7e280c81918ac7603758e4721d; transferred intact checkpoint and explicit three-directory custody. Native ending reached and persisted; deployed browser/WASM acceptance remains separately required.",
-      "status": "FRESH_ENTRY_NATIVE_PASS_CONCURRENT_CARD_OPEN_CONTINUATION_ADAPTER_NEEDED",
+      "status": "NATIVE_NO_COPY_QUALIFIED_CREW_COVERAGE_CONTINUES",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -43920,9 +44015,14 @@
           "kind": "fresh_ordinary_concurrent_job_native",
           "reference": "docs/testing/Crew_fresh_concurrent_job_QA_20261116.md",
           "summary": "All 20 fresh native checks pass on 6bfbecfb. PLAY starts First Night; confirmed Skip Lessons returns to PLAY, then a generated ordinary run starts at Back Alley with $100. The two-stage Crew Accept grants $70 and two duties, with an empty actual debt array. Follow the tip, the quoted $9 / 42-minute Punchline journey, Try the word, Keep it simple and Follow the order reach the Back Room with $161 and 87 standing. An 85.536-second unpaused wait advances clock 765 to 893 without a package request. Final Save writes the unique CREW-FRESH-CJ2-261116 slot. Continue and the concurrent card remain untested. Job PID 39668 closed with exit 0 and active 0; product hashes are unchanged. No new product defect is confirmed."
+        },
+        {
+          "kind": "qualified_native_no_copy_forward",
+          "reference": "docs/testing/Crew_native_no_copy_adapter_QA_20261116.md",
+          "summary": "104 final synthetic guard/lifecycle tests and 72 actual no-copy native checks pass across 6 closed Jobs. Same CJ2 slot/directories continue forward under honest native custody; original evidence retained. No profile copy, New Run, replay or browser-control expansion. Current case crew-native-cj2-board-reject1-261116."
         }
       ],
-      "next_action": "Preserve crew-fresh-cj2-261116 in place at Punchline Back Room: $161, standing 87, two duties, no debt, clock 893. Next is ordinary forward Continue under a qualified native no-copy resident adapter, then an actually displayed Crew request and Friendly Collection card inspection while that route remains active. Existing resident admission requires browser custody; the current native adapter is fresh-only. Reusing a launch claim or fabricating browser receipts is unsupported. Alternative needs explicit narrow authorization for one complete save_dir/appdata/localappdata copy of this new QA-only profile into a fresh guarded run. Historical checkpoint replay and slot overwrite remain unapproved. Browser and human pacing remain Open.",
+      "next_action": "Publish the qualified native no-copy adapter and preserve its same-profile custody chain. Continue the active c2 carried package at Punchline Back Room: $161, reputation87, two duties, clock1080, deadline1260, target Back Alley. Correct confirmed CREW-CONCURRENT-ROUTE-OFFER-20261116 through focused UI projection checks and separately qualified exact-new-build native compatibility, without copying or replaying the campaign. Broader Crew/browser/human pacing remain Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -43935,7 +44035,7 @@
           "user:Sentinel_b9ecabacc1848191bed579864eef4f2a"
         ]
       },
-      "updated_at": "2026-11-16T14:34:54.441666+00:00"
+      "updated_at": "2026-11-16T15:47:59.048880+00:00"
     },
     {
       "id": "CREW-NOAUDIT-ENABLED-LOCK-20261116",

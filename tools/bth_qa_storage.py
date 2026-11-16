@@ -65,6 +65,7 @@ class Layout:
     reserve_bytes: int = 20 * GIB
     prepared: bool = False
     resident_binding: object | None = None
+    native_binding: object | None = None
 
     @property
     def manifest_path(self):
@@ -81,6 +82,9 @@ class Layout:
         if self.resident_binding is not None:
             result["schema"] = "bth-qa-storage/resident-v1"
             result["resident_profile_binding"] = self.resident_binding.as_dict()
+        if self.native_binding is not None:
+            result["schema"] = "bth-qa-storage/native-forward-v1"
+            result["native_profile_binding"] = self.native_binding.as_dict()
         return result
 
 
@@ -179,11 +183,20 @@ def _structure(layout):
     expected_run = root / "runs" / layout.run_id
     if _key(paths["run_root"]) != _key(expected_run):
         _fail("layout_mismatch", paths["run_root"], "run directory does not match root and run ID", layout)
+    if layout.resident_binding is not None and layout.native_binding is not None:
+        _fail("mixed_profile_bindings", layout.profile, "native and browser custody cannot be combined", layout)
+    native_leaves = ()
+    if layout.native_binding is not None:
+        from bth_qa_native_forward import validate_structure, PERSISTENT_LEAVES
+        validate_structure(layout, paths)
+        native_leaves = PERSISTENT_LEAVES
     if layout.resident_binding is not None:
         from bth_qa_resident import validate_structure
         validate_structure(layout, paths)
     for name in _LEAVES:
         if name == "profile" and layout.resident_binding is not None:
+            continue
+        if name in native_leaves:
             continue
         if _key(paths[name]) != _key(expected_run / name):
             _fail("layout_mismatch", paths[name], f"{name} differs from the planned dedicated directory", layout)
@@ -232,6 +245,9 @@ def validate_layout(layout, prepared=None, extra_write_paths=()):
             _fail("root_escape", path, "extra output must belong to this workspace or this run", layout)
     if layout.resident_binding is not None:
         from bth_qa_resident import validate_binding
+        validate_binding(layout, require_lease=layout.prepared)
+    if layout.native_binding is not None:
+        from bth_qa_native_forward import validate_binding
         validate_binding(layout, require_lease=layout.prepared)
     observations = _check_space(layout, list(paths.values()) + extras)
     if not layout.prepared:
@@ -289,9 +305,15 @@ def prepare_layout(layout):
         _fail("already_prepared", layout.run_root, "prepare may only be called once", layout)
     validate_layout(layout)  # All path/space checks finish before any mkdir/write.
     success = False
+    lease_module = None
+    native_leaves = ()
     if layout.resident_binding is not None:
-        from bth_qa_resident import acquire_lease, release_lease
-        acquire_lease(layout)
+        import bth_qa_resident as lease_module
+    if layout.native_binding is not None:
+        import bth_qa_native_forward as lease_module
+        native_leaves = lease_module.PERSISTENT_LEAVES
+    if lease_module is not None:
+        lease_module.acquire_lease(layout)
     try:
         _ensure_parents(layout.run_root.parent)
         _mkdir_new(layout.run_root)
@@ -301,6 +323,8 @@ def prepare_layout(layout):
         for name in _LEAVES:
             if name == "profile" and layout.resident_binding is not None:
                 continue  # Never mkdir, copy or change the existing resident profile.
+            if name in native_leaves:
+                continue  # Exact native campaign directories stay in place.
             _mkdir_new(getattr(layout, name))
         _check_space(layout, _structure(layout).values())
         prepared = replace(layout, prepared=True)
@@ -312,8 +336,8 @@ def prepare_layout(layout):
         _fail("prepare_failed", getattr(error, "filename", None) or layout.run_root,
               f"{error}; partial new directories are retained, never overwritten or removed", layout)
     finally:
-        if layout.resident_binding is not None and not success:
-            release_lease(layout, active_owned_processes=0)
+        if lease_module is not None and not success:
+            lease_module.release_lease(layout, active_owned_processes=0)
 
 
 def child_environment(layout, parent_env: Mapping[str, str]):
@@ -401,3 +425,15 @@ def plan_paid_trip_cold_recovery_layout(root, workspace, run_id, *, profile, cus
     return plan(root,workspace,run_id,profile=profile,custody=custody,campaign_id=campaign_id,
         origin=origin,expected_commit=expected_commit,expected_write_bytes=expected_write_bytes,
         reserve_bytes=reserve_bytes,recovery_policy=POLICY)
+
+
+def plan_native_forward_layout(root, workspace, run_id, *, expected_commit, custody, expected_write_bytes=4 * GIB, reserve_bytes=20 * GIB):
+    """Exact agent-created cj2 native forward continuation; fresh/browser rules remain separate."""
+    from bth_qa_native_forward import plan
+    return plan(root, workspace, run_id, expected_commit=expected_commit, custody=custody, expected_write_bytes=expected_write_bytes, reserve_bytes=reserve_bytes)
+
+
+def release_native_forward_layout(layout, *, active_owned_processes):
+    """Release the exact native campaign lease only after its owned capped Job is empty."""
+    from bth_qa_native_forward import release_lease
+    return release_lease(layout, active_owned_processes=active_owned_processes)
