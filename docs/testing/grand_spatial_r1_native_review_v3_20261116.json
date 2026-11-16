@@ -1,0 +1,41 @@
+{
+  "task_id": "BTH-ENV-SPATIAL-GRAND-001",
+  "candidate": "grand-spatial-r1-assembled-v3",
+  "decision": "POPULATED_ART_NO_GO",
+  "independent_reviewer": "/root/audit_spatial_handoff",
+  "source_commit": "24b8e34bb228335eb17db403757b9ce6f21c7151",
+  "qa_source_identity_sha256": "0252b6ca6317ef6d42b3d52e4bacd9c904b19223e2d97bfa9cf6bc9b99a5df9f",
+  "qa_source_files": 9207,
+  "candidate_background_sha256": "5b017df8ec2373c9779d2b76d0f705217f7ec2c1d7402afd0cc7b19e5082d3e1",
+  "candidate_package_sha256": "3502800e87bbdb65510cf20193a6237d6894cf6fceaed8708bdbeb2e424bc892",
+  "contexts": {
+    "run_id": "BTH-ENV-SPATIAL-GRANDNATIVE-20261116-v3-contexts",
+    "checks": 19167,
+    "captured_contexts": 4,
+    "job_pid": 21564,
+    "exit_code": 1,
+    "active_at_release": 0,
+    "status": "FAILED_RETAINED",
+    "findings": ["grand_casino_convention_crowd neutral owned-window pointer"],
+    "actual_convention_hover": "game:pull_tabs",
+    "replayed_convention_hover": "",
+    "other_three_actual_hovers": "",
+    "attribution": "Mouse-event coordinates/provenance were not recorded. Camera and target were1.0, offsets0, selection empty; neither physical-pointer movement nor camera drift is established. Do not count this run as native PASS."
+  },
+  "populated_art_finding": {
+    "contexts": ["Base", "Gala", "Audit"],
+    "kind": "bright_collar_behind_fixed_name",
+    "blackjack_label_native_rect": [1293.8,558,128.4,30],
+    "bright_gold_bounds_native": [1342,575,48,3],
+    "bright_pixels": 92,
+    "finding": "Right lower pedestal collar crosses the Blackjack baseline/descender region. The word remains readable, but the stripe violates the quiet support requirement.",
+    "required_correction": "Subdue only the physical lower collar face/edge, following its shape. Preserve pedestal, table, floor, label and gameplay geometry; do not paint a label-sized plaque or cutout."
+  },
+  "suitable_actual_findings": ["Rourke floor contacts in both placements", "Repaired floor joins and removed cabinet-shadow frame", "Horizontal tabletop planes and attached supports", "Broad floating lamp plates absent in inspected stills"],
+  "independent_unaffected_checks": {
+    "motion": {"run_id": "BTH-ENV-SPATIAL-GRANDNATIVE-20261116-v3-motion", "checks": 66, "native_entries": 16, "simulated_low_detail_entries": 7, "status": "PASS", "report_sha256": "be78b9eb48b28c94892e5f4e6606fab1dcf40c6d4b5d8fb475921dcbc18c0121"},
+    "no_pointer_liveness": {"run_id": "BTH-ENV-SPATIAL-GRANDNATIVE-20261116-v3-liveness", "status": "PASS"}
+  },
+  "retention": "Entire V3 QA project and all failed/pass receipts remain unchanged. V4 uses a fresh workspace and repeats qualification; no V3 retake was launched.",
+  "production_art_or_test_changed": false
+}

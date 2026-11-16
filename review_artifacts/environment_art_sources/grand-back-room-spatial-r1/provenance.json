@@ -1,0 +1,323 @@
+{
+  "schema": "bth.grand_back_room_spatial_source_trial/v1",
+  "task_id": "BTH-ENV-SPATIAL-GBR-001",
+  "parent_id": "BTH-ENV-SPATIAL-001",
+  "status": "RAW_SOURCE_PRESERVED_NOT_APPROVED",
+  "generation": {
+    "tool": "Built-in image_gen.imagegen",
+    "intent": "precise-object-edit",
+    "calls": 1,
+    "target": "assets/art/environments/grand_casino_back_room/background.png",
+    "target_sha256": "f9d2ca14641e3ac7dd67c92af9453ce4993f0a7dec22156b4f96d6f046f8fcdf",
+    "target_size": [
+      1800,
+      860
+    ],
+    "style_reference": "assets/art/travel/exteriors/delta_queen.png",
+    "style_reference_sha256": "4414fe5c94f850fb233c3f0e14cabed29291aac08b881823c12db4cdf4241767",
+    "reference_roles": "Image1 approved Delta Queen exterior pixel craftsmanship only; image2 actual Back Room master edit target",
+    "prompt_file": "prompt.txt",
+    "prompt_sha256": "02c90e29dd6d6ca83bcfb94b6cb6eeb26fe9b9d0c54cdbd79abc652160fce3b2",
+    "output_png": "grand-back-room-spatial-r1.png",
+    "output_png_sha256": "91fbde8eb4ebc2c007646eb506dc01bc5b1c8c40cc4baa4d71d088afd7b9ec8d",
+    "output_png_bytes": 1549268,
+    "output_size": [
+      1815,
+      866
+    ],
+    "output_opaque": true,
+    "output_base64": "grand-back-room-spatial-r1.png.b64",
+    "output_base64_sha256": "0150bbaa5989a1601145d624682636df11dc94a9880a2c0f83e7b7afa8d6886a",
+    "preserved_immediately": true,
+    "whole_generated_image_replacement_permitted": false
+  },
+  "original_package": {
+    "files": 21,
+    "current_recomputed_sha256": "065a5f98dfabb2b435bc31af76a0273921a370d1ebb9d9887ce6283c3231fbbb",
+    "seal_algorithm": "SHA256(sorted(relative path + space + file SHA256) joined by LF, no trailing LF)",
+    "manifest_sha256": "bb6d6c293824bf9e6347dfba6db5df0e874469fc11e0d094b8f1bd108f45a067",
+    "global_index_sha256": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+    "counts": "Background +16 animation PNGs +2 counter PNGs +room JSON +current global index",
+    "normal_entries": 16,
+    "low_detail_entries": 7,
+    "low_detail_ids": [
+      "casino_light_1",
+      "casino_light_2",
+      "casino_light_3",
+      "casino_sign_pulse",
+      "floor_glint_0",
+      "floor_glint_1",
+      "floor_glint_2"
+    ],
+    "counters": [
+      {
+        "id": "grand_table_left",
+        "native_master_crop": [
+          164,
+          516,
+          544,
+          72
+        ],
+        "opaque": true,
+        "current_exact_master_crop": true
+      },
+      {
+        "id": "grand_table_right",
+        "native_master_crop": [
+          1092,
+          516,
+          544,
+          72
+        ],
+        "opaque": true,
+        "current_exact_master_crop": true
+      }
+    ],
+    "no_host_or_office_foreground_replay": true
+  },
+  "retained_context": {
+    "scope": "Historical Base only, exactly3 objects: Craps, Blackjack, Travel; no Rourke cast in this fixture",
+    "context_png": "E:/CodexQA/BTH/runs/BTH-ENVART-GRANDBACKTRIAL-20261115-r1-contexts-01/evidence/__none_actual_play.png",
+    "context_png_sha256": "f33106111a565f899abe1dc7ae06fbc5b43b0bb2dbfc7142523488250363dbce",
+    "metadata": "E:/CodexQA/BTH/runs/BTH-ENVART-GRANDBACKTRIAL-20261115-r1-contexts-01/evidence/__none_metadata.json",
+    "metadata_sha256": "34cf4a43fd7d4389e1a42d91e34248018d93fb9a1b06266da04a8bea5394e792",
+    "video_frame_000": "E:/CodexQA/BTH/runs/BTH-ENVART-GRANDBACKTRIAL-20261115-r1-video-01/evidence/capture/frame_000.png",
+    "video_frame_000_sha256": "2455f19b9791adf13d7252ad4148ca066ba34cbc83c5f07258e80d162c2d11eb",
+    "context_job": {
+      "pid": 7004,
+      "exit_code": 0,
+      "active_at_release": 0
+    },
+    "video_job": {
+      "pid": 16564,
+      "exit_code": 0,
+      "active_at_release": 0
+    },
+    "rejected_input_not_used": "Old capture02 source-only guide used wrong High Limit painter arguments; only actual Back Room master and actual context were used here",
+    "corrected_legacy_guide": "E:/CodexQA/BTH/runs/BTH-ENVART-GRANDBACK-20261115-capture-03/evidence/__none_source_mode3_clock0.0_lowfalse_cleantrue.png",
+    "corrected_legacy_guide_sha256": "2645a1bc3bde73b57e129418deafbda9fb23481b846dc743dacdc2cfb6c3e889",
+    "no_current_global_process_or_host_zero_claim": true,
+    "no_competing_fresh_spatial_source_found": "Scoped room ledger, repository artifacts and retained Back Room art checkpoints"
+  },
+  "contacts": {
+    "method": "Actual retained typed paint RGBA PNGs decoded read-only; conservative alpha>=64 bboxes mapped to board900x430",
+    "craps_body": [
+      649,
+      204,
+      711,
+      247
+    ],
+    "craps_adornment": [
+      666,
+      185,
+      694,
+      197
+    ],
+    "blackjack_body": [
+      178,
+      200.5,
+      280,
+      248
+    ],
+    "blackjack_adornment": [
+      188,
+      186,
+      240,
+      245
+    ],
+    "travel_body": [
+      13,
+      363,
+      59,
+      409
+    ],
+    "travel_adornment": [
+      12.5,
+      340,
+      59.5,
+      420.5
+    ],
+    "all_three_body_draw_layer": 0,
+    "labels": [
+      {
+        "id": "game:craps",
+        "rect": [
+          656,
+          182,
+          48,
+          15
+        ]
+      },
+      {
+        "id": "game:blackjack",
+        "rect": [
+          181.899993896484,
+          183,
+          64.1999969482422,
+          15
+        ]
+      },
+      {
+        "id": "travel:leave",
+        "rect": [
+          16,
+          337,
+          44,
+          15
+        ]
+      }
+    ],
+    "limitation": "Initial3-object fixture does not establish later Rourke/boss, showdown, heist, lifecycle or save/revisit clearance"
+  },
+  "assembly_proposal": {
+    "native_initial_body_regions": [
+      [
+        164,
+        412,
+        544,
+        176
+      ],
+      [
+        1092,
+        412,
+        544,
+        176
+      ]
+    ],
+    "fixed_near_contact_rail_y": 516,
+    "raw_bright_front_rail_observed_rows": [
+      502,
+      515
+    ],
+    "fitting": "Locally trace and nearest-neighbor fit furniture; raw1815x866 room framing is not an activation source",
+    "support_policy": "Retain complete dark feet/contact shadows; fit inside native588 replay bottom where defensible, before native604 floor inlay; no bright foot caps",
+    "replay_policy": "Recrop exactly2 existing opaque fronts from the identical final master",
+    "non_table_invariants": "BACK ROOM, ROURKE'S TABLES, OFFICE desk/text/legs, notices, hotpink stripe, wall/floor and floor inlays",
+    "original_recipe": "E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261115/assemble_grandback_v1r1.py",
+    "original_recipe_sha256": "ff4058a7d0a7a6ac33061cc6735ae605362458631c7db8780bc3c240c0d9d0bf",
+    "inherited_recipe": "E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261115/assemble_highlimit_v1r1.py",
+    "inherited_recipe_sha256": "5139d13bf08399d8574ff2fc04b4b89b9fbdf43a84cd0112b6bedc3c04ac41b8",
+    "wall_structural_period": "Own source brief specifies alternating56-board panels per112-board repeat (224 native). Texture is not asserted byte-periodic.",
+    "floor_recipe_specifics": "Back Room wrapper extends global lip replacement to boardy246..261, sampling source264+(y-246), x%64. Local table floor clear remains board[81,252..356,297) and[545,252..821,297).",
+    "native_floor_clear_regions": [
+      [
+        162,
+        504,
+        550,
+        90
+      ],
+      [
+        1090,
+        504,
+        552,
+        90
+      ]
+    ],
+    "floor_donor_candidate": "Clean original same-y native x%128, derived from own old boardx%64 recipe; verify visible joins, not just phase",
+    "phase_checks": [
+      {
+        "native_region": [
+          162,
+          588,
+          550,
+          6
+        ],
+        "exact_rgba_pixels": 3300,
+        "total": 3300
+      },
+      {
+        "native_region": [
+          1090,
+          588,
+          552,
+          6
+        ],
+        "exact_rgba_pixels": 3312,
+        "total": 3312
+      }
+    ],
+    "old_fringe_policy": "Trace the own original table/frame/clear-fill shadow fringe; do not transplant public or High Limit shadow masks",
+    "floor_inlay_warning": "A dark source line begins at native602 across the room, including between tables; it belongs to the long floor-inlay assembly and is not proven old-table bottom return. Preserve it unless separately justified.",
+    "original_top_green_probe": "No strong green above native414 in tested old left-table region; no automatic assumption of public-table top-fringe rows.",
+    "outside_final_reviewed_repair_union_pixel_identity_required": true
+  },
+  "motion_proposals_not_applied": {
+    "existing_lamp_rects": "x250/350/450/550/650,y124,size52x8",
+    "strict_warm_counts_at_current": [
+      32,
+      32,
+      0,
+      0,
+      0
+    ],
+    "strict_warm_predicate": "Opaque R>=90,G>=60,R>=B+20,G>=B",
+    "own_darker_physical_moulding_predicate": "Opaque R>=70,G>=20,R>=B+20",
+    "physical_moulding_counts_at_current": [
+      32,
+      32,
+      0,
+      48,
+      64
+    ],
+    "actual_native_trim_columns": [
+      [
+        556,
+        558
+      ],
+      [
+        780,
+        782
+      ],
+      [
+        896,
+        898
+      ],
+      [
+        1120,
+        1124
+      ],
+      [
+        1344,
+        1348
+      ]
+    ],
+    "proposed_sole_art_rect_change": "casino_light_2.rect.x integer450 to448; samey124,52x8,size/ID/timing/phase/amplitudes/subset",
+    "proposed_lamp2_nonzero_trim_pixels": 32,
+    "alternative_near_lamp2_trim": [
+      1004,
+      1006
+    ],
+    "no_high_limit_soffit_reuse": "Strict warm predicate finds0/0/0/0/0 pixels at y8 in Back Room",
+    "sign_rect_unchanged": [
+      332,
+      54,
+      234,
+      62
+    ],
+    "sign_target": "Existing ROURKE'S TABLES subtitle glyphs; BACK ROOM title lies outside envelope",
+    "sign_pink_pixel_count": 1632,
+    "sign_local_texture_bbox": [
+      86,
+      28,
+      292,
+      46
+    ],
+    "sign_predicate": "Original master R>=150,B>=80,R>=G+40,B>=G+20",
+    "all_changes_are_unapplied_proposals": true,
+    "required_gate": "Independent exact numerical/material and populated native/visible-motion review"
+  },
+  "required_remaining": [
+    "Guarded E assembly and exact pixel/counter custody",
+    "Independent actual integrated image and motion review",
+    "Fresh native initial Base/all16+simulated7/Reduce Motion/no-pointer liveness",
+    "Authentic animation/scoped commit/exact TEST proof",
+    "Browser acceptance only through qualified admitted capability"
+  ],
+  "production_assets_or_manifests_written": false,
+  "gameplay_coordinates_changed": false,
+  "e_volume_written": false,
+  "qa_runtime_launched": false,
+  "ledger_or_git_changed": false,
+  "art_approval": false,
+  "test_updated": false
+}

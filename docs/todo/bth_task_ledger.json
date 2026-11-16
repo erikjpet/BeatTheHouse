@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T06:20:50.704196+00:00",
+  "updated_at": "2026-11-16T08:42:25.243756+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -38045,7 +38045,7 @@
       "name": "Audit and correct all-room spatial support and seams",
       "group": "current",
       "state": "open",
-      "status": "ACTIVE_GRAND_NATIVE_PREPARATION_AND_HIGH_LIMIT_SOURCE",
+      "status": "ACTIVE_GRAND_ANIMATED_REVIEW_AND_PARALLEL_ROOM_REPAIRS",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38127,16 +38127,16 @@
           "summary": "Bar exact7b284648 TEST current,13 artifact files and default-TLS HTTPS bytes verified; NEXT1240ce unchanged. All native gates/art review and lossless APNG pass. Browser NOT RUN; all-room parent remains open with19 room repairs remaining."
         }
       ],
-      "next_action": "Bar bounded native/visual and exact TEST artifact delivery complete; browser NOT RUN. Grand V3 static GO for isolated native trial after two retained rejections; prepare exact source, run four contexts,16/7 motion and liveness. High Limit source-only trial proceeds in parallel. All19 remaining room dispositions stay open.",
+      "next_action": "Grand V4B four contexts19167/98pairs/40IDs, motion66 and no-input liveness PASS; actual151-frame/20.0033s capture closed, independent sequence review and lossless APNG active. High Limit canonical9 metadata verified and native tooling ready for committed selected-source qualification. Grand Back Room bounded assembly and Hidden source-only trial active. Bar remains exact TEST7b; all20 parent stays open with19 room dispositions pending.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T06:20:50.704196+00:00",
+        "observed_at": "2026-11-16T08:42:25.243756+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T06:20:50.704196+00:00",
+      "updated_at": "2026-11-16T08:42:25.243756+00:00",
       "scope": [
         "Audit all environment art packages for seams, grounded supports, perspective and live object clearance; preserve existing animations and gameplay geometry."
       ],
@@ -38553,7 +38553,7 @@
       "name": "Grand public spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "V3_STATIC_GO_NATIVE_PREPARATION_ACTIVE",
+      "status": "V4B_NATIVE_PASS_ANIMATED_REVIEW_ACTIVE",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38595,18 +38595,33 @@
           "kind": "canonical_tooling_qualification",
           "reference": "docs/testing/grand_spatial_preparation_20261116.json",
           "summary": "21 release-guard regressions pass; nine canonical sidecars independently reviewed and before/after verified with unchanged PNG/JSON. Native adapter independently audited; engine not yet launched."
+        },
+        {
+          "kind": "retained_native_art_rejection",
+          "reference": "docs/testing/grand_spatial_r1_native_review_v3_20261116.json",
+          "summary": "All19167 checks ran; Convention hover assertion failed. Independent populated review rejected bright right collar behind Blackjack. Separate66 motion and liveness pass; no native/art completion claim."
+        },
+        {
+          "kind": "v4_scoped_native_trial",
+          "reference": "docs/testing/grand_spatial_r1_v4_scoped_transport_review_20261116.json",
+          "summary": "V4 quiet262-texel collar approved statically. Exact22-byte payload materializationH563ef08f and closed copy30976 verified; fresh TRIAL4B native install passed. Earlier cross-campaign install rejection retained before any engine."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/testing/grand_spatial_r1_v4_scoped_transport_review_20261116.json",
+          "summary": "V4B scoped transfer independently verified; unchanged observer passes4 populated contexts19167checks/98paintpairs/40IDs, motion66 and no-input liveness.151 actual frames span20.0033013333333s; final sequence/encoding/art approval pending."
         }
       ],
-      "next_action": "Prepare committed source with nine canonical import sidecars, install exact reviewed V3 only in fresh guarded E QA project, then qualify four populated contexts,16/7 motion, replay, labels, liveness and authentic capture. No production art or Grand TEST activation approved yet.",
+      "next_action": "Complete lossless APNG verification and independent review of closed151-frame/20.0033s V4B capture, then require final exact GO_FOR_TEST_BUILD approval. Only then integrate9 PNGs/single lamp0 x250->245 JSON leaf, commit and qualify strict TEST build against7b; all other room/UID/cache/script bytes preserved.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T06:20:50.704196+00:00",
+        "observed_at": "2026-11-16T08:42:25.243756+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T06:20:50.704196+00:00",
+      "updated_at": "2026-11-16T08:42:25.243756+00:00",
       "scope": [
         "Review and correct Grand public physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -38633,7 +38648,7 @@
         }
       },
       "implementation_batches": [],
-      "candidate_state": "V3_STATIC_GO_FOR_NATIVE_TRIAL_ONLY",
+      "candidate_state": "V4_STATIC_GO_INSTALLED_IN_FRESH_SCOPED_QA",
       "raw_source": {
         "path": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-GRANDTRIAL-20261116/candidate_sources/grand-spatial-r1.png",
         "sha256": "31e7a40bfedcbc68a00a615e400b3df88bab03d180558fd3c88749a410147c63",
@@ -38657,7 +38672,7 @@
       "name": "Grand high-limit spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "ACTIVE_SOURCE_TRIAL_PREPARATION",
+      "status": "V1_STATIC_GO_METADATA_VERIFIED_NATIVE_READY",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38684,18 +38699,33 @@
           "kind": "parallel_source_preparation",
           "reference": "docs/art/environment_spatial_rework_direction.md",
           "summary": "Dedicated source-only helper checks exact High Limit room and retained before captures; one generated non-active table trial preserved. Public Grand lamp masks do not apply to this room. No QA runtime or active-art change."
+        },
+        {
+          "kind": "preserved_source_trial",
+          "reference": "docs/art/briefs/high_limit_spatial_repair_20261116.md",
+          "summary": "One non-active source trial preserved in commit39d3b17a9; actual source/table/fixture and old-shadow contract recorded."
+        },
+        {
+          "kind": "static_native_trial_go",
+          "reference": "docs/testing/high_limit_spatial_r1_static_review_v1_20261116.json",
+          "summary": "ExactBG25242d74/H21=481e858e source joints/supports pass isolated static review; actual Baccarat contact and all native/motion/TEST gates remain pending."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/testing/high_limit_spatial_preparation_20261116.json",
+          "summary": "Exact9 canonical import additions pass guarded before/after verification, all19 PNGs/fullJSON/global index preserved; selected-source45 contract tests pass. No High Limit native/runtime or production activation yet."
         }
       ],
-      "next_action": "Review the separate preserved High Limit table source, exact assembly/shadow plan and proposed decorative light alignment. No active assets, geometry, runtime or TEST change; root coordinates isolated native qualification after public Grand.",
+      "next_action": "Commit canonical9 import sidecars and frozen selected-source/native tooling, then qualify exact21-file V1 via admitted selected-source archive. Actual Base9 Baccarat/leg contact,16/7 motion/liveness and authentic animated preview remain required. Future TEST must retain newly delivered Grand as an explicitly verified baseline.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T06:20:50.704196+00:00",
+        "observed_at": "2026-11-16T08:42:25.243756+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T06:20:50.704196+00:00",
+      "updated_at": "2026-11-16T08:42:25.243756+00:00",
       "scope": [
         "Review and correct Grand high-limit physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -38722,7 +38752,7 @@
         }
       },
       "implementation_batches": [],
-      "candidate_state": "NON_ACTIVE_SOURCE_TRIAL_PREPARED"
+      "candidate_state": "V1_STATIC_GO_FOR_NATIVE_ONLY"
     },
     {
       "id": "BTH-ENV-SPATIAL-GBR-001",
@@ -38730,7 +38760,7 @@
       "name": "Grand back room spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "status": "SOURCE_FROZEN_BOUNDED_ASSEMBLY_ACTIVE",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38752,18 +38782,28 @@
           "kind": "sidebar_handoff",
           "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
           "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
+        },
+        {
+          "kind": "parallel_source_preparation",
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "Dedicated source-only artist inspected exact back-room source and typed Base3 before; one1815x866 trial preserved under its own source folder. Lamp2 proposed art-onlyx450-to448 follows actual moulding; no HL/public mask reuse or production edits."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/art/briefs/grand_back_room_spatial_repair_20261116.md",
+          "summary": "One frozen non-active raw1815x866 trial91fbde8e; own floor/support/light/sign constraints recorded and bounded assembler active."
         }
       ],
-      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
+      "next_action": "Frozen raw trial91fbde8e and room-specific brief are preserved. Bounded table/shadow assembly code is active; preserve three Base objects, two exact counter replays, all16/7 animation timing and global602/603 inlay; sole proposed JSON leaf lamp2 x450->448 remains non-active.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T00:45:23.175587+00:00",
+        "observed_at": "2026-11-16T08:42:25.243756+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:45:23.175587+00:00",
+      "updated_at": "2026-11-16T08:42:25.243756+00:00",
       "scope": [
         "Review and correct Grand back room physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -38789,7 +38829,8 @@
           "areas": []
         }
       },
-      "implementation_batches": []
+      "implementation_batches": [],
+      "candidate_state": "RAW_SOURCE_TRIAL_PRESERVED_BRIEF_IN_PROGRESS"
     },
     {
       "id": "BTH-ENV-SPATIAL-HIDDEN-001",
@@ -38797,7 +38838,7 @@
       "name": "Hidden casino spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "status": "SOURCE_ONLY_TRIAL_ACTIVE",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38821,16 +38862,16 @@
           "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
         }
       ],
-      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
+      "next_action": "Source artist is inspecting exact small_underground_casino identity, four populated contexts, current artwork and approved Delta Queen reference for one new non-active spatial trial. Preserve own room anchors, floor/support traces and animation inventory; no production/QA/TEST change yet.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T00:45:23.175587+00:00",
+        "observed_at": "2026-11-16T08:42:25.243756+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:45:23.175587+00:00",
+      "updated_at": "2026-11-16T08:42:25.243756+00:00",
       "scope": [
         "Review and correct Hidden casino physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],

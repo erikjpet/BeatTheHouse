@@ -1,0 +1,39 @@
+{
+  "task_id": "BTH-ENV-SPATIAL-HL-001",
+  "status": "STATIC_GO_CANONICAL_METADATA_VERIFIED_NATIVE_PREPARATION_READY",
+  "candidate_background_sha256": "25242d74d442bc99b183845c75b5714983db081100b4020780645976e7f7fb50",
+  "candidate_package_21_file_sha256": "481e858ee3c484b06ba6df935983c29979a188e7e59ff5f44eaf22ecdbe020e4",
+  "static_review": "docs/testing/high_limit_spatial_r1_static_review_v1_20261116.json",
+  "canonical_metadata": {
+    "state": "APPLIED_AND_VERIFIED_METADATA_ONLY",
+    "sidecars": 9,
+    "independent_reviewers": ["/root/audit_spatial_handoff", "/root/review_test_adapter"],
+    "patch_sha256": "fbe77ab2c26223b595035ccc2dc975bd3632b97116edac2378303429f1f673cf",
+    "provenance_sha256": "3a9fbbe8a6b5d84f95f3c2f9aa987665f979da57bc013bc6a7dedb828b7d0e31",
+    "verifier_sha256": "166c52399ec166de5fb43e6300a4a8d28ed2b61028227fedf548e67cd1ff1942",
+    "before": {"run_id":"BTH-ENV-SPATIAL-HLTRIAL-20261116-metadata-before02","pid":42792,"exit_code":0,"active_at_release":0,"worker_log_sha256":"4b88b6a344b7fe5adcbe5ba21439226cc26ff7a1eb8f08da7bc6f5334b8b4cdd"},
+    "before_guarded_job_and_verifier_identity_authenticated_by_root": true,
+    "after": {"run_id":"BTH-ENV-SPATIAL-HLTRIAL-20261116-metadata-after03","pid":31632,"exit_code":0,"active_at_release":0,"worker_log_sha256":"6ed9f8e4d6308462f5fcd3b76a455af0ffbc9a67dd96f64f72228be6f793d99d"},
+    "complete_uid_bindings_verified": 1605,
+    "preserved_scope": "All19 High Limit PNGs, complete room JSON, global index and every prior file beneath the High Limit art prefix; exact9 donor import additions only. Not a whole-repository snapshot."
+  },
+  "native_tooling": {
+    "tools/high_limit_spatial_native_profile.py": "1c6cc6a722870785b9a39ecbb88f99cddbda34fc17151b52dc0392f81d8e1273",
+    "tools/high_limit_spatial_native_trial.py": "5ecdbb5b626be06059db0bbe305b76765adf8cfae1c8832abde00dc4361adef3",
+    "independent_review": "/root/native_suite_adapter/grand_native_adapter_audit",
+    "scope": "Base nine objects/pairs/IDs,2N+83 assertions,16 native/seven simulated low-detail entries and66 motion checks; no direct scenarios or Bar58-case claim"
+  },
+  "selected_source": {
+    "schema": "PARTIAL_SELECTED_PATH_ARCHIVE",
+    "helper_sha256": "311ab097dd7d57ab0eacdd342b2b4e0b8f6d49af914e827c8f5adbd934c7e353",
+    "contract_tests_sha256": "2c7756306e83f7281626453b5594905ba0491cc72e0791369cafc03cc6a2e5ca",
+    "guarded_tests": {"run_id":"BTH-ENV-SPATIAL-SELECTED-SOURCE-20261116-tests01","count":45,"result":"PASS","pid":41416,"exit_code":0,"active_at_release":0,"worker_log_sha256":"6c1a5d23b18b4daa1a661a674360b8d9332a441950c16fa13548f14b9cb8149a"},
+    "read_only_measured_scope": "At source24b8e34:2385 files/224929450 raw bytes, estimated226867200-byte tar; all900 visible GDs,502 test GDs,224 class paths,421 art sources/400 texture sources and1605 UID closure including declared native overlay. Five necessary documentation fixtures retained.",
+    "limits": "Contract tests pass; actual selected archive/extraction/cold import and PCK equivalence remain future execution gates. This scope does not qualify full repository hygiene or historical reconstruction. No existing evidence deleted or profiles moved."
+  },
+  "next_action": "Commit exact canonical source and frozen tooling, then run guarded selected-source preparation and actual Base contact/motion/liveness/capture qualification. Preserve the source commit/tree, selection and all original assertions.",
+  "high_limit_native_runtime_launched": false,
+  "production_png_or_json_changed": false,
+  "test_updated": false,
+  "browser_acceptance": "NOT_RUN under admitted E-profile restriction"
+}

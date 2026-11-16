@@ -1,0 +1,19 @@
+{
+  "task_id": "BTH-ENV-SPATIAL-HL-001",
+  "candidate": "high-limit-spatial-r1-assembled-v1",
+  "decision": "STATIC_GO_FOR_NATIVE_TRIAL",
+  "native_trial_approved": true,
+  "production_activation_approved": false,
+  "test_delivery_approved": false,
+  "independent_reviewer": "/root/audit_spatial_handoff",
+  "background_sha256": "25242d74d442bc99b183845c75b5714983db081100b4020780645976e7f7fb50",
+  "package_21_file_sha256": "481e858ee3c484b06ba6df935983c29979a188e7e59ff5f44eaf22ecdbe020e4",
+  "executed_recipe_sha256": "5fe162da9488e47aef545d7e60ae00908f1bd3f9899451a8ad791218ee516855",
+  "assembly_proof": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLTRIAL-20261116-assemble01/evidence/high-limit-spatial-r1-assembly.json",
+  "assembly_proof_sha256": "7c6d9bb22051150f57637b03bf4870396e6f111f4b5c008807631d253036ce77",
+  "assembly_job": {"pid":43932,"exit_code":0,"active_at_release":0,"assigned_before_execution":true},
+  "independent_static_result": "Coherent shallow felt planes, attached dark supports and complete floor contacts; no conspicuous old green fringe, rectangular patch or residual shadow frame. VIP/wall/soffit/inlays retained.",
+  "proposed_decorative_delta": "Five lamp rect.y integer124 to8 on existing gold soffit material; subtitle mask follows PRIVATE TABLES, not HIGH LIMIT. Other geometry, timing and16/7 inventory remain fixed.",
+  "required_native_gates": ["Actual Base nine-object Baccarat body/leg and BACOPEN label review near boardx280,y270..278.5", "Two exact replay crops and foot shadows", "Fixture visibility and16 native/7 simulated low-detail motion", "Reduce Motion and original no-pointer liveness", "Authentic animated capture"],
+  "scope": "Isolated native trial only. No public-Grand scenarios or Bar58-case coverage claim; no art activation or TEST approval."
+}

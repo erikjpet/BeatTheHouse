@@ -1,0 +1,21 @@
+{
+  "schema": "bth.grand_spatial_native_checkpoint/v1",
+  "task_id": "BTH-ENV-SPATIAL-GRAND-001",
+  "status": "NATIVE_PASS_FINAL_SEQUENCE_REVIEW_ACTIVE",
+  "source_commit": "24b8e34bb228335eb17db403757b9ce6f21c7151",
+  "candidate_background_sha256": "5408ef84bc3d8aec92b0814a8bf446210091f4d6b513be9ba8fff5a64565e9ae",
+  "candidate_package_22_file_sha256": "563ef08fec04e980c9cb2e215b2801f3612a22dd8f8250ba6247293c12f069d4",
+  "workspace": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-GRANDTRIAL4B-20261116/qa_source",
+  "contexts": {"count":4,"checks":19167,"paint_pairs":98,"distinct_objects":40,"status":"PASS","pid":42784,"report_sha256":"19a350e118346e58926591ddbe9c8a1d2a6454d41da72344bf4eaeae69b2a20c","all_hover_and_selection_neutral":true,"observer_changed":false},
+  "motion": {"status":"PASS","checks":66,"native_entries":16,"simulated_low_detail_entries":7,"reduce_motion_stable_entries":16,"pid":41284,"report_sha256":"be78b9eb48b28c94892e5f4e6606fab1dcf40c6d4b5d8fb475921dcbc18c0121"},
+  "no_pointer_liveness": {"status":"PASS","original_repository_check":true,"pid":40324},
+  "capture": {"status":"PASS","pid":43096,"frames":151,"actual_clock_span_seconds":20.0033013333333,"report":"E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GRANDNATIVE-20261116-v4b-capture-grand_casino_gala_night/evidence/capture/animation_capture.json","report_sha256":"3dde0c6269c192dbfb6c69945964c2cb9f4722eb64a4e74e4f55efb7425864c0"},
+  "job_scope": "All four native checks exited0 and released at zero active processes with suspended assignment-before-resume,12percent CPU,2GiB memory,kill-on-close and admitted E storage gates.",
+  "independent_four_still_review": {"reviewer":"/root/audit_spatial_handoff","decision":"GO_FOR_FOUR_STILL_SCOPE","result":"Quiet collar clears Blackjack; both Rourke placements retain contact/clearance; no old floor frame, donor patch, replay seam or opaque pulse plate observed."},
+  "preview_encoding": {"status":"FULL_CAPTURE_ENCODE_REJECTED_SIZE_LIMIT_NO_OUTPUT","adapter_sha256":"9f6c9a51ab5cfdd382e94943feda11b3f1dbe79b878ee68abc71d21df787305a","run_id":"BTH-ENV-SPATIAL-GRAND-APNG-20261116-v4b-encode","pid":6060,"exit_code":1,"active_at_release":0,"timed_out":false,"error":"Lossless APNG exceeds the strict 10 MiB Page limit; no fallback attempted","original_frames_modified":false,"next_action":"New explicitly shorter contiguous native-resolution excerpt with actual clocks; retain complete151-frame source and full20.0033s review evidence."},
+  "retained_failed_trials": ["V3 actual art gold-collar conflict and Convention non-neutral hover; no observer weakened or pointer-cause claim.","First V4 install rejected old-campaign candidate scope before copy/import; new V4B scoped copy authenticated the original producer and all22 files without relaxing guard."],
+  "limits": ["Seven low-detail entries are native renderer simulation, not browser acceptance.","Twenty-second Gala capture does not span the longest57.7778-second glint cycle.","Final sequence/art approval, exact source integration, TEST build and TEST delivery remain pending."],
+  "production_art_written": false,
+  "test_updated": false,
+  "browser_acceptance": "NOT_RUN"
+}

@@ -1,0 +1,19 @@
+{
+  "task_id": "BTH-ENV-SPATIAL-GRAND-001",
+  "candidate": "grand-spatial-r1-assembled-v4",
+  "decision": "STATIC_GO_FOR_NATIVE_TRIAL",
+  "native_trial_approved": true,
+  "production_activation_approved": false,
+  "test_delivery_approved": false,
+  "independent_reviewer": "/root/audit_spatial_handoff",
+  "background_sha256": "5408ef84bc3d8aec92b0814a8bf446210091f4d6b513be9ba8fff5a64565e9ae",
+  "package_22_file_sha256": "563ef08fec04e980c9cb2e215b2801f3612a22dd8f8250ba6247293c12f069d4",
+  "executed_recipe_sha256": "a41ac9e5fa14cf5409c68989587013aeca9d14044d547b051120f70d2f2016d7",
+  "assembly_proof": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GRANDTRIAL-20261116-assemble08/evidence/grand-spatial-r1-assembly-v4.json",
+  "assembly_proof_sha256": "a2244588795f89d207c0cf74ea6c2411113d47254969bd058b80c26271931b9b",
+  "assembly_job": {"pid":39944,"exit_code":0,"active_at_release":0,"assigned_before_execution":true},
+  "physical_correction": "Exactly262 right lower-collar face/edge texels receive retained quiet generated timber. All alpha/geometry, floor, contact shadows, upper cap and exterior pixels remain V3-identical. Only master and right replay change; other20 payloads remain V3-identical.",
+  "independent_static_result": "Quiet material follows the pedestal form; no bright stripe, label-sized patch, cutout halo, structural or seam regression observed.",
+  "required_fresh_gates": ["Four actual populated contexts including neutral Convention", "Blackjack lettering and Rourke contacts", "Counter replay and floor glints", "All16 native/7 simulated low-detail motion and Reduce Motion", "Original no-pointer liveness", "Authentic animated capture"],
+  "scope": "Fresh isolated native trial only; no activation or TEST approval. V3 rejection and failed pointer assertion remain retained."
+}

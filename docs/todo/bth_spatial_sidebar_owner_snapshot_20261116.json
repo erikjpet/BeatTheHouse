@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-16T06:20:50.704196+00:00",
+  "observed_at": "2026-11-16T08:42:25.243756+00:00",
   "tasks": [
     {
       "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
       "title": "Repair environment art",
       "state": "active",
-      "observed_at": "2026-11-16T06:20:50.704196+00:00",
-      "source": "Actual active sidebar owner: Bar exact7b TEST artifact/native visual delivery complete; browser NOT RUN. Grand V3 static-native-only GO after retained V1/V2 rejections, canonical nine sidecars verified and21 guard regressions pass; source/native preparation active. High Limit source-only trial prepared in parallel; no second engine job. Parent all20 remains Open with19 room dispositions pending."
+      "observed_at": "2026-11-16T08:42:25.243756+00:00",
+      "source": "Actual active sidebar owner: Bar TEST7b delivered; browser NOT RUN. Grand V4B4contexts19167checks/motion66/no-input liveness PASS; closed151frame20.0033s capture under final sequence and encoding review. High Limit9canonical metadata verified/native ready; Grand Back Room bounded assembly and Hidden source-only trial active. All20 parent remains open with19 room dispositions pending; art branch/TEST only."
     }
   ]
 }

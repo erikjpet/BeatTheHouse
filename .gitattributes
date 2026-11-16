@@ -32,3 +32,6 @@ data/art/environments/grand_casino_cage.json -text
 data/art/environments/motel_room.json -text
 data/art/environments/apartment.json -text
 data/art/environments/house.json -text
+
+# Preserve the independently authenticated High Limit canonical-metadata receipt.
+/review_artifacts/environment_art_sources/high-limit-canonical-import-metadata/provenance.json -text whitespace=cr-at-eol
