@@ -1,0 +1,104 @@
+{
+  "schema": "bth.environment_spatial_active_checkpoint/v1",
+  "observed_at": "2026-11-16T12:18:19.748790+00:00",
+  "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
+  "high_limit_delivery": {
+    "path": "docs/testing/high_limit_spatial_test_delivery_20261116.json",
+    "sha256": "b4650bd3538419c0242b58429d1eb84da0a75abc239ff03f659ed8b1d1552261",
+    "TEST_source": "b35412ac003983e2bdce620ec9fd75f4810078cd",
+    "served_sha256": "fab304ee748827a6bbec53b989284bb9df586fadbaa58e054f43b01d98610ce8",
+    "preview_page": "page_21f30d95cf108191be81f2f718cb4c60",
+    "preview_sequence": 2,
+    "page_native_reference_and_delivery_link_readback_verified": true,
+    "Page_rendered_playback_verified": false
+  },
+  "parent": {
+    "delivered": 3,
+    "remaining": 17,
+    "complete": false
+  },
+  "new_qualified_tests": {
+    "run": "BTH-ENV-SPATIAL-HIDDEN-GBR-V2-20261116-tests01",
+    "status": "PASS",
+    "count": 59,
+    "Hidden_v2": 25,
+    "GBR_pure_v1": 34,
+    "seconds": 4.532,
+    "job_pid": 31980,
+    "job_sha256": "a0d9ac8b5cdb62b24325e58351ec390d6420ffe44133be1a433e4fb873c2bf8a",
+    "log_sha256": "a3d4a2550f0f782bd3b968cc3d0c3574842a60116a63a83905ecf5b3e9b81ed5",
+    "scope": "synthetic/retained-source contract checks; not native or realGBRbaseline authority"
+  },
+  "retained_failed_joint_suite": {
+    "run": "BTH-ENV-SPATIAL-HIDDEN-GBR-20261116-tests01",
+    "count": 52,
+    "exit_code": 1,
+    "active_at_release": 0,
+    "sole_error": "Hidden current-rm report intentionally has no selected_label_evidence; original schema emits71actualcanvaslabels/zero selections. Corrected in versionedv2 without changing originalGD/assertions."
+  },
+  "GBR_actual_baseline_discovery": {
+    "old_pure_policy_sha256": "19ac590f8df8d85b92832016c32283215016b59e3598222efaa41c2b2ec00216",
+    "status": "v1 synthetic contracts pass but actualbaseline binding needs versionedfix",
+    "actual_HL_manifest_activation": "c94d12614f9b6c2b86311999acc6ae9ec0711c71e1cdeb596a2e7937c7593117",
+    "original21_logical_source_seal": "065a5f98dfabb2b435bc31af76a0273921a370d1ebb9d9887ce6283c3231fbbb",
+    "candidate21_source_seal": "e20695c6715e4156027cc211b6c7291ff2820e3d52d317dbbfc9b6cc5ca931c7",
+    "next": "newpure_v2 separates exactactivation andlogicalsource seals; actualreadonly8fff regression plus newfixedHLbaselineauthority, no allowlist/fallback"
+  },
+  "Hidden": {
+    "static_art_review_sha256": "09af35c34796e320e872bbe07dd833ae0073c511b08c438f1d44897145b8e05e",
+    "candidate30_seal": "508b106419ef299aad27d92f4d54c5c4d1f7e6cf353dff546848ed290a273509",
+    "v2_policy_sha256": "6f853e908e4d56249e361943df19efe7d3773d46e5c436a2caffe7cdff593f1f",
+    "v2_runner_sha256": "48f8a9f0aaab9eb0ee5ececec2370ad418ee211a173f37302f7b98cad3c1c6b7",
+    "next": "freshsourcecommit then guarded core13+15 acceptance+summary; original19observerGD unchanged; no native runyet",
+    "previous_tested_v2_policy_sha256": "6e056fb062c4b1db8276150f99ef322cc9ae6a60f2f07338843cf3812a3a8146",
+    "previous_tested_v2_runner_sha256": "912bb4a9f1b0d8158cd87d5421f7106c7266bfd06b38b470f0d2244949d300c4",
+    "final_v2_tests_sha256": "266c3f0d897ff18e5711f2f3b16c162d4cc1d1c7af12f6f3516e534002a43418",
+    "final_byte_qualification": {
+      "count": 25,
+      "status": "PASS",
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HIDDEN-V2FINAL-20261116-tests01\\evidence",
+      "job_pid": 38184,
+      "job_sha256": "b8a4c9f212f99fc790016fda8c1418198c2fe720827a02b2e105923669d55c85",
+      "log_sha256": "9ac4e1493c0f1ba61acffd0af5b415b92307909508ccdd49956990331ad917e7",
+      "scope": "samev2behavior; onlyoneEOFnewline andrunnerpolicySHArefresh afterindependentAST/byte-reversalGO; old59historicalretained"
+    }
+  },
+  "Private": {
+    "status": "V2 actualstaticGO forisolatednativeonly",
+    "review_sha256": "cd0ba14d82ea8317436d9983ded0b34b53cf72212fe5dfa796a5c4a104385395",
+    "logical10_including_index_seal": "11fb1cb50971100bd21404fdb73a0ca3550f487f656aa694874f4159c15dcfe4",
+    "background_sha256": "1939afd50bc5df04524c45965e9a895d6cb2f9fd17b30dc1824df9671892242b",
+    "actual_Poker_paint": 18464,
+    "minimum_felt_margin_board_pixels": 8.648236476966872,
+    "next": "onecanonicalbackground pairedapply; focusednativeadapter/sourceboundary tests; actualcleanBase andseparateeligibleLuckycontext, lifecycle7motions/RM/depth, no originalCrewwork/C3claim"
+  },
+  "Delta": {
+    "v2_test_count": 15,
+    "v2_tests_seconds": 1.178,
+    "v2_assembly_run": "BTH-ENV-SPATIAL-DELTATRIAL-20261116-v2-01",
+    "job_pid": 29232,
+    "status": "PASSassembly; actualstaticartreviewpending",
+    "proof_sha256": "ecc192e029489fd6997adf60d937db557f94ef57f58266e3dc11df7814a1dd4d",
+    "logical_room29_seal": "bcab84b0ebf42baf06d470ff9edfc847a11fe20f58ee0506461f8a1def61ace2",
+    "background_sha256": "70eb1b890d1cca16dbdccd116331c5ed841f5df91236edbdc4b4a00977e2487b"
+  },
+  "Cage": {
+    "brief_sha256": "60df5cf18828b33944bc9ce417727cd529aa8a954d4f157c61c13bc6f0c249ec",
+    "disposition": "preserve coherentbuilt-incabinet/floor, fix actualrectangularpulse withglyph-onlyalpha",
+    "glyph_texels": 5532,
+    "native_motions": 20,
+    "low_detail_motions": 16,
+    "candidate_or_runtime_generated": false,
+    "canonical_sign_metadata_artifact_created_correctly_after_absolute_absence_preflight": "review_artifacts/environment_art_sources/cage-canonical-import-metadata/; pendingindependentreview/rootpair"
+  },
+  "constraints": {
+    "no_main_NEXT_or_original_save_writes": true,
+    "global_process_inspection": "Get-CimInstance Win32_Process previouslydeniedAccessdenied; no retry/alternateinspection. OwnJobreceipts only.",
+    "browser": "NOT_RUN; no bypass of original-profile/E-profile restriction",
+    "filesystem_incident": "Prioruntracked mainmetadata content unknown; pendinghumananswer, no further cleanup/removal/moves."
+  },
+  "canonical_metadata_pair_receipt": {
+    "path": "docs\\testing\\private_and_cage_spatial_metadata_application_20261116.json",
+    "sha256": "6402a9cf1fdd4a490a35f9681fbc3b84992acbb52f123f6de6d11f0763605afa"
+  }
+}

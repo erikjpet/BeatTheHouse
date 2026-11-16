@@ -1,0 +1,62 @@
+{
+  "schema": "bth.private_cage_spatial_metadata_application/v1",
+  "tasks": [
+    "BTH-ENV-SPATIAL-PRIVATE-001",
+    "BTH-ENV-SPATIAL-CAGE-001"
+  ],
+  "status": "EXACT_TWO_CANONICAL_IMPORT_ADDITIONS_VERIFIED",
+  "pairs": {
+    "Private": {
+      "target": "assets/art/environments/punchline_back_room/background.png.import",
+      "sidecar_sha256": "42bfe5f50cd92e5116a82180ad0735e284d8ae75fb8c630d508a34919766bc14",
+      "verifier_sha256": "44632452b10c7135dfa8b3149fd84645d296ede961fd928ab7b5390db12d3c1d",
+      "jobs": {
+        "before": {
+          "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVATEMETA-20261116-before01\\evidence",
+          "pid": 19292,
+          "job_sha256": "d2ef6cab61064cd7f392f1d7acb8c9d7590aa2353feeae60de538a9e1bfc0b59",
+          "stdout_sha256": "8b6a6b5fdd98221aee6c3a7b5cc9cd63b765829e8f77da61a08c2717fd41d076",
+          "manifest_sha256": "1d6100938170df90f590751285255c65ceaf3c1285701ff52fcfa85b54c3bd4b",
+          "launch_claim_sha256": "93583806545919ddb5091cbc97d3870116c55803d4ff0aedba6161b0935af606"
+        },
+        "after": {
+          "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVATEMETA-20261116-after02\\evidence",
+          "pid": 25232,
+          "job_sha256": "2ae408872679279cb0e7f195324bdeab5f0cb03c6548db3ae5a5aaa0f5341b6a",
+          "stdout_sha256": "67139ad2ef25b2e2561a0e4a495169af384449bbcc31ef6fdb8f5de49435dd60",
+          "manifest_sha256": "2764ab230359f95643a5536a41da2029d6d2d45bbb62ed438b2b779962947b7c",
+          "launch_claim_sha256": "6ec5238b433c2fcb858cab73f36354a20e932ae02d4ca47d125b7b69d93d35b6"
+        }
+      },
+      "only_one_target_added_all_prior_room_prefix_and_PNG_JSON_index_bytes_preserved": true
+    },
+    "Cage": {
+      "target": "assets/art/environments/grand_casino_cage/anim/cage_sign_pulse.png.import",
+      "sidecar_sha256": "c01de65224414a44c9155409991088f1b7cc620ebdc1ef253632ac961ee50812",
+      "verifier_sha256": "1ebb2f94e1d6f3bd46ae9dc56499677acb625960b044dd2e6931d64f68c96ba2",
+      "jobs": {
+        "before": {
+          "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-CAGEMETA-20261116-before01\\evidence",
+          "pid": 43932,
+          "job_sha256": "f4a3f621b5adcd77afbd078a9e2ee04445c18b3116610e1e100842a688b7caa3",
+          "stdout_sha256": "7de1ddcfbcfb7266760080cf360989f159963a29afb6a3b2d85369b4ef5737df",
+          "manifest_sha256": "3af435c285add40bc5b39f6f98da7a8721e8fb0491a9471c3b29c2b48d5638c7",
+          "launch_claim_sha256": "7bdc13ce056a5626c35875ccddcdb0e0eed38913e6aa4d8eb2e627aff5c9bfed"
+        },
+        "after": {
+          "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-CAGEMETA-20261116-after02\\evidence",
+          "pid": 17960,
+          "job_sha256": "15e439fea8d9e0060cd24b7f75a85d855b77806dff3962d353ab878107e9a839",
+          "stdout_sha256": "cf5c2c207f8b175ea64b5389fc2ca374495b485e9e08b01ce5519ea29e8ee26e",
+          "manifest_sha256": "cde210a751e2aca547e7342e3b1003e957b607c6ab80bdcb1e2bc17e07d077ee",
+          "launch_claim_sha256": "24872341445d8128c2066ceb64c7724cf45958f95fd20aee78483b48e50ba921"
+        }
+      },
+      "only_one_target_added_all_prior_room_prefix_and_PNG_JSON_index_bytes_preserved": true
+    }
+  },
+  "all421_current_art_source_bytes_equal_delivered_HL_manifest": true,
+  "no_PNG_JSON_runtime_profile_or_save_changes": true,
+  "no_cleanup_or_moves": true,
+  "TEST_not_updated_by_metadata_application": true
+}

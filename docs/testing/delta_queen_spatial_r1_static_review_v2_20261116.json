@@ -1,0 +1,217 @@
+{
+  "schema": "bth.delta_queen_spatial_static_review/v2",
+  "reviewed_on": "2026-11-16",
+  "task_id": "BTH-ENV-SPATIAL-DELTA-001",
+  "room": "delta_queen",
+  "independent_reviewer": "/root/audit_spatial_handoff",
+  "decision": "STATIC_GO_FOR_NATIVE_TRIAL",
+  "native_trial_approved": true,
+  "production_activation_approved": false,
+  "test_build_approved": false,
+  "test_publication_approved": false,
+  "candidate_path": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-DELTATRIAL-20261116/candidate_sources/delta-queen-spatial-r1-assembled-v2",
+  "package_29_file_sha256": "bcab84b0ebf42baf06d470ff9edfc847a11fe20f58ee0506461f8a1def61ace2",
+  "logical_room_file_count": 29,
+  "background_sha256": "70eb1b890d1cca16dbdccd116331c5ed841f5df91236edbdc4b4a00977e2487b",
+  "original_background_sha256": "c928cb461b44b10ab8548250fb5c870ddad4a727de8d724d213ee523a676619f",
+  "original_room_29_file_sha256": "ca8ecad1e0d4205f4921765aabe099321509116196684c4e459c77a9d9fca41e",
+  "full_manifest_sha256": "f8e80a75bbbf552bd339421d19d3b1e2df0359a21ef6aa7d3e232257edd89b70",
+  "global_index_sha256": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+  "global_index_is_separate_unchanged_control": true,
+  "raw_trial_sha256": "a4b3b127e2194c5fe24a9636e1f608277ee9b5d9b0caac53a6c02a2a0176c61d",
+  "recipe_sha256": "3075bf8de1ad78ca5005e2ab2c050723eb250eaa7d4d048cb7a9087fe31091e0",
+  "assembly_proof": {
+    "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-DELTATRIAL-20261116-v2-01/evidence/delta-queen-spatial-r1-assembly-v2.json",
+    "sha256": "ecc192e029489fd6997adf60d937db557f94ef57f58266e3dc11df7814a1dd4d"
+  },
+  "closed_producer": {
+    "job_path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-DELTATRIAL-20261116-v2-01/evidence/job.json",
+    "job_sha256": "e1f225ce05a0ff0abd49c222afce20400c1a33811185810651f1519a8868fbf0",
+    "pid": 29232,
+    "exit_code": 0,
+    "active_at_release": 0,
+    "assigned_before_execution": true,
+    "timed_out": false,
+    "cpu_percent": 12,
+    "job_memory_limit_bytes": 2147483648,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "error": null,
+    "cleanup_errors": [],
+    "storage_manifest_sha256": "0960a1592d76c3e66e911f2d6d3840b3c5b3f67e4f0ffa7702a68722771565bc",
+    "launch_claim_sha256": "d087ecafd42ecdb2a7903a502db5db77867a9464d47162e33f8cbe128d0c1eed",
+    "claim_matches_actual_manifest": true,
+    "worker_log_sha256": "5d9809bb10131e928c0291512a61a94f919af34c547a4fc9fffa2fffde21914d",
+    "command": [
+      "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+      "-B",
+      "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/assemble_delta_queen_spatial_candidate_v2.py",
+      "--source-root",
+      "D:/Projects/Beat-The-House/.tmp/environment-art-layers"
+    ],
+    "storage_scope": "Explicit admitted E workspace/run/profile/temp/evidence and candidate output; 4 GiB expected plus20 GiB reserve. Actual recorded pre-Job and pre-child gates passed."
+  },
+  "independent_custody_checks": {
+    "actual_29_file_seal_recomputed_and_matched": true,
+    "all_29_candidate_file_hashes_match": true,
+    "physical_candidate_file_count": 29,
+    "all_29_baseline_file_hashes_match": true,
+    "all_44_current_source_control_hashes_match_before_after_map": true,
+    "all_279_historical_source_hashes_match_before_after_map": true,
+    "preserved_v1_all_29_hashes_match": true,
+    "only_background_payload_changed": true,
+    "all_26_motion_PNGs_full_json_and_index_unchanged": true,
+    "normal_motion_entries": 26,
+    "default_low_detail_motion_entries": 26,
+    "independently_reconstructed_native_donor_rows": 99130,
+    "generated_raw_donor_rows": 95770,
+    "own_original_R3_raw_deck_donor_rows": 3360,
+    "full_reconstructed_and_actual_BGRA_sha256": "00682e3bb51679825f7041412ca9e2f0e8af02b53a54e00caf016b1c98ffae80",
+    "reconstruction_mismatched_bytes": 0,
+    "reconstruction_method": "Read-only BGRA reconstruction starts with actual original master and replaces every recorded native destination from its actual generated-table or own-R3-deck raw coordinate. Full reconstruction equals candidate; pixels outside exact union remain original.",
+    "auxiliary_sentinels": "Known source_baseline/.gdignore (83B, ce15181c032ba4cc0d94ab3e0e4598f93b1c08290cf661fff11212eff3a47369) and candidate_sources/.gdignore are separate from29 logical room files; no broad basename-ignore claim.",
+    "production_files_unchanged": true
+  },
+  "static_art_judgment": {
+    "viewed": [
+      "Actual assembled1800x860 V2 master",
+      "Actual original1800x860 active master",
+      "Actual frozen1815x867 generated raw trial"
+    ],
+    "v1_failure_resolved": "The visible left rail now converges from native x124 at rear to x65 at last felt row, then x64 at near rim. The shaded near rim, apron and complete compact supports establish a horizontal table volume. V1's constant-width upright panel is gone.",
+    "far_outer_native_xyxy": [
+      124,
+      352,
+      676,
+      358
+    ],
+    "near_outer_native_xyxy": [
+      64,
+      476,
+      712,
+      488
+    ],
+    "visible_native_x_max_exclusive": 660,
+    "side_rail_native_width": 8,
+    "right_edge": "Logical right rail slopes behind unchanged opaque cabinet at native x660. It is not compressed into a spurious visible strip. Original cabinet and its cream boundary stay exact outside the actual left silhouette.",
+    "apron_native_rect": [
+      72,
+      488,
+      632,
+      28
+    ],
+    "apron_right_edge_is_occluded_by_cabinet": true,
+    "supports_native_rectangles": [
+      [
+        200,
+        516,
+        56,
+        24
+      ],
+      [
+        620,
+        516,
+        36,
+        24
+      ]
+    ],
+    "supports_complete_attached_dark": true,
+    "no_blocking_static_seam_floor_patch_or_support_failure_observed": true,
+    "clearance_to_first_floor_mover": "Supports end at native y540 exclusive (board270), before first floor mover at board274. Motion crossing still requires fresh native evidence."
+  },
+  "historical_paint_and_clearance": {
+    "historical_root": "E:/CodexQA/BTH/runs/BTH-ENVART-DELTATRIAL-20261115-r3-six-context-trace-01/evidence",
+    "contexts": [
+      "__none",
+      "delta_queen_captains_invitational",
+      "delta_queen_engine_trouble",
+      "delta_queen_fog_delay",
+      "delta_queen_wedding_charter",
+      "delta_queen_whale_aboard"
+    ],
+    "initial_typed_records": 116,
+    "distinct_ids": 55,
+    "all_typed_body_adornment_masks": 232,
+    "all_mask_set_seal_independently_recomputed_ordinal": "1ec2d8396838f03d0b056ba385a20fbe682d5d49e9df9bb72fb5def9b4c94f74",
+    "unique_decoded_mask_PNG_hashes": 176,
+    "actual_support_texels_tested_per_mask": 2208,
+    "all_masks_positive_alpha_support_intersections": 0,
+    "all_masks_alpha_ge64_support_intersections": 0,
+    "generic_face_pixel_centers_independently_checked": [
+      {
+        "id": "blackjack",
+        "count": 9936,
+        "outside_felt": 0,
+        "minimum_left_native_pixel_margin": 9
+      },
+      {
+        "id": "roulette",
+        "count": 8170,
+        "outside_felt": 0,
+        "minimum_left_native_pixel_margin": 352
+      }
+    ],
+    "actual_pigment_method": "In every authenticated Blackjack/Roulette body PNG, count exact flat face pigments RGB(18,80,58),(28,138,98),(20,80,60) inside actual generic face region, then check against source-traced visible felt rows.",
+    "every_context_blackjack": {
+      "actual_pigment_texels": 6024,
+      "outside_felt": 0,
+      "minimum_left_native_pixel_margin": 9
+    },
+    "every_context_roulette": {
+      "actual_pigment_texels": 5398,
+      "outside_felt": 0,
+      "minimum_right_native_pixel_margin": 5
+    },
+    "limits": "These are historical settled initial masks, source geometry and exact-pigment subsets. They do not constitute fresh V2 populated images, every antialiased/accent/card/wheel pixel, later actor placements, full motion or runtime readability."
+  },
+  "protected_original_material": {
+    "right_counter_id": "delta_right_table",
+    "right_counter_native_rect": [
+      660,
+      340,
+      540,
+      184
+    ],
+    "right_counter_PNG_sha256": "b44cf1297406c399ab8fd599cad625de0990d5ceceef9139c3583d7130146b2e",
+    "counter_crop_and_PNG_BGRA_sha256": "8028e90c1ecbff168803ef4b346b7672d8e81c8c5c76ccdaffe072b1fd6862b3",
+    "compared_counter_texels": 99360,
+    "counter_exact_opaque_final_master_crop": true,
+    "right_master_native_x660_onward_exact_original": true,
+    "no_left_replay_added": true,
+    "cream_stile_native_envelope": [
+      624,
+      340,
+      18,
+      152
+    ],
+    "cream_stile_changed_only_within_left_physical_silhouette": true,
+    "old_bottom_heal_native_rect": [
+      128,
+      516,
+      476,
+      8
+    ],
+    "deck_donor_law": "Own R3 normalized source same boardX, sourceY=targetY+112; no global period.",
+    "global_floor_seam_native_rows": [
+      526,
+      527
+    ],
+    "global_seam_original_outside_exact_posts": true,
+    "all_native_y540_onward_exact_original": true,
+    "original_title_windows_brass_rail_reflections_and_animation_payloads_preserved": true
+  },
+  "preserved_rejection": {
+    "review_path": "docs/testing/delta_queen_spatial_r1_static_review_v1_20261116.json",
+    "review_sha256": "d1246772b75c8bd0ff8ed8d8d0bf7d580d321c26aa6ed7f6c3a473d210b25504",
+    "package_29_file_sha256": "a2458f4cad2efaa21f2a5dd992f8b751544a5c2a7369089bd8863d83faa4645a",
+    "background_sha256": "c1ce98996e9ba0fd86b102ccd075eef3dc15df49bc797b44d1bc55a92b432577",
+    "status": "V1 NO-GO remains immutable and is not relabeled. V2 is a distinct revised package."
+  },
+  "remaining_gates": [
+    "Fresh all-six populated/selected/depth review of V2, including Crew/Dave/Ox/Fog labels, near-left overhang, cream-pier/cabinet occlusion and original right replay.",
+    "Actual26 native/default-low entries, Reduce Motion, floor/glint crossings and original no-pointer animation liveness, followed by authenticated autonomous actual-clock capture and independent animated review.",
+    "Final native/art and build/publication approval remain separate. No active art, TEST, browser gameplay or all20-room completion is approved by this document.",
+    "Six historical initial scenarios do not establish later lifecycle/open-hours, UI-earned progression, work outcomes, save/revisit or browser behavior.",
+    "Reviewer ran no repository helper, tests, QA job, engine, browser or Git; made no E writes, active-art edits, moves, deletion or cleanup. Only this expressly authorized new absolute-D review document was created."
+  ]
+}

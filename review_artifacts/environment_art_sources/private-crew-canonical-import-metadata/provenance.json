@@ -1,0 +1,106 @@
+{
+  "schema": "bth.private_crew_canonical_import_metadata/v1",
+  "status": "REVIEW_ONLY_NOT_APPLIED",
+  "task_id": "BTH-ENV-SPATIAL-PRIVATE-001",
+  "source_root": "D:/Projects/Beat-The-House/.tmp/environment-art-layers",
+  "scope": "Exactly one absent Private Crew background PNG.import sidecar. New review artifacts only; no source apply, PNG/JSON edit, runtime, profiles, E writes or art approval.",
+  "patch_sha256": "dffc0779c53f190d6a0d24e43e4963ad80085baa8ef111201308a0b932d77196",
+  "verifier_sha256": "44632452b10c7135dfa8b3149fd84645d296ede961fd928ab7b5390db12d3c1d",
+  "baseline": {
+    "source_commit": "7b284648642a896e534c8bfd53c8e7abbc55108d",
+    "source_tree": "f7d316a268984bfdd7fafef71d0971c9fff0956e",
+    "workspace": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-BARBUILD2-20261116",
+    "manifest_path": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-BARBUILD2-20261116/.tmp/web-release-7b284648/stage/build_manifest.json",
+    "manifest_sha256": "5855381ff2137ece43c2b097b169c70c50b658f1caa6d86e1461b42b22bbe447",
+    "pck_path": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-BARBUILD2-20261116/.tmp/web-release-7b284648/stage/index.pck",
+    "pck_sha256": "a84ed267a7d664ada937d441be1d053419fe78df5e6725e217c99d60b0bc4ba1",
+    "pck_entries": 2107,
+    "pck_file_base": 112,
+    "pck_directory_offset": 131566576,
+    "uid_cache": {
+      "path": ".godot/uid_cache.bin",
+      "entries": 1605,
+      "payload_sha256": "587514374b37d67f6c0e795cc82d840f1d4a5f9f0b0c2f3c80586ce4eb38b4db",
+      "mapping_sha256": "293bcadacffd15543a5686b5e40cc6cd409495e80628d77bc0e5e62c2eb61b55",
+      "all_bindings_authenticated_by_actual_immutable_pck": true
+    }
+  },
+  "sidecar_count": 1,
+  "sidecars": [
+    {
+      "path": "assets/art/environments/punchline_back_room/background.png.import",
+      "source_path": "assets/art/environments/punchline_back_room/background.png",
+      "old_presence": false,
+      "old_sha256": null,
+      "baseline_donor": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-BARBUILD2-20261116/assets/art/environments/punchline_back_room/background.png.import",
+      "new_sha256": "42bfe5f50cd92e5116a82180ad0735e284d8ae75fb8c630d508a34919766bc14",
+      "new_bytes": 978,
+      "uid": "uid://cnx5mvyx76m4p",
+      "numeric_uid": "5734621103488520433",
+      "compiled_target": ".godot/imported/background.png-879f9a37c3f168f4600a9350566556e9.ctex",
+      "baseline_compiled_sha256": "3e8310cbd6ae1fa40ffa2cb6a2535c48db4e207fe50df1877c205f7d846627e1",
+      "baseline_compiled_md5": "c80c27fbf65a733b780096163349b24b",
+      "baseline_compiled_bytes": 604720,
+      "observed_source_sha256": "0913167ca23cb0422a11e8fa7a7be429e04ff19c0ead3ddfb6a751598029f4ee",
+      "baseline_source_sha256": "0913167ca23cb0422a11e8fa7a7be429e04ff19c0ead3ddfb6a751598029f4ee",
+      "baseline_source_md5": "5ed951620df2244e96133cc7afaa9b6f",
+      "md5_record_path": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-BARBUILD2-20261116/.godot/imported/background.png-879f9a37c3f168f4600a9350566556e9.md5",
+      "md5_record_sha256": "f0f1616e898dcdd75c34d91f32656a79e1921b77f7a960ac022f27fbaa5b88a2",
+      "pck_import_sha256": "18511db0facfb859b2e6bd0e61d282ce190d00d03aedd102f6fc0a917ed45efc",
+      "pck_import_md5": "18f921a056bd782fb71407dc87ca8380",
+      "pck_import_bytes": 199
+    }
+  ],
+  "original_private_package": {
+    "file_count": 10,
+    "room_file_count": 9,
+    "png_files": 8,
+    "unique_animation_pngs": 7,
+    "room9_seal": "c8882f6f7fee3d1514b94f3a3834e04f47bbf4e10413ce0ef53b27fc824dd733",
+    "seal": "ce147a7e45f5252460d3a19dbe180b71ef0863fc9201097b8e3f9e20bd5ebb13",
+    "manifest_sha256": "c8734f4d3a00a0e3620167216e18faabdfb87551ee1d8f05fd89a5ed47cbc059",
+    "global_index_sha256": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+    "files": {
+      "assets/art/environments/punchline_back_room/anim/floor_glint_0.png": "4a6d0f35054fff1e66e5d208c04579315ef9e177a695da98903745f4b2d4fcc0",
+      "assets/art/environments/punchline_back_room/anim/floor_glint_1.png": "90c802a9dda2dc591e1d3faed2ae5e17f1cbd93451480ac6dfb2422039925016",
+      "assets/art/environments/punchline_back_room/anim/floor_glint_2.png": "95cf2166aaf1a3be8fa0379b7e051f2278e8f29be18ed50766e11bf0c45c1e3d",
+      "assets/art/environments/punchline_back_room/anim/floor_glint_3.png": "5df5b9a1483ed57014a5cb2e09e8b0a7f0d8566fafa5ee66bb0e90dec4d68472",
+      "assets/art/environments/punchline_back_room/anim/floor_glint_4.png": "7fe35aa3eb2b6df3bd307a2c04d9212a59b7cbe481c3dc94612d5d87f48172ba",
+      "assets/art/environments/punchline_back_room/anim/floor_glint_5.png": "cdec42943461d79b19283e18037b0c28eac2781607c0d46b7287c835475a0abe",
+      "assets/art/environments/punchline_back_room/anim/floor_glint_6.png": "6d3a46e2613d871e0e4783bfb519b34f737d4fdf0a4c317c25385c4b75855748",
+      "assets/art/environments/punchline_back_room/background.png": "0913167ca23cb0422a11e8fa7a7be429e04ff19c0ead3ddfb6a751598029f4ee",
+      "data/art/environments/punchline_back_room.json": "c8734f4d3a00a0e3620167216e18faabdfb87551ee1d8f05fd89a5ed47cbc059",
+      "data/art/environments/index.json": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24"
+    }
+  },
+  "manifest_inventory": {
+    "counter_ids": [],
+    "unique_animation_pngs": 7,
+    "animation_ids": [
+      "floor_glint_0",
+      "floor_glint_1",
+      "floor_glint_2",
+      "floor_glint_3",
+      "floor_glint_4",
+      "floor_glint_5",
+      "floor_glint_6"
+    ],
+    "native_entries": 7,
+    "web_low_detail_entries": 7
+  },
+  "notes": [
+    "Full978-byte settings are an exact W2 donor; UID/remap are authenticated against the actual immutable minimal packed record and complete1605-entry cache, not legacy helper UIDs.",
+    "Actual PCK payload bounds/flags, directory MD5, compiled CTEX bytes/SHA/MD5, source PNG SHA/MD5 and the exact source/destination MD5 record are verified read-only.",
+    "Only the strict Private prefix plus its full JSON/global index is snapshotted. The paired before/after verifier requires all8 PNGs/JSON/index and prior files unchanged and exactly one sidecar addition.",
+    "Patch Add File targets use the exact absolute D art-worktree prefix. The verifier rejects relative or other-root targets. Root alone applies after independent audit and a closed guarded before receipt.",
+    "Root must authenticate the exact guarded before Job, command, storage manifest/claim and stdout before applying; this read-only verifier does not authenticate that external Job.",
+    "Candidate V2 native-only static approval does not approve production art or TEST. No final art, runtime or deployment is authorized by this metadata artifact.",
+    "Verifier derives from audited Hidden1a2431d0..., with Private-specific one-background/zero-counter/7-entry namespace and independently researched donor bindings."
+  ],
+  "source_targets_applied": false,
+  "source_png_json_changed": false,
+  "e_volume_written": false,
+  "qa_job_or_runtime_launched": false,
+  "art_approval": false,
+  "test_updated": false
+}

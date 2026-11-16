@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T11:40:12.960063+00:00",
+  "updated_at": "2026-11-16T12:18:19.748790+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -38045,7 +38045,7 @@
       "name": "Audit and correct all-room spatial support and seams",
       "group": "current",
       "state": "open",
-      "status": "ACTIVE_HIGH_LIMIT_AND_PARALLEL_ROOM_REPAIRS",
+      "status": "ACTIVE_THREE_ROOMS_DELIVERED_SEVENTEEN_REMAINING",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38071,6 +38071,18 @@
           "evidence": [
             "docs/testing/grand_spatial_test_delivery_20261116.json"
           ]
+        },
+        {
+          "sha": "f54d7b5095e142217269d1b31687c52181ee614e",
+          "evidence": [
+            "docs/testing/high_limit_spatial_test_delivery_20261116.json"
+          ]
+        },
+        {
+          "sha": "b35412ac003983e2bdce620ec9fd75f4810078cd",
+          "evidence": [
+            "docs/testing/high_limit_spatial_test_delivery_20261116.json"
+          ]
         }
       ],
       "deployment": {
@@ -38078,9 +38090,10 @@
         "state": "pending",
         "evidence": [
           "docs/testing/bar_spatial_test_delivery_20261116.json",
-          "docs/testing/grand_spatial_test_delivery_20261116.json"
+          "docs/testing/grand_spatial_test_delivery_20261116.json",
+          "docs/testing/high_limit_spatial_test_delivery_20261116.json"
         ],
-        "scope": "Bar and Grand public TEST artifact delivery verified; remaining18 room dispositions and whole-parent delivery remain open."
+        "scope": "Bar/Grand/HighLimitTESTartifactdeliveryverified; remaining17roomdispositions/wholeparent remainopen."
       },
       "evidence": [
         {
@@ -38137,18 +38150,23 @@
           "kind": "grand_test_artifact_delivery",
           "reference": "docs/testing/grand_spatial_test_delivery_20261116.json",
           "summary": "Grand public joins Bar on exact TEST25cc. Native/art, strict Web resource delta,13 HTTPS files and lossless animated excerpt verified; all20 parent remains Open with18 room dispositions remaining."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/testing/high_limit_spatial_test_delivery_20261116.json",
+          "summary": "ACTIVE_THREE_ROOMS_DELIVERED_SEVENTEEN_REMAINING"
         }
       ],
-      "next_action": "Bar and Grand public are delivered on exact TEST25cc with bounded native/visual acceptance; continue18 remaining room dispositions. High Limit v3 duration normalization passed all24 custody regressions; fresh selected-source qualification next. Back Room V2 static-native GO and canonical9 metadata are verified; Hidden and Private bounded assemblers active, Delta source trial frozen.",
+      "next_action": "Bar/Grand/HighLimitdeliveredexactTESTb354;17roomdispositionsremain. ContinueGBRactualHLbaselinebinding/newreleasechain, Hiddenv2qualified59tests→freshguardednative, PrivateV2native/sourceboundaryandmetadata, DeltaV2actualaudit, Cageglyphmask. No missingBartrial/savehold.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T09:43:18.961615+00:00",
+        "observed_at": "2026-11-16T12:18:19.748790+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T09:43:18.961615+00:00",
+      "updated_at": "2026-11-16T12:18:19.748790+00:00",
       "scope": [
         "Audit all environment art packages for seams, grounded supports, perspective and live object clearance; preserve existing animations and gameplay geometry."
       ],
@@ -38169,8 +38187,8 @@
         "coverage": {
           "required": true,
           "complete": false,
-          "completed_room_count": 2,
-          "remaining_room_count": 18,
+          "completed_room_count": 3,
+          "remaining_room_count": 17,
           "basis": "Spatial repair and native/visual plus TEST-artifact disposition; preliminary snapshot review alone does not close a room.",
           "areas": [
             {
@@ -38191,11 +38209,11 @@
             },
             {
               "id": "grand_casino_high_limit",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/art/environment_spatial_rework_direction.md"
+                "docs/testing/high_limit_spatial_test_delivery_20261116.json"
               ],
-              "summary": "Room spatial repair and its acceptance/delivery remain open."
+              "summary": "Boundednative/visual andTESTartifactdelivered; browserNOT_RUN."
             },
             {
               "id": "grand_casino_back_room",
@@ -38726,18 +38744,38 @@
       "kind": "objective",
       "name": "Grand high-limit spatial and seam review",
       "group": "current",
-      "state": "open",
-      "status": "V2_RELEASE_CODE_GO_88_TESTS_PASS_FRESH_TEST_CAMPAIGN_NEXT",
+      "state": "complete",
+      "status": "COMPLETE_NATIVE_VISUAL_TEST_ARTIFACT_BROWSER_NOT_RUN",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "f54d7b5095e142217269d1b31687c52181ee614e",
+          "evidence": [
+            "docs/testing/high_limit_spatial_test_delivery_20261116.json"
+          ]
+        },
+        {
+          "sha": "b35412ac003983e2bdce620ec9fd75f4810078cd",
+          "evidence": [
+            "docs/testing/high_limit_spatial_test_delivery_20261116.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "evidence": []
+        "state": "verified",
+        "evidence": [
+          "docs/testing/high_limit_spatial_test_delivery_20261116.json",
+          "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLBUILD2-20261116-v2-served/evidence/served.json"
+        ],
+        "commit": "b35412ac003983e2bdce620ec9fd75f4810078cd",
+        "scope": "ExactHighLimitboundednative/visual plus TESTartifact/current/defaultTLS13files.",
+        "verified_scope": "Manifest8fff/PCK4f0b/sourceb354/H21=481;Grand/Bar/allotherrooms and1605UID/cache/code preserved. NEXT7a862 unchangedonly11:56:22..12:02:01UTC publicationwindow.",
+        "pending_scope": "Browserstartup/servedWebvisuals/gameplay NOT_RUN; PageAPNGplaybacknotobserved, previewnotall-cycle."
       },
       "evidence": [
         {
@@ -38789,18 +38827,23 @@
           "kind": "verified_active_checkpoint",
           "reference": "docs/testing/high_limit_spatial_test_build_v2_preparation_20261116.json",
           "summary": "V2_RELEASE_CODE_GO_88_TESTS_PASS_FRESH_TEST_CAMPAIGN_NEXT; fullrequestedroomTESTdelivery remainsopen."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/testing/high_limit_spatial_test_delivery_20261116.json",
+          "summary": "COMPLETE_NATIVE_VISUAL_TEST_ARTIFACT_BROWSER_NOT_RUN"
         }
       ],
-      "next_action": "Commit exact v2 helper/approval46 chain and start all15 fresh guarded build phases on new committed export source. V1 first5phasesPASS; extract correctly refused wronglydeclaredreadonlytar beforechild, allartifacts retained. New88testsPASS includingactualguardboundary. Native/artGO871/H481 unchanged; animatedpreview verified/saved; TESTdelivery stillpending.",
+      "next_action": "BoundedHighLimitrepairdeliveredTESTb354 withnative/artGO,15guardedbuildphases,13HTTPSfilesandverifiedanimatedpreview. KeepbrowseracceptanceNOT_RUN; continueall20parentandremaining17rooms.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T11:40:12.960063+00:00",
+        "observed_at": "2026-11-16T12:18:19.748790+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T11:40:12.960063+00:00",
+      "updated_at": "2026-11-16T12:18:19.748790+00:00",
       "scope": [
         "Review and correct Grand high-limit physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -38816,13 +38859,26 @@
             "id": "visual-and-implementation-audit",
             "description": "Document explicit room disposition; where corrected, scoped commit plus independent visual/motion/geometry and TEST evidence.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/high_limit_spatial_test_delivery_20261116.json",
+              "docs/testing/high_limit_spatial_v1_native_art_approval_20261116.json",
+              "docs/testing/high_limit_spatial_preview_delivery_20261116.json"
+            ]
+          },
+          {
+            "id": "live-browser-acceptance",
+            "description": "Browserstartup/servedWebvisuals/gameplay beyondboundednative/visualplusTESTartifactclosure.",
+            "required": false,
+            "state": "unavailable",
+            "evidence": [
+              "docs/testing/high_limit_spatial_test_delivery_20261116.json"
+            ]
           }
         ],
         "coverage": {
           "required": false,
-          "complete": false,
+          "complete": true,
           "areas": []
         }
       },
@@ -38835,7 +38891,7 @@
       "name": "Grand back room spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "V2_NATIVE_AND_INDEPENDENT_ART_GO_PREVIEW_ENCODING",
+      "status": "NATIVE_ART_GO_ACTUAL_HL_BASELINE_RELEASE_V2_PREPARATION",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38882,18 +38938,23 @@
           "kind": "verified_active_checkpoint",
           "reference": "docs/testing/grand_back_room_spatial_v2_native_art_approval_20261116.json",
           "summary": "V2_NATIVE_AND_INDEPENDENT_ART_GO_PREVIEW_ENCODING; fullrequestedroomTESTdelivery remainsopen."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/testing/environment_spatial_active_checkpoint_20261116_1218.json",
+          "summary": "NATIVE_ART_GO_ACTUAL_HL_BASELINE_RELEASE_V2_PREPARATION"
         }
       ],
-      "next_action": "Finalactualnative/artGOdda141 covers13phases/3964sources/456frameidentities and actualvisualsamples; first75previewencodingactive afterclosedplanPASS. Preserve completedHL/Grand/Bar in nextTESTbaseline; nointegrationorGBRreleasebeforeactualHLdeliveryqualification.",
+      "next_action": "HLdeliveryb465/TESTb354nowactualbaseline. Fixpurepolicyv2actualactivationc94 vslogical21original065 withreal8fffregression; prepareindependentlyreviewedloader/build/servedchain. NativeGOdda/e206 unchanged; APNGverifyalreadyactive,noduplicate.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T11:40:12.960063+00:00",
+        "observed_at": "2026-11-16T12:18:19.748790+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T11:40:12.960063+00:00",
+      "updated_at": "2026-11-16T12:18:19.748790+00:00",
       "scope": [
         "Review and correct Grand back room physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -38928,7 +38989,7 @@
       "name": "Hidden casino spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "V1_STATIC_NATIVE_GO_CANONICAL2_IMPORTS_VERIFIED_NATIVE_PROFILE_ACTIVE",
+      "status": "V2_CODE_GO_25_CONTRACTS_PASS_FRESH_NATIVE_CAMPAIGN_NEXT",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38965,18 +39026,23 @@
           "kind": "verified_active_checkpoint",
           "reference": "docs/testing/hidden_spatial_metadata_application_20261116.json",
           "summary": "V1_STATIC_NATIVE_GO_CANONICAL2_IMPORTS_VERIFIED_NATIVE_PROFILE_ACTIVE; bounded evidence only; TESTdelivery stillpending."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/testing/environment_spatial_active_checkpoint_20261116_1218.json",
+          "summary": "V2_CODE_GO_25_CONTRACTS_PASS_FRESH_NATIVE_CAMPAIGN_NEXT"
         }
       ],
-      "next_action": "Commit exactly2canonicalimports after authenticatedguardedbefore/apply/afterpair; allpriorHiddenfiles/28PNG/JSON/index unchanged. Source-specific13core plus original26primarywork-outcome/hits/composite/RM/wrap/placement phases are being prepared without assertionchanges.",
+      "next_action": "Commitnewv2sourceafterreal59testPASS(25Hidden+34GBR). Runfreshcore13 plus15explicitHiddenacceptance andsummary in guardedEworkspace; authenticoriginal19GD/26primarycases/31motions, currentRM71canvaszeroSelectedcontractcorrected. No activationbeforefinalactualreview.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T11:13:27.693585+00:00",
+        "observed_at": "2026-11-16T12:18:19.748790+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T11:13:27.693585+00:00",
+      "updated_at": "2026-11-16T12:18:19.748790+00:00",
       "scope": [
         "Review and correct Hidden casino physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39010,7 +39076,7 @@
       "name": "Private Crew room spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "V1_ACTUAL_NO_GO_REVIEWED_V2_GUARDED_ASSEMBLY_ACTIVE",
+      "status": "V2_ACTUAL_STATIC_NATIVE_GO_SOURCE_SPECIFIC_ADAPTER_REVIEW",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -39047,18 +39113,23 @@
           "kind": "verified_active_checkpoint",
           "reference": "tools/assemble_private_crew_spatial_candidate_v2.py",
           "summary": "V1_ACTUAL_NO_GO_REVIEWED_V2_GUARDED_ASSEMBLY_ACTIVE; fullrequestedroomTESTdelivery remainsopen."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/testing/environment_spatial_active_checkpoint_20261116_1218.json",
+          "summary": "V2_ACTUAL_STATIC_NATIVE_GO_SOURCE_SPECIFIC_ADAPTER_REVIEW"
         }
       ],
-      "next_action": "PreserveV1fbec/NOGO. NewindependentlyreviewedV2recipe79152 gives coherentfar252..632 to near220..668; actual18464Pokerpaint minimum8.648boardfeltmargin; allanchors/motion/JSON/index andV1supportsfloor retained. Freshguardedv2-01 assemblyactive, actualart/title reviewnext; noactivation.",
+      "next_action": "PrivateV2actualplane/donor/mask/Poker/staticGOcd0. Finishcanonical1pairedapply, nativeadapterfocusedchecks andsafeQA-probe/exportboundary; actualcleanBase10+separateeligibleLucky/lifecycle7motion/RM/depth. OriginalCrewwork/C3unproved remainslimited, no inventedclaims.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T11:40:12.960063+00:00",
+        "observed_at": "2026-11-16T12:18:19.748790+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T11:40:12.960063+00:00",
+      "updated_at": "2026-11-16T12:18:19.748790+00:00",
       "scope": [
         "Review and correct Private Crew room physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39092,7 +39163,7 @@
       "name": "Delta Queen spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "V1_ACTUAL_PLANE_NO_GO_SOURCE_SPECIFIC_V2_CORRECTION_REVIEW",
+      "status": "V2_GUARDED_TESTS_AND_ASSEMBLY_PASS_ACTUAL_ART_AUDIT_NEXT",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -39129,18 +39200,23 @@
           "kind": "verified_active_checkpoint",
           "reference": "docs/testing/delta_queen_spatial_r1_static_review_v1_20261116.json",
           "summary": "V1_ACTUAL_PLANE_NO_GO_SOURCE_SPECIFIC_V2_CORRECTION_REVIEW; fullrequestedroomTESTdelivery remainsopen."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/testing/environment_spatial_active_checkpoint_20261116_1218.json",
+          "summary": "V2_GUARDED_TESTS_AND_ASSEMBLY_PASS_ACTUAL_ART_AUDIT_NEXT"
         }
       ],
-      "next_action": "PreserveactualNOGOd124/29H a245: constantfeltrowsremainupright despiteallpaint/mask/donorcustodyPASS. NewV2leftconvergence/rightcabinetocclusion geometrysourcecode in independentreview; no Eassembly/native/activation untilCODEGOandfocusedchecks.",
+      "next_action": "V2recipe3075/15testsPASS;29sealbcab/BG70eb assembledproofecc. Independentlyreviewactualplane/source/232masks/rightopaque540x184/floor; then source-specificnativequalification, no activationbeforeactualGO.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T11:40:12.960063+00:00",
+        "observed_at": "2026-11-16T12:18:19.748790+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T11:40:12.960063+00:00",
+      "updated_at": "2026-11-16T12:18:19.748790+00:00",
       "scope": [
         "Review and correct Delta Queen physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39196,18 +39272,23 @@
           "kind": "sidebar_handoff",
           "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
           "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "AUDIT_RECORDED_REPAIR_PENDING"
         }
       ],
-      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
+      "next_action": "Continue Pawn Shop spatial and seam review fromtheexistingroom-specificdirection/retainedactualpopulatedevidence: prepareboundedrepairandindependentmotion/geometry/TESTdisposition. ExistingBartrialresolved; no missingBartrialororiginalsavedependency.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T00:45:23.175587+00:00",
+        "observed_at": "2026-11-16T12:18:19.748790+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:45:23.175587+00:00",
+      "updated_at": "2026-11-16T12:18:19.748790+00:00",
       "scope": [
         "Review and correct Pawn Shop physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39263,18 +39344,23 @@
           "kind": "sidebar_handoff",
           "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
           "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "AUDIT_RECORDED_REPAIR_PENDING"
         }
       ],
-      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
+      "next_action": "Continue Jazz Club spatial and seam review fromtheexistingroom-specificdirection/retainedactualpopulatedevidence: prepareboundedrepairandindependentmotion/geometry/TESTdisposition. ExistingBartrialresolved; no missingBartrialororiginalsavedependency.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T00:45:23.175587+00:00",
+        "observed_at": "2026-11-16T12:18:19.748790+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:45:23.175587+00:00",
+      "updated_at": "2026-11-16T12:18:19.748790+00:00",
       "scope": [
         "Review and correct Jazz Club physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39330,18 +39416,23 @@
           "kind": "sidebar_handoff",
           "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
           "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "AUDIT_RECORDED_REPAIR_PENDING"
         }
       ],
-      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
+      "next_action": "Continue Kitty Cat Lounge spatial and seam review fromtheexistingroom-specificdirection/retainedactualpopulatedevidence: prepareboundedrepairandindependentmotion/geometry/TESTdisposition. ExistingBartrialresolved; no missingBartrialororiginalsavedependency.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T00:45:23.175587+00:00",
+        "observed_at": "2026-11-16T12:18:19.748790+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:45:23.175587+00:00",
+      "updated_at": "2026-11-16T12:18:19.748790+00:00",
       "scope": [
         "Review and correct Kitty Cat Lounge physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39397,18 +39488,23 @@
           "kind": "sidebar_handoff",
           "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
           "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "AUDIT_RECORDED_REPAIR_PENDING"
         }
       ],
-      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
+      "next_action": "Continue Public Punchline spatial and seam review fromtheexistingroom-specificdirection/retainedactualpopulatedevidence: prepareboundedrepairandindependentmotion/geometry/TESTdisposition. ExistingBartrialresolved; no missingBartrialororiginalsavedependency.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T00:45:23.175587+00:00",
+        "observed_at": "2026-11-16T12:18:19.748790+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:45:23.175587+00:00",
+      "updated_at": "2026-11-16T12:18:19.748790+00:00",
       "scope": [
         "Review and correct Public Punchline physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39464,18 +39560,23 @@
           "kind": "sidebar_handoff",
           "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
           "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "AUDIT_RECORDED_REPAIR_PENDING"
         }
       ],
-      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
+      "next_action": "Continue Motel lobby spatial and seam review fromtheexistingroom-specificdirection/retainedactualpopulatedevidence: prepareboundedrepairandindependentmotion/geometry/TESTdisposition. ExistingBartrialresolved; no missingBartrialororiginalsavedependency.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T00:45:23.175587+00:00",
+        "observed_at": "2026-11-16T12:18:19.748790+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:45:23.175587+00:00",
+      "updated_at": "2026-11-16T12:18:19.748790+00:00",
       "scope": [
         "Review and correct Motel lobby physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39531,18 +39632,23 @@
           "kind": "sidebar_handoff",
           "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
           "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "AUDIT_RECORDED_REPAIR_PENDING"
         }
       ],
-      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
+      "next_action": "Continue Apartment spatial and seam review fromtheexistingroom-specificdirection/retainedactualpopulatedevidence: prepareboundedrepairandindependentmotion/geometry/TESTdisposition. ExistingBartrialresolved; no missingBartrialororiginalsavedependency.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T00:45:23.175587+00:00",
+        "observed_at": "2026-11-16T12:18:19.748790+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:45:23.175587+00:00",
+      "updated_at": "2026-11-16T12:18:19.748790+00:00",
       "scope": [
         "Review and correct Apartment physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39598,18 +39704,23 @@
           "kind": "sidebar_handoff",
           "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
           "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "AUDIT_RECORDED_REPAIR_PENDING"
         }
       ],
-      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
+      "next_action": "Continue House spatial and seam review fromtheexistingroom-specificdirection/retainedactualpopulatedevidence: prepareboundedrepairandindependentmotion/geometry/TESTdisposition. ExistingBartrialresolved; no missingBartrialororiginalsavedependency.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T00:45:23.175587+00:00",
+        "observed_at": "2026-11-16T12:18:19.748790+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:45:23.175587+00:00",
+      "updated_at": "2026-11-16T12:18:19.748790+00:00",
       "scope": [
         "Review and correct House physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39643,7 +39754,7 @@
       "name": "Grand Cage spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "status": "SOURCE_AUDIT_NO_GEOMETRY_REBUILD_GLYPH_MASK_PREPARATION",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -39665,18 +39776,23 @@
           "kind": "sidebar_handoff",
           "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
           "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/art/briefs/grand_cage_spatial_repair_20261116.md",
+          "summary": "SOURCE_AUDIT_NO_GEOMETRY_REBUILD_GLYPH_MASK_PREPARATION"
         }
       ],
-      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
+      "next_action": "Preservecoherentbuilt-incabinet/floor/20native16low; cutactualbroadpulsealphatogold5532glyphtexelsonly. Independentlyreviewonecanonicalsignmetadata/rootpairedapply; finishguardawarehelper/tests andfreshnonactivecandidate thennative/TEST.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T00:45:23.175587+00:00",
+        "observed_at": "2026-11-16T12:18:19.748790+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:45:23.175587+00:00",
+      "updated_at": "2026-11-16T12:18:19.748790+00:00",
       "scope": [
         "Review and correct Grand Cage physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39732,18 +39848,23 @@
           "kind": "sidebar_handoff",
           "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
           "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "AUDIT_RECORDED_REPAIR_PENDING"
         }
       ],
-      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
+      "next_action": "Continue Beach spatial and seam review fromtheexistingroom-specificdirection/retainedactualpopulatedevidence: prepareboundedrepairandindependentmotion/geometry/TESTdisposition. ExistingBartrialresolved; no missingBartrialororiginalsavedependency.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T00:45:23.175587+00:00",
+        "observed_at": "2026-11-16T12:18:19.748790+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:45:23.175587+00:00",
+      "updated_at": "2026-11-16T12:18:19.748790+00:00",
       "scope": [
         "Review and correct Beach physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39799,18 +39920,23 @@
           "kind": "sidebar_handoff",
           "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
           "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "AUDIT_RECORDED_REPAIR_PENDING"
         }
       ],
-      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
+      "next_action": "Continue Back Alley spatial and seam review fromtheexistingroom-specificdirection/retainedactualpopulatedevidence: prepareboundedrepairandindependentmotion/geometry/TESTdisposition. ExistingBartrialresolved; no missingBartrialororiginalsavedependency.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T00:45:23.175587+00:00",
+        "observed_at": "2026-11-16T12:18:19.748790+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:45:23.175587+00:00",
+      "updated_at": "2026-11-16T12:18:19.748790+00:00",
       "scope": [
         "Review and correct Back Alley physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39866,18 +39992,23 @@
           "kind": "sidebar_handoff",
           "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
           "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "AUDIT_RECORDED_REPAIR_PENDING"
         }
       ],
-      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
+      "next_action": "Continue Gas Station Casino spatial and seam review fromtheexistingroom-specificdirection/retainedactualpopulatedevidence: prepareboundedrepairandindependentmotion/geometry/TESTdisposition. ExistingBartrialresolved; no missingBartrialororiginalsavedependency.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T00:45:23.175587+00:00",
+        "observed_at": "2026-11-16T12:18:19.748790+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:45:23.175587+00:00",
+      "updated_at": "2026-11-16T12:18:19.748790+00:00",
       "scope": [
         "Review and correct Gas Station Casino physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39933,18 +40064,23 @@
           "kind": "sidebar_handoff",
           "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
           "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "AUDIT_RECORDED_REPAIR_PENDING"
         }
       ],
-      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
+      "next_action": "Continue Corner Store spatial and seam review fromtheexistingroom-specificdirection/retainedactualpopulatedevidence: prepareboundedrepairandindependentmotion/geometry/TESTdisposition. ExistingBartrialresolved; no missingBartrialororiginalsavedependency.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T00:45:23.175587+00:00",
+        "observed_at": "2026-11-16T12:18:19.748790+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:45:23.175587+00:00",
+      "updated_at": "2026-11-16T12:18:19.748790+00:00",
       "scope": [
         "Review and correct Corner Store physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -40000,18 +40136,23 @@
           "kind": "sidebar_handoff",
           "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
           "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "AUDIT_RECORDED_REPAIR_PENDING"
         }
       ],
-      "next_action": "Retain room finding in spatial direction; continue after existing Bar trial ownership/output is resolved. Source snapshot review does not close motion/scenario or TEST acceptance.",
+      "next_action": "Continue Motel Room spatial and seam review fromtheexistingroom-specificdirection/retainedactualpopulatedevidence: prepareboundedrepairandindependentmotion/geometry/TESTdisposition. ExistingBartrialresolved; no missingBartrialororiginalsavedependency.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T00:45:23.175587+00:00",
+        "observed_at": "2026-11-16T12:18:19.748790+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:45:23.175587+00:00",
+      "updated_at": "2026-11-16T12:18:19.748790+00:00",
       "scope": [
         "Review and correct Motel Room physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
