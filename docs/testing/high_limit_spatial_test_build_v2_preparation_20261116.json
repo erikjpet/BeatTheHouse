@@ -1,0 +1,35 @@
+{
+  "schema": "bth.high_limit_spatial_test_build_preparation/v2",
+  "observed_at": "2026-11-16T11:40:12.960063+00:00",
+  "task_id": "BTH-ENV-SPATIAL-HL-001",
+  "frozen_v2_helpers": {
+    "tools/high_limit_spatial_test_build_v2.py": "6d8483d69f936903651026021dba39f496ab0ca948098d1d0c789d7ff1bc6ab3",
+    "tools/high_limit_spatial_test_release_profile_v2.py": "d770c69a3a7f30b8fea9fb219229f29fd7f68e362d95e6b87d1e376e2b4040da",
+    "tools/verify_high_limit_spatial_test_served_v2.py": "eb0b42d26fd534dab141c9a5da1d559279a3943aec1aca8312fe405ee6e1577c",
+    "tools/tests/test_high_limit_spatial_test_release_v2.py": "64759d79a2113f61e0039f48620c9f3754ffc4c4db2b3ff2c5e860f2df66dcef",
+    "tools/high_limit_spatial_test_release_v2.README.md": "2b9c94955d3bd54eaea37861763c41ba1e1009af6ca4a392483c192306bc600f"
+  },
+  "independent_static_code_review": "GO; three v2 modules equal frozenv1 after reversing only reviewed positive-output/schema/entrypoint/reference changes",
+  "closed_focused_tests": {
+    "count": 88,
+    "grand": 21,
+    "pure_high_limit": 27,
+    "v2_release_and_boundary": 40,
+    "seconds": 2.261,
+    "job_pid": 41800,
+    "job_sha256": "9d65d0447cc50c6044c6d48987e550b157b9a735b9b175ebe85bdcee18bf4c83",
+    "log_sha256": "f32ed928c062816c52b70345ee970afaccb7a850f3170f5266ab7639efd29718",
+    "evidence": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLRELEASE-V2-20261116-tests01/evidence",
+    "status": "PASS",
+    "real_retained_archive_guard_boundary_test": "v1 wrong write declarations rejected; v2 exact read-only input admitted; archive bytes/stat unchanged; no testcreatedfilesystempaths"
+  },
+  "approval_sha256": "46e8685cf4dab2a49c8d0cbcda08c816612bb32614d5e1ec3798cbaf0208b1d7",
+  "original_native_art_go_sha256": "871b8e811a05b12b40da059732b0e6de94633143fa44ac0bc6cba16149ecea9b",
+  "baseline_certificate_sha256": "c355c3fb638233016d0bb169ceb92942376db24011d1e2ef48c6443da9140356",
+  "retained_v1_stop_sha256": "75474b7313a7079ecc59ae9f7d805c70db1e2fbc699001e154281e2b76aa7c0f",
+  "new_fresh_campaign_required": true,
+  "archive_write_scope": "Fresh archive phase only; extract reads archive and writes only fresh qa_source. Guard/caps/budget unchanged.",
+  "test_updated": false,
+  "browser_acceptance": "NOT_RUN",
+  "preview_receipt_sha256": "b62ee2deb9eb08543abb9da3de6719270a6d0c0fbd6f1f8f2397821a24e1dee7"
+}

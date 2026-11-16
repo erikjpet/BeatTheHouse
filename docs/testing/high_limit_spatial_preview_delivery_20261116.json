@@ -1,0 +1,47 @@
+{
+  "schema": "bth.high_limit_spatial_preview_delivery/v1",
+  "task_id": "BTH-ENV-SPATIAL-HL-001",
+  "page": "page_21f30d95cf108191be81f2f718cb4c60",
+  "page_sequence": 1,
+  "page_url": "https://chatgpt.com/space/page_21f30d95cf108191be81f2f718cb4c60",
+  "reference": "library-file:fde1_bGliZmlsZV8tV3NrdzlUSW10YzFsMmwtWng5Ulln_FileDrive_b2e6deecb030819197ad6510125a1c29",
+  "upload_access_confirmed": true,
+  "output": {
+    "path": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-HL-APNG-20261116/preview_artifacts/high-limit-first75-excerpt-81dd282b813f-900.png",
+    "sha256": "348ab89e7de7473bdb3284ad9970701c31f9fb1f90da46e068aab684914b81f7",
+    "bytes": 3672184,
+    "format": "APNG",
+    "dimensions": [
+      900,
+      430
+    ],
+    "frames": 75,
+    "original_frames": 152,
+    "display_seconds": 9.8746,
+    "terminal_hold_seconds": 0.02,
+    "explicit_excerpt": true,
+    "all_selected_frames_exact_RGBA": true
+  },
+  "capture_json_sha256": "81dd282b813f2f6b4e8882c129a86c4bd55580c3683cda024cf165e2fd4b25b6",
+  "encode": {
+    "phase_result_sha256": "deeca337322ff454997b54361ce66793323601280caf958f9bc8f69d04b0e523",
+    "job_sha256": "1ceda916343f5de51b152b4919f9dca1332f856edd88f483541615401a61f25f",
+    "pid": 36936,
+    "proof_sha256": "307383825efadffb78cb19ba6f321846635af3701fff432a12ce6caaf0274e17"
+  },
+  "verify": {
+    "phase_result_sha256": "abe48c476cf9e933070e0c8bc52c24a14061762d5d1ebc0adbcb6f1cec2bf3a3",
+    "job_sha256": "d824b74ab3b2155b9e51d06b2c57fb67a7c1c316515e480a12e593e206ae33a5",
+    "pid": 39828,
+    "proof_sha256": "14749a9ae177ee9eb5ed8e7888112cc790eb55373cfc7ecd91f1f4581966a9ad"
+  },
+  "caption_limits": {
+    "surface": "900px diagnostic board clone; actual production UI separately reviewed",
+    "full_capture_seconds": 20.1175733333333,
+    "full_cycle_or_browser_acceptance": false,
+    "rendered_page_layout_and_APNG_playback_verified": false
+  },
+  "page_reference_markdown_readback_verified": true,
+  "test_updated": false,
+  "source_integrated_commit": "f54d7b5095e142217269d1b31687c52181ee614e"
+}

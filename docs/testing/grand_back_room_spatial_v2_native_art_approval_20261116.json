@@ -1,0 +1,455 @@
+{
+  "schema": "bth.grand_back_room_spatial_native_art_review/v1",
+  "reviewed_on": "2026-11-16",
+  "task_id": "BTH-ENV-SPATIAL-GBR-001",
+  "room": "grand_casino_back_room",
+  "environment": "grand_casino_back_room",
+  "decision": "GO_FOR_TEST_BUILD",
+  "independent_reviewer": "/root/native_suite_adapter",
+  "evidence_custody_auditor": "/root/bar_clearance_audit/dark_feet_source_audit",
+  "production_activation_approved": true,
+  "test_publication_approved": false,
+  "browser_acceptance": "NOT_RUN",
+  "approval_scope": "Integrate only this exact Grand Casino Back Room V2 art package and prepare its independently gated TEST build. This native/art approval is not the separate release approval, qualified export, publication authorization or served/browser acceptance.",
+  "source_commit": "a9c02a9557abfd644b27f36be392d354fc70c6ef",
+  "source_tree": "edcf685c282567daa2bb82a6ba49d818e5950ed6",
+  "source_scope": "PARTIAL_SELECTED_PATH_ARCHIVE",
+  "package_21_file_sha256": "e20695c6715e4156027cc211b6c7291ff2820e3d52d317dbbfc9b6cc5ca931c7",
+  "candidate_root": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-GBRTRIAL-20261116/candidate_sources/grand-back-room-spatial-r1-assembled-v2",
+  "approved_package_files_sha256": {
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_0.png": "988e0207c99758ba1f5d7f30d4bfa9b7439beb9faf15b3c9ff9a76c55ba27340",
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_1.png": "f9e2470a1a73e3ab62b6f3c2f23102ef4184003d7b7b98bf4691d39583221515",
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_2.png": "0fac3ccc158a14a64b034e55acbb242436e145bf47bc822b8b7ba41aca239595",
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_3.png": "74b88031a6733ffcacbf97bbd910e9e30ba139ac37132f72fd00e62963b40bf1",
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_4.png": "7964ba8bd36745aeb5b44feeee7cff613d813e1b4a4fd5aebc91deb877663ba9",
+    "assets/art/environments/grand_casino_back_room/anim/casino_sign_pulse.png": "dceb1dc0df381fa98592cb9c58822e1863512f7a44f64b5c5bdd88faea8d51ed",
+    "assets/art/environments/grand_casino_back_room/anim/casino_sparkle_0.png": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+    "assets/art/environments/grand_casino_back_room/anim/casino_sparkle_1.png": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+    "assets/art/environments/grand_casino_back_room/anim/casino_sparkle_2.png": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_0.png": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_1.png": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_2.png": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_3.png": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_4.png": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_5.png": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_6.png": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+    "assets/art/environments/grand_casino_back_room/background.png": "46492785829f659c5869d91a6510d424ea4977e6921b1ece7de1225aa804e6ca",
+    "assets/art/environments/grand_casino_back_room/counters/grand_table_left.png": "9a96841d98e0f5ee53d15563c94881f3ce34ab4569182f7009f6b0609c4dafac",
+    "assets/art/environments/grand_casino_back_room/counters/grand_table_right.png": "de3a5e82cce15772a929306eb423aaf44b96ff3302cf8c73aec1eb12b7dc0964",
+    "data/art/environments/grand_casino_back_room.json": "cc8553a5856289c7fe6b42754db43b4bd02d07e5c793ca1fea54e7655eca103d",
+    "data/art/environments/index.json": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24"
+  },
+  "grand_back_room_json_sha256": "cc8553a5856289c7fe6b42754db43b4bd02d07e5c793ca1fea54e7655eca103d",
+  "native_adapter_sha256": "a516fcdb782c0764e39d1ef9e59d5f87520a8ad146ad7f21c3f2d908973c443b",
+  "native_policy_sha256": "c34375889ac8e35f8852c724cbe0e801d5c181920c9fae7583883583a21cb594",
+  "selected_source_helper_sha256": "051ae002c310602175b89b2db624ca7777651ce69ee89057dbcff2f540e53625",
+  "native_source_config_sha256": "837d51a86f2ba003f117d0a969a38ce3dda99364a597a4f330920fff0f3af1af",
+  "native_identity_sha256": "2794328aaef0818cd7ccee0774343eab50642f43ea17ad93afed9c05a9506c4d",
+  "native_capture_inputs_sha256": "239b82527dfef4c9d1f1cf83654de8b411671ea018237d8215037428a62cb275",
+  "native_contexts_sha256": "6a7a6717c948b8e5dcd4d8a78bbbfacaf12d0303496531f7df7c98bde08b9870",
+  "native_motion_sha256": "b433a0cb1838fad9c969b901098785821a99b9d844eaee2e05b4afed7d961ed4",
+  "native_liveness_sha256": "e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b",
+  "native_capture_sha256": "3342ed79ece4a408f567cfae8afbdab01bd1612d441a623e24ed2086e8908afd",
+  "native_phase_receipts": {
+    "source-identity": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-source-identity/evidence/phase-result.json",
+      "sha256": "7d3290cdb1d930d9bff16bd6b50923c3d66a89647987a00118c04a8d76198bac",
+      "job_sha256": "b83a9658a8bc0418d3ebe19abf905ae611782db0b17f54f2cc6adc4fea7db541",
+      "log_sha256": "ff57aa57bc145234a75afd747c0748625ec4f1973acfc87ecdc5c9ea529708f3",
+      "pid": 35788,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {}
+    },
+    "tree": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-tree/evidence/phase-result.json",
+      "sha256": "f410d2dc55f48b02afe94b669c2f25c388c379c52af5741550b03aab22cdb864",
+      "job_sha256": "b797d66351eee4368dda3fbbdb2f52a67c38c1812ac650949915e7f577ed77a4",
+      "log_sha256": "0e2dd0a8e3942d2caaafb2e1b71ab1e6cc73f1ea3a6a12889b1d424c6c8762ac",
+      "pid": 28300,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {}
+    },
+    "baseline-tree": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-baseline-tree/evidence/phase-result.json",
+      "sha256": "95ad8104fc210b9e9c2925e576ef3e45f4e538b8a7dcc40a39939e2bbb4f544f",
+      "job_sha256": "d3d8f853f9bc7cd6c40568b83e2d4a5897979d6f2b677bc49afc485014db0c9d",
+      "log_sha256": "2d10cb875de127677736b61e6cd9a8cf79a47d042c0caff04474eeef8bfaad2b",
+      "pid": 37472,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {}
+    },
+    "select": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-select/evidence/phase-result.json",
+      "sha256": "bce69911286ecea8c736a72195b853ef5225551d7dbaede0a9934d6bacc561d1",
+      "job_sha256": "0e95d757932b6256c49bece34bbeca3f5d03ec74c7ba452c2517572f3cc517af",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pid": 37280,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "closure.json": "5f7e0a61e76509815be6867ee48546b76425b16719b2547a840b1b39fbe85c95",
+        "selection.json": "2158e4ca83deb0c18f1a3281650bd3e73bcca4e37e552179128e8688fafaa1df",
+        "worker-result.json": "8eec87abbd8d54b526e331f0270d2cebacaf36f601f079470c368bad6b731a5f"
+      }
+    },
+    "archive": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-archive/evidence/phase-result.json",
+      "sha256": "4b7e1134e2dd6afdc440de2e0608d2dfef5c220ccd22db8b7ca2f93429674d54",
+      "job_sha256": "5f80e93cbbcde010a1d75326a3633cb1ae90aa6ebe54e59a65439e1c19f5a4f2",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pid": 18048,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {}
+    },
+    "prepare": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-prepare/evidence/phase-result.json",
+      "sha256": "db62d8b07ac75d472cf467a7cacdfbd6a6f37a6768e95baaffe67f84282cee3f",
+      "job_sha256": "ce9c997273ea170a753b82cd23d0dd5e3ec18eac2fdbad2a0e46380f3db41cd6",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pid": 28492,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "worker-result.json": "a91af61deb2032f71f532c81cbd9b0d0899fb9c51e5a0c69f26fc200fb950b14"
+      }
+    },
+    "install": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-install/evidence/phase-result.json",
+      "sha256": "30a8676bb52b816fdef00ab272e403fa65d5a18a9330d1689f4f334032a1d057",
+      "job_sha256": "732e125e8a0df8b84a64c84746e91cf49d885e55d0dd4c3b28d5e1de553cae4c",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pid": 37076,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "worker-result.json": "6074d76c1845d6dd8bfd79fcc57ecde94de409149b2093e5fb8428dc100da9bd"
+      }
+    },
+    "import": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-import/evidence/phase-result.json",
+      "sha256": "ede4fffe6273668e4ed680268bf86def94ab0e9db7df7e1db94b495a6d731cad",
+      "job_sha256": "e4aca96bc4645e92d184a881bf4fc6dd43e588d990bf9bd9087961e204cbfaf9",
+      "log_sha256": "d7a3867e57c3da9befc6adb5e57c9dd273cc77e4f4eacdeac0f3d1945dc6ad5f",
+      "pid": 39076,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {}
+    },
+    "identity": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-identity/evidence/phase-result.json",
+      "sha256": "7b32e7abcbd56cac3efafa8a15ed45c26926b961d9d333896a21b207bbf7b6bf",
+      "job_sha256": "afde130ab83242065aa4c8ea6e86b778ee771bdf6a94cbe90a715f19d7806297",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pid": 25556,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "worker-result.json": "4f95f876344adeaa5ece1dab0f60f6720c22cdb0ab701f6a1e98dd6974b6b53c"
+      }
+    },
+    "contexts": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-contexts/evidence/phase-result.json",
+      "sha256": "94dc54ac562da7a1ab8464518ab3d02f1e637da2ac44919a97ee0ae3d5175d3f",
+      "job_sha256": "fa9839d26d090eb435e278379d20aeb3d622504760291ec3839a840a29b72156",
+      "log_sha256": "b3f8518bf10dc90b8d060c2ccafe5515567aa79705424834b8d2f463add01003",
+      "pid": 10252,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "grand_casino_back_room_preart_metadata.json": "6a7a6717c948b8e5dcd4d8a78bbbfacaf12d0303496531f7df7c98bde08b9870"
+      }
+    },
+    "motion": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-motion/evidence/phase-result.json",
+      "sha256": "64a961522bdf5500340488e3778cac35e83fd28e1e9eafd8919a77d389314016",
+      "job_sha256": "b120a7d3e0b6e1cc5513bd3bee66e259d32d28b3c4c28583adb29005fd28679e",
+      "log_sha256": "34990870ab7ded09e8598cb04176ce70dec562e0fe0eca43e465183fd7e67701",
+      "pid": 36252,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "grand_casino_back_room_animation_probe.json": "b433a0cb1838fad9c969b901098785821a99b9d844eaee2e05b4afed7d961ed4"
+      }
+    },
+    "liveness": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-liveness/evidence/phase-result.json",
+      "sha256": "9e96e7f4ec85074d203d6403a937c2809fb675659f44569c9a217e56858da106",
+      "job_sha256": "5121b763f598498f965be3e379b5f0ac51d5d222e22798fa5f4d99d2f7650890",
+      "log_sha256": "e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b",
+      "pid": 30468,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {}
+    },
+    "capture": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-capture/evidence/phase-result.json",
+      "sha256": "562f8f45b8b04db9be2daef0e4da47b2d90c643675bd7408ac4c6ca67c579cd8",
+      "job_sha256": "327dcfada56cdfbfe28bd7db29ddca23a2d5cbacff15e7c4a280b8382188cd0d",
+      "log_sha256": "f05345a7c470563ae69cce447a551355fcd605f4864b23cd5c6c9d490dcb74e5",
+      "pid": 34596,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "capture/animation_capture.json": "3342ed79ece4a408f567cfae8afbdab01bd1612d441a623e24ed2086e8908afd"
+      }
+    }
+  },
+  "authenticated_evidence": {
+    "candidate_proof_path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRTRIAL-20261116-assemble05/evidence/grand-back-room-spatial-r1-assembly-v2.json",
+    "candidate_proof_sha256": "f7663f3a63472499848e490b2c3b844d3a89c2a7d5a33caf4f0b01ae030f3e30",
+    "prior_static_review_path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/grand_back_room_spatial_r1_static_review_v2_20261116.json",
+    "prior_static_review_sha256": "0e90b08babcd94cc42638154190b63ce49de5f663c138a16df48ceafffd33d9e",
+    "executed_recipe_sha256": "9ed6c29917c74cdecb044e9639271af631a65e7268ce6015b3b881f50ea6474d",
+    "assembly_job_sha256": "a0da5fc1e704f4414b0317560e23ce82d5ee7f4f62f1216814f2504d82e5ad89",
+    "all_thirteen_phase_results": "PASS. Same current source commit/tree/config; exact admitted command/input, actual Job/log/artifact/storage-manifest/launch-claim hashes. All Jobs assigned before execution, exit0 and active_at_release0 with no timeout, error, cleanup error or error log.",
+    "job_caps": {
+      "cpu_rate": 1200,
+      "job_memory_limit_bytes": 2147483648,
+      "kill_on_close": true,
+      "breakaway_allowed": false,
+      "expected_write_bytes": 4294967296,
+      "reserve_bytes": 21474836480
+    },
+    "actual_source_custody": "Independent read-only rehash of all3964 identity-listed non-cache native source files and exact membership, all native dependencies, Python/Git/engine/runtime and actual capture inputs; zero mismatches. Current source is a selected-path archive of the full pinned commit/tree, not an old unverified full archive.",
+    "selected_source_archive_sha256": "00c0898374cdf43797d7eee65a1ed8eac284843623b34e0d14e1b03a280b2bc1",
+    "candidate_custody": "Actual installed21-file package seal and candidate/native payload identities match the assembly and approved static review.",
+    "capture_png_custody": {
+      "matched_frame_pngs": 456,
+      "frame_png_bytes": 253898064,
+      "retained_pngs_including_controls": 461,
+      "mismatches": 0,
+      "ledger_fields_checked": [
+        "filename",
+        "family",
+        "clock",
+        "dimensions",
+        "bytes",
+        "sha256"
+      ],
+      "frame_set_seal": "5d304adbe33431e0ccf0252f7be265361f59cd4505454caa32b3293204a9671d",
+      "seal_method": "SHA256 over filename+SHA sorted-LF records, no terminal LF, as independently recomputed by the custody auditor.",
+      "visual_scope": "All456 frame identities authenticated; visual examination is bounded to the actual samples below."
+    },
+    "baseline_auxiliary": {
+      ".gdignore": {
+        "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-GBRTRIAL-20261116\\source_baseline\\.gdignore",
+        "bytes": 78,
+        "sha256": "5fc569e3a3c8e2f0ab6bd6d048bb5f87ca6af7b2bb0d8a7b3e39f08346aecf2c",
+        "modified_ns": 1794819295442639000,
+        "file_id": 2251799815028876,
+        "ordinary_regular_file": true,
+        "inspection_access": "read-only",
+        "included_in_art_payload_seal": false,
+        "copied_into_qa_source": false
+      }
+    },
+    "baseline_auxiliary_scope": "The exact external78-byte source_baseline/.gdignore is separately authenticated and unchanged before/after all13 phases, excluded from the logical21 art seal and res source hashes, and not copied into qa_source.",
+    "canonical_imports": "All nine canonical source import sidecars preserved; original observer UID artifacts remain provenance and do not overwrite canonical tracked UIDs.",
+    "historical_observer_label": "Observer report commit94155957c3bdce01d801da013cbcd3eed3289305 remains a historical label. Fresh current source is a9c02a9557abfd644b27f36be392d354fc70c6ef. Original five observer bodies/assertions and original no-pointer liveness are preserved."
+  },
+  "native_acceptance": {
+    "contexts": {
+      "checks": 7969,
+      "source_files": 3964,
+      "check_formula": "2N+41",
+      "findings": [],
+      "scenario_ids": [
+        "__none"
+      ],
+      "object_count": 3,
+      "object_ids": [
+        "game:craps",
+        "game:blackjack",
+        "travel:leave"
+      ],
+      "body_adornment_pairs": 3,
+      "selected_label_cases": 3,
+      "neutral_hover_and_selection": true
+    },
+    "motion": {
+      "checks": 66,
+      "failures": [],
+      "native_entries": 16,
+      "simulated_low_detail_entries": 7,
+      "all_native_entries_live_visible_change": true,
+      "all_native_entries_reduce_motion_stable": true,
+      "asset_or_manifest_modified": false
+    },
+    "no_pointer_liveness": "Original animation_liveness_without_pointer_check.gd actual log reports PASS.",
+    "reduce_motion": "Actual QA-only settings route, no user setting saved; both full-app pixels and production native-art texture stable after the wait.",
+    "autonomous_capture": {
+      "scenario": "__none",
+      "frames": 152,
+      "first_actual_scene_clock": 8.45244366666685,
+      "last_actual_scene_clock": 28.581831857143,
+      "actual_clock_span_seconds": 20.1293881904762,
+      "maximum_animation_cycle_seconds": 57.7777777777778,
+      "cycle_capped": true,
+      "no_pointer_input": true,
+      "natural_arrival_remaining_person_transits": 0,
+      "aligned_board900_frames": 152,
+      "board900_state_clock_equivalence_failures": 0,
+      "fullapp_is_actual_production": true,
+      "board900_is_diagnostic_clone": true,
+      "native1800_art_frames_exclude_live_objects": true,
+      "timing": "Recorded actual clocks retained. No invented FPS, interpolation, brightness or alpha boost."
+    }
+  },
+  "visual_samples": [
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-contexts/evidence/__none_actual_play.png",
+      "sha256": "bac35a61cca968ab29a399e0937e4ecc2ee8eb6557f6698954bd97e6010532a2"
+    },
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-contexts/evidence/__none_production_board_1800x860.png",
+      "sha256": "04328d8b66532c4d1f4c7c8b464b340c4797205a738addd7fe34c640efff3d51"
+    },
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-contexts/evidence/__none_selected_00.png",
+      "sha256": "385d9cd88a0e7102b33ad416c5f872a58a724fcd7f7a8e96eb8c0d1d2045c84d"
+    },
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-contexts/evidence/__none_selected_01.png",
+      "sha256": "c1aca6d9abd1d1cd846c4d38bf2e22c31036289d362ef39ce04c1d072b377005"
+    },
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-contexts/evidence/__none_selected_02.png",
+      "sha256": "e8e2f4965ba5bae1f591aa95926ef388784afa2da0e589e89b7660c18049a44a"
+    },
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-capture/evidence/capture/board900_000.png",
+      "sha256": "fa9a67d2b75d99b447547cdc3ca5e28dfa52530871a0c0273b26576541a5fef1"
+    },
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-capture/evidence/capture/board900_075.png",
+      "sha256": "f1ce33664cc5f47a2a86759df42a520703b73a2b7872be720ff2ea354f2b4207"
+    },
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-capture/evidence/capture/board900_151.png",
+      "sha256": "d31328f07a6267666c087ed43f75f933a7ab0d6b22b83880fd5397bbb6660ec7"
+    },
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-capture/evidence/capture/frame_075.png",
+      "sha256": "51f6ee168acf2369f941257f6df327c573f42d78e6dcb6a8f73fe9355de13c43"
+    },
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-capture/evidence/capture/board2x_075.png",
+      "sha256": "875564fc07643cc0987f5787e97e105f26b9f877339b196c6775a209d8ba1e88"
+    },
+    {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-capture/evidence/capture/reduce_motion_play.png",
+      "sha256": "0cd91a776b2f29365f520bdbc5c6c017c794edda322cbe8c3698027e41e87696"
+    }
+  ],
+  "source_master_viewed": {
+    "path": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-GBRTRIAL-20261116/candidate_sources/grand-back-room-spatial-r1-assembled-v2/assets/art/environments/grand_casino_back_room/background.png",
+    "sha256": "46492785829f659c5869d91a6510d424ea4977e6921b1ece7de1225aa804e6ca"
+  },
+  "source_replay_crops": {
+    "grand_table_left": {
+      "native_rect": [
+        164,
+        516,
+        544,
+        72
+      ],
+      "exact_master_crop": true
+    },
+    "grand_table_right": {
+      "native_rect": [
+        1092,
+        516,
+        544,
+        72
+      ],
+      "exact_master_crop": true
+    }
+  },
+  "source_practical_masks": {
+    "casino_light_0": {
+      "rect": [
+        250,
+        124,
+        52,
+        8
+      ],
+      "visible_material_pixels": 32,
+      "alpha_cut_only": true
+    },
+    "casino_light_1": {
+      "rect": [
+        350,
+        124,
+        52,
+        8
+      ],
+      "visible_material_pixels": 32,
+      "alpha_cut_only": true
+    },
+    "casino_light_2": {
+      "rect": [
+        448,
+        124,
+        52,
+        8
+      ],
+      "visible_material_pixels": 32,
+      "alpha_cut_only": true
+    },
+    "casino_light_3": {
+      "rect": [
+        550,
+        124,
+        52,
+        8
+      ],
+      "visible_material_pixels": 48,
+      "alpha_cut_only": true
+    },
+    "casino_light_4": {
+      "rect": [
+        650,
+        124,
+        52,
+        8
+      ],
+      "visible_material_pixels": 64,
+      "alpha_cut_only": true
+    },
+    "casino_sign_pulse": {
+      "rect": [
+        332,
+        54,
+        234,
+        62
+      ],
+      "visible_material_pixels": 1632,
+      "alpha_cut_only": true
+    }
+  },
+  "visual_judgment": [
+    "Both tables read as horizontal felt planes with continuous side rails and shallow near aprons; four complete dark supports meet the same floor. The protected inlay and wall/floor join remain coherent. The inspected actual master/native/populated samples contain no detached old outer corner stubs, broad rectangular donor patch, old cabinet frame or new source/replay seam.",
+    "Actual Blackjack and Craps game paint remains over its respective felt with readable labels. All three actual selected information panels are readable. The unchanged Travel position and Office furniture retain their existing spatial relationship.",
+    "Sampled source/native900/full-app frames retain the same table supports and replay composition as autonomous glints and pulses advance. Warm pulses lie on existing vertical brass material and the pink ROURKE'S TABLES subtitle retains its glyph-shaped effect; no opaque pulse rectangle or independent floating lamp bar was observed in the inspected frames.",
+    "Fixed-clock per-entry native and simulated low-detail checks authenticate all16 entries and the7 low-detail subset separately from visual excerpt sampling; original autonomous liveness and actual Reduce Motion controls pass."
+  ],
+  "findings": [],
+  "preserved_predecessor": {
+    "static_review": "docs/testing/grand_back_room_spatial_r1_static_review_v1_20261116.json",
+    "package_sha256": "15d88d5b7438aaebad295dcf6d0748a0a04cf64b3f3f08193be35e1f002b9f04",
+    "status": "V1 remains rejected for its detached corner remnants. V2 approval does not relabel V1 or any failed prior native campaign."
+  },
+  "limits_and_remaining_gates": [
+    "Base only contains Craps, Blackjack and Travel. No later Rourke/boss/showdown/heist/lifecycle/work-outcome/save/revisit or complete gameplay acceptance is implied.",
+    "The20.1293881904762-second capture is shorter than the57.7777777777778-second maximum animation cycle. This is bounded actual visual sampling, not every position of every long glint cycle.",
+    "Native1800 captures are the production art renderer and exclude live objects/fronts. Board900 is a clock/layout-equivalent diagnostic production-canvas clone. Full-app1280x720 captures are the actual populated application.",
+    "Simulated low-detail qualification is not browser gameplay. Browser acceptance remains NOT_RUN.",
+    "This review launched no job, helper, engine or browser and made no E writes or art activation. Only this explicitly authorized new D review document and the separate requested new preview encoder source were created.",
+    "Root must hash this first review and independently prepare any final release/build authorization, preserve Grand/High Limit/Bar and other rooms through strict source/PCK checks, then qualify export/verify/publication/served gates. The all20-room objective remains open.",
+    "The requested new preview encoder is separate code. This art review does not claim an encoded animated artifact already exists."
+  ]
+}

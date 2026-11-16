@@ -1,0 +1,55 @@
+{
+  "schema": "bth.high_limit_spatial_test_build_storage_stop/v1",
+  "observed_at": "2026-11-16T11:24:27.090110+00:00",
+  "task_id": "BTH-ENV-SPATIAL-HL-001",
+  "export_source_commit": "f54d7b5095e142217269d1b31687c52181ee614e",
+  "export_source_tree": "6bea1adc7ffa5d8a317da2d8cafb61d427bb9294",
+  "frozen_builder_sha256": "757acf5b56f53f4a567112b19fa45a7b4bf933baf6f850ad2c2a07d2b27a1003",
+  "completed_phases": {
+    "source-identity": {
+      "phase_result_sha256": "d1883a48e3de6899b448b9b25763e0d831612959f07a935aa1466e239d6e6efd",
+      "job_sha256": "5b1553372e96c34157ac7150dec7f692536b42e6dffa922b20f1a04ade49cee5",
+      "pid": 18296
+    },
+    "tree": {
+      "phase_result_sha256": "5608567a05d33bbe54a36c78dd25f56c7c09d29cdc9e5767ba3f0a0534eedb5e",
+      "job_sha256": "59e85d675c2e97924b4b94df4e52a41f1ff61dbd852cb27c1115a2b7a7e4bf4b",
+      "pid": 37948
+    },
+    "baseline-tree": {
+      "phase_result_sha256": "0cec47c302d100e576ee866975da594266956c3472fd5c049b485a5b3f1f7237",
+      "job_sha256": "17f3b221b9473acf333c6127898703f971cb354401112b2fe35af82b2c421810",
+      "pid": 15400
+    },
+    "select": {
+      "phase_result_sha256": "bd1e2e09b025710d350526aa315e5ece568187b565af8b0f8d043b830f9f5b8f",
+      "job_sha256": "1a5eae17d1e916772fad481e45ad7684aba27f9aa3c604678e8d87849a77b2a7",
+      "pid": 30348
+    },
+    "archive": {
+      "phase_result_sha256": "cfa855b7b9346122a52513545ec3e5961cfaeb4c93bffafef5f42acb1bdfc22b",
+      "job_sha256": "c156de5c318d1cfc23990c17fec26c8e5fa0c0bbf8c38a68d361c170a5580a5a",
+      "pid": 37336
+    }
+  },
+  "stopped_phase": "extract",
+  "exact_error": {
+    "status": "HL_STORAGE_REJECTED",
+    "error": "not_directory",
+    "target": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-HLBUILD-20261116\\source_inputs\\source.tar",
+    "message": "a writable path ancestor is not a directory",
+    "fallback_attempted": false
+  },
+  "cause": "The v1 adapter included its read-only existing source archive file in the extract phase writable-output declarations. The maintained storage guard correctly refused this declaration.",
+  "extract_run_path_absent": true,
+  "qa_source_path_absent": true,
+  "extract_worker_launched": false,
+  "preserved_archive": {
+    "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-HLBUILD-20261116\\source_inputs\\source.tar",
+    "bytes": 228444160,
+    "sha256": "312495500ecf1c9827ff5108b9b1150acd7e42e895473898754ad254bdcaea87"
+  },
+  "remediation": "New versioned adapter declares the archive as writable only when its fresh archive phase creates it, and as read-only input for extract. Retain v1 helper/workspace/receipts; independently review/test/commit v2 and use fresh campaign. Do not relax guard or change drive/security settings.",
+  "test_updated": false,
+  "native_art_approval_remains_valid": true
+}

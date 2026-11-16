@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T11:13:27.693585+00:00",
+  "updated_at": "2026-11-16T11:40:12.960063+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -38727,7 +38727,7 @@
       "name": "Grand high-limit spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "APPROVED_PACKAGE_INTEGRATED_GUARDED_TEST_BUILD_NEXT",
+      "status": "V2_RELEASE_CODE_GO_88_TESTS_PASS_FRESH_TEST_CAMPAIGN_NEXT",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38784,18 +38784,23 @@
           "kind": "verified_active_checkpoint",
           "reference": "docs/testing/high_limit_spatial_v1_branch_integration_20261116.json",
           "summary": "APPROVED_PACKAGE_INTEGRATED_GUARDED_TEST_BUILD_NEXT; bounded evidence only; TESTdelivery stillpending."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/testing/high_limit_spatial_test_build_v2_preparation_20261116.json",
+          "summary": "V2_RELEASE_CODE_GO_88_TESTS_PASS_FRESH_TEST_CAMPAIGN_NEXT; fullrequestedroomTESTdelivery remainsopen."
         }
       ],
-      "next_action": "Final native/art GO and exact branch integration verified:9PNG+5decorativeYchanges; allother411raw/protectedruntime unchanged. Commit isolated export source and run15guardedbuild phases over authenticatedGrandbaseline, then TESTsnapshot/publish/HTTPS and preview. APNGencode existinglaunch remainspending; no duplicate.",
+      "next_action": "Commit exact v2 helper/approval46 chain and start all15 fresh guarded build phases on new committed export source. V1 first5phasesPASS; extract correctly refused wronglydeclaredreadonlytar beforechild, allartifacts retained. New88testsPASS includingactualguardboundary. Native/artGO871/H481 unchanged; animatedpreview verified/saved; TESTdelivery stillpending.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T11:13:27.693585+00:00",
+        "observed_at": "2026-11-16T11:40:12.960063+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T11:13:27.693585+00:00",
+      "updated_at": "2026-11-16T11:40:12.960063+00:00",
       "scope": [
         "Review and correct Grand high-limit physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -38830,7 +38835,7 @@
       "name": "Grand back room spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "V2_ALL13_NATIVE_PHASES_PASS_INDEPENDENT_FINAL_ART_REVIEW_ACTIVE",
+      "status": "V2_NATIVE_AND_INDEPENDENT_ART_GO_PREVIEW_ENCODING",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38872,18 +38877,23 @@
           "kind": "verified_active_checkpoint",
           "reference": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-capture/evidence/phase-result.json",
           "summary": "V2_ALL13_NATIVE_PHASES_PASS_INDEPENDENT_FINAL_ART_REVIEW_ACTIVE; bounded evidence only; TESTdelivery stillpending."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/testing/grand_back_room_spatial_v2_native_art_approval_20261116.json",
+          "summary": "V2_NATIVE_AND_INDEPENDENT_ART_GO_PREVIEW_ENCODING; fullrequestedroomTESTdelivery remainsopen."
         }
       ],
-      "next_action": "All13freshnativev3 phasesPASS on sourcea9; Base3 contexts7969,16/7motion66,originalno-pointerliveness,capture152frames20.129388s. Complete independent actualapp/motionreview, then approved sourceintegration and deliveredHL-preserving TESTprofile.",
+      "next_action": "Finalactualnative/artGOdda141 covers13phases/3964sources/456frameidentities and actualvisualsamples; first75previewencodingactive afterclosedplanPASS. Preserve completedHL/Grand/Bar in nextTESTbaseline; nointegrationorGBRreleasebeforeactualHLdeliveryqualification.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T11:13:27.693585+00:00",
+        "observed_at": "2026-11-16T11:40:12.960063+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T11:13:27.693585+00:00",
+      "updated_at": "2026-11-16T11:40:12.960063+00:00",
       "scope": [
         "Review and correct Grand back room physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39000,7 +39010,7 @@
       "name": "Private Crew room spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "ASSEMBLED_V1_VISUAL_NO_GO_FRESH_V2_PERSPECTIVE_CORRECTION_ACTIVE",
+      "status": "V1_ACTUAL_NO_GO_REVIEWED_V2_GUARDED_ASSEMBLY_ACTIVE",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -39032,18 +39042,23 @@
           "kind": "verified_active_checkpoint",
           "reference": "docs/testing/private_crew_spatial_r1_static_review_v1_20261116.json",
           "summary": "ASSEMBLED_V1_VISUAL_NO_GO_FRESH_V2_PERSPECTIVE_CORRECTION_ACTIVE; bounded evidence only; TESTdelivery stillpending."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "tools/assemble_private_crew_spatial_candidate_v2.py",
+          "summary": "V1_ACTUAL_NO_GO_REVIEWED_V2_GUARDED_ASSEMBLY_ACTIVE; fullrequestedroomTESTdelivery remainsopen."
         }
       ],
-      "next_action": "RetainV1 and actual NO-GO: far364width to near372 over70depth stillreads uprightpanel. NewV2recipe must preserve all18464actualPokerpaint,50typedmask/depth boundaries,7native/lowmotions/fullJSON/index and introduce coherent visible table perspective before independentreview/native.",
+      "next_action": "PreserveV1fbec/NOGO. NewindependentlyreviewedV2recipe79152 gives coherentfar252..632 to near220..668; actual18464Pokerpaint minimum8.648boardfeltmargin; allanchors/motion/JSON/index andV1supportsfloor retained. Freshguardedv2-01 assemblyactive, actualart/title reviewnext; noactivation.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T11:13:27.693585+00:00",
+        "observed_at": "2026-11-16T11:40:12.960063+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T11:13:27.693585+00:00",
+      "updated_at": "2026-11-16T11:40:12.960063+00:00",
       "scope": [
         "Review and correct Private Crew room physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39077,7 +39092,7 @@
       "name": "Delta Queen spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "GUARDED_V1_ASSEMBLY_PASS_ACTUAL_STATIC_ART_AUDIT_ACTIVE",
+      "status": "V1_ACTUAL_PLANE_NO_GO_SOURCE_SPECIFIC_V2_CORRECTION_REVIEW",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -39109,18 +39124,23 @@
           "kind": "verified_active_checkpoint",
           "reference": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-DELTATRIAL-20261116-assemble01/evidence/delta-queen-spatial-r1-assembly.json",
           "summary": "GUARDED_V1_ASSEMBLY_PASS_ACTUAL_STATIC_ART_AUDIT_ACTIVE; bounded evidence only; TESTdelivery stillpending."
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/testing/delta_queen_spatial_r1_static_review_v1_20261116.json",
+          "summary": "V1_ACTUAL_PLANE_NO_GO_SOURCE_SPECIFIC_V2_CORRECTION_REVIEW; fullrequestedroomTESTdelivery remainsopen."
         }
       ],
-      "next_action": "Guardedassemble01job42376exit0zero;29roomseal a2458f4c,onlyleftmaster changed,all26motionPNGs/fullJSON/index/rightforeground unchanged. Independently inspect actual tabletopplane/railcompression/creamstile and232typedmaskclearance; no native/artactivation beforeactualGO.",
+      "next_action": "PreserveactualNOGOd124/29H a245: constantfeltrowsremainupright despiteallpaint/mask/donorcustodyPASS. NewV2leftconvergence/rightcabinetocclusion geometrysourcecode in independentreview; no Eassembly/native/activation untilCODEGOandfocusedchecks.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T11:13:27.693585+00:00",
+        "observed_at": "2026-11-16T11:40:12.960063+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T11:13:27.693585+00:00",
+      "updated_at": "2026-11-16T11:40:12.960063+00:00",
       "scope": [
         "Review and correct Delta Queen physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
