@@ -38342,7 +38342,7 @@
       "parent_ids": [],
       "group": "current",
       "state": "open",
-      "status": "NATIVE_FIXED_215_CHECKS_MAIN_NEXT_PENDING",
+      "status": "MAIN_NEXT_SERVED_215_NATIVE_WEB_STARTUP_UNVERIFIED",
       "owner": {
         "assignment_state": "assigned",
         "name": "Sidebar general NEXT gameplay QA",
@@ -38384,6 +38384,15 @@
             "id": "next-delivery",
             "description": "Authorized scoped main commit followed through existing NEXT watcher with exact deployed build/assets and changed-path evidence where feasible; retain visual/Web limits.",
             "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md"
+            ]
+          },
+          {
+            "id": "exact-web-startup",
+            "description": "Confirm basic launch on exact served build and retain Web changed-path acceptance limits; HTTP/native evidence alone does not prove startup.",
+            "required": true,
             "state": "open",
             "evidence": [
               "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md"
@@ -38402,7 +38411,14 @@
               ]
             },
             {
-              "name": "Authorized main push, exact NEXT identity/assets and launch qualification limits",
+              "name": "Exact main/tree, NEXT promotion, trusted HTTPS pointer/metadata and changed PCK hash",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md"
+              ]
+            },
+            {
+              "name": "Exact-build browser startup and rendered changed-path Web acceptance remain unverified under retained browser-control restriction",
               "state": "remaining",
               "evidence": [
                 "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md"
@@ -38412,31 +38428,221 @@
         }
       },
       "implementation_batches": [],
-      "commits": [],
+      "commits": [
+        {
+          "sha": "1240cebdd15ee294e8997b46d20819762d691923",
+          "evidence": [
+            "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "evidence": []
+        "state": "verified",
+        "evidence": [
+          "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md",
+          "E:\\CodexQA\\BTH\\runs\\sidebar-slot-min-next-served-20261116-01\\evidence\\next-receipt.json"
+        ],
+        "commit": "1240cebdd15ee294e8997b46d20819762d691923"
       },
       "evidence": [
         {
           "reference": "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md",
           "kind": "native_ordinary_owned_campaign_canvas_reproduction",
           "summary": "Current main reproduces MIN lock; two runtime declarations/adapters now preflight real funding before delivery.215 qualified checks pass: actual19, cold16, legacy warm136 and cold44. Original failures and overlapping134 retained separately."
+        },
+        {
+          "reference": "E:\\CodexQA\\BTH\\runs\\sidebar-slot-min-next-served-20261116-01\\evidence\\next-receipt.json",
+          "kind": "trusted_https_exact_next_pipeline_receipt",
+          "summary": "Exact1240cebd/tree07fa7f46 deployed04:29:59Z. Trusted HTTPS entry/pointer/BUILD/manifest/REF/VERSION match source/staged hashes. Changed PCK full streamed hash matches. Startup/visual Web unverified; no browser control attempted."
         }
       ],
-      "next_action": "Review only the scoped diff, commit/push the authorized Slot fix to main, observe the existing NEXT watcher and record exact deployed/served provenance with basic-launch and Web limits.",
+      "next_action": "Retain exact NEXT receipt and seek permitted exact-build startup/rendered changed-path evidence without bypassing inherited browser-control restrictions. Continue independent owned native general QA.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T04:14:23.420250+00:00",
+        "observed_at": "2026-11-16T04:38:45.391492+00:00",
         "evidence": [
           "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T04:14:23.420250+00:00",
+      "updated_at": "2026-11-16T04:38:45.391492+00:00",
+      "planned_app_changes": []
+    },
+    {
+      "id": "BTH-NEXT-QA-GENERAL-SIDEBAR-001",
+      "name": "Continue general NEXT QA in a visible sidebar agent",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "state": "open",
+      "status": "NATIVE_591_GENERAL_OPEN_SLOT_MAIN_NEXT_SERVED",
+      "owner": {
+        "assignment_state": "assigned",
+        "name": "Sidebar general NEXT gameplay QA",
+        "task_ref": "6afa5080-2f00-8191-804a-d401aa98a020"
+      },
+      "objective": {
+        "text": "Support the three ending playtests and continue general NEXT bug-finding without duplicating active jobs. Triage reproducible product findings, fix root causes while retaining safeguards, test and track by stable ID, commit/push authorized fixes to main and verify NEXT. Preserve existing saves and unrelated work, use admitted guarded E: QA storage and respect browser/computer-control denials.",
+        "source": "Trusted parent delegation from01a1a147-7f07-7583-baf0-771a839f1013 following the explicit request for visible sidebar agents.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "isolated-samples",
+            "description": "Varied ordinary native gameplay/persistence samples with explicit fidelity, original custody and clean capped Job closure.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/NEXT_sidebar_general_QA_20261116.md"
+            ]
+          },
+          {
+            "id": "triage",
+            "description": "Classify failed observations and confirmed findings while retaining original failed evidence.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/NEXT_sidebar_general_QA_20261116.md"
+            ]
+          },
+          {
+            "id": "remaining-coverage",
+            "description": "Broader ordinary gameplay and feasible exact Web/ending evidence remain distinct from this bounded native batch.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/NEXT_sidebar_general_QA_20261116.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": true,
+          "complete": false,
+          "areas": [
+            {
+              "name": "Ordinary routes/tickets and multiple paid games through cold saves, now beach Slot actual canvas input and a tracked reproduced/fixed funding defect",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/NEXT_sidebar_general_QA_20261116.md",
+                "docs/testing/NEXT_sidebar_scratch_travel_QA_20261116.md",
+                "docs/testing/NEXT_sidebar_funded_BJ_Roulette_QA_20261116.md",
+                "docs/testing/NEXT_sidebar_Coin_Pusher_QA_20261116.md",
+                "docs/testing/NEXT_sidebar_Bar_Dice_QA_20261116.md",
+                "docs/testing/NEXT_sidebar_Beach_Slot_QA_20261116.md",
+                "docs/testing/NEXT_sidebar_G_invitation_QA_20261116.md"
+              ]
+            },
+            {
+              "name": "Broader routes/games, Web and full ending acceptance",
+              "state": "remaining",
+              "evidence": [
+                "docs/testing/NEXT_sidebar_general_QA_20261116.md"
+              ]
+            }
+          ]
+        }
+      },
+      "implementation_batches": [],
+      "commits": [
+        {
+          "sha": "bcfde74daf191626de67365a630affe2db838f13",
+          "evidence": [
+            "docs/testing/NEXT_sidebar_general_QA_20261116.md"
+          ]
+        },
+        {
+          "sha": "f5a6f00ec0e06f3cac2524af32b8a995c6012260",
+          "evidence": [
+            "docs/testing/NEXT_sidebar_scratch_travel_QA_20261116.md"
+          ]
+        },
+        {
+          "sha": "744c6d8556215b8a9b12119951bac7629746491e",
+          "evidence": [
+            "docs/testing/NEXT_sidebar_funded_BJ_Roulette_QA_20261116.md"
+          ]
+        },
+        {
+          "sha": "e4e143a5239bb97d3a5c30853427f3c3d0b45ca1",
+          "evidence": [
+            "docs/testing/NEXT_sidebar_Coin_Pusher_QA_20261116.md"
+          ]
+        },
+        {
+          "sha": "519fbe850908c75f0a8c4de64f454be20929631c",
+          "evidence": [
+            "docs/testing/NEXT_sidebar_Bar_Dice_QA_20261116.md"
+          ]
+        },
+        {
+          "sha": "61ce57e627d3dfd59eaa6020a448bf6a1ec5de99",
+          "evidence": [
+            "docs/testing/NEXT_sidebar_Beach_Slot_QA_20261116.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/testing/NEXT_sidebar_general_QA_20261116.md",
+          "kind": "native_generated_campaign_and_canvas_action",
+          "summary": "163 valid checks and25 new-host Continue boundaries. No pointer/Web/separate-process cold claim or new product defect. Failed probe assumptions retained."
+        },
+        {
+          "reference": "docs/testing/NEXT_sidebar_scratch_travel_QA_20261116.md",
+          "kind": "native_ordinary_generated_cold_copied_fixture",
+          "summary": "118 additional focused checks: actual partial Scratch strokes, ordinary travel, separate-process Continue, normal boat lock/service completion, once-only filing, and unpaid Video Poker preview/Holds plus actual Draw with a separate paid Scratch ticket."
+        },
+        {
+          "reference": "docs/testing/NEXT_sidebar_funded_BJ_Roulette_QA_20261116.md",
+          "kind": "native_ordinary_generated_cold_copied_fixture",
+          "summary": "61 additional focused checks: genuinely funded Blackjack decision and settled push through cold processes; Roulette draft capacity, normal confirmed paid spin saved in motion, cold reveal and scheduled no-input sit-out without repeated paid chips; exact unrelated paid Scratch mask after ordinary return."
+        },
+        {
+          "reference": "docs/testing/NEXT_sidebar_Coin_Pusher_QA_20261116.md",
+          "kind": "native_ordinary_generated_cold_copied_fixture",
+          "summary": "58 additional focused checks: actual offered Coin Pusher, hold cancellation, paid Drop plus real jam-response choice, intended reentry motor restart, live no-input physics, empty-tray Collect, actual11-coin hold/release, queued manual Save completing without a second input, cold account/paid-body retention and exact separate Scratch mask."
+        },
+        {
+          "reference": "docs/testing/NEXT_sidebar_Bar_Dice_QA_20261116.md",
+          "kind": "native_ordinary_generated_cold_copied_fixture",
+          "summary": "67 additional focused checks: actual15 lounge route, normal Bar Dice uncharged cover/marks/Call through cold processes, real one-die Shake, final paid6 loss applied once, settled cold and stale-call rejection, ordinary return and exact original paid Scratch filing."
+        },
+        {
+          "reference": "docs/testing/NEXT_sidebar_Beach_Slot_QA_20261116.md",
+          "kind": "native_ordinary_generated_cold_copied_fixture",
+          "summary": "99 additional qualified ordinary beach-route/Slot checks plus ten retained diagnostics/original failures. Confirmed actual unfunded Spin strands MIN; separate tracked current-main fix1240cebd passes215 focused checks and awaits NEXT."
+        },
+        {
+          "reference": "docs/testing/NEXT_sidebar_G_invitation_QA_20261116.md",
+          "kind": "current_main_native_ordinary_cold_invitation",
+          "summary": "18 qualified checks: actual15 beach/lounge route, cold12 account, real offered invitation, normal enabled acceptance and advertised50 grant. One probe-script timeout excluded; originals unchanged. Seven further Grand-route checks pass: accepted50 stake cold-retained exactly once at62, invite object absent, offered free Grand route/arrival and valid authority. Actual Craps is now normally offered; its gameplay is next."
+        }
+      ],
+      "next_action": "Explore the normally offered Grand Craps game from current-main owned G arrival; read actual chip/stake/funding terms before paid play. Preserve full general/endings scope and Web startup acceptance as Open.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-16T04:38:45.391492+00:00",
+        "evidence": [
+          "docs/testing/NEXT_sidebar_general_QA_20261116.md",
+          "docs/testing/NEXT_sidebar_scratch_travel_QA_20261116.md",
+          "docs/testing/NEXT_sidebar_funded_BJ_Roulette_QA_20261116.md",
+          "docs/testing/NEXT_sidebar_Coin_Pusher_QA_20261116.md",
+          "docs/testing/NEXT_sidebar_Bar_Dice_QA_20261116.md",
+          "docs/testing/NEXT_sidebar_Beach_Slot_QA_20261116.md"
+        ]
+      },
+      "updated_at": "2026-11-16T04:38:45.391492+00:00",
       "planned_app_changes": []
     }
   ],
