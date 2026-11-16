@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-12T17:35:36.928525+00:00",
+  "updated_at": "2026-11-16T01:06:10.865093+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -4879,10 +4879,10 @@
         }
       },
       "state": "open",
-      "status": "ACTIVE_ORIGINAL_FAILING_SAVES_PRESERVED",
+      "status": "NATIVE_CLEAN_SWEEP_COLD_PASS_WEB_BLOCKED",
       "owner": {
-        "name": "Playtest heist ending reachability",
-        "task_ref": "01a17dc5-9c58-7169-a1e8-99b89f2120ea",
+        "name": "Playtest Crew ending",
+        "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
         "assignment_state": "assigned"
       },
       "commits": [],
@@ -4902,20 +4902,31 @@
           "kind": "recorded_receipt",
           "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-10-27\\task\\evidence\\crew-r06-ordinary-continuation-handoff.md",
           "summary": "Retains its original source/platform/fixture limits; not a new test."
+        },
+        {
+          "kind": "native_ordinary_gameplay",
+          "reference": "docs/testing/NEXT_intact_Grand_Bishop_QA_20261116.md",
+          "summary": "Intact O campaign reaches native Clean Sweep, earns $1,150 to $1,327 with 14 chips, and passes 16 terminal cold-process/Save-Continue checks. Full companion custody and guarded public-host actions retained. Original scope, historical failures and browser/WASM acceptance remain open."
         }
       ],
-      "implementation_batches": [],
-      "next_action": "Reconcile the original scope/evidence and current owner for BTH-QA-CREW-ENDING-001, then carry out the named remaining acceptance without repeating delivered implementation. Source record: Not yet established for this open item's full original scope; R06 independent campaign continues; R02Count and R03Motel failures stay preserved. Do not reaccept or replay historical deliveries.",
+      "implementation_batches": [
+        "BTH-QA-CREW-ENDING-001-SIDEBAR-20261116"
+      ],
+      "next_action": "Preserve the closed terminal checkpoint crew-sidebar-count-terminal-cold-20261116-01 and pending Blue Bag. Resume exact deployed NEXT browser acceptance only through a verified isolated controllable profile; retain historical R02/R03/R06 failures and original-scope gaps.",
       "blocker": {
-        "state": "unknown",
-        "kind": null,
-        "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
+        "state": "active",
+        "kind": "browser_profile_control",
+        "description": "Native Clean Sweep and terminal persistence qualified on pinned source. Existing inability to control a verified separate browser profile prevents deployed NEXT/WASM acceptance; no existing user browser/profile was used and no denial bypass was attempted.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:23:29.672223+00:00",
-        "evidence": []
+        "observed_at": "2026-11-16T01:02:11.568102+00:00",
+        "evidence": [
+          "docs/testing/NEXT_intact_Grand_Bishop_QA_20261116.md",
+          "user:Sentinel_ee32381a9d248191940c27f9e463769e",
+          "user:Sentinel_b9ecabacc1848191bed579864eef4f2a"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00"
+      "updated_at": "2026-11-16T01:02:11.568102+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -6273,7 +6284,7 @@
         {
           "kind": "native_ordinary_gameplay",
           "reference": "docs/testing/NEXT_intact_Grand_Bishop_QA_20261116.md",
-          "summary": "Intact Grand greeting/roster9/9 and Bishop normal recruitment/saveContinue16/16; native only, broader ending acceptance open."
+          "summary": "Intact O campaign reaches native Clean Sweep, earns $1,150 to $1,327 with 14 chips, and passes 16 terminal cold-process/Save-Continue checks. Full companion custody and guarded public-host actions retained. Original scope, historical failures and browser/WASM acceptance remain open."
         }
       ],
       "implementation_batches": [],
@@ -6287,7 +6298,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T00:23:36.728228+00:00",
+      "updated_at": "2026-11-16T01:02:11.568102+00:00",
       "candidate_qualification_20261111": {
         "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
         "proof": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
@@ -41893,6 +41904,54 @@
         "Scoped source/assets/tests/docs squash, excluding feature-added review movies and superseded guard/instruction edits.",
         "Resolve current-main seams; test automatic completion, menu boundaries, save/receipt, rollback, modal ownership and liveness."
       ]
+    },
+    {
+      "id": "BTH-QA-CREW-ENDING-001-SIDEBAR-20261116",
+      "name": "Resume intact Crew campaign in sidebar",
+      "aliases": [],
+      "group": "current",
+      "parent_id": "BTH-QA-CREW-ENDING-001",
+      "state": "open",
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": []
+      },
+      "scope": [
+        "Continue the transferred ordinary campaign through the Crew heist using normal progression and intact private companions.",
+        "Record source/build and native versus browser fidelity; preserve historical failed states and the user's saves.",
+        "No duplicate worker or bypass of browser/computer denials."
+      ],
+      "acceptance_scope": "Owner restart request Sentinel_3464b568ddc48191af59e314081b75ef and sidebar request Sentinel_11391c7e280c81918ac7603758e4721d; transferred intact checkpoint and explicit three-directory custody. Native ending reached and persisted; deployed browser/WASM acceptance remains separately required.",
+      "status": "NATIVE_CLEAN_SWEEP_COLD_PASS_WEB_BLOCKED",
+      "owner": {
+        "name": "Playtest Crew ending",
+        "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
+        "assignment_state": "assigned"
+      },
+      "evidence": [
+        {
+          "kind": "native_ordinary_gameplay",
+          "reference": "docs/testing/NEXT_intact_Grand_Bishop_QA_20261116.md",
+          "summary": "Intact O campaign reaches native Clean Sweep, earns $1,150 to $1,327 with 14 chips, and passes 16 terminal cold-process/Save-Continue checks. Full companion custody and guarded public-host actions retained. Original scope, historical failures and browser/WASM acceptance remain open."
+        }
+      ],
+      "next_action": "Preserve the closed terminal checkpoint crew-sidebar-count-terminal-cold-20261116-01 and pending Blue Bag. Resume exact deployed NEXT browser acceptance only through a verified isolated controllable profile; retain historical R02/R03/R06 failures and original-scope gaps.",
+      "blocker": {
+        "state": "active",
+        "kind": "browser_profile_control",
+        "description": "Native Clean Sweep and terminal persistence qualified on pinned source. Existing inability to control a verified separate browser profile prevents deployed NEXT/WASM acceptance; no existing user browser/profile was used and no denial bypass was attempted.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-16T01:02:11.568102+00:00",
+        "evidence": [
+          "docs/testing/NEXT_intact_Grand_Bishop_QA_20261116.md",
+          "user:Sentinel_ee32381a9d248191940c27f9e463769e",
+          "user:Sentinel_b9ecabacc1848191bed579864eef4f2a"
+        ]
+      },
+      "updated_at": "2026-11-16T01:02:11.568102+00:00"
     }
   ]
 }
