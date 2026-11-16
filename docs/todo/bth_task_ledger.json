@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-14T20:49:22.809231+00:00",
+  "updated_at": "2026-11-16T00:14:15.2181367+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -38038,6 +38038,1365 @@
       "planned_app_changes": [
         "Data-driven background, animation and counter layers; developer reload; packed main-menu backdrops. Preserve scheduling and all game logic."
       ]
+    },
+    {
+      "id": "BTH-ENV-SPATIAL-001",
+      "kind": "objective",
+      "name": "Audit and correct all-room spatial support and seams",
+      "group": "current",
+      "state": "open",
+      "status": "SOURCE_REVIEW",
+      "owner": {
+        "name": "direct_room_spatial_rework",
+        "task_ref": "/root/direct_room_spatial_rework",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
+          "kind": "director_direction"
+        }
+      ],
+      "next_action": "Audit all environment art packages for seams, grounded supports, perspective and live object clearance; preserve existing animations and gameplay geometry.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "scope": [
+        "Audit all environment art packages for seams, grounded supports, perspective and live object clearance; preserve existing animations and gameplay geometry."
+      ],
+      "parent_ids": [],
+      "objective": {
+        "text": "Audit all environment art packages for seams, grounded supports, perspective and live object clearance; preserve existing animations and gameplay geometry.",
+        "source": "Current owner-requested all-room spatial rework relayed by /root,2026-11-16.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "visual-and-implementation-audit",
+            "description": "Audit all environment art packages for seams, grounded supports, perspective and live object clearance; preserve existing animations and gameplay geometry.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "implementation_batches": []
+    },
+    {
+      "id": "BTH-ENV-SPATIAL-BAR-001",
+      "kind": "objective",
+      "name": "Correct Bar pool-table support and perspective",
+      "group": "current",
+      "state": "open",
+      "status": "SOURCE_REVIEW",
+      "owner": {
+        "name": "implement_room_spatial_fixes",
+        "task_ref": "/root/implement_room_spatial_fixes",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
+          "kind": "director_direction"
+        }
+      ],
+      "next_action": "Repair Bar decorative pool-table rails, apron, legs and shadow in y264-294, preserving all17 motions, ball paths and live geometry; require visual audit before TEST delivery.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "scope": [
+        "Repair Bar decorative pool-table rails, apron, legs and shadow in y264-294, preserving all17 motions, ball paths and live geometry; require visual audit before TEST delivery."
+      ],
+      "parent_ids": [
+        "BTH-ENV-SPATIAL-001"
+      ],
+      "objective": {
+        "text": "Repair Bar decorative pool-table rails, apron, legs and shadow in y264-294, preserving all17 motions, ball paths and live geometry; require visual audit before TEST delivery.",
+        "source": "Current owner-requested all-room spatial rework relayed by /root,2026-11-16.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "visual-and-implementation-audit",
+            "description": "Repair Bar decorative pool-table rails, apron, legs and shadow in y264-294, preserving all17 motions, ball paths and live geometry; require visual audit before TEST delivery.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "implementation_batches": []
+    },
+    {
+      "id": "BTH-TEST-TRAVEL-PERF-001",
+      "kind": "objective",
+      "name": "Apply shared travel performance fix to TEST",
+      "group": "current",
+      "state": "open",
+      "status": "FOCUSED_VALIDATION",
+      "owner": {
+        "name": "find_next_game_bugs",
+        "task_ref": "/root/find_next_game_bugs",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "0ef525e012df485bc3312e0d2ea89e3aa05b4d55",
+          "evidence": []
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [],
+      "next_action": "Exact scoped fix pushed;95/95 and required liveness passed. Verify TEST export/source and behavior; keep parent slowdown open.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T00:15:06.753044+00:00",
+      "scope": [
+        "Shared exact-byte save/projection cache performance correction; preserve all art, save outcomes and no-input animation."
+      ],
+      "parent_ids": [],
+      "objective": {
+        "text": "Shared exact-byte save/projection cache performance correction; preserve all art, save outcomes and no-input animation.",
+        "source": "Owner reports same travel slowdown in NEXT and TEST; explicit parent scope2026-11-16.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "visual-and-implementation-audit",
+            "description": "Focused contract and liveness pass on art branch, scoped commit, exact TEST delivery identity and behavior evidence.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "implementation_batches": []
+    },
+    {
+      "id": "BTH-ENV-SPATIAL-GRAND-001",
+      "kind": "objective",
+      "name": "Grand public spatial and seam review",
+      "group": "current",
+      "state": "open",
+      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "owner": {
+        "name": "direct_room_spatial_rework",
+        "task_ref": "/root/direct_room_spatial_rework",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
+          "kind": "director_direction"
+        }
+      ],
+      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "scope": [
+        "Review and correct Grand public physical support, perspective and seams; distinguish candidates from confirmed findings."
+      ],
+      "parent_ids": [
+        "BTH-ENV-SPATIAL-001"
+      ],
+      "objective": {
+        "text": "Review and correct Grand public physical support, perspective and seams; distinguish candidates from confirmed findings.",
+        "source": "Current owner-requested all-room spatial rework relayed by /root,2026-11-16.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "visual-and-implementation-audit",
+            "description": "Document explicit room disposition; where corrected, scoped commit plus independent visual/motion/geometry and TEST evidence.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "implementation_batches": []
+    },
+    {
+      "id": "BTH-ENV-SPATIAL-HL-001",
+      "kind": "objective",
+      "name": "Grand high-limit spatial and seam review",
+      "group": "current",
+      "state": "open",
+      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "owner": {
+        "name": "direct_room_spatial_rework",
+        "task_ref": "/root/direct_room_spatial_rework",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
+          "kind": "director_direction"
+        }
+      ],
+      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "scope": [
+        "Review and correct Grand high-limit physical support, perspective and seams; distinguish candidates from confirmed findings."
+      ],
+      "parent_ids": [
+        "BTH-ENV-SPATIAL-001"
+      ],
+      "objective": {
+        "text": "Review and correct Grand high-limit physical support, perspective and seams; distinguish candidates from confirmed findings.",
+        "source": "Current owner-requested all-room spatial rework relayed by /root,2026-11-16.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "visual-and-implementation-audit",
+            "description": "Document explicit room disposition; where corrected, scoped commit plus independent visual/motion/geometry and TEST evidence.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "implementation_batches": []
+    },
+    {
+      "id": "BTH-ENV-SPATIAL-GBR-001",
+      "kind": "objective",
+      "name": "Grand back room spatial and seam review",
+      "group": "current",
+      "state": "open",
+      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "owner": {
+        "name": "direct_room_spatial_rework",
+        "task_ref": "/root/direct_room_spatial_rework",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
+          "kind": "director_direction"
+        }
+      ],
+      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "scope": [
+        "Review and correct Grand back room physical support, perspective and seams; distinguish candidates from confirmed findings."
+      ],
+      "parent_ids": [
+        "BTH-ENV-SPATIAL-001"
+      ],
+      "objective": {
+        "text": "Review and correct Grand back room physical support, perspective and seams; distinguish candidates from confirmed findings.",
+        "source": "Current owner-requested all-room spatial rework relayed by /root,2026-11-16.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "visual-and-implementation-audit",
+            "description": "Document explicit room disposition; where corrected, scoped commit plus independent visual/motion/geometry and TEST evidence.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "implementation_batches": []
+    },
+    {
+      "id": "BTH-ENV-SPATIAL-HIDDEN-001",
+      "kind": "objective",
+      "name": "Hidden casino spatial and seam review",
+      "group": "current",
+      "state": "open",
+      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "owner": {
+        "name": "direct_room_spatial_rework",
+        "task_ref": "/root/direct_room_spatial_rework",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
+          "kind": "director_direction"
+        }
+      ],
+      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "scope": [
+        "Review and correct Hidden casino physical support, perspective and seams; distinguish candidates from confirmed findings."
+      ],
+      "parent_ids": [
+        "BTH-ENV-SPATIAL-001"
+      ],
+      "objective": {
+        "text": "Review and correct Hidden casino physical support, perspective and seams; distinguish candidates from confirmed findings.",
+        "source": "Current owner-requested all-room spatial rework relayed by /root,2026-11-16.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "visual-and-implementation-audit",
+            "description": "Document explicit room disposition; where corrected, scoped commit plus independent visual/motion/geometry and TEST evidence.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "implementation_batches": []
+    },
+    {
+      "id": "BTH-ENV-SPATIAL-PRIVATE-001",
+      "kind": "objective",
+      "name": "Private Crew room spatial and seam review",
+      "group": "current",
+      "state": "open",
+      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "owner": {
+        "name": "direct_room_spatial_rework",
+        "task_ref": "/root/direct_room_spatial_rework",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
+          "kind": "director_direction"
+        }
+      ],
+      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "scope": [
+        "Review and correct Private Crew room physical support, perspective and seams; distinguish candidates from confirmed findings."
+      ],
+      "parent_ids": [
+        "BTH-ENV-SPATIAL-001"
+      ],
+      "objective": {
+        "text": "Review and correct Private Crew room physical support, perspective and seams; distinguish candidates from confirmed findings.",
+        "source": "Current owner-requested all-room spatial rework relayed by /root,2026-11-16.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "visual-and-implementation-audit",
+            "description": "Document explicit room disposition; where corrected, scoped commit plus independent visual/motion/geometry and TEST evidence.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "implementation_batches": []
+    },
+    {
+      "id": "BTH-ENV-SPATIAL-DELTA-001",
+      "kind": "objective",
+      "name": "Delta Queen spatial and seam review",
+      "group": "current",
+      "state": "open",
+      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "owner": {
+        "name": "direct_room_spatial_rework",
+        "task_ref": "/root/direct_room_spatial_rework",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
+          "kind": "director_direction"
+        }
+      ],
+      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "scope": [
+        "Review and correct Delta Queen physical support, perspective and seams; distinguish candidates from confirmed findings."
+      ],
+      "parent_ids": [
+        "BTH-ENV-SPATIAL-001"
+      ],
+      "objective": {
+        "text": "Review and correct Delta Queen physical support, perspective and seams; distinguish candidates from confirmed findings.",
+        "source": "Current owner-requested all-room spatial rework relayed by /root,2026-11-16.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "visual-and-implementation-audit",
+            "description": "Document explicit room disposition; where corrected, scoped commit plus independent visual/motion/geometry and TEST evidence.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "implementation_batches": []
+    },
+    {
+      "id": "BTH-ENV-SPATIAL-PAWN-001",
+      "kind": "objective",
+      "name": "Pawn Shop spatial and seam review",
+      "group": "current",
+      "state": "open",
+      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "owner": {
+        "name": "direct_room_spatial_rework",
+        "task_ref": "/root/direct_room_spatial_rework",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
+          "kind": "director_direction"
+        }
+      ],
+      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "scope": [
+        "Review and correct Pawn Shop physical support, perspective and seams; distinguish candidates from confirmed findings."
+      ],
+      "parent_ids": [
+        "BTH-ENV-SPATIAL-001"
+      ],
+      "objective": {
+        "text": "Review and correct Pawn Shop physical support, perspective and seams; distinguish candidates from confirmed findings.",
+        "source": "Current owner-requested all-room spatial rework relayed by /root,2026-11-16.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "visual-and-implementation-audit",
+            "description": "Document explicit room disposition; where corrected, scoped commit plus independent visual/motion/geometry and TEST evidence.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "implementation_batches": []
+    },
+    {
+      "id": "BTH-ENV-SPATIAL-JAZZ-001",
+      "kind": "objective",
+      "name": "Jazz Club spatial and seam review",
+      "group": "current",
+      "state": "open",
+      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "owner": {
+        "name": "direct_room_spatial_rework",
+        "task_ref": "/root/direct_room_spatial_rework",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
+          "kind": "director_direction"
+        }
+      ],
+      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "scope": [
+        "Review and correct Jazz Club physical support, perspective and seams; distinguish candidates from confirmed findings."
+      ],
+      "parent_ids": [
+        "BTH-ENV-SPATIAL-001"
+      ],
+      "objective": {
+        "text": "Review and correct Jazz Club physical support, perspective and seams; distinguish candidates from confirmed findings.",
+        "source": "Current owner-requested all-room spatial rework relayed by /root,2026-11-16.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "visual-and-implementation-audit",
+            "description": "Document explicit room disposition; where corrected, scoped commit plus independent visual/motion/geometry and TEST evidence.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "implementation_batches": []
+    },
+    {
+      "id": "BTH-ENV-SPATIAL-KITTY-001",
+      "kind": "objective",
+      "name": "Kitty Cat Lounge spatial and seam review",
+      "group": "current",
+      "state": "open",
+      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "owner": {
+        "name": "direct_room_spatial_rework",
+        "task_ref": "/root/direct_room_spatial_rework",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
+          "kind": "director_direction"
+        }
+      ],
+      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "scope": [
+        "Review and correct Kitty Cat Lounge physical support, perspective and seams; distinguish candidates from confirmed findings."
+      ],
+      "parent_ids": [
+        "BTH-ENV-SPATIAL-001"
+      ],
+      "objective": {
+        "text": "Review and correct Kitty Cat Lounge physical support, perspective and seams; distinguish candidates from confirmed findings.",
+        "source": "Current owner-requested all-room spatial rework relayed by /root,2026-11-16.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "visual-and-implementation-audit",
+            "description": "Document explicit room disposition; where corrected, scoped commit plus independent visual/motion/geometry and TEST evidence.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "implementation_batches": []
+    },
+    {
+      "id": "BTH-ENV-SPATIAL-PUNCH-001",
+      "kind": "objective",
+      "name": "Public Punchline spatial and seam review",
+      "group": "current",
+      "state": "open",
+      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "owner": {
+        "name": "direct_room_spatial_rework",
+        "task_ref": "/root/direct_room_spatial_rework",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
+          "kind": "director_direction"
+        }
+      ],
+      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "scope": [
+        "Review and correct Public Punchline physical support, perspective and seams; distinguish candidates from confirmed findings."
+      ],
+      "parent_ids": [
+        "BTH-ENV-SPATIAL-001"
+      ],
+      "objective": {
+        "text": "Review and correct Public Punchline physical support, perspective and seams; distinguish candidates from confirmed findings.",
+        "source": "Current owner-requested all-room spatial rework relayed by /root,2026-11-16.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "visual-and-implementation-audit",
+            "description": "Document explicit room disposition; where corrected, scoped commit plus independent visual/motion/geometry and TEST evidence.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "implementation_batches": []
+    },
+    {
+      "id": "BTH-ENV-SPATIAL-MOTEL-001",
+      "kind": "objective",
+      "name": "Motel lobby spatial and seam review",
+      "group": "current",
+      "state": "open",
+      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "owner": {
+        "name": "direct_room_spatial_rework",
+        "task_ref": "/root/direct_room_spatial_rework",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
+          "kind": "director_direction"
+        }
+      ],
+      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "scope": [
+        "Review and correct Motel lobby physical support, perspective and seams; distinguish candidates from confirmed findings."
+      ],
+      "parent_ids": [
+        "BTH-ENV-SPATIAL-001"
+      ],
+      "objective": {
+        "text": "Review and correct Motel lobby physical support, perspective and seams; distinguish candidates from confirmed findings.",
+        "source": "Current owner-requested all-room spatial rework relayed by /root,2026-11-16.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "visual-and-implementation-audit",
+            "description": "Document explicit room disposition; where corrected, scoped commit plus independent visual/motion/geometry and TEST evidence.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "implementation_batches": []
+    },
+    {
+      "id": "BTH-ENV-SPATIAL-APARTMENT-001",
+      "kind": "objective",
+      "name": "Apartment spatial and seam review",
+      "group": "current",
+      "state": "open",
+      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "owner": {
+        "name": "direct_room_spatial_rework",
+        "task_ref": "/root/direct_room_spatial_rework",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
+          "kind": "director_direction"
+        }
+      ],
+      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "scope": [
+        "Review and correct Apartment physical support, perspective and seams; distinguish candidates from confirmed findings."
+      ],
+      "parent_ids": [
+        "BTH-ENV-SPATIAL-001"
+      ],
+      "objective": {
+        "text": "Review and correct Apartment physical support, perspective and seams; distinguish candidates from confirmed findings.",
+        "source": "Current owner-requested all-room spatial rework relayed by /root,2026-11-16.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "visual-and-implementation-audit",
+            "description": "Document explicit room disposition; where corrected, scoped commit plus independent visual/motion/geometry and TEST evidence.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "implementation_batches": []
+    },
+    {
+      "id": "BTH-ENV-SPATIAL-HOUSE-001",
+      "kind": "objective",
+      "name": "House spatial and seam review",
+      "group": "current",
+      "state": "open",
+      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "owner": {
+        "name": "direct_room_spatial_rework",
+        "task_ref": "/root/direct_room_spatial_rework",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
+          "kind": "director_direction"
+        }
+      ],
+      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "scope": [
+        "Review and correct House physical support, perspective and seams; distinguish candidates from confirmed findings."
+      ],
+      "parent_ids": [
+        "BTH-ENV-SPATIAL-001"
+      ],
+      "objective": {
+        "text": "Review and correct House physical support, perspective and seams; distinguish candidates from confirmed findings.",
+        "source": "Current owner-requested all-room spatial rework relayed by /root,2026-11-16.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "visual-and-implementation-audit",
+            "description": "Document explicit room disposition; where corrected, scoped commit plus independent visual/motion/geometry and TEST evidence.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "implementation_batches": []
+    },
+    {
+      "id": "BTH-ENV-SPATIAL-CAGE-001",
+      "kind": "objective",
+      "name": "Grand Cage spatial and seam review",
+      "group": "current",
+      "state": "open",
+      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "owner": {
+        "name": "direct_room_spatial_rework",
+        "task_ref": "/root/direct_room_spatial_rework",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
+          "kind": "director_direction"
+        }
+      ],
+      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "scope": [
+        "Review and correct Grand Cage physical support, perspective and seams; distinguish candidates from confirmed findings."
+      ],
+      "parent_ids": [
+        "BTH-ENV-SPATIAL-001"
+      ],
+      "objective": {
+        "text": "Review and correct Grand Cage physical support, perspective and seams; distinguish candidates from confirmed findings.",
+        "source": "Current owner-requested all-room spatial rework relayed by /root,2026-11-16.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "visual-and-implementation-audit",
+            "description": "Document explicit room disposition; where corrected, scoped commit plus independent visual/motion/geometry and TEST evidence.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "implementation_batches": []
+    },
+    {
+      "id": "BTH-ENV-SPATIAL-BEACH-001",
+      "kind": "objective",
+      "name": "Beach spatial and seam review",
+      "group": "current",
+      "state": "open",
+      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "owner": {
+        "name": "direct_room_spatial_rework",
+        "task_ref": "/root/direct_room_spatial_rework",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
+          "kind": "director_direction"
+        }
+      ],
+      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "scope": [
+        "Review and correct Beach physical support, perspective and seams; distinguish candidates from confirmed findings."
+      ],
+      "parent_ids": [
+        "BTH-ENV-SPATIAL-001"
+      ],
+      "objective": {
+        "text": "Review and correct Beach physical support, perspective and seams; distinguish candidates from confirmed findings.",
+        "source": "Current owner-requested all-room spatial rework relayed by /root,2026-11-16.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "visual-and-implementation-audit",
+            "description": "Document explicit room disposition; where corrected, scoped commit plus independent visual/motion/geometry and TEST evidence.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "implementation_batches": []
+    },
+    {
+      "id": "BTH-ENV-SPATIAL-BACK-001",
+      "kind": "objective",
+      "name": "Back Alley spatial and seam review",
+      "group": "current",
+      "state": "open",
+      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "owner": {
+        "name": "direct_room_spatial_rework",
+        "task_ref": "/root/direct_room_spatial_rework",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
+          "kind": "director_direction"
+        }
+      ],
+      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "scope": [
+        "Review and correct Back Alley physical support, perspective and seams; distinguish candidates from confirmed findings."
+      ],
+      "parent_ids": [
+        "BTH-ENV-SPATIAL-001"
+      ],
+      "objective": {
+        "text": "Review and correct Back Alley physical support, perspective and seams; distinguish candidates from confirmed findings.",
+        "source": "Current owner-requested all-room spatial rework relayed by /root,2026-11-16.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "visual-and-implementation-audit",
+            "description": "Document explicit room disposition; where corrected, scoped commit plus independent visual/motion/geometry and TEST evidence.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "implementation_batches": []
+    },
+    {
+      "id": "BTH-ENV-SPATIAL-GAS-001",
+      "kind": "objective",
+      "name": "Gas Station Casino spatial and seam review",
+      "group": "current",
+      "state": "open",
+      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "owner": {
+        "name": "direct_room_spatial_rework",
+        "task_ref": "/root/direct_room_spatial_rework",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
+          "kind": "director_direction"
+        }
+      ],
+      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "scope": [
+        "Review and correct Gas Station Casino physical support, perspective and seams; distinguish candidates from confirmed findings."
+      ],
+      "parent_ids": [
+        "BTH-ENV-SPATIAL-001"
+      ],
+      "objective": {
+        "text": "Review and correct Gas Station Casino physical support, perspective and seams; distinguish candidates from confirmed findings.",
+        "source": "Current owner-requested all-room spatial rework relayed by /root,2026-11-16.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "visual-and-implementation-audit",
+            "description": "Document explicit room disposition; where corrected, scoped commit plus independent visual/motion/geometry and TEST evidence.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "implementation_batches": []
+    },
+    {
+      "id": "BTH-ENV-SPATIAL-CORNER-001",
+      "kind": "objective",
+      "name": "Corner Store spatial and seam review",
+      "group": "current",
+      "state": "open",
+      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "owner": {
+        "name": "direct_room_spatial_rework",
+        "task_ref": "/root/direct_room_spatial_rework",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
+          "kind": "director_direction"
+        }
+      ],
+      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "scope": [
+        "Review and correct Corner Store physical support, perspective and seams; distinguish candidates from confirmed findings."
+      ],
+      "parent_ids": [
+        "BTH-ENV-SPATIAL-001"
+      ],
+      "objective": {
+        "text": "Review and correct Corner Store physical support, perspective and seams; distinguish candidates from confirmed findings.",
+        "source": "Current owner-requested all-room spatial rework relayed by /root,2026-11-16.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "visual-and-implementation-audit",
+            "description": "Document explicit room disposition; where corrected, scoped commit plus independent visual/motion/geometry and TEST evidence.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "implementation_batches": []
+    },
+    {
+      "id": "BTH-ENV-SPATIAL-MOTELROOM-001",
+      "kind": "objective",
+      "name": "Motel Room spatial and seam review",
+      "group": "current",
+      "state": "open",
+      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "owner": {
+        "name": "direct_room_spatial_rework",
+        "task_ref": "/root/direct_room_spatial_rework",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "All20 room inventory; actual/native/static limits; first Bar repair and four Grand sign masks, no activation.",
+          "kind": "director_direction"
+        }
+      ],
+      "next_action": "Follow room-specific finding in director direction; verify populated states, correct only demonstrated issues and pass independent audit before TEST.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-15T16:42:52.236538-06:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T00:14:15.2181367+00:00",
+      "scope": [
+        "Review and correct Motel Room physical support, perspective and seams; distinguish candidates from confirmed findings."
+      ],
+      "parent_ids": [
+        "BTH-ENV-SPATIAL-001"
+      ],
+      "objective": {
+        "text": "Review and correct Motel Room physical support, perspective and seams; distinguish candidates from confirmed findings.",
+        "source": "Current owner-requested all-room spatial rework relayed by /root,2026-11-16.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "visual-and-implementation-audit",
+            "description": "Document explicit room disposition; where corrected, scoped commit plus independent visual/motion/geometry and TEST evidence.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "implementation_batches": []
     }
   ],
   "batches": [

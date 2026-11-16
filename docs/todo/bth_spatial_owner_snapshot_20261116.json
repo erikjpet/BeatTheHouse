@@ -1,0 +1,34 @@
+{
+  "observed_at": "2026-11-16T00:14:15.2181367+00:00",
+  "tasks": [
+    {
+      "state": "active",
+      "observed_at": "2026-11-16T00:14:15.2181367+00:00",
+      "source": "Current assigned director actively inspecting source/captures and writing direction; root resumed task2026-11-16.",
+      "title": "Direct room spatial rework",
+      "task_ref": "/root/direct_room_spatial_rework"
+    },
+    {
+      "state": "active",
+      "observed_at": "2026-11-16T00:14:15.2181367+00:00",
+      "source": "Direct current worker messages: Bar trial and source assembly active; no approved activation.",
+      "title": "Implement room spatial fixes",
+      "task_ref": "/root/implement_room_spatial_fixes"
+    },
+    {
+      "state": "active",
+      "observed_at": "2026-11-16T00:14:15.2181367+00:00",
+      "source": "Direct current worker messages: independent all20 scan and populated image audit active.",
+      "title": "Audit room spatial logic",
+      "task_ref": "/root/audit_room_spatial_logic"
+    },
+    {
+      "task_ref": "/root/find_next_game_bugs",
+      "title": "Apply shared travel perf fix to TEST",
+      "state": "active",
+      "observed_at": "2026-11-16T00:15:06.753044+00:00",
+      "source": "Direct current worker message: exact three-file patch applied and focused checks running."
+    }
+  ],
+  "schema": "bth.owner_snapshot/v1"
+}
