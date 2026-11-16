@@ -105,4 +105,6 @@ Every case used admitted E: layouts and manifests, both capacity/launch gates, v
 | crew-sidebar-om3-261116 | `1268ffab` | 16/16 | `d03503d16d7d105a0a8dbb5c4a38fa2bb39fd1a41db0ac063aeb1c4da41e71e6` |
 | crew-sidebar-om5-261116 | `1268ffab` | 11/11 | `2b08dfe8fcf4c4076488ae872ac870777bba92aeefd5ee1e7148d86784b4cd97` |
 
-Total **253/253** in 21 closed native Jobs. Exact GD copies and source/custody/storage/launch/cleanup receipts remain beside each log. Consolidated receipt: `E:\CodexQA\BTH\runs\crew-ordinary-record5-261116\evidence\cases.json`. Manual reconciliation: `E:\CodexQA\BTH\runs\crew-ordinary-record5-261116\evidence\reconciliation.json`.
+Total **253/253** in 21 closed native Jobs. Exact GD copies and source/custody/storage/launch/cleanup receipts remain beside each log. Consolidated receipt: `E:\CodexQA\BTH\runs\crew-ordinary-accept5-261116\evidence\cases.json`. Manual reconciliation: `E:\CodexQA\BTH\runs\crew-ordinary-accept5-261116\evidence\reconciliation.json`.
+
+Accepted source/QA proof commit: `965e2398fd78e4c7593722063509cbad29dee356`. This bounded native ordinary-delivery, reputation, cooldown and missed/pushy-refusal acceptance is Complete. The broader objective remains Open for optional route prerequisites, human pacing and actual browser/WASM acceptance.
