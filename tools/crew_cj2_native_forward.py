@@ -9,7 +9,7 @@ import bth_qa_storage as g
 import bth_qa_native_forward as native
 from bth_qa_guarded_run import execute
 from bth_qa_atomic_receipt import atomic_json
-QUALIFIED_SOURCES={'tools/bth_qa_storage.py','tools/bth_qa_native_forward.py','tools/bth_qa_resident.py','tools/bth_qa_guarded_run.py','tools/tests/test_bth_qa_native_forward.py','tools/crew_cj2_native_forward.py','tools/crew_cj2_native_forward.gd'}
+QUALIFIED_SOURCES={'tools/bth_qa_storage.py','tools/bth_qa_native_forward.py','tools/bth_qa_resident.py','tools/bth_qa_guarded_run.py','tools/tests/test_bth_qa_native_forward.py','tools/crew_cj2_native_forward.py','tools/crew_cj2_native_forward.gd','tools/tests/test_bth_qa_native_ui_compat.py'}
 
 def digest(path):return hashlib.sha256(path.read_bytes()).hexdigest()
 def read(path):return json.loads(path.read_text(encoding='utf-8-sig'))
@@ -79,7 +79,7 @@ def main():
   target=layout.temp/'native_forward.gd'
   with target.open('xb') as stream:stream.write(script.read_bytes())
   engine_sha=digest(native.GODOT)
-  new_json(layout.evidence/'native-inputs.json',{'source_commit':PIN,'original_fresh_source_commit':native.ORIGIN_COMMIT,'product_digest':native.PRODUCT_DIGEST,'qualification':str(qual_path),'qualified_guard_sources':qualified['source_files'],'syntax_qualification':str(syntax_path),'script_sha256':script_sha,'engine_sha256':engine_sha,'slot':native.SLOT,'mode':a.mode,'persistent_paths':dict(binding.persistent_paths),'directory_identities':binding.as_dict()['directory_identities'],'previous_case':binding.last_case,'previous_campaign_sha256':binding.previous_campaign_sha256,'profile_copy_performed':False,'original_evidence_modified':False,'persistence_note':'Normal forward autosaves may update this same QA campaign; no old-save bytes are copied, migrated or replayed.'})
+  new_json(layout.evidence/'native-inputs.json',{'source_commit':PIN,'original_fresh_source_commit':native.ORIGIN_COMMIT,'origin_product_digest':native.PRODUCT_DIGEST,'admitted_product_digest':binding.product_inputs_sha256,'qualification':str(qual_path),'qualified_guard_sources':qualified['source_files'],'syntax_qualification':str(syntax_path),'script_sha256':script_sha,'engine_sha256':engine_sha,'slot':native.SLOT,'mode':a.mode,'persistent_paths':dict(binding.persistent_paths),'directory_identities':binding.as_dict()['directory_identities'],'previous_case':binding.last_case,'previous_campaign_sha256':binding.previous_campaign_sha256,'profile_copy_performed':False,'original_evidence_modified':False,'persistence_note':'Normal forward autosaves may update this same QA campaign; no old-save bytes are copied, migrated or replayed.'})
   helpers=Path(r'D:\Projects\site\scripts\bth_cpu_job');sys.path.insert(0,str(helpers))
   from native_proof_worker import SuspendedWorker
   def factory(job,command,**kwargs):

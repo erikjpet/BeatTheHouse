@@ -27,6 +27,8 @@ ORIGIN_RUN_ROOT = ROOT / "runs" / CAMPAIGN_ID
 SLOT = "CREW-FRESH-CJ2-261116"
 ORIGIN_COMMIT = "6bfbecfb959b28a3148a1bafb44e85e0bee6ed0d"
 PRODUCT_DIGEST = "2161dd546f16b8255b696db2a07bc6a08a3d0b432e9202c95fc890e6980650ab"
+# Exact UI-only build audited in crew-concurrent-audit1-261116; origin receipts stay unchanged.
+AUDITED_UI_PRODUCT_DIGEST = "0b159b5a405769f2189d978010e874916820b1852eb789f77879deac9848a471"
 CUSTODY_PATH = WORKSPACE / "evidence" / (CAMPAIGN_ID + "-native-custody.json")
 GODOT = Path(r"D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe")
 PERSISTENT_LEAVES = ("profile", "save_dir", "appdata", "localappdata", "home", "cache")
@@ -328,8 +330,10 @@ def _source_ok(expected_commit):
         _fail("source_identity", expected_commit, "explicit current source commit required")
     if _current_head() != expected_commit:
         _fail("source_identity", WORKSPACE, "current linked HEAD differs from the admitted commit")
-    if _current_product_digest() != PRODUCT_DIGEST:
-        _fail("product_changed", WORKSPACE, "current product inputs differ from original CJ2; no compatibility waiver")
+    actual_digest = _current_product_digest()
+    if not _hash_text(actual_digest) or actual_digest not in (PRODUCT_DIGEST, AUDITED_UI_PRODUCT_DIGEST):
+        _fail("product_changed", WORKSPACE, "current product inputs are not an exact qualified CJ2 build")
+    return actual_digest
 
 
 def bootstrap_custody(expected_commit):
@@ -405,7 +409,7 @@ def _collect_chain(record, identities, origin_hashes, tracked, seen=None, depth=
 def _snapshot(expected_commit, custody):
     if not _same(custody, CUSTODY_PATH):
         _fail("custody_path", custody, "only the explicit CJ2 native custody path is admitted")
-    _source_ok(expected_commit)
+    actual_digest = _source_ok(expected_commit)
     _, origin_hashes = _origin_metadata()
     identities = _identities()
     record, custody_hash = _owned_json(CUSTODY_PATH)
@@ -414,7 +418,7 @@ def _snapshot(expected_commit, custody):
     _collect_chain(record, identities, origin_hashes, tracked)
     mutex = "Local\\BTH-QA-Native-CJ2-" + hashlib.sha256(g._key(ORIGIN_RUN_ROOT).encode()).hexdigest()
     return Cj2NativeBinding(CAMPAIGN_ID, SLOT, expected_commit, str(WORKSPACE), str(ORIGIN_RUN_ROOT),
-                           str(CUSTODY_PATH), PRODUCT_DIGEST, tuple(sorted(_paths().items())),
+                           str(CUSTODY_PATH), actual_digest, tuple(sorted(_paths().items())),
                            tuple(sorted((name, tuple(identity)) for name, identity in identities.items())),
                            tuple(sorted(tracked.items())), record["last_case"], record["last_output"],
                            record["receipt_hashes"]["campaign"], mutex)
@@ -428,7 +432,9 @@ def validate_structure(layout, paths):
         _fail("scope", layout.run_root, "only exact CJ2 workspace/root and a fresh crew-native case are admitted", layout)
     if (binding.campaign_id != CAMPAIGN_ID or binding.autosave_slot != SLOT
             or binding.workspace != str(WORKSPACE) or binding.origin_run_root != str(ORIGIN_RUN_ROOT)
-            or binding.custody != str(CUSTODY_PATH) or binding.product_inputs_sha256 != PRODUCT_DIGEST
+            or binding.custody != str(CUSTODY_PATH)
+            or not _hash_text(binding.product_inputs_sha256)
+            or binding.product_inputs_sha256 not in (PRODUCT_DIGEST, AUDITED_UI_PRODUCT_DIGEST)
             or dict(binding.persistent_paths) != _paths()):
         _fail("binding_invalid", layout.profile, "native binding identity differs", layout)
     for name in PERSISTENT_LEAVES:
@@ -561,7 +567,9 @@ def close_record(binding, started_record, guarded_job, native_worker_result):
     exact CASE_IN_PROGRESS custody. Never call on failure, timeout or uncertainty.
     """
     layout = _leased_layout(binding)
-    _source_ok(binding.expected_commit)
+    actual_digest = _source_ok(binding.expected_commit)
+    if actual_digest != binding.product_inputs_sha256:
+        _fail("product_changed", WORKSPACE, "product inputs changed from this case's exact admitted build", layout)
     identities = _identities()
     if identities != {name: list(value) for name, value in binding.directory_identities}:
         _fail("binding_changed", layout.profile, "native directory identities changed during the worker", layout)

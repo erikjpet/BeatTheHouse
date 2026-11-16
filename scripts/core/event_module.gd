@@ -324,8 +324,12 @@ func _crew_timed_choices(rows: Array, run_state: RunState) -> Array:
 			if str(hook.get("type", "")) != "crew_job_accept": continue
 			var definition_id := str(hook.get("definition_id", ""))
 			var definition := CrewStateModel.job_definition(definition_id)
-			if not run_state.CrewDeliveryScheduleScript.is_package_kind(str(definition.get("kind", ""))): continue
-			if run_state.delivery_has_active_run() or not run_state.crew_package_scene_allows_offer():
+			var kind := str(definition.get("kind", ""))
+			if run_state.CrewDeliveryScheduleScript.is_route_kind(kind) and run_state.delivery_has_active_run():
+				omit = true
+				break
+			if not run_state.CrewDeliveryScheduleScript.is_package_kind(kind): continue
+			if not run_state.crew_package_scene_allows_offer():
 				omit = true
 				break
 			var preview := run_state.delivery_crew_offer(definition_id, _crew_offer_clock)

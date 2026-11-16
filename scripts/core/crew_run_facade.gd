@@ -1892,7 +1892,9 @@ func crew_job_board_offers() -> Array:
 			continue
 		var definition: Dictionary = definition_value
 		var definition_id := str(definition.get("id", ""))
-		if _run.CrewDeliveryScheduleScript.is_package_kind(str(definition.get("kind", ""))) and (_run.delivery_has_active_run() or not _run.crew_package_scene_allows_offer()): continue
+		var kind := str(definition.get("kind", ""))
+		if _run.CrewDeliveryScheduleScript.is_route_kind(kind) and _run.delivery_has_active_run(): continue
+		if _run.CrewDeliveryScheduleScript.is_package_kind(kind) and not _run.crew_package_scene_allows_offer(): continue
 		if definition_id == "crew_favor_delivery" or crew_job_definition_pending(definition_id):
 			continue
 		var member_id := str(definition.get("member_id", ""))

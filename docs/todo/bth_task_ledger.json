@@ -4991,7 +4991,7 @@
         }
       },
       "state": "open",
-      "status": "NATIVE_NO_COPY_QUALIFIED_CREW_COVERAGE_CONTINUES",
+      "status": "CONCURRENT_ROUTE_UI_FIX_FOCUSED_PASS_NATIVE_NEXT_PENDING",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -5220,7 +5220,7 @@
         "BTH-QA-CREW-NATIVE-NOCOPY-20261116",
         "CREW-CONCURRENT-ROUTE-OFFER-20261116"
       ],
-      "next_action": "Preserve the qualified native no-copy adapter and continue the same active c2 package at Punchline Back Room: $161, reputation87, two duties, clock1080, deadline1260, target Back Alley. Correct confirmed CREW-CONCURRENT-ROUTE-OFFER-20261116 through focused UI projection tests and separately qualified exact-new-build native compatibility. Native continuation needs no profile copying or new permission; broader Crew/browser/human pacing remain Open.",
+      "next_action": "Verify the committed UI fix by normal in-place c2 Continue and actual Board projection with the same active Rook package; publish the tested scoped fix, verify exact NEXT identity, then continue the real Back Alley handoff. Preserve all native custody/history and owner saves; broader Crew/browser/human pacing remain Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -5234,7 +5234,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T15:58:42.191778+00:00"
+      "updated_at": "2026-11-16T16:26:48.006753+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -43750,7 +43750,7 @@
         "Use exact-source synthetic projection checks and the existing c2 native no-copy forward campaign; preserve browser restrictions and original evidence."
       ],
       "acceptance_scope": "Actual enabled Friendly Collection card/button while Rook package is active; normal press is rejected with no public state mutation. Bounded correction needs focused tests and native/NEXT evidence; broader Crew/browser acceptance remains on the parent.",
-      "status": "CONFIRMED_NATIVE_OFFER_GUARD_MISMATCH_FIX_IN_PROGRESS",
+      "status": "CONCURRENT_ROUTE_UI_FIX_FOCUSED_PASS_NATIVE_NEXT_PENDING",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -43761,9 +43761,14 @@
           "kind": "actual_native_enabled_card_safe_rejection",
           "reference": "docs/testing/Crew_concurrent_route_offer_QA_20261116.md",
           "summary": "Natural loan request at1080 starts carried Rook package. Actual Collection boardcard enabled/no reason; one real press preserves exact161cash/87standing/two duties/RNG950800549/action10/debt[]/single original job and delivery. Fourteen integrity/control checks pass; this is a confirmed UI defect, not a successful collection acceptance."
+        },
+        {
+          "kind": "focused_ui_projection_and_exact_build_bridge",
+          "reference": "docs/testing/Crew_concurrent_route_offer_QA_20261116.md",
+          "summary": "Two UI projections corrected without changing acceptance.87 synthetic projection/authority checks pass;112 guard/lifecycle/build-compatibility checks pass. Exactly audited product0b159b5a includes only two UI-function edits and the new regression. Fixed-build native/NEXT pending."
         }
       ],
-      "next_action": "Suppress competing route offers in board and timed-choice projections using is_route_kind while preserving package-only encounter/quote constraints, stake offers and authoritative rejection. Add focused projection regressions, qualify exact new-build compatibility for native in-place continuation, then verify the same active c2 route and NEXT identity without copying or replaying saves.",
+      "next_action": "Verify the committed UI fix by normal in-place c2 Continue and actual Board projection with the same active Rook package; publish the tested scoped fix, verify exact NEXT identity, then continue the real Back Alley handoff. Preserve all native custody/history and owner saves; broader Crew/browser/human pacing remain Open.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -43772,7 +43777,7 @@
         "observed_at": "2026-11-16T15:44:56.885355+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T15:44:56.885355+00:00"
+      "updated_at": "2026-11-16T16:26:48.006753+00:00"
     },
     {
       "id": "BTH-QA-CREW-NATIVE-NOCOPY-20261116",
@@ -43948,7 +43953,7 @@
         "No duplicate worker or bypass of browser/computer denials."
       ],
       "acceptance_scope": "Owner restart request Sentinel_3464b568ddc48191af59e314081b75ef and sidebar request Sentinel_11391c7e280c81918ac7603758e4721d; transferred intact checkpoint and explicit three-directory custody. Native ending reached and persisted; deployed browser/WASM acceptance remains separately required.",
-      "status": "NATIVE_NO_COPY_QUALIFIED_CREW_COVERAGE_CONTINUES",
+      "status": "CONCURRENT_ROUTE_UI_FIX_FOCUSED_PASS_NATIVE_NEXT_PENDING",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -44041,7 +44046,7 @@
           "summary": "104 final synthetic guard/lifecycle tests and 82 actual no-copy native checks pass across 7 closed Jobs. Same CJ2 slot/directories continue forward under honest native custody; original evidence retained. No profile copy, New Run, replay or browser-control expansion. Current case crew-native-cj2-committed1-261116."
         }
       ],
-      "next_action": "Preserve the qualified native no-copy adapter and continue the same active c2 package at Punchline Back Room: $161, reputation87, two duties, clock1080, deadline1260, target Back Alley. Correct confirmed CREW-CONCURRENT-ROUTE-OFFER-20261116 through focused UI projection tests and separately qualified exact-new-build native compatibility. Native continuation needs no profile copying or new permission; broader Crew/browser/human pacing remain Open.",
+      "next_action": "Verify the committed UI fix by normal in-place c2 Continue and actual Board projection with the same active Rook package; publish the tested scoped fix, verify exact NEXT identity, then continue the real Back Alley handoff. Preserve all native custody/history and owner saves; broader Crew/browser/human pacing remain Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -44054,7 +44059,7 @@
           "user:Sentinel_b9ecabacc1848191bed579864eef4f2a"
         ]
       },
-      "updated_at": "2026-11-16T15:58:42.191778+00:00"
+      "updated_at": "2026-11-16T16:26:48.006753+00:00"
     },
     {
       "id": "CREW-NOAUDIT-ENABLED-LOCK-20261116",
