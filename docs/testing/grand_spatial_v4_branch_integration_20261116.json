@@ -1,0 +1,33 @@
+{
+  "schema": "bth.grand_spatial_branch_integration/v1",
+  "task_id": "BTH-ENV-SPATIAL-GRAND-001",
+  "observed_at": "2026-11-16T08:50:56.794344+00:00",
+  "approval_sha256": "f326256b6fdf9139d667d738069415e54a66789da86b1bb863c91f46027c9930",
+  "reviewer": "/root/audit_spatial_handoff",
+  "background_sha256": "5408ef84bc3d8aec92b0814a8bf446210091f4d6b513be9ba8fff5a64565e9ae",
+  "package_22_file_sha256": "563ef08fec04e980c9cb2e215b2801f3612a22dd8f8250ba6247293c12f069d4",
+  "changed_sources": {
+    "assets/art/environments/grand_casino/background.png": "5408ef84bc3d8aec92b0814a8bf446210091f4d6b513be9ba8fff5a64565e9ae",
+    "assets/art/environments/grand_casino/counters/grand_table_left.png": "953a85b9e9f245f4ab51ce56591516563c045198f5a2adf99b955f562cbe7b2e",
+    "assets/art/environments/grand_casino/counters/grand_table_right.png": "b43a09a913a6699c63c48b2a221533a3b69f51a9b34610d23b9ba50c9cbf2665",
+    "assets/art/environments/grand_casino/anim/casino_sign_pulse.png": "5ff497464eade3eedceec730833dcff8476ea5e1d78405daf4bd1cf8695353c8",
+    "assets/art/environments/grand_casino/anim/casino_light_0.png": "0fac3ccc158a14a64b034e55acbb242436e145bf47bc822b8b7ba41aca239595",
+    "assets/art/environments/grand_casino/anim/casino_light_1.png": "95ab08b7a77551ba39dcaf92e19bd84076408cee2d194b86cd4be769f530090f",
+    "assets/art/environments/grand_casino/anim/casino_light_2.png": "01214d5dbb6d930d9e18d2a3d64971c638bc7b99d60104513a9d8a634102baaa",
+    "assets/art/environments/grand_casino/anim/casino_light_3.png": "bbd358040694ce938af2d25e40ef796612c5e10d9369a812a963287cfcd89b38",
+    "assets/art/environments/grand_casino/anim/casino_light_4.png": "49a5df698a902129b82acbbcdb6770e948b707216c39eaff329c79610954bb5d",
+    "data/art/environments/grand_casino.json": "2038f2818cc87a7adbc8ca363caf02ac147f2d84c2122a9e925041ae53bcfe41"
+  },
+  "raw_inventory_files": 421,
+  "other_room_source_bytes_preserved": true,
+  "protected_source_hashes": {
+    "scripts/ui/pixel_scene_canvas.gd": "c2ce2abee8827372d66fd6c9647a74e06f5db8fed520bbd812b8c7eb29f4af38",
+    "scripts/ui/environment_art_renderer.gd": "900b44af05602f6259eed0a2cb33a45d1899cb30bd71aaaed5a744bcc9ccad96",
+    "scripts/ui/environment_art_pack.gd": "067cf5f9673bd85705f4971e9c4db70aaafcfe1cec912b926ed9edc685fb5d8f",
+    "data/environments/placement_surfaces.json": "9caa123fb96816777328ad88f022fe05defb74ef5b4f645b7a15bcac67c25cf1",
+    "data/environments/developer_placement_overrides.json": "c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f"
+  },
+  "candidate_source_unchanged": true,
+  "gameplay_coordinates_changed": false,
+  "test_updated": false
+}

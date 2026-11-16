@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T08:42:25.243756+00:00",
+  "updated_at": "2026-11-16T08:51:37.910310+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -38045,7 +38045,7 @@
       "name": "Audit and correct all-room spatial support and seams",
       "group": "current",
       "state": "open",
-      "status": "ACTIVE_GRAND_ANIMATED_REVIEW_AND_PARALLEL_ROOM_REPAIRS",
+      "status": "ACTIVE_GRAND_APPROVED_BRANCH_INTEGRATION_TEST_BUILD_NEXT",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38127,16 +38127,16 @@
           "summary": "Bar exact7b284648 TEST current,13 artifact files and default-TLS HTTPS bytes verified; NEXT1240ce unchanged. All native gates/art review and lossless APNG pass. Browser NOT RUN; all-room parent remains open with19 room repairs remaining."
         }
       ],
-      "next_action": "Grand V4B four contexts19167/98pairs/40IDs, motion66 and no-input liveness PASS; actual151-frame/20.0033s capture closed, independent sequence review and lossless APNG active. High Limit canonical9 metadata verified and native tooling ready for committed selected-source qualification. Grand Back Room bounded assembly and Hidden source-only trial active. Bar remains exact TEST7b; all20 parent stays open with19 room dispositions pending.",
+      "next_action": "Grand V4 independent native/art GO and exact10-source integration complete; commit and strict TEST build/served proof next. Short native-resolution APNG excerpt in preparation after full capture exceeded10MiB; complete151-frame20.0033s source retained. High Limit canonical9/source tooling committed21138e1; Back Room bounded assembly and Hidden source-only trial active. All20 parent remains open with19 dispositions pending.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T08:42:25.243756+00:00",
+        "observed_at": "2026-11-16T08:51:37.910310+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T08:42:25.243756+00:00",
+      "updated_at": "2026-11-16T08:51:37.910310+00:00",
       "scope": [
         "Audit all environment art packages for seams, grounded supports, perspective and live object clearance; preserve existing animations and gameplay geometry."
       ],
@@ -38553,7 +38553,7 @@
       "name": "Grand public spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "V4B_NATIVE_PASS_ANIMATED_REVIEW_ACTIVE",
+      "status": "APPROVED_BRANCH_INTEGRATION_TEST_BUILD_PENDING",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38610,18 +38610,28 @@
           "kind": "verified_active_checkpoint",
           "reference": "docs/testing/grand_spatial_r1_v4_scoped_transport_review_20261116.json",
           "summary": "V4B scoped transfer independently verified; unchanged observer passes4 populated contexts19167checks/98paintpairs/40IDs, motion66 and no-input liveness.151 actual frames span20.0033013333333s; final sequence/encoding/art approval pending."
+        },
+        {
+          "kind": "independent_art_approval_and_branch_integration",
+          "reference": "docs/testing/grand_spatial_v4_art_approval_20261116.json",
+          "summary": "Independent GO_FOR_TEST_BUILD f326256b; actual9PNG+singletypedJSON integration verified at22seal563ef08f, all421rawart and protectedgameplay source hashes preserved; no TEST update yet."
+        },
+        {
+          "kind": "branch_integration_custody",
+          "reference": "docs/testing/grand_spatial_v4_branch_integration_20261116.json",
+          "summary": "Exact10 approved source paths copied from authenticated V4B candidate; other19rooms/index preserved; freshbuild/publicationpending."
         }
       ],
-      "next_action": "Complete lossless APNG verification and independent review of closed151-frame/20.0033s V4B capture, then require final exact GO_FOR_TEST_BUILD approval. Only then integrate9 PNGs/single lamp0 x250->245 JSON leaf, commit and qualify strict TEST build against7b; all other room/UID/cache/script bytes preserved.",
+      "next_action": "Commit exact approved9PNGs plus sole decorative lamp0 integerx250->245 JSON change, then strict Grand TEST build against7b. Require unchanged1605UID/cache/class/GDC/SCN, other19rooms/doorways and served-byte proof. Finalnative/art GO recorded; lossless75-frame excerpt encoding remains separate.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T08:42:25.243756+00:00",
+        "observed_at": "2026-11-16T08:51:37.910310+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T08:42:25.243756+00:00",
+      "updated_at": "2026-11-16T08:51:37.910310+00:00",
       "scope": [
         "Review and correct Grand public physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],

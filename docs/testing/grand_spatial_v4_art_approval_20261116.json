@@ -1,0 +1,123 @@
+{
+  "schema": "bth.grand_spatial_test_approval/v1",
+  "task_id": "BTH-ENV-SPATIAL-GRAND-001",
+  "environment_id": "grand_casino",
+  "verdict": "GO_FOR_TEST_BUILD",
+  "reviewer": "/root/audit_spatial_handoff",
+  "review_date": "2026-11-16",
+  "baseline_source_commit": "7b284648642a896e534c8bfd53c8e7abbc55108d",
+  "baseline_manifest_sha256": "5855381ff2137ece43c2b097b169c70c50b658f1caa6d86e1461b42b22bbe447",
+  "baseline_pck_sha256": "a84ed267a7d664ada937d441be1d053419fe78df5e6725e217c99d60b0bc4ba1",
+  "grand_package_sha256": "563ef08fec04e980c9cb2e215b2801f3612a22dd8f8250ba6247293c12f069d4",
+  "grand_json_sha256": "2038f2818cc87a7adbc8ca363caf02ac147f2d84c2122a9e925041ae53bcfe41",
+  "approved_png_sha256": {
+    "assets/art/environments/grand_casino/background.png": "5408ef84bc3d8aec92b0814a8bf446210091f4d6b513be9ba8fff5a64565e9ae",
+    "assets/art/environments/grand_casino/counters/grand_table_left.png": "953a85b9e9f245f4ab51ce56591516563c045198f5a2adf99b955f562cbe7b2e",
+    "assets/art/environments/grand_casino/counters/grand_table_right.png": "b43a09a913a6699c63c48b2a221533a3b69f51a9b34610d23b9ba50c9cbf2665",
+    "assets/art/environments/grand_casino/anim/casino_sign_pulse.png": "5ff497464eade3eedceec730833dcff8476ea5e1d78405daf4bd1cf8695353c8",
+    "assets/art/environments/grand_casino/anim/casino_light_0.png": "0fac3ccc158a14a64b034e55acbb242436e145bf47bc822b8b7ba41aca239595",
+    "assets/art/environments/grand_casino/anim/casino_light_1.png": "95ab08b7a77551ba39dcaf92e19bd84076408cee2d194b86cd4be769f530090f",
+    "assets/art/environments/grand_casino/anim/casino_light_2.png": "01214d5dbb6d930d9e18d2a3d64971c638bc7b99d60104513a9d8a634102baaa",
+    "assets/art/environments/grand_casino/anim/casino_light_3.png": "bbd358040694ce938af2d25e40ef796612c5e10d9369a812a963287cfcd89b38",
+    "assets/art/environments/grand_casino/anim/casino_light_4.png": "49a5df698a902129b82acbbcdb6770e948b707216c39eaff329c79610954bb5d"
+  },
+  "approved_json_semantic_delta": "Only decorative casino_light_0.rect[0] integer250 to integer245. All16 motions, seven simulated low-detail entries, timing, amplitudes, phases and gameplay geometry retain their existing contracts.",
+  "native_source": {
+    "commit": "24b8e34bb228335eb17db403757b9ce6f21c7151",
+    "tree": "3ab6b78b6cb04b0d6553ec5dd8e55f6bb53c5505",
+    "identity_sha256": "f1173c556ce460b6237323bff9e45e04ed23745778a4926b94c1cf24446fc505",
+    "source_config_sha256": "122bfc996bc910516c0f456579217d23406e85e1daf94260fb58a289cc8d1fe9",
+    "actual_qa_22_file_seal_recomputed_after_capture": true,
+    "observer_embedded_dd96_commit_is_historical_not_current_identity": true
+  },
+  "native_gates": {
+    "contexts": {
+      "report_sha256": "19a350e118346e58926591ddbe9c8a1d2a6454d41da72344bf4eaeae69b2a20c",
+      "checks": 19167,
+      "source_paint_pairs": 98,
+      "union_ids": 40,
+      "findings": [],
+      "all_four_actual_views_neutral": true,
+      "job_pid": 42784,
+      "exit_code": 0,
+      "active_at_release": 0
+    },
+    "motion": {
+      "report_sha256": "be78b9eb48b28c94892e5f4e6606fab1dcf40c6d4b5d8fb475921dcbc18c0121",
+      "checks": 66,
+      "native_entries": 16,
+      "simulated_low_detail_entries": 7,
+      "failures": [],
+      "job_pid": 41284,
+      "job_sha256": "6d33a61be838d7a586f981c861e133e31756ba1e7865726efdda1fc606c0e678",
+      "exit_code": 0,
+      "active_at_release": 0
+    },
+    "no_pointer_liveness": {
+      "status": "PASS",
+      "job_pid": 40324,
+      "job_sha256": "11dcf4e571c287f3f5aca3ca9e75dbd41b1b2a099fe374c4fcd2a8fdb4a43403",
+      "exit_code": 0,
+      "active_at_release": 0
+    },
+    "capture": {
+      "report_sha256": "3dde0c6269c192dbfb6c69945964c2cb9f4722eb64a4e74e4f55efb7425864c0",
+      "scenario": "grand_casino_gala_night",
+      "frames": 151,
+      "actual_clock_start": 12.464542,
+      "actual_clock_end": 32.4678433333333,
+      "actual_clock_span": 20.0033013333333,
+      "all_151_clocks_strictly_increasing_and_board900_clocks_equal": true,
+      "all_151_board900_actor_animation_layout_object_equivalences_true": true,
+      "all_453_actual_png_headers_and_exact_frame_paths_verified": true,
+      "original_capture_observer_sha256": "dd4ba3f0c0f646e983c86e8f6b6ea8a30c0ec65613dce3dc90e97d789e1f3976",
+      "job_pid": 43096,
+      "job_sha256": "0205d0256d542e930ebcedf66e82dd548af6bff7aa88c6e51a9c867ffc84e52f",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "reduce_motion_full_app_and_art_texture_stable": true
+    }
+  },
+  "independent_visual_review": {
+    "still_scope": "All four actual_play PNGs and matching production_board_1800x860 PNGs: Base, Gala, Convention and Audit.",
+    "actual_play_sha256": {
+      "__none_actual_play.png": "602a72215f046de5133d25e59d7aca3c77317baaeba0812c127f299b79ce2947",
+      "grand_casino_gala_night_actual_play.png": "1fc248eb6574487eb5abe5a875a850798d7112198d712bd6a0a8c57f804fc39d",
+      "grand_casino_convention_crowd_actual_play.png": "c574348537c837975dabfabcca9e1cb48132a4f6aaa287a3dd321d0d26e9a7ab",
+      "grand_casino_audit_night_actual_play.png": "ce1ff1f56c18193e2cbe233d60f4afe5ba6b080c9ed6b7653be57457c5f27869"
+    },
+    "actual_full_app_capture_frames": [0, 35, 72, 138],
+    "aligned_board900_capture_frames": [0, 34, 35, 36, 71, 72, 73, 121, 137, 138, 139, 150],
+    "fixture_native_art_min_max_frames": {
+      "casino_light_0": [133, 63],
+      "casino_light_1": [57, 149],
+      "casino_light_2": [62, 51],
+      "casino_light_3": [45, 56],
+      "casino_light_4": [50, 61],
+      "casino_sign_pulse": [41, 137]
+    },
+    "result": "GO. Both horizontal felt planes, shallow aprons and central pedestal supports read coherently. Rourke's two populated positions retain floor contact and open floor clearance. The quiet right lower collar clears Blackjack lettering without a label-sized patch. No old rectangular cast-shadow frame, bright donor patch, visible source/replay joint, broken inlay, floating support or sampled glint cutoff was observed. The six actual fixture min/max strips vary on the intended practical gold edges and underline, with no opaque rectangular pulse field or drifting mask boundary.",
+    "source_alpha_check": "Sign2656 nonzero texels allalpha46, remaining55376 transparent, localbboxx0..467/y30..35. Lamp0..4 nonzero counts32/96/32/32/96 allalpha255; remaining texels transparent.",
+    "inspection_method": "Objects/contacts use actual full app frames and clock/state-aligned board900 QA clone frames. Board2x actual native art-only frames are used solely for fixture material/pulse comparison; they exclude live objects. Fixture strips were inspected in memory at nearest-neighbor2x with no brightness, contrast, color, alpha or timing changes and no file output."
+  },
+  "evidence": [
+    "docs/testing/grand_spatial_r1_static_review_v4_20261116.json",
+    "docs/testing/grand_spatial_r1_v4_scoped_transport_review_20261116.json",
+    "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GRANDTRIAL4B-20261116-copy02/evidence/grand-spatial-r1-v4-scoped-copy.json",
+    "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GRANDNATIVE-20261116-v4b-identity/evidence/phase-result.json",
+    "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GRANDNATIVE-20261116-v4b-contexts/evidence/grand_casino_preart_metadata.json",
+    "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GRANDNATIVE-20261116-v4b-contexts/evidence/*_actual_play.png",
+    "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GRANDNATIVE-20261116-v4b-motion/evidence/grand_casino_animation_probe.json",
+    "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GRANDNATIVE-20261116-v4b-liveness/evidence/worker.log",
+    "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GRANDNATIVE-20261116-v4b-capture-grand_casino_gala_night/evidence/capture/animation_capture.json"
+  ],
+  "scope_and_limits": [
+    "Approval covers exact reviewed Grand public source integration on the art branch and preparation of its strict TEST build against qualified7b. Fresh build/PCK/source/UID/served verification and publication remain separately gated.",
+    "Visual review samples the explicitly listed authentic frames. All151 frame records/453PNG headers and clock/state equivalences were authenticated; no claim of visual inspection of every frame is made.",
+    "The20.0033013333333-second autonomous excerpt does not cover the longest57.7777777777778-second floor-glint loop. Fixed-clock per-entry66 checks are separate evidence, not a whole-cycle video claim.",
+    "Seven low-detail entries are the actual native renderer's simulated low-detail flag, not browser gameplay acceptance. Browser acceptance remains unverified.",
+    "APNG encoding and pixel-exact verification are pending separately; this approval reviews original capture PNGs and their actual timestamps.",
+    "The V1/V2 seam failures, V3 collar rejection and original Convention hover failure remain retained. The fresh V4B unmodified original observer passed; no causal explanation of the earlier hover failure is asserted.",
+    "This bounded Grand public approval does not close the all20-room parent objective, authorize main/NEXT changes or approve other Grand rooms."
+  ]
+}
