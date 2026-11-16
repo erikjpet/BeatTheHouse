@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T05:12:16.616395+00:00",
+  "updated_at": "2026-11-16T06:51:34.594134+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -4965,14 +4965,15 @@
               "id": "ordinary-delivery-reputation-cooldown",
               "state": "remaining",
               "evidence": [
-                "docs/testing/Crew_scope_and_adverse_getaway_QA_20261116.md"
+                "docs/testing/Crew_scope_and_adverse_getaway_QA_20261116.md",
+                "docs/testing/Crew_ordinary_delivery_QA_20261116.md"
               ]
             }
           ]
         }
       },
       "state": "open",
-      "status": "NATIVE_PINCHED_RECOVERY_PASS_CONTINUING_WEB_OPEN",
+      "status": "NATIVE_FIRST_ORDINARY_DELIVERY_PASS_COOLDOWN_ACTIVE_WEB_OPEN",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -5078,6 +5079,11 @@
           "kind": "recovered_crew_scope_and_native_adverse_flow",
           "reference": "docs/testing/Crew_scope_and_adverse_getaway_QA_20261116.md",
           "summary": "Recovered actual retained user Crew scope/source and explicit continued native/Web direction. Normal Duck+four Holds reach caught pursuit12/11, genuine warm Somebody Got Pinched720 payout to883cash/16chips; cold report,14 actual Roadside claim checks and38 New Run/cold cleanup checks pass. Bags3/5 remain unopened. All10 native Jobs134 checks; no product regression established. Parent continues for ordinary deliveries, optional dependencies, route/pacing and browser acceptance."
+        },
+        {
+          "kind": "native_ordinary_delivery_progress",
+          "reference": "docs/testing/Crew_ordinary_delivery_QA_20261116.md",
+          "summary": "Actual Crew-present natural request, Alley terms, normal two-stage acceptance, one carried job, quoted7fare/36min trip and2:30 handoff pass. Deferred22 yields177cash; whole-job reputation70to95(+25), duties2to1, no cash debt. Fresh/stale-handoff/Save-Continue checks pass; normal200-second post-success watch reaches7:28AM with Crew present and no early request. Thirteen positive native Jobs143 checks; three diagnostics retained/excluded. Next watch crosses8:30AM boundary; remaining duty continues."
         }
       ],
       "implementation_batches": [
@@ -5085,9 +5091,10 @@
         "CREW-NOAUDIT-ENABLED-LOCK-20261116",
         "CREW-STAKE-REPAY-DISCLOSURE-20261116",
         "BTH-QA-CREW-ENDING-001-HOUSE-EDGE-BAG-20261116",
-        "BTH-QA-CREW-ENDING-001-GETAWAY-FAILURE-20261116"
+        "BTH-QA-CREW-ENDING-001-GETAWAY-FAILURE-20261116",
+        "BTH-QA-CREW-ENDING-001-ORDINARY-DELIVERY-20261116"
       ],
-      "next_action": "Preserve gf7/gf8 actual Pinched ending and gf10 fresh recovered100cash/0chips/no duties/heist/getaway with both bags retained. Scope/source recovered and adverse native batch qualified. Continue ordinary Crew delivery/reputation/cooldown coverage from an intact earned pre-heist checkpoint; optional Corridor, route/human pacing and browser/WASM acceptance remain Open.",
+      "next_action": "Continue unmodified clock from fulfilled od15 (177cash,95standing,one duty,clock1590,Knuckles present). Observe actual post-success6h boundary1950 before a further request, then pursue the remaining owed delivery normally. Preserve all three original diagnostics and successful ending/recovery profiles; browser, missed/denial and other route/pacing coverage remain Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -5101,7 +5108,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T05:12:16.616395+00:00"
+      "updated_at": "2026-11-16T06:51:34.594134+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -38771,6 +38778,50 @@
   ],
   "batches": [
     {
+      "id": "BTH-QA-CREW-ENDING-001-ORDINARY-DELIVERY-20261116",
+      "name": "Ordinary Crew delivery timing and reputation",
+      "aliases": [],
+      "group": "current",
+      "parent_id": "BTH-QA-CREW-ENDING-001",
+      "state": "open",
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": []
+      },
+      "scope": [
+        "Resume earned terms-progress pre-heist checkpoint using paired save_dir/appdata/localappdata custody; never touch owner saves or replay the accepted loan.",
+        "Observe normal unpaused native clock, actual Crew presence and naturally offered package requests; do not inspect or force future RNG or change timers.",
+        "Test offered ordinary delivery terms, single-active behavior, fulfillment/reputation and cold persistence where reachable; retain unobserved and blocked boundaries explicitly."
+      ],
+      "acceptance_scope": "Continue the broader Crew track after qualified success and adverse endings. Related direct human rules: user:Sentinel_5687a9fdd6e88191a896ed6da2cd72a2 (two obligations, no cash debt, one active delivery, cooldown and pushy retry); user:Sentinel_7c91e909fbbc8191bfa4e51bbb24ddd9 (25% hourly chance after6h, Crew presence only). Read directly this turn. Native operational evidence does not establish browser or human pacing coverage.",
+      "status": "NATIVE_FIRST_ORDINARY_DELIVERY_PASS_COOLDOWN_ACTIVE_WEB_OPEN",
+      "owner": {
+        "name": "Playtest Crew ending",
+        "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
+        "assignment_state": "assigned"
+      },
+      "evidence": [
+        {
+          "kind": "native_ordinary_delivery_progress",
+          "reference": "docs/testing/Crew_ordinary_delivery_QA_20261116.md",
+          "summary": "Actual Crew-present natural request, Alley terms, normal two-stage acceptance, one carried job, quoted7fare/36min trip and2:30 handoff pass. Deferred22 yields177cash; whole-job reputation70to95(+25), duties2to1, no cash debt. Fresh/stale-handoff/Save-Continue checks pass; normal200-second post-success watch reaches7:28AM with Crew present and no early request. Thirteen positive native Jobs143 checks; three diagnostics retained/excluded. Next watch crosses8:30AM boundary; remaining duty continues."
+        }
+      ],
+      "next_action": "Continue unmodified clock from fulfilled od15 (177cash,95standing,one duty,clock1590,Knuckles present). Observe actual post-success6h boundary1950 before a further request, then pursue the remaining owed delivery normally. Preserve all three original diagnostics and successful ending/recovery profiles; browser, missed/denial and other route/pacing coverage remain Open.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-16T05:19:33.396811+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T06:51:34.594134+00:00"
+    },
+    {
       "id": "BTH-QA-CREW-ENDING-001-GETAWAY-FAILURE-20261116",
       "name": "Native failed-getaway consequences and persistence",
       "aliases": [],
@@ -42584,7 +42635,7 @@
         "No duplicate worker or bypass of browser/computer denials."
       ],
       "acceptance_scope": "Owner restart request Sentinel_3464b568ddc48191af59e314081b75ef and sidebar request Sentinel_11391c7e280c81918ac7603758e4721d; transferred intact checkpoint and explicit three-directory custody. Native ending reached and persisted; deployed browser/WASM acceptance remains separately required.",
-      "status": "NATIVE_PINCHED_RECOVERY_PASS_CONTINUING_WEB_OPEN",
+      "status": "NATIVE_FIRST_ORDINARY_DELIVERY_PASS_COOLDOWN_ACTIVE_WEB_OPEN",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -42630,9 +42681,14 @@
           "kind": "recovered_crew_scope_and_native_adverse_flow",
           "reference": "docs/testing/Crew_scope_and_adverse_getaway_QA_20261116.md",
           "summary": "Recovered actual retained user Crew scope/source and explicit continued native/Web direction. Normal Duck+four Holds reach caught pursuit12/11, genuine warm Somebody Got Pinched720 payout to883cash/16chips; cold report,14 actual Roadside claim checks and38 New Run/cold cleanup checks pass. Bags3/5 remain unopened. All10 native Jobs134 checks; no product regression established. Parent continues for ordinary deliveries, optional dependencies, route/pacing and browser acceptance."
+        },
+        {
+          "kind": "native_ordinary_delivery_progress",
+          "reference": "docs/testing/Crew_ordinary_delivery_QA_20261116.md",
+          "summary": "Actual Crew-present natural request, Alley terms, normal two-stage acceptance, one carried job, quoted7fare/36min trip and2:30 handoff pass. Deferred22 yields177cash; whole-job reputation70to95(+25), duties2to1, no cash debt. Fresh/stale-handoff/Save-Continue checks pass; normal200-second post-success watch reaches7:28AM with Crew present and no early request. Thirteen positive native Jobs143 checks; three diagnostics retained/excluded. Next watch crosses8:30AM boundary; remaining duty continues."
         }
       ],
-      "next_action": "Preserve gf7/gf8 actual Pinched ending and gf10 fresh recovered100cash/0chips/no duties/heist/getaway with both bags retained. Scope/source recovered and adverse native batch qualified. Continue ordinary Crew delivery/reputation/cooldown coverage from an intact earned pre-heist checkpoint; optional Corridor, route/human pacing and browser/WASM acceptance remain Open.",
+      "next_action": "Continue unmodified clock from fulfilled od15 (177cash,95standing,one duty,clock1590,Knuckles present). Observe actual post-success6h boundary1950 before a further request, then pursue the remaining owed delivery normally. Preserve all three original diagnostics and successful ending/recovery profiles; browser, missed/denial and other route/pacing coverage remain Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -42645,7 +42701,7 @@
           "user:Sentinel_b9ecabacc1848191bed579864eef4f2a"
         ]
       },
-      "updated_at": "2026-11-16T05:12:16.616395+00:00"
+      "updated_at": "2026-11-16T06:51:34.594134+00:00"
     },
     {
       "id": "CREW-NOAUDIT-ENABLED-LOCK-20261116",
