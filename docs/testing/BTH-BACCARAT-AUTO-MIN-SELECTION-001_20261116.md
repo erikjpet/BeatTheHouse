@@ -2,7 +2,7 @@
 
 Tracking BTH-BACCARAT-AUTO-MIN-SELECTION-001; parent BTH-NEXT-QA-GENERAL-SIDEBAR-001. Visible owner6afa5080-2f00-8191-804a-d401aa98a020.
 
-The narrow fix passes55 focused native/recovery checks: ordinary24, repeated cold17 and captured-old-state recovery14. The four-fixture synthetic presentation/Save/replay suite passes with six new minimum/valid-auto assertions, and animation_liveness_without_pointer_check.gd passes. Main commit/push and exact NEXT delivery are next. Browser startup/rendered Web remains unverified. General exploration remains independently Open at774 checks; those counts are not combined.
+The narrow fix passes55 focused native/recovery checks: ordinary24, repeated cold17 and captured-old-state recovery14. The four-fixture synthetic presentation/Save/replay suite passes with six new minimum/valid-auto assertions, and animation_liveness_without_pointer_check.gd passes. Main eb05632b738ab91dc21d717b80ee78ae84fbb204 and exact served NEXT delivery are verified. Browser startup/rendered Web remains unverified. General exploration remains independently Open at774 checks; those counts are not combined.
 
 The ordinary owned G campaign earned the Craps payout, redeemed10 chips through actual Cage controls, paid the posted60 High-Limit buy-in and entered Golden Banker with7 cash, no chips and a90 minimum. Actual zero-wager Deal produced a natural public hand, Save during dealing and exact cold Continue. No money, cards, RNG, clock, flags or player state was injected.
 
@@ -22,7 +22,7 @@ All exact commands, admitted E: manifests/gates,4GiB expected writes plus20GiB r
 
 Main advanced with three Crew documentation paths. Integration preserved those rows/report and tested bytes. Candidate base19b8839d0a25f3de0d168fb1422fb81d8c4a873f. Runtime scope is Baccarat auto-command validation plus additions to its existing test. Original Slot215-check source bytes remain exact. Stable/itch/audience/trust/watcher machinery are unchanged.
 
-Delivery is pending authorized scoped main commit/push and the existing NEXT watcher. Keep the item Open for delivery and exact-build startup limits.
+Main/NEXT delivery is verified below. Keep the item Open for exact-build browser startup and rendered Web acceptance.
 
 Qualified at2026-11-16T05:55:53.852238+00:00.
 
@@ -41,3 +41,11 @@ Qualified at2026-11-16T05:55:53.852238+00:00.
 Working CRLF and normalized LF SHA256:
 - scripts/games/baccarat.gd: working4502db440dfa2e67df039ab3a4d2fac2413084ea4cccc8cd6ba061ca047321c6; LF031598b387b6f10b17e1ed08ba80effd1e2ffab4d0550a0e8837dfca51ef5943.
 - scripts/tests/baccarat_deal_presentation_check.gd: working3371dde3fd774cf3831de2df2330421d756e0f34cdcf74866c4c232916312327; LF955a416814cd2eb5115ed3d7b155e05fd1037614f185c84c64f2224e7d544984.
+
+Verified delivery checkpoint 2026-11-16T06:23:14.980104+00:00.
+
+Authorized runtime commit eb05632b738ab91dc21d717b80ee78ae84fbb204/tree efc2d51c5e508edf9f73f9f69ed75a4e5bfa9d87 was pushed with remote main equality, qualified source hashes and clean isolated index verified. Existing watcher26256/guardian25112 detected06:00:53Z and promoted2026-11-16T06:06:23Z. No duplicate/manual watcher or build ran.
+
+Trusted HTTPS observed2026-11-16T06:07:35.138589Z: NEXT/dev entry, immutable BUILD.json, build_manifest.json, REF, VERSION and HTML match the exact staged commit/tree and hashes. Changed index.pck was fully streamed:124982648 bytes, SHA2564afad55dab348ec05225d32aab08e61930cd7f4b0c49c6d9bbf27c9c7d194ae4. Archive119065130 bytes/SHA256afacabeca8c07cab9f5bd662bc2e20b49739447469eff6a7e1f195a7e7ce1c25. Qualified normalized LF source hashes match the Git build source. Receipt E:\CodexQA\BTH\runs\sidebar-baccarat-auto-min-next-served-20261116-01\evidence\next-receipt.json, exit0/owned0; commit receipt E:/CodexQA/BTH/runs/sidebar-baccarat-auto-min-commit-push-20261116-01/evidence/commit-push.json.
+
+The previous Slot correction is an ancestor and its qualified runtime/test bytes are unchanged. No repeat native suite was required for this evidence-only checkpoint. TLS trust, private LAN audience, stable/itch and deployment machinery were unchanged. Browser startup and rendered Web play remain unverified under the inherited browser-control restriction. No browser/control fallback or evasion was attempted. Both fix objectives remain Open for that acceptance, and broader general/endings coverage remains Open independently.

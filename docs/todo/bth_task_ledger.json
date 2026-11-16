@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T05:55:53.852238+00:00",
+  "updated_at": "2026-11-16T06:23:14.980104+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -38539,6 +38539,12 @@
           "evidence": [
             "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md"
           ]
+        },
+        {
+          "sha": "eb05632b738ab91dc21d717b80ee78ae84fbb204",
+          "evidence": [
+            "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+          ]
         }
       ],
       "deployment": {
@@ -38547,9 +38553,10 @@
         "evidence": [
           "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md",
           "E:\\CodexQA\\BTH\\runs\\sidebar-slot-min-next-served-20261116-01\\evidence\\next-receipt.json",
-          "E:\\CodexQA\\BTH\\runs\\sidebar-slot-next-descendant-20261116-01\\evidence\\next-receipt.json"
+          "E:\\CodexQA\\BTH\\runs\\sidebar-slot-next-descendant-20261116-01\\evidence\\next-receipt.json",
+          "E:\\CodexQA\\BTH\\runs\\sidebar-baccarat-auto-min-next-served-20261116-01\\evidence\\next-receipt.json"
         ],
-        "commit": "3cbeefa7210a0785e894357be17f3729fd247c7e"
+        "commit": "eb05632b738ab91dc21d717b80ee78ae84fbb204"
       },
       "evidence": [
         {
@@ -38568,18 +38575,18 @@
           "summary": "Actual promoted/served3cbeefa7/tree0d3bdebf verified04:52:11Z. Intervening155975 documentation build was superseded; no promotion claimed for it. Only docs changed from qualified1240 runtime, preserving215 focused checks and original full-PCK hash evidence. Web startup remains unverified."
         }
       ],
-      "next_action": "Retain actual3cbeefa7 NEXT provenance and qualified1240 runtime evidence; obtain permitted exact-build startup/rendered acceptance without bypassing inherited browser-control restriction. Continue independent ordinary general QA.",
+      "next_action": "Retain exact-build Web startup acceptance as open under existing restriction; qualified215 native source remains unchanged in the verified eb05632 NEXT build.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T04:58:21.815832+00:00",
+        "observed_at": "2026-11-16T06:23:14.980104+00:00",
         "evidence": [
           "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T04:58:21.815832+00:00",
+      "updated_at": "2026-11-16T06:23:14.980104+00:00",
       "planned_app_changes": []
     },
     {
@@ -38590,7 +38597,7 @@
       "parent_ids": [],
       "group": "current",
       "state": "open",
-      "status": "NATIVE_774_GENERAL_OPEN_BACCARAT_FIXED_MAIN_NEXT_PENDING",
+      "status": "NATIVE_774_GENERAL_OPEN_TWO_FIXES_MAIN_NEXT_SERVED",
       "owner": {
         "assignment_state": "assigned",
         "name": "Sidebar general NEXT gameplay QA",
@@ -38707,6 +38714,12 @@
           "evidence": [
             "docs/testing/NEXT_sidebar_Craps_QA_20261116.md"
           ]
+        },
+        {
+          "sha": "eb05632b738ab91dc21d717b80ee78ae84fbb204",
+          "evidence": [
+            "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+          ]
         }
       ],
       "deployment": {
@@ -38759,15 +38772,20 @@
           "reference": "docs/testing/NEXT_sidebar_Cage_Baccarat_QA_20261116.md",
           "kind": "ordinary_native_Cage_and_Baccarat_new_timer_defect",
           "summary": "65 qualified checks for real cashout, High-Limit entry, under-minimum controls and actual zero-wager public hand. Genuine timed-rejection control lock tracked separately; public-history oracle excluded."
+        },
+        {
+          "reference": "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md",
+          "kind": "qualified_baccarat_fix_main_next_delivery",
+          "summary": "Separate55-check Baccarat correction and earlier215-check Slot correction are on main and exact served eb05632 NEXT. General774 exploration count remains distinct; browser startup remains unverified."
         }
       ],
-      "next_action": "Finish scoped main/NEXT delivery of BTH-BACCARAT-AUTO-MIN-SELECTION-001 while retaining broader varied QA/endings scope and explicit Web startup limits.",
+      "next_action": "Continue distinct ordinary gameplay paths, triage only reproduced defects and retain separate exact-build Web/ending gaps; Slot and Baccarat fixes are now main/NEXT served.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T05:55:53.852238+00:00",
+        "observed_at": "2026-11-16T06:23:14.980104+00:00",
         "evidence": [
           "docs/testing/NEXT_sidebar_general_QA_20261116.md",
           "docs/testing/NEXT_sidebar_scratch_travel_QA_20261116.md",
@@ -38777,7 +38795,7 @@
           "docs/testing/NEXT_sidebar_Beach_Slot_QA_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T05:55:53.852238+00:00",
+      "updated_at": "2026-11-16T06:23:14.980104+00:00",
       "planned_app_changes": []
     },
     {
@@ -38790,7 +38808,7 @@
       ],
       "group": "current",
       "state": "open",
-      "status": "NATIVE_FIXED_55_CHECKS_COMPAT_LIVENESS_MAIN_NEXT_PENDING",
+      "status": "MAIN_NEXT_SERVED_55_NATIVE_COMPAT_LIVENESS_WEB_STARTUP_UNVERIFIED",
       "owner": {
         "assignment_state": "assigned",
         "name": "Sidebar general NEXT gameplay QA",
@@ -38841,7 +38859,7 @@
             "id": "main-next-delivery",
             "description": "Scoped authorized main commit/push and exact existing NEXT provenance/assets; retain explicit startup/rendered Web limits.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
               "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
             ]
@@ -38875,7 +38893,15 @@
               ]
             },
             {
-              "name": "Authorized main/NEXT delivery and exact-build startup/rendered Web limits",
+              "name": "Authorized main/NEXT provenance and full changed PCK",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md",
+                "E:\\CodexQA\\BTH\\runs\\sidebar-baccarat-auto-min-next-served-20261116-01\\evidence\\next-receipt.json"
+              ]
+            },
+            {
+              "name": "Exact-build browser startup and rendered Web acceptance",
               "state": "remaining",
               "evidence": [
                 "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
@@ -38885,11 +38911,21 @@
         }
       },
       "implementation_batches": [],
-      "commits": [],
+      "commits": [
+        {
+          "sha": "eb05632b738ab91dc21d717b80ee78ae84fbb204",
+          "evidence": [
+            "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "evidence": []
+        "state": "verified",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\sidebar-baccarat-auto-min-next-served-20261116-01\\evidence\\next-receipt.json"
+        ],
+        "commit": "eb05632b738ab91dc21d717b80ee78ae84fbb204"
       },
       "evidence": [
         {
@@ -38901,20 +38937,25 @@
           "reference": "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md",
           "kind": "faithful_native_fix_old_state_and_synthetic_compatibility",
           "summary": "Pending-delivery root confirmed;55 native/recovery checks, four-case suite with six new minimum/valid-auto assertions and no-pointer liveness pass. Actual old Cancel works and stale replay rejects; evidence classes remain separate."
+        },
+        {
+          "reference": "E:\\CodexQA\\BTH\\runs\\sidebar-baccarat-auto-min-next-served-20261116-01\\evidence\\next-receipt.json",
+          "kind": "exact_main_next_served_full_pck",
+          "summary": "Main eb05632 and tree efc2d51c served through the existing watcher; trusted HTTPS metadata and full124982648-byte PCK hash match stage and qualified LF source. Web startup remains unverified under retained browser-control restriction."
         }
       ],
-      "next_action": "Commit/push only tested Baccarat source/test and scoped evidence, observe existing NEXT, verify exact deployed/served identity/PCK and retain startup/rendered Web gap.",
+      "next_action": "Retain exact-build startup/rendered Web acceptance as open under existing browser-control restriction; continue independent ordinary general QA without weakening or bypassing that restriction.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T05:55:53.852238+00:00",
+        "observed_at": "2026-11-16T06:23:14.980104+00:00",
         "evidence": [
           "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T05:55:53.852238+00:00",
+      "updated_at": "2026-11-16T06:23:14.980104+00:00",
       "planned_app_changes": []
     }
   ],
