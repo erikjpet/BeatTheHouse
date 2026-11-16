@@ -1,0 +1,13 @@
+{
+  "task_id": "BTH-ENV-SPATIAL-BAR-001",
+  "reviewer": "/root/audit_spatial_handoff",
+  "candidate_sha256": "a870d3652a72d3ebb5067fe9e46b412f3c2a5b938a40e4c3b2cf72e0be7a2408",
+  "verdict": "ART_GO_FOR_BRANCH_INTEGRATION_AND_BUILD_ONLY",
+  "judgment": "The pool table reads as a horizontal supported object. Wall continuity, fixed Numbers contact and foot/label contrast pass independent visual review. No remaining demonstrated art blocker to committing this exact background and preparing its build.",
+  "inspected": ["Exact final source", "All8 initial populated native contexts", "Meaningful autonomous floor-crossing and ball samples from the20.119249s Fight excerpt"],
+  "preserve": ["All17 motion entries and payloads", "Manifest/index", "Counter replay crop", "Gameplay and placement geometry", "All other room art"],
+  "publication_gates_remaining": ["Full58sequence/composite/replay/placement technical suite", "Exact source/build/PCK and TEST payload verification"],
+  "excluded_claims": ["All58 visual coverage", "Full346.154s/all-scenario motion cycles", "Browser acceptance"],
+  "test_activation_approved": false,
+  "main_or_next_approved": false
+}
