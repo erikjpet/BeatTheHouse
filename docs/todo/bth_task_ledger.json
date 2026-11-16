@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T02:22:13.916254+00:00",
+  "updated_at": "2026-11-16T02:39:48.629157+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -4879,7 +4879,7 @@
         }
       },
       "state": "open",
-      "status": "NATIVE_TERMS_RECRUITMENT_STAKE_BRANCHES_PASS_UI_WEB_OPEN",
+      "status": "NATIVE_ALTERNATE_ENDING_QA_UI_FINDINGS_WEB_OPEN",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -4902,6 +4902,12 @@
           "sha": "7f75625cb5ddb5c4576c3c60c276190aa56060b4",
           "evidence": [
             "docs/testing/NEXT_Crew_terminal_classification_20261116.md"
+          ]
+        },
+        {
+          "sha": "e8a1e3782709b268fe74d744405aeb85d5f4c6c9",
+          "evidence": [
+            "docs/testing/NEXT_Crew_terms_and_stake_QA_20261116.md"
           ]
         }
       ],
@@ -4935,13 +4941,13 @@
         {
           "kind": "bounded_native_terms_recruitment_stake",
           "reference": "docs/testing/NEXT_Crew_terms_and_stake_QA_20261116.md",
-          "summary": "Normal Crew terms/confirmation, Knuckles and Mags recruitment, active stake persistence, three natural Blackjack losses, repayment and shrug branches plus stale replay rejection pass. Repayment UI omits its $20 debit from displayed consequence/confirmation; retained for review. Continued repaid branch at Punchline Back Room/$138."
+          "summary": "Continued normal terms, recruits and stake branches; original enabled no-audit Lock assertion retained (3/4), independent safe-rejection repro9/9. Dynamic choice_views overrides authored disabled. Repay UI omits $20 debit. Alternate actual Hold/Dump/Dock ending and cold terminal8/8 retain one Clean Sweep payout1150, cash1327/chips14. Browser/WASM open."
         }
       ],
       "implementation_batches": [
         "BTH-QA-CREW-ENDING-001-SIDEBAR-20261116"
       ],
-      "next_action": "Continue normal Crew planning and leads from crew-sidebar-repaid-backroom-20261116-01 ($138, standing 95, two duties, no modal). Preserve alternate shrug and original terminal checkpoints. Review CREW-STAKE-REPAY-DISCLOSURE-20261116; browser/WASM acceptance remains Open.",
+      "next_action": "Review CREW-NOAUDIT-ENABLED-LOCK-20261116 (dynamic choice view forces enabled=true) and CREW-STAKE-REPAY-DISCLOSURE-20261116 with the gameplay-fix owner. Continue genuine Crew leads from crew-sidebar-noaudit-lock-repro-20261116-01 or remaining normal Go decision from intact Count checkpoint. Alternate Dump ending retained at crew-sidebar-alt8-261116 ($1327/14 chips). Browser/WASM remains Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -4955,7 +4961,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T02:22:13.916254+00:00"
+      "updated_at": "2026-11-16T02:39:48.629157+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -6323,7 +6329,7 @@
         {
           "kind": "bounded_native_terms_recruitment_stake",
           "reference": "docs/testing/NEXT_Crew_terms_and_stake_QA_20261116.md",
-          "summary": "Normal Crew terms/confirmation, Knuckles and Mags recruitment, active stake persistence, three natural Blackjack losses, repayment and shrug branches plus stale replay rejection pass. Repayment UI omits its $20 debit from displayed consequence/confirmation; retained for review. Continued repaid branch at Punchline Back Room/$138."
+          "summary": "Continued normal terms, recruits and stake branches; original enabled no-audit Lock assertion retained (3/4), independent safe-rejection repro9/9. Dynamic choice_views overrides authored disabled. Repay UI omits $20 debit. Alternate actual Hold/Dump/Dock ending and cold terminal8/8 retain one Clean Sweep payout1150, cash1327/chips14. Browser/WASM open."
         }
       ],
       "implementation_batches": [],
@@ -6337,7 +6343,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T02:22:13.916254+00:00",
+      "updated_at": "2026-11-16T02:39:48.629157+00:00",
       "candidate_qualification_20261111": {
         "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
         "proof": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
@@ -41969,6 +41975,12 @@
           "evidence": [
             "docs/testing/NEXT_Crew_terminal_classification_20261116.md"
           ]
+        },
+        {
+          "sha": "e8a1e3782709b268fe74d744405aeb85d5f4c6c9",
+          "evidence": [
+            "docs/testing/NEXT_Crew_terms_and_stake_QA_20261116.md"
+          ]
         }
       ],
       "deployment": {
@@ -41983,7 +41995,7 @@
         "No duplicate worker or bypass of browser/computer denials."
       ],
       "acceptance_scope": "Owner restart request Sentinel_3464b568ddc48191af59e314081b75ef and sidebar request Sentinel_11391c7e280c81918ac7603758e4721d; transferred intact checkpoint and explicit three-directory custody. Native ending reached and persisted; deployed browser/WASM acceptance remains separately required.",
-      "status": "NATIVE_TERMS_RECRUITMENT_STAKE_BRANCHES_PASS_UI_WEB_OPEN",
+      "status": "NATIVE_ALTERNATE_ENDING_QA_UI_FINDINGS_WEB_OPEN",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -42003,10 +42015,10 @@
         {
           "kind": "bounded_native_terms_recruitment_stake",
           "reference": "docs/testing/NEXT_Crew_terms_and_stake_QA_20261116.md",
-          "summary": "Normal Crew terms/confirmation, Knuckles and Mags recruitment, active stake persistence, three natural Blackjack losses, repayment and shrug branches plus stale replay rejection pass. Repayment UI omits its $20 debit from displayed consequence/confirmation; retained for review. Continued repaid branch at Punchline Back Room/$138."
+          "summary": "Continued normal terms, recruits and stake branches; original enabled no-audit Lock assertion retained (3/4), independent safe-rejection repro9/9. Dynamic choice_views overrides authored disabled. Repay UI omits $20 debit. Alternate actual Hold/Dump/Dock ending and cold terminal8/8 retain one Clean Sweep payout1150, cash1327/chips14. Browser/WASM open."
         }
       ],
-      "next_action": "Continue normal Crew planning and leads from crew-sidebar-repaid-backroom-20261116-01 ($138, standing 95, two duties, no modal). Preserve alternate shrug and original terminal checkpoints. Review CREW-STAKE-REPAY-DISCLOSURE-20261116; browser/WASM acceptance remains Open.",
+      "next_action": "Review CREW-NOAUDIT-ENABLED-LOCK-20261116 (dynamic choice view forces enabled=true) and CREW-STAKE-REPAY-DISCLOSURE-20261116 with the gameplay-fix owner. Continue genuine Crew leads from crew-sidebar-noaudit-lock-repro-20261116-01 or remaining normal Go decision from intact Count checkpoint. Alternate Dump ending retained at crew-sidebar-alt8-261116 ($1327/14 chips). Browser/WASM remains Open.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -42019,7 +42031,7 @@
           "user:Sentinel_b9ecabacc1848191bed579864eef4f2a"
         ]
       },
-      "updated_at": "2026-11-16T02:22:13.916254+00:00"
+      "updated_at": "2026-11-16T02:39:48.629157+00:00"
     }
   ]
 }

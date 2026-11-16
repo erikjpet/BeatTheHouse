@@ -1,4 +1,4 @@
-# Crew terms, recruitment and stake-loss QA
+# Crew terms, stake-loss and alternate ending QA
 
 Stable IDs: `BTH-QA-CREW-ENDING-001` / `BTH-QA-CREW-ENDING-001-SIDEBAR-20261116`. Owner: sidebar task `6afa5073-0cb4-8191-82b0-326a14a3e029`.
 
@@ -35,6 +35,27 @@ Continuing branch: `E:/CodexQA/BTH/runs/crew-sidebar-repaid-backroom-20261116-01
 
 This is continued coverage after the earlier terminal diagnostic classification and bag/New Run/route checks in [NEXT_Crew_terminal_classification_20261116.md](NEXT_Crew_terminal_classification_20261116.md). The full historical parent scope/source and browser/WASM acceptance remain open; no bounded passing sequence closes them.
 
+## Continued planning after the setback
+
+After publication of the initial 22-Job proof at e8a1e3782709b268fe74d744405aeb85d5f4c6c9 (pushed and remote main verified), normal Rook / Bishop dialogue continued through saved actual responses. Subsequent cases use that source commit; the only source differences from 3cecec33 remain QA documentation and ledger files.
+
+`CREW-NOAUDIT-ENABLED-LOCK-20261116`: The normal planning popup says No audit on the books this season, but shows Lock The Count as enabled, with an empty disabled_reason. The real public-host response is rejected. Preserve the original 3/4 assertion result (exit 1), worker log hash 9168be0fb269f252c9c152cbf17beabef836a8a01f5b19489f7bb7524fc746ef. An independent 9/9 repro from the prior intact checkpoint confirms planning live=false, no locked plan, and no cash/RNG/duty/job/heist/delivery changes after rejection or Save/Continue. This establishes a presentation-enabled mismatch while the host correctly enforces the world prerequisite. It does not establish that an audit must exist in every generated season.
+
+Source corroboration: `scripts/core/crew_run_facade.gd:720` correctly emits disabled=true for a non-live plan. `scripts/core/event_module.gd:212` unconditionally sets enabled=true in its dynamic choice view branch, and clears disabled_reason on line 213. The UI view consumes enabled. This is the concrete source path for the observed misleading enabled action; no validator or gate was weakened and no runtime fix was mixed into QA documentation.
+
+The no-audit campaign is preserved at `E:/CodexQA/BTH/runs/crew-sidebar-noaudit-lock-repro-20261116-01`, Punchline Back Room, $138 / zero chips, standing 95, two delivery duties, no modal. It cannot begin another Count normally in this season. The next ending coverage instead uses a complete copy of the earlier successful intact Count checkpoint, and keeps these distinct campaign branches explicit.
+
+## Alternate live-heist decisions
+
+The successful third-hand checkpoint first confirmed that all three Bishop decisions were already set and only Take the exit remained. It was preserved. The alternate branch therefore uses the earlier successful `crew-sidebar-count-hand1-deal-20261116-01`, where the actually offered choice is Sit or Dump. The real saved Dump button was pressed, retaining Hold as the first decision and changing score 100 to 88. The next normal $8 hand settled once, advancing round 1 to 2 and chips 14 to 22. Actual Dock was then chosen; the third normal $8 hand settled once, reaching round 3 / score 88 / cash $177 / chips 14. Normal Take the exit starts the genuine Riverboat getaway with six deadline actions remaining and pursuit 4. All intermediate Save/Continue boundaries retain the chosen decisions, exact public heist/delivery/job values and private companions.
+
+Preparation incident: run `crew-sidebar-count-distraction-alternate-offer-20261116-01` stopped before any child creation. Copying the existing shader cache to a 263-character destination failed with `[WinError 3] The system cannot find the path specified`, including `appdata/Godot/app_userdata/Beat the House/shader_cache/CanvasShaderGLES3/b12e872c188ed6a05d8ee4356e6394eb6da432907cce8e374825de6f29ec28ee/4929588113dd490be9ff2057ffb1286cc26af3d7.cache`. Its storage manifest and unused partial copy remain preserved, with no Job or launch-claim file. A fresh shorter run ID under the same approved E: root (`crew-sidebar-alt1-261116`) brings the longest copy path to 229 characters, copies all three directories unchanged, passes admission and executes under the unchanged guard. No drive fallback, security setting change or partial-profile reuse occurred.
+
+The alternate Dump route's actual offered $0 / 36-minute Delta Queen travel completed Clean Sweep with score 88, one $1,150 payout, cash $1,327 and 14 chips. Fare-plus-earned-payout accounting passed. A separate OS-process Continue and another official Save/Continue retain VICTORY, completed heist, resolved delivery, identical money rows and the same pending Blue Bag entitlement. Three report reads do not award cash or alter RNG again. This is a second real decision sequence with the same observed ending, not a claim to have covered every ending or outcome threshold. The completed alternate checkpoint is `E:/CodexQA/BTH/runs/crew-sidebar-alt8-261116`.
+
+Latest actionable state: continue other genuine Crew leads from the preserved no-audit campaign, or exercise the remaining normal Go decision from an intact active Count copy. Keep `CREW-NOAUDIT-ENABLED-LOCK-20261116` and `CREW-STAKE-REPAY-DISCLOSURE-20261116` open for the gameplay-fix owner. Browser/WASM acceptance remains unobserved. No owned native worker is left running at this evidence checkpoint.
+
+
 ## Evidence
 
 All workers used admitted E: storage, complete verified save_dir/appdata/localappdata copies, manifests and pre-Job/pre-child gates, CPU 12% / 2 GiB memory caps, assignment before execution, and released with zero owned processes. The wrappers reported each input checkpoint tree unchanged.
@@ -63,5 +84,19 @@ All workers used admitted E: storage, complete verified save_dir/appdata/localap
 | crew-sidebar-lowroller-shrugged-20261116-01 | 12/12 | `71c4005bd2100907b4985f3a17fac3c3ec4050d27585e356c5595d00f2db6248` |
 | crew-sidebar-lowroller-shrug-cold-20261116-01 | 5/5 | `04911ce3c56b52c830721198071f5297adf52ca63050865386436837cfbf91e1` |
 | crew-sidebar-repaid-backroom-20261116-01 | 6/6 | `64f197dd182fe56f66bdfb903705ff6f7b3de8f81503adedc834acb92b338339` |
+| crew-sidebar-repaid-rook-leads-20261116-01 | 6/6 | `65d3efd1feca933eeb1b473eabd736f5e04a387a9f20f75e23847217107102b4` |
+| crew-sidebar-repaid-bishop-lead-20261116-01 | 6/6 | `ee1a1266686052775d30f522997e5d3b0b6d1b9d0b94038f2bfeb1c352524c80` |
+| crew-sidebar-repaid-planning-offer-20261116-01 | 6/6 | `195e815af674c8fe1052b84f98e89c6b24a2715aa0f3d267d4e95360984070a0` |
+| crew-sidebar-repaid-count-lock-20261116-01 | 3/4 (original failure retained) | `9168be0fb269f252c9c152cbf17beabef836a8a01f5b19489f7bb7524fc746ef` |
+| crew-sidebar-noaudit-lock-repro-20261116-01 | 9/9 | `57c9cc391c9abc6b5dc4938985722be1d438c9a264711014ef39df0a74e94722` |
+| crew-sidebar-count-alternate-open-20261116-01 | 6/6 | `2756d7b8b10b6654f3459ea7c5da34352ae4e4e690abce6209bc02cb937ab4c8` |
+| crew-sidebar-alt1-261116 | 6/6 | `c4c39b907e165d15979b32bc3a0dcd3780c253edaeb7f718f4d21a726b39bb41` |
+| crew-sidebar-alt2-261116 | 6/6 | `d683de8564e38a8ffc3ff9f5a3b0c2fed8472a6183de889cd26bddfa5e7dac58` |
+| crew-sidebar-alt3-261116 | 11/11 | `8e2ec9492af0d19f448d0131f83f9015bb4acc4e44a13d45c68bb5ef632fa1cb` |
+| crew-sidebar-alt4-261116 | 6/6 | `604fc74143c9428f6ea10fdaf58a271fa7152545a5e53a077fc99dbd7cc7541a` |
+| crew-sidebar-alt5-261116 | 11/11 | `ee617018589bd66e0adf7d4c11e6f9d0467fca5f4694afc9cf7a894849c032e1` |
+| crew-sidebar-alt6-261116 | 6/6 | `657a44223f6c8a13addbf3480e7a2c879f6489ca4870ec8f9c095eacaa0432e3` |
+| crew-sidebar-alt7-261116 | 9/9 | `2a8d9d1decc28d726f78bc88b6eb07998785c743f1e7e0528ab6218f605f2958` |
+| crew-sidebar-alt8-261116 | 8/8 | `b68c62eda814c4c2f6a6acac69fa8218536110c74d52ab3510db7dc31b5fd481` |
 
-Total: 186 passing checks across 22 closed Jobs. Original failed logs and the earlier terminal checkpoint are retained. Browser/WASM and human pointer/pacing acceptance remain open; no product or animation scheduling code changed.
+Total: 285 / 286 checks across 36 closed Jobs; 1 original assertion failure(s) retained. Browser/WASM and human pointer/pacing acceptance remain open; no product or animation scheduling code changed.
