@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T12:52:31.216519+00:00",
+  "updated_at": "2026-11-16T13:45:18.917129+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -38045,7 +38045,7 @@
       "name": "Audit and correct all-room spatial support and seams",
       "group": "current",
       "state": "open",
-      "status": "ACTIVE_THREE_ROOMS_DELIVERED_SEVENTEEN_REMAINING",
+      "status": "ACTIVE_FOUR_ROOMS_DELIVERED_SIXTEEN_REMAINING",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38083,6 +38083,12 @@
           "evidence": [
             "docs/testing/high_limit_spatial_test_delivery_20261116.json"
           ]
+        },
+        {
+          "sha": "e07ca9280f4eebc531ef83dd50a79d76ec51ad23",
+          "evidence": [
+            "docs/testing/grand_back_room_spatial_test_delivery_20261116.json"
+          ]
         }
       ],
       "deployment": {
@@ -38091,9 +38097,10 @@
         "evidence": [
           "docs/testing/bar_spatial_test_delivery_20261116.json",
           "docs/testing/grand_spatial_test_delivery_20261116.json",
-          "docs/testing/high_limit_spatial_test_delivery_20261116.json"
+          "docs/testing/high_limit_spatial_test_delivery_20261116.json",
+          "docs/testing/grand_back_room_spatial_test_delivery_20261116.json"
         ],
-        "scope": "Bar/Grand/HighLimitTESTartifactdeliveryverified; remaining17roomdispositions/wholeparent remainopen."
+        "scope": "Four bounded room TEST-artifact deliveries verified; remaining16 room dispositions and whole parent remain open."
       },
       "evidence": [
         {
@@ -38155,18 +38162,23 @@
           "kind": "verified_active_checkpoint",
           "reference": "docs/testing/high_limit_spatial_test_delivery_20261116.json",
           "summary": "ACTIVE_THREE_ROOMS_DELIVERED_SEVENTEEN_REMAINING"
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/testing/grand_back_room_spatial_test_delivery_20261116.json",
+          "summary": "ACTIVE_FOUR_ROOMS_DELIVERED_SIXTEEN_REMAINING"
         }
       ],
-      "next_action": "Bar/Grand/HighLimitdeliveredexactTESTb354;17roomdispositionsremain. ContinueGBRactualHLbaselinebinding/newreleasechain, Hiddenv2qualified59tests→freshguardednative, PrivateV2native/sourceboundaryandmetadata, DeltaV2actualaudit, Cageglyphmask. No missingBartrial/savehold.",
+      "next_action": "Bar, Grand, High Limit and Grand Back Room delivered on TEST e07; sixteen room dispositions remain. Continue Hidden v3 native campaign, Private v2 file preparation, Delta native qualification, Cage alpha native adapter, and Kitty/Apartment source audits.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T12:18:19.748790+00:00",
+        "observed_at": "2026-11-16T13:45:18.917129+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T12:18:19.748790+00:00",
+      "updated_at": "2026-11-16T13:45:18.917129+00:00",
       "scope": [
         "Audit all environment art packages for seams, grounded supports, perspective and live object clearance; preserve existing animations and gameplay geometry."
       ],
@@ -38187,8 +38199,8 @@
         "coverage": {
           "required": true,
           "complete": false,
-          "completed_room_count": 3,
-          "remaining_room_count": 17,
+          "completed_room_count": 4,
+          "remaining_room_count": 16,
           "basis": "Spatial repair and native/visual plus TEST-artifact disposition; preliminary snapshot review alone does not close a room.",
           "areas": [
             {
@@ -38217,11 +38229,11 @@
             },
             {
               "id": "grand_casino_back_room",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/art/environment_spatial_rework_direction.md"
+                "docs/testing/grand_back_room_spatial_test_delivery_20261116.json"
               ],
-              "summary": "Room spatial repair and its acceptance/delivery remain open."
+              "summary": "Bounded native/visual and TEST artifact delivered; browser NOT_RUN."
             },
             {
               "id": "delta_queen",
@@ -38890,18 +38902,32 @@
       "kind": "objective",
       "name": "Grand back room spatial and seam review",
       "group": "current",
-      "state": "open",
-      "status": "EXACT_APPROVED_PACKAGE_INTEGRATED_89_TESTS_CERTIFICATE_GO_FRESH_BUILD_NEXT",
+      "state": "complete",
+      "status": "COMPLETE_NATIVE_VISUAL_TEST_ARTIFACT_BROWSER_NOT_RUN",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "e07ca9280f4eebc531ef83dd50a79d76ec51ad23",
+          "evidence": [
+            "docs/testing/grand_back_room_spatial_test_delivery_20261116.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "evidence": []
+        "state": "verified",
+        "commit": "e07ca9280f4eebc531ef83dd50a79d76ec51ad23",
+        "evidence": [
+          "docs/testing/grand_back_room_spatial_test_delivery_20261116.json",
+          "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRBUILD-20261116-v1-served/evidence/served.json"
+        ],
+        "scope": "Bounded native/visual plus exact TEST artifact/current/defaultTLS13files.",
+        "verified_scope": "Manifest00e125/PCKbe8602/sourcee07/H21e206; other19rooms/12doorways/1605UID/cache/code preserved. NEXT6bfbec unchanged only13:27:16..13:40:38UTC.",
+        "pending_scope": "Browser startup/served Web visuals/gameplay NOT_RUN; Page playback not observed; capture not all-cycle."
       },
       "evidence": [
         {
@@ -38948,18 +38974,23 @@
           "kind": "verified_active_checkpoint",
           "reference": "docs/testing/grand_back_room_spatial_test_preparation_20261116.json",
           "summary": "EXACT_APPROVED_PACKAGE_INTEGRATED_89_TESTS_CERTIFICATE_GO_FRESH_BUILD_NEXT"
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/testing/grand_back_room_spatial_test_delivery_20261116.json",
+          "summary": "COMPLETE_NATIVE_VISUAL_TEST_ARTIFACT_BROWSER_NOT_RUN"
         }
       ],
-      "next_action": "CommitexactreviewedGBRcode/e206source/56capproval; runfresh15guardedbuildphases onnewcommittedexportsource overactualHLcertificatec485. EnginepriorityGBRwhileHiddenv3sourcefilterfixprepared. Nativea9GOdda/previewretained; TESTnotupdateduntilbuild/publish/HTTPS.",
+      "next_action": "Bounded Grand Back Room repair delivered on TEST e07 with native/art GO, fifteen guarded build phases, thirteen HTTPS files and saved animated preview. Keep browser acceptance NOT_RUN; continue all20 parent.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T12:52:31.216519+00:00",
+        "observed_at": "2026-11-16T13:45:18.917129+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T12:52:31.216519+00:00",
+      "updated_at": "2026-11-16T13:45:18.917129+00:00",
       "scope": [
         "Review and correct Grand back room physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -38975,18 +39006,31 @@
             "id": "visual-and-implementation-audit",
             "description": "Document explicit room disposition; where corrected, scoped commit plus independent visual/motion/geometry and TEST evidence.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/grand_back_room_spatial_test_delivery_20261116.json",
+              "docs/testing/grand_back_room_spatial_v2_native_art_approval_20261116.json",
+              "docs/testing/grand_back_room_spatial_preview_delivery_20261116.json"
+            ]
+          },
+          {
+            "id": "live-browser-acceptance",
+            "description": "Browser startup/served Web visuals/gameplay beyond bounded native/visual plus TEST-artifact closure.",
+            "required": false,
+            "state": "unavailable",
+            "evidence": [
+              "docs/testing/grand_back_room_spatial_test_delivery_20261116.json"
+            ]
           }
         ],
         "coverage": {
           "required": false,
-          "complete": false,
+          "complete": true,
           "areas": []
         }
       },
       "implementation_batches": [],
-      "candidate_state": "RAW_SOURCE_TRIAL_PRESERVED_BRIEF_IN_PROGRESS"
+      "candidate_state": "APPROVED_PACKAGE_DELIVERED_TEST"
     },
     {
       "id": "BTH-ENV-SPATIAL-HIDDEN-001",
@@ -38994,7 +39038,7 @@
       "name": "Hidden casino spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "V2_EIGHT_PHASES_PASS_IDENTITY_CASINO_FILTER_BUG_V3_FIX_ACTIVE",
+      "status": "V3_35_TESTS_CODE_GO_FRESH_NATIVE_CAMPAIGN_ACTIVE",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -39041,18 +39085,23 @@
           "kind": "verified_active_checkpoint",
           "reference": "docs/testing/hidden_spatial_native_v2_stop_20261116.json",
           "summary": "V2_EIGHT_PHASES_PASS_IDENTITY_CASINO_FILTER_BUG_V3_FIX_ACTIVE"
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/testing/environment_spatial_adapter_qualification_20261116.json",
+          "summary": "V3_35_TESTS_CODE_GO_FRESH_NATIVE_CAMPAIGN_ACTIVE"
         }
       ],
-      "next_action": "Preservev2source7bd/8PASS+identityFAIL; actualcatalog8rowsincludes5club, originalobserverfilters3casinoexacthistoricalrows. Newversion3identity_workerfilter+real8rowregression/freshHIDDENTRIAL2 sourceonlyinprogress, thenindependentreview/tests/commit/freshcampaign. No retry/cleanup/activation.",
+      "next_action": "Fresh HIDDENTRIAL2 v3 campaign runs all29 explicit phases from401/tree1870. Final35 tests pass and independent fixture review GO; retain old v2 identity failure and first v3 fixture failure. Preserve original inputs; no activation until actual native/art GO.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T12:52:31.216519+00:00",
+        "observed_at": "2026-11-16T13:45:18.917129+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T12:52:31.216519+00:00",
+      "updated_at": "2026-11-16T13:45:18.917129+00:00",
       "scope": [
         "Review and correct Hidden casino physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39086,7 +39135,7 @@
       "name": "Private Crew room spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "V2_ACTUAL_STATIC_NATIVE_GO_SOURCE_SPECIFIC_ADAPTER_REVIEW",
+      "status": "V2_38_TESTS_SAFE_OBSERVER_GO_FILE_PHASES_ACTIVE",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -39128,18 +39177,23 @@
           "kind": "verified_active_checkpoint",
           "reference": "docs/testing/environment_spatial_active_checkpoint_20261116_1218.json",
           "summary": "V2_ACTUAL_STATIC_NATIVE_GO_SOURCE_SPECIFIC_ADAPTER_REVIEW"
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/testing/environment_spatial_adapter_qualification_20261116.json",
+          "summary": "V2_38_TESTS_SAFE_OBSERVER_GO_FILE_PHASES_ACTIVE"
         }
       ],
-      "next_action": "PrivateV2actualplane/donor/mask/Poker/staticGOcd0. Finishcanonical1pairedapply, nativeadapterfocusedchecks andsafeQA-probe/exportboundary; actualcleanBase10+separateeligibleLucky/lifecycle7motion/RM/depth. OriginalCrewwork/C3unproved remainslimited, no inventedclaims.",
+      "next_action": "Private v2 first7 file/Git phases active from401, no engine overlap with Hidden. Canonical BG metadata paired PASS; original raw GD excluded from committed runtime closure, new QA observers are inert Git-bound .gd.txt. Complete the21-phase campaign, including separate eligible Lucky glyph and lifecycle acceptance.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T12:18:19.748790+00:00",
+        "observed_at": "2026-11-16T13:45:18.917129+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T12:18:19.748790+00:00",
+      "updated_at": "2026-11-16T13:45:18.917129+00:00",
       "scope": [
         "Review and correct Private Crew room physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39173,7 +39227,7 @@
       "name": "Delta Queen spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "V2_GUARDED_TESTS_AND_ASSEMBLY_PASS_ACTUAL_ART_AUDIT_NEXT",
+      "status": "V2_47_TESTS_SAFE_OBSERVER_GO_CANONICAL_IMPORT_APPLIED_NATIVE_NEXT",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -39215,18 +39269,23 @@
           "kind": "verified_active_checkpoint",
           "reference": "docs/testing/environment_spatial_active_checkpoint_20261116_1218.json",
           "summary": "V2_GUARDED_TESTS_AND_ASSEMBLY_PASS_ACTUAL_ART_AUDIT_NEXT"
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/testing/environment_spatial_adapter_qualification_20261116.json",
+          "summary": "V2_47_TESTS_SAFE_OBSERVER_GO_CANONICAL_IMPORT_APPLIED_NATIVE_NEXT"
         }
       ],
-      "next_action": "V2recipe3075/15testsPASS;29sealbcab/BG70eb assembledproofecc. Independentlyreviewactualplane/source/232masks/rightopaque540x184/floor; then source-specificnativequalification, no activationbeforeactualGO.",
+      "next_action": "Delta actual V2 plane/static GO c59, final47 tests PASS with profile1bc/runnerd4f. Canonical BG metadata before/apply/after affc PASS; prepare fresh22-phase native campaign from401 after exclusive engine admission. Work/save/revisit and fullapp RM remain bounded.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T12:18:19.748790+00:00",
+        "observed_at": "2026-11-16T13:45:18.917129+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T12:18:19.748790+00:00",
+      "updated_at": "2026-11-16T13:45:18.917129+00:00",
       "scope": [
         "Review and correct Delta Queen physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39404,7 +39463,7 @@
       "name": "Kitty Cat Lounge spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "status": "SOURCE_AUDIT_ACTIVE_RETAINED_POPULATED_EVIDENCE",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -39431,18 +39490,23 @@
           "kind": "verified_active_checkpoint",
           "reference": "docs/art/environment_spatial_rework_direction.md",
           "summary": "AUDIT_RECORDED_REPAIR_PENDING"
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "SOURCE_AUDIT_ACTIVE_RETAINED_POPULATED_EVIDENCE"
         }
       ],
-      "next_action": "Continue Kitty Cat Lounge spatial and seam review fromtheexistingroom-specificdirection/retainedactualpopulatedevidence: prepareboundedrepairandindependentmotion/geometry/TESTdisposition. ExistingBartrialresolved; no missingBartrialororiginalsavedependency.",
+      "next_action": "Source-only worker native_suite_adapter owns Kitty actual R6 stage/master/counter/masks and retained five-context audit; new scoped repair brief next. No generation, E job or activation.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T12:18:19.748790+00:00",
+        "observed_at": "2026-11-16T13:45:18.917129+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T12:18:19.748790+00:00",
+      "updated_at": "2026-11-16T13:45:18.917129+00:00",
       "scope": [
         "Review and correct Kitty Cat Lounge physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39620,7 +39684,7 @@
       "name": "Apartment spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "AUDIT_RECORDED_REPAIR_PENDING",
+      "status": "SOURCE_AUDIT_ACTIVE_RETAINED_POPULATED_EVIDENCE",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -39647,18 +39711,23 @@
           "kind": "verified_active_checkpoint",
           "reference": "docs/art/environment_spatial_rework_direction.md",
           "summary": "AUDIT_RECORDED_REPAIR_PENDING"
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/art/environment_spatial_rework_direction.md",
+          "summary": "SOURCE_AUDIT_ACTIVE_RETAINED_POPULATED_EVIDENCE"
         }
       ],
-      "next_action": "Continue Apartment spatial and seam review fromtheexistingroom-specificdirection/retainedactualpopulatedevidence: prepareboundedrepairandindependentmotion/geometry/TESTdisposition. ExistingBartrialresolved; no missingBartrialororiginalsavedependency.",
+      "next_action": "Source-only worker audit_spatial_handoff owns Apartment actual populated R2 floor/counter/source audit and new scoped spatial brief; preserve original seven objects/fourteen motifs/Base-only limits. No generation, E job or activation.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T12:18:19.748790+00:00",
+        "observed_at": "2026-11-16T13:45:18.917129+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T12:18:19.748790+00:00",
+      "updated_at": "2026-11-16T13:45:18.917129+00:00",
       "scope": [
         "Review and correct Apartment physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -39764,7 +39833,7 @@
       "name": "Grand Cage spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "SOURCE_AUDIT_NO_GEOMETRY_REBUILD_GLYPH_MASK_PREPARATION",
+      "status": "V2_30_TESTS_ACTUAL_ALPHA_STATIC_GO_NATIVE_ADAPTER_ACTIVE",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -39791,18 +39860,23 @@
           "kind": "verified_active_checkpoint",
           "reference": "docs/art/briefs/grand_cage_spatial_repair_20261116.md",
           "summary": "SOURCE_AUDIT_NO_GEOMETRY_REBUILD_GLYPH_MASK_PREPARATION"
+        },
+        {
+          "kind": "verified_active_checkpoint",
+          "reference": "docs/testing/cage_spatial_r1_static_review_v2_20261116.json",
+          "summary": "V2_30_TESTS_ACTUAL_ALPHA_STATIC_GO_NATIVE_ADAPTER_ACTIVE"
         }
       ],
-      "next_action": "Preservecoherentbuilt-incabinet/floor/20native16low; cutactualbroadpulsealphatogold5532glyphtexelsonly. Independentlyreviewonecanonicalsignmetadata/rootpairedapply; finishguardawarehelper/tests andfreshnonactivecandidate thennative/TEST.",
+      "next_action": "Fresh Cage alpha candidate29610fee and actual independent static GO517a after30 v2 tests and guarded assembly31392. Preserve original capacity-stop evidence; source-specific native adapter/stock12/EMPTY52/visibility36/matched-clock glyph review active, no art activation.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T12:18:19.748790+00:00",
+        "observed_at": "2026-11-16T13:45:18.917129+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T12:18:19.748790+00:00",
+      "updated_at": "2026-11-16T13:45:18.917129+00:00",
       "scope": [
         "Review and correct Grand Cage physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],

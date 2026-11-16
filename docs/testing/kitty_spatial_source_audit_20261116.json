@@ -1,0 +1,729 @@
+{
+  "schema": "bth.kitty_spatial_source_audit/v1",
+  "task_id": "BTH-ENV-SPATIAL-KITTY-001",
+  "room": "kitty_cat_lounge",
+  "review_date": "2026-11-16",
+  "owner": "/root/native_suite_adapter",
+  "status": "SOURCE_AUDIT_REPAIR_PROPOSAL_ONLY",
+  "candidate_generated": false,
+  "production_art_modified": false,
+  "qa_runtime_started": false,
+  "test_updated": false,
+  "parent_authority": "Root assigned source-only queued-room audit/repair brief; root owns ledger, runtime, Git and TEST.",
+  "current_source": {
+    "root": "D:/Projects/Beat-The-House/.tmp/environment-art-layers",
+    "room_only_file_count": 30,
+    "room_only_sha256": "017faffa1f02256046add9e21c2aae3358e2b9508eec15cbac942050f449cfb2",
+    "files": {
+      "assets/art/environments/kitty_cat_lounge/anim/candle_light_0.png": "d79eddbe02603a5412ab7be088d6790b329d2e04dd817842f8eaf6064fe1a12a",
+      "assets/art/environments/kitty_cat_lounge/anim/candle_light_1.png": "545375c389080aefa2f4e0461474452313a6ce5754d6946910e7a38b52698d95",
+      "assets/art/environments/kitty_cat_lounge/anim/candle_light_2.png": "d73a331a1e0b2e7aca2b472aa8bd02035453ec120d8303e2e9126b0135fd168f",
+      "assets/art/environments/kitty_cat_lounge/anim/candle_light_3.png": "0a563e8293c2d67067ca6cb9988ff4287007abc690c33d09aa6cd48252efec64",
+      "assets/art/environments/kitty_cat_lounge/anim/candle_light_4.png": "766debe06cb201c06999bcbacc7ede2dcd7a2d76dbbff435315660268029bda9",
+      "assets/art/environments/kitty_cat_lounge/anim/cool_air_0.png": "ebe7ceb580eb4286ed3d03d2c18d2c8423b818e65704049dafec601134cdb5b9",
+      "assets/art/environments/kitty_cat_lounge/anim/cool_air_1.png": "048dd38269941db7e74d803ac5c0878ca190c7da6b8a7d714d00fea7c79f006e",
+      "assets/art/environments/kitty_cat_lounge/anim/cool_air_2.png": "b5f8e207a2c83a23623feb29034e115fb767cc5b45332ca23444044f61342c03",
+      "assets/art/environments/kitty_cat_lounge/anim/cool_air_3.png": "2e4e4699cb2436b7ef3fc6e4b4fd611d760e19d6f2d3edff02346071af4b9302",
+      "assets/art/environments/kitty_cat_lounge/anim/cool_air_4.png": "2410d0bd01c2927c264b0d73fca0328341ca04c4cce3d8596cbcdd987dcd55ad",
+      "assets/art/environments/kitty_cat_lounge/anim/floor_glint_0.png": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+      "assets/art/environments/kitty_cat_lounge/anim/floor_glint_1.png": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+      "assets/art/environments/kitty_cat_lounge/anim/floor_glint_2.png": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+      "assets/art/environments/kitty_cat_lounge/anim/floor_glint_3.png": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+      "assets/art/environments/kitty_cat_lounge/anim/floor_glint_4.png": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+      "assets/art/environments/kitty_cat_lounge/anim/floor_glint_5.png": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+      "assets/art/environments/kitty_cat_lounge/anim/floor_glint_6.png": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+      "assets/art/environments/kitty_cat_lounge/anim/kitty_sign_pulse.png": "30af2beae75ddd29b474b645ff86fb26b6f4e2797761cfbf077e05d988f7901f",
+      "assets/art/environments/kitty_cat_lounge/anim/pink_air_0.png": "7884f7f55c0dfcf00fce4442cf4eb742b373a057ef928ae3e2cf996ff0bc09a6",
+      "assets/art/environments/kitty_cat_lounge/anim/pink_air_1.png": "54e57decb1b1a83ad10cda5400cb53e85f0cb697d63b80b2e550060df55de1f1",
+      "assets/art/environments/kitty_cat_lounge/anim/pink_air_2.png": "741b09243d56c16c0380ac01426b6a9ae5c50f3b226b54c4da56858a52f64d73",
+      "assets/art/environments/kitty_cat_lounge/anim/pink_air_3.png": "2ce1065d3eb05218ad8c557879b4f4e47c39ac113d6833863e43a8d3a4deb516",
+      "assets/art/environments/kitty_cat_lounge/anim/pink_air_4.png": "b9ae8238f27bf31326147aca81dfc11e16f03f384c007063a5eaf64f00cc9fb4",
+      "assets/art/environments/kitty_cat_lounge/anim/warm_sparkle_0.png": "5476a12e98bbfbfa2145403b7d8909f7bf662693f5116926dcd3f08a960dbe13",
+      "assets/art/environments/kitty_cat_lounge/anim/warm_sparkle_1.png": "5476a12e98bbfbfa2145403b7d8909f7bf662693f5116926dcd3f08a960dbe13",
+      "assets/art/environments/kitty_cat_lounge/anim/warm_sparkle_2.png": "5476a12e98bbfbfa2145403b7d8909f7bf662693f5116926dcd3f08a960dbe13",
+      "assets/art/environments/kitty_cat_lounge/anim/warm_sparkle_3.png": "5476a12e98bbfbfa2145403b7d8909f7bf662693f5116926dcd3f08a960dbe13",
+      "assets/art/environments/kitty_cat_lounge/background.png": "808cdc6dc571889e288d1db023487f8b776f229592463d0459d07a711e8c06e1",
+      "assets/art/environments/kitty_cat_lounge/counters/kitty_champagne_bar.png": "3ad4156cec44de64000f94848f159575b7d8f2f96ed8fb42fffa7b6d84a52497",
+      "data/art/environments/kitty_cat_lounge.json": "03da076bad28b512c463bf6d620f9a037e36678545f1c06fb685102da923fd6a"
+    },
+    "current_index_sha256": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+    "with_current_index_sha256": "56e801e814a04f99a9f2b069b1923eea36462ed1ae4952222c6d4f39a0a360e1",
+    "room_only_seal_excludes_index": true,
+    "exact_current_source_commit_not_read_or_invented": true
+  },
+  "retained_static_comparison": {
+    "native_doc": "docs/testing/kitty_cat_r6_native_trial.json",
+    "native_doc_sha256": "1bdaaeaf14834960884a57893e54431582ad63bc91c1bf17b0ef7f0ad7ff377e",
+    "historical_package_including_then_index": "080ee7bfab97168ce4dd67a592add6e7254c6baca2ce0d2326ee8bb7aba04bab",
+    "historical_index_sha256": "fdc7fd22d4f433369983eeb04cd76526be684c9ed9750a212e2c70af08e81906",
+    "current_all30_room_files_equal_R6_doc": true,
+    "only_difference_from31_file_old_package": "Global index changed as other rooms were integrated; current index is separately bound, not substituted.",
+    "historical_runtime_receipts_requalified_here": false
+  },
+  "observed_finding": {
+    "id": "KITTY-STAGE-DECK-001",
+    "decision": "CONFIRMED_CURRENT_SOURCE_AND_RETAINED_POPULATED_STAGE_CONTACT_DEFECT",
+    "description": "Lower stage is a vertical red-wood framed fascia without a readable horizontal deck; actual Amateur contestant and Slow-night Host feet/shadows meet that vertical face.",
+    "current_master": "808cdc6dc571889e288d1db023487f8b776f229592463d0459d07a711e8c06e1",
+    "all_five_retained_populated_views_personally_inspected": true,
+    "viewed_populated_pngs": {
+      "__none": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r5-capture-01\\evidence\\__none_actual_play.png",
+        "sha256": "696c6585e3a1d4a9176ad3b1483efe56bfa25a0d360e0e7b4fccae0316c0e09f"
+      },
+      "kitty_cat_lounge_amateur_night": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r5-capture-01\\evidence\\kitty_cat_lounge_amateur_night_actual_play.png",
+        "sha256": "8904d91d77d26d56679046d50049768aa0901229e919a63dd9fe6caf5916be1a"
+      },
+      "kitty_cat_lounge_bachelorette_storm": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r5-capture-01\\evidence\\kitty_cat_lounge_bachelorette_storm_actual_play.png",
+        "sha256": "545402124cf208534537a6f9a6a63dd50710db591c926747085b239faf0f177e"
+      },
+      "kitty_cat_lounge_buyout": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r5-capture-01\\evidence\\kitty_cat_lounge_buyout_actual_play.png",
+        "sha256": "2abf05b550ad2a95c9bf9ef494d82d941a97fb0c8c6f9ff26c96d174d6d7d1cf"
+      },
+      "kitty_cat_lounge_slow_night": {
+        "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r5-capture-01\\evidence\\kitty_cat_lounge_slow_night_actual_play.png",
+        "sha256": "928a68cc22b01b0541ccf1d8f5405750d6cc70d193a5084ba550fc5ad3c959a7"
+      }
+    },
+    "static_view_limit": "R5 populated scenes are retained noon/closing initial fixtures, not a fresh current runtime. All30 current room assets are byte-identical to the R6 doc; R6 static/counter are documented byte-identical R5.",
+    "other_dispositions": {
+      "candle_trays": "Retain three authored shallow floor trays. No finding that they need legs.",
+      "champagne_front": "Preserve exact opaque existing master crop; no source rebuild requested.",
+      "global_floor_join": "Outside proposed bounded stage window. No fresh whole-room seam PASS claimed."
+    }
+  },
+  "retained_contexts": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r5-capture-01\\evidence\\kitty_preart_metadata.json",
+    "sha256": "2159cd06068bad11d6741d483c75a98b184ae29adc8d5bb3d2db3bf36203eedf",
+    "checks": 15164,
+    "scenarios": [
+      "__none",
+      "kitty_cat_lounge_amateur_night",
+      "kitty_cat_lounge_buyout",
+      "kitty_cat_lounge_slow_night",
+      "kitty_cat_lounge_bachelorette_storm"
+    ],
+    "per_context_objects": {
+      "__none": 13,
+      "kitty_cat_lounge_amateur_night": 22,
+      "kitty_cat_lounge_bachelorette_storm": 19,
+      "kitty_cat_lounge_buyout": 20,
+      "kitty_cat_lounge_slow_night": 19
+    },
+    "object_occurrences": 93
+  },
+  "retained_mask_custody": {
+    "path": "E:/CodexQA/BTH/runs/BTH-ENVART-KITTY-20261115-occlusion-r6-01/evidence/kitty-r6-five-context-occlusion.json",
+    "sha256": "9d3da051c8e85de1757176b193e51c9f64cc326c79b53ef3f802acf9634e489a",
+    "count": 186,
+    "sha256_sorted_LF_no_terminal_LF": "9a125f44e622152f5f3b2adc9b27d354dd6854ed9b516f672efde34f69188372",
+    "all186_actual_files_rehashed_and_match_retained_R6_mask_hashes": true,
+    "all186_pixel_alpha_planes_redecoded_here": false,
+    "files": {
+      "__none_host_0_body.png": "4a30cdf56c79ebac3ce5756c26d3f5e510a7f9febd1f9f0f7b3d571561863e4a",
+      "__none_host_0_adorn.png": "1b4097e41f2d40ec8094b1ab85043b67fa30cd553a17e263ae9285e54bfe7801",
+      "__none_host_1_body.png": "cb4a2443b7fd3ec21c6b0ed0e685dca6038b74372477147f7164288a3466d481",
+      "__none_host_1_adorn.png": "310ffabda5f8247584e988e06f617b49c01846f30ab4cec6efb1a3b8ed72a08a",
+      "__none_host_2_body.png": "5eba1fc37e7fc422653fe77184e43662a2d06474efc02d31677461aaad4c0771",
+      "__none_host_2_adorn.png": "1e03696e35810f846eac2122affc1d27934cc7dbddea20c5adb8ddaebd67be6a",
+      "__none_host_3_body.png": "230eb34f50fbadb13b717cb3a39623bdb008374a3299077a5e59eb6d5a0cafe5",
+      "__none_host_3_adorn.png": "d4fa1ce8806c27e8ffcde0c1dc2e0a20584a747b99c6052b06186016aafe27e2",
+      "__none_host_4_body.png": "8a5fbd2c1da5d75286e4f24a77adccdde801581b04b8a7e388e6aa33c694fc5d",
+      "__none_host_4_adorn.png": "bcf4c21044334336dbff47eea4c9ef48cc95346da367a269a830f623595fe28c",
+      "__none_host_5_body.png": "d965fdf725db9496d538f4afc1016698e5a8068353020431110d3f20ba83c509",
+      "__none_host_5_adorn.png": "eafec484b49ace4da6ff39d10854b005b056180c9c045edee245fd03281f930a",
+      "__none_host_6_body.png": "d5bcbc75ca6b23c4603ccb1a278380bde1ad715c1c17a48b2f97471547bfa124",
+      "__none_host_6_adorn.png": "03f08228ed1dc76ff7e4bf0d7569e7490407295070e57a553e59ec0dcdff3153",
+      "__none_host_7_body.png": "2186fe4bf93a61846ad33a1c0c0a5eb9dc337c701890722e6a70ec5e93f9c233",
+      "__none_host_7_adorn.png": "9546a051b37df71503198af3d4fa5bfee8e98d230eb369ad13599d03bcbe44e6",
+      "__none_host_8_body.png": "9f65c4d33a468acbf4dabc2b58996edfd485d3edd2abc54df81c817a7bd60d7d",
+      "__none_host_8_adorn.png": "8edde8638a76f1bd34aa9931f6d138dd30ebe4435309d322775db8f8cac972a7",
+      "__none_host_9_body.png": "b75de86563a714a7c9f35a49a9b40df942089720ca07cc673dc973d4c763ba59",
+      "__none_host_9_adorn.png": "477ddc316131effb381c5de92d5c7a7308c7e8051af161d34b6572bb6963e683",
+      "__none_host_10_body.png": "43fe075c29ed454a7232478fb7beb762e836cf057c1a9114abc0b1ae39ffd966",
+      "__none_host_10_adorn.png": "ea3aab9e682acd63cf376b48ddfe7aa692dd5d798d93872c8e5cb1d22040be3a",
+      "__none_host_11_body.png": "1e3a05d1fcbc0362d6014fdd3a3a173958fc879915a6e141bd95e8aa1606707d",
+      "__none_host_11_adorn.png": "956ee35440a3aa9c0ab5b31a103b30e56dbc78d235de79056f3300affb7d9a9b",
+      "__none_host_12_body.png": "94dd68af353e2cba8876c9db444ee493240a1179b1190931b5de4ef0ac1333a7",
+      "__none_host_12_adorn.png": "7fa3b7021047823354bd69472e20d17473e260e918564213137492f634f28891",
+      "kitty_cat_lounge_amateur_night_host_0_body.png": "9d40112ba42fb39740a39c7820d6b33852fbb195e6803f282dd2e4967d3d84a8",
+      "kitty_cat_lounge_amateur_night_host_0_adorn.png": "67deff001ff26993fd7691d0deaefaeafb57c37fff5d01571fffa7001b4b4400",
+      "kitty_cat_lounge_amateur_night_host_1_body.png": "d6a4ba151c4c2d1ff1ce098e395aed700ca37edba6bbfefef9b928a49f74f0fc",
+      "kitty_cat_lounge_amateur_night_host_1_adorn.png": "608011d807051761d1f3880f64e68c2c4cf417183d79b8e1572903ea31b672b2",
+      "kitty_cat_lounge_amateur_night_host_2_body.png": "5c351ae4b20b189bed41131d679f6dd4b2f041168e1d696dab1b8568695a6c4c",
+      "kitty_cat_lounge_amateur_night_host_2_adorn.png": "4d99930c530c22c3d429411f42a5fe8db3a9583efb7fca3ec27171fa0360a71c",
+      "kitty_cat_lounge_amateur_night_host_3_body.png": "1a30e1a236e16538bd2727ed6de27a1cf39b30b1488bbd54fa08098d1ed063f6",
+      "kitty_cat_lounge_amateur_night_host_3_adorn.png": "c2572e7fda396fc581bed84a7c4ec6fe1ef7bbc1b60b299c9dec1c1e2630414b",
+      "kitty_cat_lounge_amateur_night_host_4_body.png": "ff12f821b9913e0083462c118790668b9f9ec90153f3a7575bfa7305322953d5",
+      "kitty_cat_lounge_amateur_night_host_4_adorn.png": "8edde8638a76f1bd34aa9931f6d138dd30ebe4435309d322775db8f8cac972a7",
+      "kitty_cat_lounge_amateur_night_host_5_body.png": "53490b6654d03d795f7e2a8622765bb2c80d63ba373feae09c56154d7301821a",
+      "kitty_cat_lounge_amateur_night_host_5_adorn.png": "7555933e2e62b0214ae71f2c94bdf297523fdb617d410c15916abb7e1267a8b9",
+      "kitty_cat_lounge_amateur_night_host_6_body.png": "3cba9db32c5666373288b9ba30bdb625d365b36a7f25cdbe8331c61499bd0c2c",
+      "kitty_cat_lounge_amateur_night_host_6_adorn.png": "d2d92258e86c412f83d51708c6c5abcd951e2b3570383d6d38bef3811fec17bc",
+      "kitty_cat_lounge_amateur_night_host_7_body.png": "47a2e2f7151ce9d1fa41dd3855aee5629215e857dc9db5fbd3dbff504c7d0187",
+      "kitty_cat_lounge_amateur_night_host_7_adorn.png": "d43b5fd54f10fecaa5bf165b9c6ba018eace0d251de6df694fe6f4717a35a39e",
+      "kitty_cat_lounge_amateur_night_host_8_body.png": "9f2d4eb04cc44ef23f41c63cea2146da7bfcae02a9868be1cbab13d5b77fa488",
+      "kitty_cat_lounge_amateur_night_host_8_adorn.png": "dfb2dc8f12208727dc49ece1b1893b61867973e461b7aa2fcf72f8c1fbf040dc",
+      "kitty_cat_lounge_amateur_night_host_9_body.png": "7bc6b5e30a81df04fbfe5a717c99518457f37a28b24dda647bb1f26f352862b5",
+      "kitty_cat_lounge_amateur_night_host_9_adorn.png": "bcf4c21044334336dbff47eea4c9ef48cc95346da367a269a830f623595fe28c",
+      "kitty_cat_lounge_amateur_night_host_10_body.png": "6deae801a7fc098edd3f2556de9520bb0e5397e2e2f31f4154d1faba7d503968",
+      "kitty_cat_lounge_amateur_night_host_10_adorn.png": "412cb2c1b5622b8b6d063bb99eef04697130772d831d1a3f378ad3e654b65cf0",
+      "kitty_cat_lounge_amateur_night_host_11_body.png": "87d85b38a55117e2adaff340190fe3c1afa63cfc6ac886f1ff90d7617e1f6eb1",
+      "kitty_cat_lounge_amateur_night_host_11_adorn.png": "a7268a4b6d3a3676b5b439915b924ec02ecf86e33ca6e5f844e3871b64932505",
+      "kitty_cat_lounge_amateur_night_host_12_body.png": "e525831d6518fc5a33f197b89347e897af73fc08924659cbb25b25c42f366031",
+      "kitty_cat_lounge_amateur_night_host_12_adorn.png": "2036bdf06bee4b74f33bf2464b7fd12b25b35817e1dfb4018cd83b23323f2766",
+      "kitty_cat_lounge_amateur_night_host_13_body.png": "289cf2b8e9a97f7bfda1f6453d097c67747f914cfa848010d44916e41a4f10d7",
+      "kitty_cat_lounge_amateur_night_host_13_adorn.png": "a9e97c209ba45a46b407c986d7f81e5f102ebadc1746f5c5c316dffad6cd38df",
+      "kitty_cat_lounge_amateur_night_host_14_body.png": "c32a4a2d274172f411a105f75e538567db009dd816f4a6df96dcffcbb9327e82",
+      "kitty_cat_lounge_amateur_night_host_14_adorn.png": "a4cc209876e34bfa0eba17682003b156eb5bd0ed59f9768431a331236f716284",
+      "kitty_cat_lounge_amateur_night_host_15_body.png": "aed7e24b8f513aa781ddf0c8a572e5450543aaeeea0d226365b5bdabd9400092",
+      "kitty_cat_lounge_amateur_night_host_15_adorn.png": "dfb8af762103a5c2a690130717a5d49b0296e953706804eaa278ba649b127eed",
+      "kitty_cat_lounge_amateur_night_host_16_body.png": "2ca9463f9c01ea6fa88ab55bf4401812eec3dd5d595d947db0ce9da9bad5425f",
+      "kitty_cat_lounge_amateur_night_host_16_adorn.png": "e51e056e5865c61c9be1533619837002d6a79f262c003086dfee4c20a3196c8f",
+      "kitty_cat_lounge_amateur_night_host_17_body.png": "f726521fa7eaf758e848ab313a3c44fe5ef8b693b3015db7421824ae80a3bac6",
+      "kitty_cat_lounge_amateur_night_host_17_adorn.png": "652cdec11a22987f362542577706921d8dbbace443134e8e18304fb0e37cca08",
+      "kitty_cat_lounge_amateur_night_host_18_body.png": "97884a11727e4bd89ed2de840bc0d21db2aa6189902a9f9fa45d3c9ea5264ad4",
+      "kitty_cat_lounge_amateur_night_host_18_adorn.png": "9561fc8314c9e10672a16249325518b98efddb7d62b5daeb238410d800424632",
+      "kitty_cat_lounge_amateur_night_host_19_body.png": "8c0c88dfc386686e7d93c0a180b7e70f4f4e9139b85c60e0f673a85f4acfdde2",
+      "kitty_cat_lounge_amateur_night_host_19_adorn.png": "5a3bd7430bcbedb78920bec4bed6e53bcaf012da682a1c098f1e2566480d7cdd",
+      "kitty_cat_lounge_amateur_night_host_20_body.png": "cb37578b7c1d3b072c9ddb90e95e31a12bbdc0346b7dc5c5de9d89cc1160a0b5",
+      "kitty_cat_lounge_amateur_night_host_20_adorn.png": "0c1318c7acaf47bc5ef782b3fc8eba1d1d5ff8df50f368b6bc253c53e6ca1888",
+      "kitty_cat_lounge_amateur_night_host_21_body.png": "63a74efd562d663b6d8b944307a62259ea09fc0d786a31f6f6b5c21fb4e0e4e6",
+      "kitty_cat_lounge_amateur_night_host_21_adorn.png": "02e2856c04e70a9612df52d56b70d7e59a3bf075715ee85c987009ec2b602434",
+      "kitty_cat_lounge_bachelorette_storm_host_0_body.png": "72e6208c4a19c91cb9d55c06c700b3b3ad203d3d438ffa7bc4fe46d32fcf9842",
+      "kitty_cat_lounge_bachelorette_storm_host_0_adorn.png": "d49b45449b40d20498184023bce8fdd3838fe01a2fe4fbc7cae2ad13e47cef0e",
+      "kitty_cat_lounge_bachelorette_storm_host_1_body.png": "5eba1fc37e7fc422653fe77184e43662a2d06474efc02d31677461aaad4c0771",
+      "kitty_cat_lounge_bachelorette_storm_host_1_adorn.png": "d39199315427d42c87449517baae0af076d3fb0269c450b8fe5303ecc9404801",
+      "kitty_cat_lounge_bachelorette_storm_host_2_body.png": "2e1d67b7ccfe3ca47b098ffda5e600b6f0bf6f5ce1e50a53539bef0703b48c13",
+      "kitty_cat_lounge_bachelorette_storm_host_2_adorn.png": "acc934477a469f1758a2825b42a1767b8456acebb2a7971bd22fad7f205d8e60",
+      "kitty_cat_lounge_bachelorette_storm_host_3_body.png": "96f0144d8c1f10c72a2b37b8d83fe09265e7d25830c5b07ae43413ce87fb0f3e",
+      "kitty_cat_lounge_bachelorette_storm_host_3_adorn.png": "30355fdb648bccc4afca6a6e705b77fe4d3bb4c2d6849e198ca0c028dd95a5f4",
+      "kitty_cat_lounge_bachelorette_storm_host_4_body.png": "3729673f2075383e5e3870395c9a4fbc64fd007fc132f56ade51780978eb0b74",
+      "kitty_cat_lounge_bachelorette_storm_host_4_adorn.png": "1f6217c6556b55c65d445e10069667dc4a3c49a3cb27b88c0014f68c0d15ce2e",
+      "kitty_cat_lounge_bachelorette_storm_host_5_body.png": "d27c9c67ce0e2e7891aae86d80b2dfde3c6f15827edc093745ed99ce3de04cb3",
+      "kitty_cat_lounge_bachelorette_storm_host_5_adorn.png": "8343d56d090a069791638bd86b07bf1414e93f6c38e6e0bf5bfaee6db6585a62",
+      "kitty_cat_lounge_bachelorette_storm_host_6_body.png": "5ed8e2e32f135294fd309f329f45bc6c81d69dd9a1b946f67f45166b3c10b77b",
+      "kitty_cat_lounge_bachelorette_storm_host_6_adorn.png": "7e634d21f3ebdfdb558234cc022ea9f6a762638aa2eda12beb01af76b5be0eff",
+      "kitty_cat_lounge_bachelorette_storm_host_7_body.png": "3dc1b72902ab7185771dd060c4ecbf16c93e31b4e10e5644dd3f583a2586e0b9",
+      "kitty_cat_lounge_bachelorette_storm_host_7_adorn.png": "956ee35440a3aa9c0ab5b31a103b30e56dbc78d235de79056f3300affb7d9a9b",
+      "kitty_cat_lounge_bachelorette_storm_host_8_body.png": "b76cc9bcaf84df61b599f277f8847fc0f2fa2e1b5297b1a51a91e01279c61655",
+      "kitty_cat_lounge_bachelorette_storm_host_8_adorn.png": "e13bcd8339d40b9b0ddf5985edbe6ff34225b5f30685d3c8cd5408f1357499cd",
+      "kitty_cat_lounge_bachelorette_storm_host_9_body.png": "08786f66f79de0e7914539e9ff8639804be2d9b943f27b123aed2d5e3383074e",
+      "kitty_cat_lounge_bachelorette_storm_host_9_adorn.png": "852446a3d219d0ff64a24ff85547654324a173e84b28c940fa44eee498f9b769",
+      "kitty_cat_lounge_bachelorette_storm_host_10_body.png": "aaa024fda0ea0b5491a8563537ab79fb200fa8a66a2b257f00b91d2efd781f7a",
+      "kitty_cat_lounge_bachelorette_storm_host_10_adorn.png": "6118385de8fe3703d3d23944c3b9c789e2e7580cfdc6ddb2bc0391443d5f5448",
+      "kitty_cat_lounge_bachelorette_storm_host_11_body.png": "11475c42170565381f68d2146c1b48a66577b865b1c0e3d970337d914f376cf2",
+      "kitty_cat_lounge_bachelorette_storm_host_11_adorn.png": "4eddac27a0623fdade462ebbc8fa70d17d7f2dfa514e99526eac161112615bd6",
+      "kitty_cat_lounge_bachelorette_storm_host_12_body.png": "23fc31b7ce247f952bda47d4cf93db5ed1882a93b08535c0c3b273308d0453f2",
+      "kitty_cat_lounge_bachelorette_storm_host_12_adorn.png": "bec1d1b98565f108066b173af1a211432b4c70571f5190984f9ff062f0709e5d",
+      "kitty_cat_lounge_bachelorette_storm_host_13_body.png": "94dd68af353e2cba8876c9db444ee493240a1179b1190931b5de4ef0ac1333a7",
+      "kitty_cat_lounge_bachelorette_storm_host_13_adorn.png": "62b6db53720f9d66668ce4158095265736c39bb466dcd99be5e2e294153461a2",
+      "kitty_cat_lounge_bachelorette_storm_host_14_body.png": "45227ef86eb47113d9e9dd21bd02c305be7ebdde677a0f0f32430e326dba0ff1",
+      "kitty_cat_lounge_bachelorette_storm_host_14_adorn.png": "096147cbc82d4303c0a9213237c19378e03a493da0df34a0f7688b764035a4bc",
+      "kitty_cat_lounge_bachelorette_storm_host_15_body.png": "29ca839be750b72a8f88ae1595cbd643faa41fbd9fdd0adaa1cf671feb6ad599",
+      "kitty_cat_lounge_bachelorette_storm_host_15_adorn.png": "a9fd05d4d439fbf808aa48a9965b213d318eba74a1c55eb11503f3312ee9535c",
+      "kitty_cat_lounge_bachelorette_storm_host_16_body.png": "b55acb35709e312b392d7732d3ca51128980a72a0f2fae9b4de092868c5de325",
+      "kitty_cat_lounge_bachelorette_storm_host_16_adorn.png": "a998af07526704ab8ef76ce8943a0a1628ae28a6275c3790c49f266efb4137f7",
+      "kitty_cat_lounge_bachelorette_storm_host_17_body.png": "5138f0741968b8fc0074d115d85e84c436b582b84a7a47c82c93640ce7941c1e",
+      "kitty_cat_lounge_bachelorette_storm_host_17_adorn.png": "9ea09ff27a09244ac38be2c9af4f1d1334fc838f95e847b2b491e5d00fea1c35",
+      "kitty_cat_lounge_bachelorette_storm_host_18_body.png": "fb158800c5cb77fee15cb1cdbf2bd83dbe9dc6216cc12c388ee5b6e5c65b8263",
+      "kitty_cat_lounge_bachelorette_storm_host_18_adorn.png": "8fded6758a3fe902302288534dad4aabe9f176e2b7e1c423240c9f0ed638f44b",
+      "kitty_cat_lounge_buyout_host_0_body.png": "683fea2fed6b1be83fb444b0270563b115dc301cca66af42d81786a7e5753249",
+      "kitty_cat_lounge_buyout_host_0_adorn.png": "2f1b99184b59f63bf3d7419eab70171383b7da6e32a7cc8114dc7c3fde4aae9e",
+      "kitty_cat_lounge_buyout_host_1_body.png": "e4f1d59fcff04a709881b20394e1d97598b765fed5822b1722f5c809e4388320",
+      "kitty_cat_lounge_buyout_host_1_adorn.png": "4901e18b4cd894554e16b5536349dfe7279dc1640a1e08958ff3ec84d44ec93c",
+      "kitty_cat_lounge_buyout_host_2_body.png": "5b88f946eb0e4dcd8777bdf07a43c173c6a0f16a78c7fec81b31a13c370629ba",
+      "kitty_cat_lounge_buyout_host_2_adorn.png": "4d99930c530c22c3d429411f42a5fe8db3a9583efb7fca3ec27171fa0360a71c",
+      "kitty_cat_lounge_buyout_host_3_body.png": "1a30e1a236e16538bd2727ed6de27a1cf39b30b1488bbd54fa08098d1ed063f6",
+      "kitty_cat_lounge_buyout_host_3_adorn.png": "c2572e7fda396fc581bed84a7c4ec6fe1ef7bbc1b60b299c9dec1c1e2630414b",
+      "kitty_cat_lounge_buyout_host_4_body.png": "ff12f821b9913e0083462c118790668b9f9ec90153f3a7575bfa7305322953d5",
+      "kitty_cat_lounge_buyout_host_4_adorn.png": "8edde8638a76f1bd34aa9931f6d138dd30ebe4435309d322775db8f8cac972a7",
+      "kitty_cat_lounge_buyout_host_5_body.png": "aac7b1b2c994461d77404e3d4368dfc0e522dacc84586f0e7ac0a8735be2ee4e",
+      "kitty_cat_lounge_buyout_host_5_adorn.png": "7555933e2e62b0214ae71f2c94bdf297523fdb617d410c15916abb7e1267a8b9",
+      "kitty_cat_lounge_buyout_host_6_body.png": "7f410c82a47f9e59e42a5c5bcfa7a0c31a23b713a3ab63593819f528ab20e615",
+      "kitty_cat_lounge_buyout_host_6_adorn.png": "9ab5f45d22b6ef6b17a4343ddadea751b9ac009952aa187dfd0c15f0822a2d48",
+      "kitty_cat_lounge_buyout_host_7_body.png": "7bc6b5e30a81df04fbfe5a717c99518457f37a28b24dda647bb1f26f352862b5",
+      "kitty_cat_lounge_buyout_host_7_adorn.png": "bcf4c21044334336dbff47eea4c9ef48cc95346da367a269a830f623595fe28c",
+      "kitty_cat_lounge_buyout_host_8_body.png": "faa37ef1ece4e002591c0591dfaca64350879ddae68aef451a9dbf9b23886899",
+      "kitty_cat_lounge_buyout_host_8_adorn.png": "9aab80f4456094925fd2876e8da56e03f015aad5aeb7d8719640cdaf98649475",
+      "kitty_cat_lounge_buyout_host_9_body.png": "87d85b38a55117e2adaff340190fe3c1afa63cfc6ac886f1ff90d7617e1f6eb1",
+      "kitty_cat_lounge_buyout_host_9_adorn.png": "f43afaed6499d184e57ae10c30e7a113c831f66223458a8be63594f31a923184",
+      "kitty_cat_lounge_buyout_host_10_body.png": "654c579af54503a2ddee0e784d89f833dd66d35b29e8e6eeeff0a68466155dd9",
+      "kitty_cat_lounge_buyout_host_10_adorn.png": "dc6fbf5e3b5e0d47a092afa52dd0cada05f312d4b5a1947458b8ced0f2ecb8a0",
+      "kitty_cat_lounge_buyout_host_11_body.png": "96a5b8f3facae9846a97f6defc9e5fe9843e67284e3dd41cacdcfa61ddfd0a09",
+      "kitty_cat_lounge_buyout_host_11_adorn.png": "55ef7b0db8fcc3f2526c37ef11a1d58f2abcc8e8928f13229c55cc17b0905e1f",
+      "kitty_cat_lounge_buyout_host_12_body.png": "c32a4a2d274172f411a105f75e538567db009dd816f4a6df96dcffcbb9327e82",
+      "kitty_cat_lounge_buyout_host_12_adorn.png": "a4cc209876e34bfa0eba17682003b156eb5bd0ed59f9768431a331236f716284",
+      "kitty_cat_lounge_buyout_host_13_body.png": "aed7e24b8f513aa781ddf0c8a572e5450543aaeeea0d226365b5bdabd9400092",
+      "kitty_cat_lounge_buyout_host_13_adorn.png": "3b82ab575176cd544cb38a267b83147e2059c08fb1bb62e06fbf06d39e418ccf",
+      "kitty_cat_lounge_buyout_host_14_body.png": "2ca9463f9c01ea6fa88ab55bf4401812eec3dd5d595d947db0ce9da9bad5425f",
+      "kitty_cat_lounge_buyout_host_14_adorn.png": "e51e056e5865c61c9be1533619837002d6a79f262c003086dfee4c20a3196c8f",
+      "kitty_cat_lounge_buyout_host_15_body.png": "6576b000cf65c1a0a5cc9111aedf8b9345ab09112930849af4e23561284d6e24",
+      "kitty_cat_lounge_buyout_host_15_adorn.png": "760e1ec587b043547b68db52d8ae0f261c151d5e2c8bbd738a3c47ea25735e98",
+      "kitty_cat_lounge_buyout_host_16_body.png": "ef0ed13c236d14dd1133a5c327d3140215706fff810a3ba3a49e2c03bd1edf09",
+      "kitty_cat_lounge_buyout_host_16_adorn.png": "1e7a964443a3c0ab868ab318251da73acea3cbce420758f1fef025055647ddca",
+      "kitty_cat_lounge_buyout_host_17_body.png": "21f05ce6e7a93414b59b8c685fc3a5537a202eecfb22ca1de52f9b9c20458e15",
+      "kitty_cat_lounge_buyout_host_17_adorn.png": "06c04f3a4a780759ecbc44c61a91ab46743cf3234d46d45bd8c8dce61399312a",
+      "kitty_cat_lounge_buyout_host_18_body.png": "fe340515a39dd87da5de42f48d98e9ec25176208dada3658d8735144399306a5",
+      "kitty_cat_lounge_buyout_host_18_adorn.png": "364c8020b89139db5a3c19569733b2f462baf9ab78e5430bee0103c36a2b133a",
+      "kitty_cat_lounge_buyout_host_19_body.png": "73697684befbb1cb7ba22b42a3d51dbe81027356ca4a5fd82cec4c01d7bfd54c",
+      "kitty_cat_lounge_buyout_host_19_adorn.png": "06e3186f3ef6e7b131cda95ba288b15752320287ded7bae6e7030eb24f7dc3a0",
+      "kitty_cat_lounge_slow_night_host_0_body.png": "2f208563e5996f87d5de3641f29351f2dbdb63c6f417cd11542fc87d1c96037b",
+      "kitty_cat_lounge_slow_night_host_0_adorn.png": "9e7b3fef1d8fff7b101391d83462463e07dfcf86c64666f17391781598c378aa",
+      "kitty_cat_lounge_slow_night_host_1_body.png": "3cde9fc9a484f1f3cbbe7ba20d75eb711e692b966ac2a6877507ef5615d4c574",
+      "kitty_cat_lounge_slow_night_host_1_adorn.png": "535885a09444f1c4c550353272047dba390f7b1d852fabd83df6012510f7c763",
+      "kitty_cat_lounge_slow_night_host_2_body.png": "816983cfdf9dc89acc9ee1a74b5fac0fa62b29c539edb73fba0e4abab8855158",
+      "kitty_cat_lounge_slow_night_host_2_adorn.png": "acc934477a469f1758a2825b42a1767b8456acebb2a7971bd22fad7f205d8e60",
+      "kitty_cat_lounge_slow_night_host_3_body.png": "f6e8debf672d4f7f1f87901e241e86bd93b1d32e0683bf867f856e855ba15b42",
+      "kitty_cat_lounge_slow_night_host_3_adorn.png": "8edde8638a76f1bd34aa9931f6d138dd30ebe4435309d322775db8f8cac972a7",
+      "kitty_cat_lounge_slow_night_host_4_body.png": "4e781ed32249a13e98fce072932e7c7dfc1ebaac47f666ce93bc4f456a77d4fc",
+      "kitty_cat_lounge_slow_night_host_4_adorn.png": "43db9df014cc2ec768d79fa44b298595d54de91ebfa5e99d3ea0d40a358ab539",
+      "kitty_cat_lounge_slow_night_host_5_body.png": "61a6b55a651ba0141b7453d2ee2dcfdbe4b468b244add23d6b0ba03af1457cab",
+      "kitty_cat_lounge_slow_night_host_5_adorn.png": "9546a051b37df71503198af3d4fa5bfee8e98d230eb369ad13599d03bcbe44e6",
+      "kitty_cat_lounge_slow_night_host_6_body.png": "5ed8e2e32f135294fd309f329f45bc6c81d69dd9a1b946f67f45166b3c10b77b",
+      "kitty_cat_lounge_slow_night_host_6_adorn.png": "bcf4c21044334336dbff47eea4c9ef48cc95346da367a269a830f623595fe28c",
+      "kitty_cat_lounge_slow_night_host_7_body.png": "ea199099ec2609f3e6752d70020dbd7c7d1cd4efe1a2f1bd84b95a680299d642",
+      "kitty_cat_lounge_slow_night_host_7_adorn.png": "956ee35440a3aa9c0ab5b31a103b30e56dbc78d235de79056f3300affb7d9a9b",
+      "kitty_cat_lounge_slow_night_host_8_body.png": "39adce38615b7f196e9177ae476e7caeebc751731e413c4a4561b67b8a8998b6",
+      "kitty_cat_lounge_slow_night_host_8_adorn.png": "f43afaed6499d184e57ae10c30e7a113c831f66223458a8be63594f31a923184",
+      "kitty_cat_lounge_slow_night_host_9_body.png": "7756cb5f02733fb8fb213fd74f2971846261393b9129a64802149b1c8c7966bf",
+      "kitty_cat_lounge_slow_night_host_9_adorn.png": "8fcdda4491b49b94141090ff475f9df38a8ed29892490efd9542afc87e8c91ab",
+      "kitty_cat_lounge_slow_night_host_10_body.png": "e8962e81922722963677016f8c4770432b4f820882e98ead10cf521373f81e95",
+      "kitty_cat_lounge_slow_night_host_10_adorn.png": "034ff657ddded88ee7e15ec93c6fe27dcb0f73573c186f791c4e561c2a478559",
+      "kitty_cat_lounge_slow_night_host_11_body.png": "11475c42170565381f68d2146c1b48a66577b865b1c0e3d970337d914f376cf2",
+      "kitty_cat_lounge_slow_night_host_11_adorn.png": "378afd717d170833161170cce124476900b16cd777fe063cde1ed6dabeba0d74",
+      "kitty_cat_lounge_slow_night_host_12_body.png": "23fc31b7ce247f952bda47d4cf93db5ed1882a93b08535c0c3b273308d0453f2",
+      "kitty_cat_lounge_slow_night_host_12_adorn.png": "6fc2b5c70ebbc09f5bca59aaacfdd83322ceb4901678f83106d53c9f895c2707",
+      "kitty_cat_lounge_slow_night_host_13_body.png": "94dd68af353e2cba8876c9db444ee493240a1179b1190931b5de4ef0ac1333a7",
+      "kitty_cat_lounge_slow_night_host_13_adorn.png": "62b6db53720f9d66668ce4158095265736c39bb466dcd99be5e2e294153461a2",
+      "kitty_cat_lounge_slow_night_host_14_body.png": "c263ad57a33cc23da340d58ab12ff99e01ffefe7c9c819a18298b52b0f9da38e",
+      "kitty_cat_lounge_slow_night_host_14_adorn.png": "09e909bb36f440db12efe5497f536b1434d0a0c3fa4983c4a9f32077c8dacaed",
+      "kitty_cat_lounge_slow_night_host_15_body.png": "cd835e1e25f96ca571d8826707a5ae07c7629b9e79dd25033ad99d5beec15ee5",
+      "kitty_cat_lounge_slow_night_host_15_adorn.png": "5d729236159d36c4f49c502e382c8e6fc75b7dec91910db4f0a49c94f4a85888",
+      "kitty_cat_lounge_slow_night_host_16_body.png": "f072cae67a3796e0d625c822ab0c9c5221ea788c49e2e03c50f6a56e9956eb6e",
+      "kitty_cat_lounge_slow_night_host_16_adorn.png": "6a5e82944cb6582d7d9a611c42783b0eeaaadaf36118f3e8481e841d7528b8a4",
+      "kitty_cat_lounge_slow_night_host_17_body.png": "0c7db983b0d925c600e5d3f05dd6b233338c99c694668933932663fb7fc1b7d5",
+      "kitty_cat_lounge_slow_night_host_17_adorn.png": "875ffd35b24d8db15b8a3d02724cf17ca48ae2c60fca926c7a3e1bb038eb8bcb",
+      "kitty_cat_lounge_slow_night_host_18_body.png": "24ef4bc15379d2794c0eb98d8bc5ff06371d646e22e43e41d42bd27cf58d7268",
+      "kitty_cat_lounge_slow_night_host_18_adorn.png": "d414824a88e30137a92543e878244e979c54d7397e498074f9f8aba143a3ff05"
+    }
+  },
+  "stage_objects": {
+    "scenario::kitty_cat_lounge_amateur_night_dressing_rack": {
+      "scenario": "kitty_cat_lounge_amateur_night",
+      "label": "Dressing costume rack",
+      "position": "(0.502222, 0.425581)",
+      "size": "(92.0, 64.0)",
+      "contact": "base",
+      "rect_board": {
+        "aspect_ratio": 1.4375,
+        "h": 64,
+        "w": 92,
+        "x": 406.000030517578,
+        "y": 151
+      },
+      "label_rect_board": {
+        "aspect_ratio": 4.84615267240084,
+        "h": 26,
+        "w": 125.999969482422,
+        "x": 389.000030517578,
+        "y": 217
+      },
+      "body_png": "kitty_cat_lounge_amateur_night_host_13_body.png",
+      "adorn_png": "kitty_cat_lounge_amateur_night_host_13_adorn.png",
+      "body_sha256": "289cf2b8e9a97f7bfda1f6453d097c67747f914cfa848010d44916e41a4f10d7",
+      "adorn_sha256": "a9e97c209ba45a46b407c986d7f81e5f102ebadc1746f5c5c316dffad6cd38df"
+    },
+    "scenario::kitty_cat_lounge_amateur_night_amateur_contestant": {
+      "scenario": "kitty_cat_lounge_amateur_night",
+      "label": "Amateur contestant",
+      "position": "(0.406667, 0.411628)",
+      "size": "(72.0, 80.0)",
+      "contact": "feet",
+      "rect_board": {
+        "aspect_ratio": 0.9,
+        "h": 80,
+        "w": 72,
+        "x": 330,
+        "y": 136.999984741211
+      },
+      "label_rect_board": {
+        "aspect_ratio": 7.75999959309896,
+        "h": 15,
+        "w": 116.399993896484,
+        "x": 307.799987792969,
+        "y": 119.999984741211
+      },
+      "body_png": "kitty_cat_lounge_amateur_night_host_17_body.png",
+      "adorn_png": "kitty_cat_lounge_amateur_night_host_17_adorn.png",
+      "body_sha256": "f726521fa7eaf758e848ab313a3c44fe5ef8b693b3015db7421824ae80a3bac6",
+      "adorn_sha256": "652cdec11a22987f362542577706921d8dbbace443134e8e18304fb0e37cca08"
+    },
+    "scenario::kitty_cat_lounge_slow_night_mini_stage": {
+      "scenario": "kitty_cat_lounge_slow_night",
+      "label": "Mini-stage",
+      "position": "(0.255556, 0.439535)",
+      "size": "(92.0, 64.0)",
+      "contact": "base",
+      "rect_board": {
+        "aspect_ratio": 1.4375,
+        "h": 64,
+        "w": 92,
+        "x": 183.999984741211,
+        "y": 157
+      },
+      "label_rect_board": {
+        "aspect_ratio": 4.66666768391927,
+        "h": 15,
+        "w": 70.0000152587891,
+        "x": 194.999984741211,
+        "y": 140
+      },
+      "body_png": "kitty_cat_lounge_slow_night_host_14_body.png",
+      "adorn_png": "kitty_cat_lounge_slow_night_host_14_adorn.png",
+      "body_sha256": "c263ad57a33cc23da340d58ab12ff99e01ffefe7c9c819a18298b52b0f9da38e",
+      "adorn_sha256": "09e909bb36f440db12efe5497f536b1434d0a0c3fa4983c4a9f32077c8dacaed"
+    },
+    "scenario::kitty_cat_lounge_slow_night_slow_night_host": {
+      "scenario": "kitty_cat_lounge_slow_night",
+      "label": "Host",
+      "position": "(0.157778, 0.42093)",
+      "size": "(72.0, 80.0)",
+      "contact": "feet",
+      "rect_board": {
+        "aspect_ratio": 0.9,
+        "h": 80,
+        "w": 72,
+        "x": 106,
+        "y": 140.999984741211
+      },
+      "label_rect_board": {
+        "aspect_ratio": 3.2,
+        "h": 15,
+        "w": 48,
+        "x": 118,
+        "y": 123.999984741211
+      },
+      "body_png": "kitty_cat_lounge_slow_night_host_15_body.png",
+      "adorn_png": "kitty_cat_lounge_slow_night_host_15_adorn.png",
+      "body_sha256": "cd835e1e25f96ca571d8826707a5ae07c7629b9e79dd25033ad99d5beec15ee5",
+      "adorn_sha256": "5d729236159d36c4f49c502e382c8e6fc75b7dec91910db4f0a49c94f4a85888"
+    }
+  },
+  "bounded_alpha_inspection": {
+    "method": "Read-only System.Drawing.Bitmap.GetPixel over explicit recorded regions; alpha>=64; no image writes. Bounds include object shadow and are region bounds, not a whole-mask extent proof.",
+    "physical_feet_vs_shadow_not_separately_classified": true,
+    "records": [
+      {
+        "file": "kitty_cat_lounge_amateur_night_host_17_body.png",
+        "query_native": [
+          620,
+          240,
+          240,
+          240
+        ],
+        "alpha_ge64_pixels": 8575,
+        "bbox_half_open": [
+          665,
+          315,
+          797,
+          440
+        ],
+        "last_paint_y": 439,
+        "last_row_x_half_open": [
+          682,
+          782
+        ],
+        "sha256": "f726521fa7eaf758e848ab313a3c44fe5ef8b693b3015db7421824ae80a3bac6"
+      },
+      {
+        "file": "kitty_cat_lounge_slow_night_host_15_body.png",
+        "query_native": [
+          180,
+          250,
+          220,
+          230
+        ],
+        "alpha_ge64_pixels": 8539,
+        "bbox_half_open": [
+          217,
+          323,
+          349,
+          448
+        ],
+        "last_paint_y": 447,
+        "last_row_x_half_open": [
+          234,
+          334
+        ],
+        "sha256": "cd835e1e25f96ca571d8826707a5ae07c7629b9e79dd25033ad99d5beec15ee5"
+      },
+      {
+        "file": "kitty_cat_lounge_amateur_night_host_13_body.png",
+        "query_native": [
+          780,
+          280,
+          250,
+          210
+        ],
+        "alpha_ge64_pixels": 12720,
+        "bbox_half_open": [
+          816,
+          331,
+          992,
+          428
+        ],
+        "last_paint_y": 427,
+        "last_row_x_half_open": [
+          840,
+          968
+        ],
+        "sha256": "289cf2b8e9a97f7bfda1f6453d097c67747f914cfa848010d44916e41a4f10d7"
+      },
+      {
+        "file": "kitty_cat_lounge_slow_night_host_14_body.png",
+        "query_native": [
+          340,
+          290,
+          250,
+          210
+        ],
+        "alpha_ge64_pixels": 7370,
+        "bbox_half_open": [
+          372,
+          376,
+          548,
+          440
+        ],
+        "last_paint_y": 439,
+        "sha256": "c263ad57a33cc23da340d58ab12ff99e01ffefe7c9c819a18298b52b0f9da38e"
+      }
+    ]
+  },
+  "counter_check": {
+    "counter": "assets/art/environments/kitty_cat_lounge/counters/kitty_champagne_bar.png",
+    "sha256": "3ad4156cec44de64000f94848f159575b7d8f2f96ed8fb42fffa7b6d84a52497",
+    "size": [
+      536,
+      96
+    ],
+    "native_master_crop": [
+      1168,
+      380,
+      536,
+      96
+    ],
+    "board_rect": [
+      584,
+      190,
+      268,
+      48
+    ],
+    "rgba_texels_compared": 51456,
+    "mismatched_texels": 0,
+    "nonopaque_counter_texels": 0,
+    "method": "Read-only Bitmap.GetPixel RGBA equality, all536x96 crop texels."
+  },
+  "motion": {
+    "count": 27,
+    "types": {
+      "mover": 17,
+      "pulse": 5,
+      "frames": 5
+    },
+    "ids": [
+      "kitty_sign_pulse",
+      "pink_air_0",
+      "pink_air_1",
+      "pink_air_2",
+      "pink_air_3",
+      "pink_air_4",
+      "cool_air_0",
+      "cool_air_1",
+      "cool_air_2",
+      "cool_air_3",
+      "cool_air_4",
+      "candle_light_0",
+      "candle_light_1",
+      "candle_light_2",
+      "candle_light_3",
+      "candle_light_4",
+      "warm_sparkle_0",
+      "warm_sparkle_1",
+      "warm_sparkle_2",
+      "warm_sparkle_3",
+      "floor_glint_0",
+      "floor_glint_1",
+      "floor_glint_2",
+      "floor_glint_3",
+      "floor_glint_4",
+      "floor_glint_5",
+      "floor_glint_6"
+    ],
+    "default_low_detail_count": 27
+  },
+  "original_observer_sources": {
+    "tools/envart_kitty_preart_metadata.gd": {
+      "sha256": "51c191725faffeb4b9467e15dc41b4e0ace14d28d91d04214b952ba10c1c4a38",
+      "bytes": 22728
+    },
+    "tools/envart_kitty_animation_probe.gd": {
+      "sha256": "ef4b1b7ab50340543c358bd8d27c383ae1c2c991f6c8015a72307f0de1c32da1",
+      "bytes": 4693
+    },
+    "tools/envart_kitty_animation_capture.gd": {
+      "sha256": "b75c8b8f09b0ba6e77a69b9c9a9e6ecaa290582d457667b4d46f2a8c2235abfa",
+      "bytes": 16016
+    },
+    "tools/environment_art_baseline_capture.gd": {
+      "sha256": "89d7ae812bedd203f49830bf367863bced32d08cfcc5e0327ebaf4450317de8f",
+      "bytes": 4755
+    },
+    "tools/environment_layout_screenshots.gd": {
+      "sha256": "eadf8f113aff55113ecf59e764503fd5bc2e4a64d00689573e0b56489b1a78e5",
+      "bytes": 201672
+    }
+  },
+  "historical_inputs": {
+    "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENVART-KITTY-TRIAL-20261115\\kitty_capture_inputs.json",
+    "sha256": "00251d9136c19da5a84a1ef15d56872b98abc2e7fb86007060234a2a8018414c",
+    "source_hash_count": 7215,
+    "catalog": [
+      "__none",
+      "kitty_cat_lounge_amateur_night",
+      "kitty_cat_lounge_buyout",
+      "kitty_cat_lounge_slow_night",
+      "kitty_cat_lounge_bachelorette_storm"
+    ]
+  },
+  "retained_native_motion": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r6-motion-01\\evidence\\kitty_animation_probe.json",
+    "sha256": "d336eaae07a2d7e414032250c5e68c210d5a265f9e6d76c552774147a9a20565",
+    "checks": 55,
+    "entry_count": 27,
+    "failures": []
+  },
+  "retained_capture": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r6-video-01\\evidence\\capture\\animation_capture.json",
+    "sha256": "c1003cb9d6c58737a10be27b7c6dfc4e614ca1b72e3b611f9abe813fa1b4577d",
+    "frame_count": 62,
+    "first_clock": 12.207871666667,
+    "last_clock": 20.3339745555559,
+    "actual_clock_span": 8.12610288888889,
+    "requested_seconds": 8,
+    "max_animation_cycle": 97,
+    "cycle_capped": true,
+    "reduced_motion_art_texture_stable": true,
+    "reduced_motion_fullapp_stable": false
+  },
+  "repair_proposal": {
+    "status": "NOT_A_CANDIDATE_OR_STATIC_ART_APPROVAL",
+    "changed_payload_target": "assets/art/environments/kitty_cat_lounge/background.png",
+    "master_size": [
+      1800,
+      860
+    ],
+    "board_size": [
+      900,
+      430
+    ],
+    "max_source_assembly_window_native": [
+      188,
+      390,
+      816,
+      86
+    ],
+    "exact_pixel_mask_still_requires_review_before_assembly": true,
+    "proposed_deck_polygon_native": [
+      [
+        206,
+        392
+      ],
+      [
+        986,
+        392
+      ],
+      [
+        1004,
+        456
+      ],
+      [
+        188,
+        456
+      ]
+    ],
+    "proposed_deck_polygon_board": [
+      [
+        103,
+        196
+      ],
+      [
+        493,
+        196
+      ],
+      [
+        502,
+        228
+      ],
+      [
+        94,
+        228
+      ]
+    ],
+    "proposed_front_fascia_y_native": [
+      456,
+      476
+    ],
+    "preserve_existing_lower_base_and_floor_join_from_y_native": 476,
+    "minimum_complete_actor_paint_end_clearance_native": {
+      "amateur": 16,
+      "slow_host": 8
+    },
+    "contact_clearance_method": "Deck near edge456 minus recorded half-open body+shadow endpoint440/448. Not an alpha-swept actor-route guarantee.",
+    "construction": "Rear deck meets curtain lower boundary; side edges converge toward the rear; a quiet horizontal wood top leads to separately shaded shallow fascia and existing plinth. No new legs, furniture, text, light, replay, or live prop.",
+    "manifest_and_all27_animation_textures_byte_identical_required": true,
+    "champagne_counter_byte_identical_required": true,
+    "current_index_byte_identical_required": true,
+    "all_nonstage_master_pixels_byte_identical_required": true,
+    "gameplay_positions_labels_routes_draw_order_timing_and_processing_unchanged_required": true,
+    "dynamic_layers_crossing_window": [
+      "cool_air_3: native y374..414; overlaps deck window",
+      "cool_air_4: native y410..450; overlaps deck window"
+    ],
+    "static_cones_remain_static_and_above_deck": true,
+    "material_direction": "Reuse room burgundy/plum/warm polished-wood family; visible shallow plank recession, no extra gold fixtures, label patches, stage fog or duplicated silhouettes.",
+    "no_generation_or_assembly_executed": true
+  },
+  "future_acceptance": {
+    "source_candidate": "New non-active revision on admitted E only after root authorizes guarded assembly; retain original/R6 and raw source. Only reviewed mask may alter master; full donor/source hash proof.",
+    "geometry": "exact five Kitty initial contexts. Preserve13/22/20/19/19 actual object counts in catalog order,93 selected/typed occurrences,186 typed masks; rebind source inventory and derive current assertion count honestly.",
+    "stage_contact": "Review actual native populated Amateur and Slow-night contact, mini-stage/rack bases, selected-label contrast, visible side/apron joints and whole original floor join. Retained masks do not prove future actors/later phases.",
+    "animation": "All27 entries fixed-clock visible production change plus identical-time controls; matched object/route clocks for full composites/RM; exact one opaque counter replay; simulated low detail27 separately labeled; smoke3/4 visible after repair; seven floor movers and wrap preserved.",
+    "liveness": "Original no-input liveness plus actual Kitty placement clock/redraw advance. Never disable processing/autonomous redraw or suppress animation during overlay.",
+    "capture": "Authentic actual-clock populated capture capped20real-sec with untouched originals, source-clock ledger, actual UI/900clone/art-only distinctions. Old8.1261s capture is not a97s full cycle.",
+    "reduced_motion": "Art texture stable is required; old fullapp false is retained honestly. Fixed-clock populated RM diagnostics are separate.",
+    "delivery": "Independent static/native actual art approval and scoped commit then exact TEST artifact/HTTPS verification. Browser/later work/save-revisit/full-cycle remain unperformed unless separately established.",
+    "production_or_release_approval_given": false
+  },
+  "limitations": [
+    "No new runtime, browser, QA workspace or source import.",
+    "No current full-source Git archive authenticated here.",
+    "No all20 audit repeated.",
+    "Not all186 alpha planes were decoded;186 SHA custody plus4 bounded source-paint regions inspected.",
+    "No artwork, animations, manifest, game positions or saves changed."
+  ],
+  "evidence_sources": {
+    "original_brief": {
+      "path": "docs/art/briefs/kitty_cat_lounge.md",
+      "sha256": "13914d1aaed9ba8ea960dae4dd2980df15bb198e12c254436698741d34b26402"
+    },
+    "original_direction": {
+      "path": "docs/art/environment_spatial_rework_direction.md",
+      "sha256": "9a438875d8c5b4d923e1f5938caa9d900e5433aed0e27f3836907284245e579b"
+    }
+  },
+  "next_action": "Root reviews this proposed stage window/plane, reconciles owner ledger, then authorizes one non-active source repair/guarded assembly; independent actual pixels precede any native activation."
+}

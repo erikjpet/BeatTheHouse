@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-16T12:52:31.216519+00:00",
+  "observed_at": "2026-11-16T13:45:18.917129+00:00",
   "tasks": [
     {
       "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
       "title": "Repair environment art",
       "state": "active",
-      "observed_at": "2026-11-16T12:52:31.216519+00:00",
-      "source": "Actualactiveowner:3roomsdeliveredTESTb354,17remain. GBRnative/art+89tests/c485actualHLbaseline+56cbuildGO+exactbranchintegration qualified, fresh15phasebuildnextwithGodotslot. Hiddenv2stoppedafter8PASS/identitylayerfilterbug; newv3sourcefixactive, no engineactive. Privatev2safeexternalobservercodeGO/unitjobactive;Cagealphahelper/testsbeingfinished,canon1pairedapplied; DeltaV2native-onlyartGO/nativeadapter/metadata1sourcepreparation. Alljobsowned/capped/zeroatclosedreceipts. Gitpush7bdformalreviewresolved; Eadmissionresolved; no globalprocess/browserdenialbypass, no originalsaves/MAIN/NEXTchanges. Priormainuntrackedmetadataunknownpendinghumananswer/nocleanup."
+      "observed_at": "2026-11-16T13:45:18.917129+00:00",
+      "source": "Four rooms delivered on TEST e07: Bar, Grand, High Limit, Grand Back Room; sixteen remain. GBR15 build phases/defaultTLS13 files verified, NEXT6bfbec unchanged only13:27:16..13:40:38UTC. Rootsource401 checkpoint pushed. Hiddenv3 final35PASS/independentGO, fresh29phasecampaign owns engine; Privatev2 first7filephases in parallel/no engine. Delta final47PASS/canonical1pair applied, native next. Cage30PASS/freshalpha assembly and independent517a staticGO, nativeadapter active. Kitty/Apartment distinct source audits active. All closedJobs capped/zero; no original saves/MAIN/NEXT changes or process/browser denial bypass. Prior main untracked metadata uncertainty remains awaiting human answer; no cleanup."
     }
   ]
 }
