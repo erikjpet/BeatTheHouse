@@ -1,0 +1,53 @@
+{
+  "schema": "bth.grand_back_room_spatial_branch_integration/v1",
+  "task_id": "BTH-ENV-SPATIAL-GBR-001",
+  "observed_at": "2026-11-16T12:40:51.131693+00:00",
+  "approval_sha256": "dda141cafab20e7f12db27e83011aa8896cf31f3e3099890ea3463302c7163a9",
+  "reviewer": "/root/native_suite_adapter",
+  "native_source_commit": "a9c02a9557abfd644b27f36be392d354fc70c6ef",
+  "native_source_tree": "edcf685c282567daa2bb82a6ba49d818e5950ed6",
+  "baseline_manifest_sha256": "8fff3a29d0bfd41527324ace7fd55e56c4307c5027504fd30e84ca9b02e46810",
+  "baseline_activation_seal": "c94d12614f9b6c2b86311999acc6ae9ec0711c71e1cdeb596a2e7937c7593117",
+  "baseline_logical_21_file_sha256": "065a5f98dfabb2b435bc31af76a0273921a370d1ebb9d9887ce6283c3231fbbb",
+  "package_21_file_sha256": "e20695c6715e4156027cc211b6c7291ff2820e3d52d317dbbfc9b6cc5ca931c7",
+  "background_sha256": "46492785829f659c5869d91a6510d424ea4977e6921b1ece7de1225aa804e6ca",
+  "changed_sources": {
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_0.png": "988e0207c99758ba1f5d7f30d4bfa9b7439beb9faf15b3c9ff9a76c55ba27340",
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_1.png": "f9e2470a1a73e3ab62b6f3c2f23102ef4184003d7b7b98bf4691d39583221515",
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_2.png": "0fac3ccc158a14a64b034e55acbb242436e145bf47bc822b8b7ba41aca239595",
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_3.png": "74b88031a6733ffcacbf97bbd910e9e30ba139ac37132f72fd00e62963b40bf1",
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_4.png": "7964ba8bd36745aeb5b44feeee7cff613d813e1b4a4fd5aebc91deb877663ba9",
+    "assets/art/environments/grand_casino_back_room/anim/casino_sign_pulse.png": "dceb1dc0df381fa98592cb9c58822e1863512f7a44f64b5c5bdd88faea8d51ed",
+    "assets/art/environments/grand_casino_back_room/background.png": "46492785829f659c5869d91a6510d424ea4977e6921b1ece7de1225aa804e6ca",
+    "assets/art/environments/grand_casino_back_room/counters/grand_table_left.png": "9a96841d98e0f5ee53d15563c94881f3ce34ab4569182f7009f6b0609c4dafac",
+    "assets/art/environments/grand_casino_back_room/counters/grand_table_right.png": "de3a5e82cce15772a929306eb423aaf44b96ff3302cf8c73aec1eb12b7dc0964",
+    "data/art/environments/grand_casino_back_room.json": "cc8553a5856289c7fe6b42754db43b4bd02d07e5c793ca1fea54e7655eca103d"
+  },
+  "json_typed_delta": [
+    {
+      "path": [
+        "animations",
+        2,
+        "rect",
+        0
+      ],
+      "before": 450,
+      "after": 448
+    }
+  ],
+  "other411_raw_art_source_files_byte_exact": true,
+  "protected_source_hashes": {
+    "scripts/ui/pixel_scene_canvas.gd": "c2ce2abee8827372d66fd6c9647a74e06f5db8fed520bbd812b8c7eb29f4af38",
+    "scripts/ui/environment_art_renderer.gd": "900b44af05602f6259eed0a2cb33a45d1899cb30bd71aaaed5a744bcc9ccad96",
+    "scripts/ui/environment_art_pack.gd": "067cf5f9673bd85705f4971e9c4db70aaafcfe1cec912b926ed9edc685fb5d8f",
+    "data/environments/placement_surfaces.json": "9caa123fb96816777328ad88f022fe05defb74ef5b4f645b7a15bcac67c25cf1",
+    "data/environments/developer_placement_overrides.json": "c5c9808497ee3d4f056bb5a7f24a64524d4e59ee50e3fff106eb41e09383245f"
+  },
+  "candidate_unchanged": true,
+  "native16_and_low_detail7_all_other_animation_fields_unchanged": true,
+  "interaction_and_gameplay_coordinates_changed": false,
+  "decorative_lamp_x_changes": 1,
+  "TEST_updated": false,
+  "main_NEXT_stable_itch_touched": false,
+  "concurrent_hidden_isolation": "Hidden adapter owner verified immutableGit7bd/ownEqa_source andnoDother-room artdependencies beforethisintegration."
+}

@@ -1,0 +1,51 @@
+{
+  "schema": "bth.grand_back_room_spatial_test_preparation/v1",
+  "task_id": "BTH-ENV-SPATIAL-GBR-001",
+  "observed_at": "2026-11-16T12:52:31.216519+00:00",
+  "frozen_source_hashes": {
+    "tools/high_limit_spatial_delivered_baseline.py": "fe17fa193e5ce5d4df2e250f7cf5858b3500e8e2e0582d608ae75a93be27f9c1",
+    "tools/grand_back_room_spatial_test_profile_v2.py": "0af8ccae95bea02dbb772c02ade08e9fc25804d7bc62cbed7a38ac1f03b75574",
+    "tools/grand_back_room_spatial_test_release_profile.py": "306a4f49126ac7cae6caa9461834f69b629de646432d55f6d0e8262b9dc962c0",
+    "tools/grand_back_room_spatial_test_build.py": "75144acd4986c06508d07b9f824c83b714fe97e77ee7c5f0900572ebca17b022",
+    "tools/verify_grand_back_room_spatial_test_served.py": "64207b1fe7df14466ab88c688b94f125b88f1c89f495aa19e84dcc4d2d48007e",
+    "tools/tests/test_grand_back_room_spatial_test_profile_v2.py": "da4e5ee0302a2c39a09cd7284471a07158c0926a7939e4359d68de54e0088468",
+    "tools/tests/test_grand_back_room_spatial_test_release.py": "6b7878b92352a3c8ffdd8315c68ddabf3cc76d0696b67861db386a3886559c8f",
+    "tools/grand_back_room_spatial_test_release.README.md": "a4e91e43bb6c291e064b0476c3ced9bff939fbc9dfbd432074620f689ce7fda4"
+  },
+  "independent_static_code_GO": true,
+  "actual_qualified_tests": {
+    "count": 89,
+    "pure_actualbaseline": 37,
+    "release": 52,
+    "seconds": 1.455,
+    "job_pid": 37684,
+    "job_sha256": "c6e5ef63e6d5f59ef3bd803d3012a0a1dfb916809f9ac75b6c214d22209e69cd",
+    "log_sha256": "0f89d6b292d9cbebd2cc384af73d2cbd1dee8a67dc04a3e8c6d1b1b116b966d6",
+    "evidence": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRRELEASE-20261116-tests01/evidence",
+    "status": "PASS"
+  },
+  "actual_HL_certificate": {
+    "sha256": "c4855fca42f7b7990b853e7cd9786c2562c634d0e923b1f509e48ad819d8c465",
+    "status": "ACTUAL_IMMUTABLE_HIGH_LIMIT_BASELINE_AUTHENTICATED",
+    "job_pid": 37584,
+    "job_sha256": "8eb7bf348199df505f1986514bf429f440dd81c6a8ac67261537210af3bda147",
+    "stdout_sha256": "fccac938d811a852be519d0f87bdfdaa26f5c54e8bc251f5a021c6b9164b56f2",
+    "evidence": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRBASELINE-20261116-certificate01/evidence",
+    "native_export_code_bridge_files": 760,
+    "baseline_source": "b35412ac003983e2bdce620ec9fd75f4810078cd",
+    "baseline_manifest_sha256": "8fff3a29d0bfd41527324ace7fd55e56c4307c5027504fd30e84ca9b02e46810"
+  },
+  "native_art_GO_sha256": "dda141cafab20e7f12db27e83011aa8896cf31f3e3099890ea3463302c7163a9",
+  "separate_TEST_build_approval_sha256": "56c5aa87df2d9c214b6b888c2f1609bf573d5ca80dc50b1d0d72498f2384ff01",
+  "branch_integration_sha256": "b1d874c54e22e371b6e4d36a5e2c01d90fad480e176dd7f7ba4d41537d67577d",
+  "candidate21_sha256": "e20695c6715e4156027cc211b6c7291ff2820e3d52d317dbbfc9b6cc5ca931c7",
+  "only_source_changes": "9PNG+oneintegerdecorativelamp2X450->448; allother411rawsources preserved",
+  "baseline_activation_c94_distinct_from_logical_original21_065": true,
+  "source_export_commit": "supply actual committed source afterthischeckpoint, notnativea9",
+  "build_phase_count": 15,
+  "build_not_started": true,
+  "TEST_updated": false,
+  "browser_acceptance": "NOT_RUN",
+  "preview_receipt": "docs/testing/grand_back_room_spatial_preview_delivery_20261116.json",
+  "preview_receipt_sha256": "7e8c32b18568980dfe9f0368e0f7d66363af575ecc404cdebb39ea254ae4ae5a"
+}

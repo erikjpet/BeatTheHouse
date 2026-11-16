@@ -1,0 +1,44 @@
+{
+  "schema": "bth.grand_back_room_spatial_preview_delivery/v1",
+  "task_id": "BTH-ENV-SPATIAL-GBR-001",
+  "page_id": "page_2aec5fdabdd88191a22fc77c483c231e",
+  "page_sequence": 1,
+  "page_url": "https://chatgpt.com/space/page_2aec5fdabdd88191a22fc77c483c231e",
+  "reference": "library-file:fde1_bGliZmlsZV9oMGF4dk1OOEw5N01xdW9SSkhpSHR3_FileDrive_b2e6deecb030819197ad6510125a1c29",
+  "output": {
+    "path": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-GBR-APNG-20261116/preview_artifacts/grand-back-room-first75-excerpt-3342ed79ece4-900.png",
+    "sha256": "e780e2284577aeccd8478d988332f484b71f8fbdb6120d717f1d74820df04d30",
+    "bytes": 1820895,
+    "frames": 75,
+    "display_seconds": 9.8835,
+    "terminal_hold_seconds": 0.02,
+    "dimensions": [
+      900,
+      430
+    ],
+    "format": "APNG",
+    "explicit_excerpt": true,
+    "all_selected_frames_exact_RGBA": true
+  },
+  "capture": {
+    "json_sha256": "3342ed79ece4a408f567cfae8afbdab01bd1612d441a623e24ed2086e8908afd",
+    "original_frames": 152,
+    "full_clock_span_seconds": 20.1293881904762,
+    "surface": "900px diagnostic clone; actual production UI separately reviewed",
+    "all_original_PNGs_retained": 461
+  },
+  "encode": {
+    "job_sha256": "f5b03fccf832491bd0e8e5182f61214f2906e77a57076366c82654645db73760",
+    "proof_sha256": "09b173d412b085c86b954ea709d9ce84f414a405e6eb8cd02a47febcf9128253"
+  },
+  "verify": {
+    "job_sha256": "cd5fa9bc426eaa79b6bab85589e00bc0185af6c2f5e605768645eeedf45bba90",
+    "proof_sha256": "1f95909fdebe48b60cf0b34a9b244febb728d6c0af1723e02dfd164cd0581a54"
+  },
+  "file_access_confirmed": true,
+  "native_reference_and_caption_readback_verified": true,
+  "rendered_APNG_playback_verified": false,
+  "all_animation_cycles_or_later_Rourke_states_reviewed": false,
+  "browser_acceptance": "NOT_RUN",
+  "TEST_updated": false
+}

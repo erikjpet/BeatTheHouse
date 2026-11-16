@@ -1,0 +1,100 @@
+{
+  "schema": "bth.hidden_spatial_native_stop/v1",
+  "task_id": "BTH-ENV-SPATIAL-HIDDEN-001",
+  "observed_at": "2026-11-16T12:52:31.216519+00:00",
+  "source_commit": "7bd5f5b2f11d0c56d1d43ce746598cb14ab26579",
+  "source_tree": "793534f40ca4479b3a792cc11ea3077c0ce0c435",
+  "status": "EIGHT_PHASES_PASS_IDENTITY_FAILED_TWENTY_NOT_RUN",
+  "phase_jobs": {
+    "source-identity": {
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HIDNATIVE-20261116-v2-source-identity\\evidence",
+      "pid": 16536,
+      "job_sha256": "edc12b474d14ad7f8598926f3c2710c650ea312ed367c4cf0bee8922d17649bd",
+      "log_sha256": "0f022b73f34cbf39419aced1aaa3dd8a979b4b6e6b12ad8d7fc161c9ffe0d2de",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "phase_result_exists": true
+    },
+    "tree": {
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HIDNATIVE-20261116-v2-tree\\evidence",
+      "pid": 36820,
+      "job_sha256": "2a50e098354a258fd95d106d279a2c22a169410ef2dc34fff7eeda7e8d5e408e",
+      "log_sha256": "b5b7f6e1fbc17b7ceb00b5307cef1b879061b7c679a54ba136f316c80f86800d",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "phase_result_exists": true
+    },
+    "baseline-tree": {
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HIDNATIVE-20261116-v2-baseline-tree\\evidence",
+      "pid": 25576,
+      "job_sha256": "63ebcb650cb5d887e97685310d3d2a4fbe47c841526a6ac3e9ef0457577dd906",
+      "log_sha256": "2d10cb875de127677736b61e6cd9a8cf79a47d042c0caff04474eeef8bfaad2b",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "phase_result_exists": true
+    },
+    "select": {
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HIDNATIVE-20261116-v2-select\\evidence",
+      "pid": 42276,
+      "job_sha256": "5b7a4d67c0dba13a227824b03a586097deff005f47cb2a9da78271f1a522bcb6",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "phase_result_exists": true
+    },
+    "archive": {
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HIDNATIVE-20261116-v2-archive\\evidence",
+      "pid": 25620,
+      "job_sha256": "01ee5e601d001a43aaf3f2953bc3bd05db14fa62445c1a9484ca452c7fd085d7",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "phase_result_exists": true
+    },
+    "prepare": {
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HIDNATIVE-20261116-v2-prepare\\evidence",
+      "pid": 37584,
+      "job_sha256": "99efc7e2afb5f7504ddbcf57f0a4df4c2843bcbe9d05e9bdaf419285fbe460fa",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "phase_result_exists": true
+    },
+    "install": {
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HIDNATIVE-20261116-v2-install\\evidence",
+      "pid": 12072,
+      "job_sha256": "79221783e08a763b31862f601ef6ad833afd30ddd2604f8200140dd70cff2aec",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "phase_result_exists": true
+    },
+    "import": {
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HIDNATIVE-20261116-v2-import\\evidence",
+      "pid": 16768,
+      "job_sha256": "34b7d452273ac51313ee8204a79805f41c702d584e5c22c29e5f7bbd1f649a7f",
+      "log_sha256": "2cb6633a567d2777359db3f517371194cfcdb40c8c107909913542c4eb5fe2cc",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "phase_result_exists": true
+    },
+    "identity": {
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HIDNATIVE-20261116-v2-identity\\evidence",
+      "pid": 29232,
+      "job_sha256": "22af3e72112b286444e62958e2d81ee1a141fbd75964dd63240e96e36460094a",
+      "log_sha256": "779d4169656806e0abe1ba9222977624750221cb9c6972183619f625f955c9cb",
+      "exit_code": 1,
+      "active_at_release": 0,
+      "phase_result_exists": false
+    }
+  },
+  "error": "Exact three Hidden casino scenarios required",
+  "cause": "identity_worker omitted original GD casino-layer filter. Currentcatalog has5club+3casino rows; casino-filtered3fullrows match historicalcatalog.",
+  "actual_scenarios_json_sha256": "3065d0d215f9b62b05c6f2515bf23c619335abd463ba53783b5c0c600bda8882",
+  "candidate30_sha256": "508b106419ef299aad27d92f4d54c5c4d1f7e6cf353dff546848ed290a273509",
+  "source_baseline30_sha256": "4c43fd48d180010a801f511c885d44b983c67c2fbb7fb4eac25c94fbdab027ff",
+  "baseline_and_candidate_unchanged": true,
+  "contexts_motion_capture_acceptance_not_run": true,
+  "no_retry_cleanup_configmutation_or_activation": true,
+  "next": "NEWv3 applies originalcasinofilter withactualidentity_worker regression; freshQAworkspaceHIDDENTRIAL2 andfreshsource/prefix, retainedinputs remainoriginalroot. No oldQA/profilemigration."
+}

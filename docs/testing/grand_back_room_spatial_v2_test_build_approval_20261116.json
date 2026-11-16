@@ -1,0 +1,415 @@
+{
+  "schema": "bth.grand_back_room_spatial_test_approval/v1",
+  "approved_on": "2026-11-16",
+  "task_id": "BTH-ENV-SPATIAL-GBR-001",
+  "environment_id": "grand_casino_back_room",
+  "verdict": "GO_FOR_TEST_BUILD",
+  "reviewer": "/root/native_suite_adapter",
+  "prepared_by": "/root/audit_spatial_handoff",
+  "authority": "Separate build-approval wrapper reuses the immutable independent native/art review identified below. The reviewer field preserves that review's actual author; prepared_by identifies this wrapper's author. This wrapper issues no new visual judgment.",
+  "source_commit": "a9c02a9557abfd644b27f36be392d354fc70c6ef",
+  "source_tree": "edcf685c282567daa2bb82a6ba49d818e5950ed6",
+  "source_scope": "PARTIAL_SELECTED_PATH_ARCHIVE",
+  "export_source_scope": "The source_commit/tree above identify the actual qualified native cohort. Root must separately commit and bind the integrated export source before a fresh selected archive. No future export commit/tree is guessed or approved by this document.",
+  "approved_package_files_sha256": {
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_0.png": "988e0207c99758ba1f5d7f30d4bfa9b7439beb9faf15b3c9ff9a76c55ba27340",
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_1.png": "f9e2470a1a73e3ab62b6f3c2f23102ef4184003d7b7b98bf4691d39583221515",
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_2.png": "0fac3ccc158a14a64b034e55acbb242436e145bf47bc822b8b7ba41aca239595",
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_3.png": "74b88031a6733ffcacbf97bbd910e9e30ba139ac37132f72fd00e62963b40bf1",
+    "assets/art/environments/grand_casino_back_room/anim/casino_light_4.png": "7964ba8bd36745aeb5b44feeee7cff613d813e1b4a4fd5aebc91deb877663ba9",
+    "assets/art/environments/grand_casino_back_room/anim/casino_sign_pulse.png": "dceb1dc0df381fa98592cb9c58822e1863512f7a44f64b5c5bdd88faea8d51ed",
+    "assets/art/environments/grand_casino_back_room/anim/casino_sparkle_0.png": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+    "assets/art/environments/grand_casino_back_room/anim/casino_sparkle_1.png": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+    "assets/art/environments/grand_casino_back_room/anim/casino_sparkle_2.png": "708f74e612c96714f96e9db45ad935643627687a49987ced947f9cd919f046dc",
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_0.png": "bb4f5c707031c24c8f05cca373ab66cb3fb8ea2a729a2dafd6112be0576bc490",
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_1.png": "8c3943c4d07602da082a29d49d5d092f1d26dd1726cdf1789cabef2073b1c21a",
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_2.png": "411d358e941a5867df0c7edc1f58fe72c1c81633c1bc7f1b2c4ed8453156775b",
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_3.png": "18868f32b541dc3a10c44c3dc109054745b7f1e07953883700b4d27ad0ebfa3d",
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_4.png": "36cb42a27c9b0588e0130993d78403243e1c11255fce38a0a16097dd4d1d7147",
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_5.png": "3658013941c5c6b6a3ca7484d9018e893a681aa97eaef8e2f212451a6362ed27",
+    "assets/art/environments/grand_casino_back_room/anim/floor_glint_6.png": "d8f87fdc51b4401fef0d151975fb2963bbd43919625a8e6aec9234087627bb57",
+    "assets/art/environments/grand_casino_back_room/background.png": "46492785829f659c5869d91a6510d424ea4977e6921b1ece7de1225aa804e6ca",
+    "assets/art/environments/grand_casino_back_room/counters/grand_table_left.png": "9a96841d98e0f5ee53d15563c94881f3ce34ab4569182f7009f6b0609c4dafac",
+    "assets/art/environments/grand_casino_back_room/counters/grand_table_right.png": "de3a5e82cce15772a929306eb423aaf44b96ff3302cf8c73aec1eb12b7dc0964",
+    "data/art/environments/grand_casino_back_room.json": "cc8553a5856289c7fe6b42754db43b4bd02d07e5c793ca1fea54e7655eca103d",
+    "data/art/environments/index.json": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24"
+  },
+  "grand_back_room_json_sha256": "cc8553a5856289c7fe6b42754db43b4bd02d07e5c793ca1fea54e7655eca103d",
+  "grand_back_room_package_sha256": "e20695c6715e4156027cc211b6c7291ff2820e3d52d317dbbfc9b6cc5ca931c7",
+  "native_adapter_sha256": "a516fcdb782c0764e39d1ef9e59d5f87520a8ad146ad7f21c3f2d908973c443b",
+  "native_policy_sha256": "c34375889ac8e35f8852c724cbe0e801d5c181920c9fae7583883583a21cb594",
+  "native_source_config_sha256": "837d51a86f2ba003f117d0a969a38ce3dda99364a597a4f330920fff0f3af1af",
+  "native_identity_sha256": "2794328aaef0818cd7ccee0774343eab50642f43ea17ad93afed9c05a9506c4d",
+  "native_capture_inputs_sha256": "239b82527dfef4c9d1f1cf83654de8b411671ea018237d8215037428a62cb275",
+  "native_contexts_sha256": "6a7a6717c948b8e5dcd4d8a78bbbfacaf12d0303496531f7df7c98bde08b9870",
+  "native_motion_sha256": "b433a0cb1838fad9c969b901098785821a99b9d844eaee2e05b4afed7d961ed4",
+  "native_liveness_sha256": "e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b",
+  "native_capture_sha256": "3342ed79ece4a408f567cfae8afbdab01bd1612d441a623e24ed2086e8908afd",
+  "selected_source_helper_sha256": "051ae002c310602175b89b2db624ca7777651ce69ee89057dbcff2f540e53625",
+  "native_phase_receipts": {
+    "source-identity": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-source-identity/evidence/phase-result.json",
+      "sha256": "7d3290cdb1d930d9bff16bd6b50923c3d66a89647987a00118c04a8d76198bac",
+      "job_sha256": "b83a9658a8bc0418d3ebe19abf905ae611782db0b17f54f2cc6adc4fea7db541",
+      "log_sha256": "ff57aa57bc145234a75afd747c0748625ec4f1973acfc87ecdc5c9ea529708f3",
+      "pid": 35788,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {}
+    },
+    "tree": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-tree/evidence/phase-result.json",
+      "sha256": "f410d2dc55f48b02afe94b669c2f25c388c379c52af5741550b03aab22cdb864",
+      "job_sha256": "b797d66351eee4368dda3fbbdb2f52a67c38c1812ac650949915e7f577ed77a4",
+      "log_sha256": "0e2dd0a8e3942d2caaafb2e1b71ab1e6cc73f1ea3a6a12889b1d424c6c8762ac",
+      "pid": 28300,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {}
+    },
+    "baseline-tree": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-baseline-tree/evidence/phase-result.json",
+      "sha256": "95ad8104fc210b9e9c2925e576ef3e45f4e538b8a7dcc40a39939e2bbb4f544f",
+      "job_sha256": "d3d8f853f9bc7cd6c40568b83e2d4a5897979d6f2b677bc49afc485014db0c9d",
+      "log_sha256": "2d10cb875de127677736b61e6cd9a8cf79a47d042c0caff04474eeef8bfaad2b",
+      "pid": 37472,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {}
+    },
+    "select": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-select/evidence/phase-result.json",
+      "sha256": "bce69911286ecea8c736a72195b853ef5225551d7dbaede0a9934d6bacc561d1",
+      "job_sha256": "0e95d757932b6256c49bece34bbeca3f5d03ec74c7ba452c2517572f3cc517af",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pid": 37280,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "closure.json": "5f7e0a61e76509815be6867ee48546b76425b16719b2547a840b1b39fbe85c95",
+        "selection.json": "2158e4ca83deb0c18f1a3281650bd3e73bcca4e37e552179128e8688fafaa1df",
+        "worker-result.json": "8eec87abbd8d54b526e331f0270d2cebacaf36f601f079470c368bad6b731a5f"
+      }
+    },
+    "archive": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-archive/evidence/phase-result.json",
+      "sha256": "4b7e1134e2dd6afdc440de2e0608d2dfef5c220ccd22db8b7ca2f93429674d54",
+      "job_sha256": "5f80e93cbbcde010a1d75326a3633cb1ae90aa6ebe54e59a65439e1c19f5a4f2",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pid": 18048,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {}
+    },
+    "prepare": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-prepare/evidence/phase-result.json",
+      "sha256": "db62d8b07ac75d472cf467a7cacdfbd6a6f37a6768e95baaffe67f84282cee3f",
+      "job_sha256": "ce9c997273ea170a753b82cd23d0dd5e3ec18eac2fdbad2a0e46380f3db41cd6",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pid": 28492,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "worker-result.json": "a91af61deb2032f71f532c81cbd9b0d0899fb9c51e5a0c69f26fc200fb950b14"
+      }
+    },
+    "install": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-install/evidence/phase-result.json",
+      "sha256": "30a8676bb52b816fdef00ab272e403fa65d5a18a9330d1689f4f334032a1d057",
+      "job_sha256": "732e125e8a0df8b84a64c84746e91cf49d885e55d0dd4c3b28d5e1de553cae4c",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pid": 37076,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "worker-result.json": "6074d76c1845d6dd8bfd79fcc57ecde94de409149b2093e5fb8428dc100da9bd"
+      }
+    },
+    "import": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-import/evidence/phase-result.json",
+      "sha256": "ede4fffe6273668e4ed680268bf86def94ab0e9db7df7e1db94b495a6d731cad",
+      "job_sha256": "e4aca96bc4645e92d184a881bf4fc6dd43e588d990bf9bd9087961e204cbfaf9",
+      "log_sha256": "d7a3867e57c3da9befc6adb5e57c9dd273cc77e4f4eacdeac0f3d1945dc6ad5f",
+      "pid": 39076,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {}
+    },
+    "identity": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-identity/evidence/phase-result.json",
+      "sha256": "7b32e7abcbd56cac3efafa8a15ed45c26926b961d9d333896a21b207bbf7b6bf",
+      "job_sha256": "afde130ab83242065aa4c8ea6e86b778ee771bdf6a94cbe90a715f19d7806297",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pid": 25556,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "worker-result.json": "4f95f876344adeaa5ece1dab0f60f6720c22cdb0ab701f6a1e98dd6974b6b53c"
+      }
+    },
+    "contexts": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-contexts/evidence/phase-result.json",
+      "sha256": "94dc54ac562da7a1ab8464518ab3d02f1e637da2ac44919a97ee0ae3d5175d3f",
+      "job_sha256": "fa9839d26d090eb435e278379d20aeb3d622504760291ec3839a840a29b72156",
+      "log_sha256": "b3f8518bf10dc90b8d060c2ccafe5515567aa79705424834b8d2f463add01003",
+      "pid": 10252,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "grand_casino_back_room_preart_metadata.json": "6a7a6717c948b8e5dcd4d8a78bbbfacaf12d0303496531f7df7c98bde08b9870"
+      }
+    },
+    "motion": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-motion/evidence/phase-result.json",
+      "sha256": "64a961522bdf5500340488e3778cac35e83fd28e1e9eafd8919a77d389314016",
+      "job_sha256": "b120a7d3e0b6e1cc5513bd3bee66e259d32d28b3c4c28583adb29005fd28679e",
+      "log_sha256": "34990870ab7ded09e8598cb04176ce70dec562e0fe0eca43e465183fd7e67701",
+      "pid": 36252,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "grand_casino_back_room_animation_probe.json": "b433a0cb1838fad9c969b901098785821a99b9d844eaee2e05b4afed7d961ed4"
+      }
+    },
+    "liveness": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-liveness/evidence/phase-result.json",
+      "sha256": "9e96e7f4ec85074d203d6403a937c2809fb675659f44569c9a217e56858da106",
+      "job_sha256": "5121b763f598498f965be3e379b5f0ac51d5d222e22798fa5f4d99d2f7650890",
+      "log_sha256": "e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b",
+      "pid": 30468,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {}
+    },
+    "capture": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRNATIVE-20261116-v3-capture/evidence/phase-result.json",
+      "sha256": "562f8f45b8b04db9be2daef0e4da47b2d90c643675bd7408ac4c6ca67c579cd8",
+      "job_sha256": "327dcfada56cdfbfe28bd7db29ddca23a2d5cbacff15e7c4a280b8382188cd0d",
+      "log_sha256": "f05345a7c470563ae69cce447a551355fcd605f4864b23cd5c6c9d490dcb74e5",
+      "pid": 34596,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "capture/animation_capture.json": "3342ed79ece4a408f567cfae8afbdab01bd1612d441a623e24ed2086e8908afd"
+      }
+    }
+  },
+  "final_art_review_path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/grand_back_room_spatial_v2_native_art_approval_20261116.json",
+  "final_art_review_sha256": "dda141cafab20e7f12db27e83011aa8896cf31f3e3099890ea3463302c7163a9",
+  "baseline_certificate_sha256": "c4855fca42f7b7990b853e7cd9786c2562c634d0e923b1f509e48ad819d8c465",
+  "baseline": {
+    "schema": "bth.grand_back_room_spatial_test_baseline_declaration/v1",
+    "source_commit": "b35412ac003983e2bdce620ec9fd75f4810078cd",
+    "source_tree": "1e9e7c8e8ad2e4fa9543163bfd4d5b5d64294e0d",
+    "manifest_sha256": "8fff3a29d0bfd41527324ace7fd55e56c4307c5027504fd30e84ca9b02e46810",
+    "pck_sha256": "4f0b958fb10b8e0083fad2865c830a10cd29bade6579cd88f05642a8a4bfd136",
+    "high_limit_approval_sha256": "46e8685cf4dab2a49c8d0cbcda08c816612bb32614d5e1ec3798cbaf0208b1d7",
+    "high_limit_strict_pck_proof_sha256": "f1d75253897b9f7dbd79a9204f5f8e2eac1e988f4237ca7c28b14614da3aba6c",
+    "high_limit_served_proof_sha256": "fab304ee748827a6bbec53b989284bb9df586fadbaa58e054f43b01d98610ce8",
+    "high_limit_served_job_sha256": "4023a6f7e7f8156b786a30d0470f417965bafd143423f94af0d472869b8003b8",
+    "high_limit_delivery_index_sha256": "b4650bd3538419c0242b58429d1eb84da0a75abc239ff03f659ed8b1d1552261",
+    "ancestor_grand_certificate_sha256": "c355c3fb638233016d0bb169ceb92942376db24011d1e2ef48c6443da9140356",
+    "uid_cache_sha256": "587514374b37d67f6c0e795cc82d840f1d4a5f9f0b0c2f3c80586ce4eb38b4db",
+    "uid_map_sha256": "293bcadacffd15543a5686b5e40cc6cd409495e80628d77bc0e5e62c2eb61b55",
+    "class_cache_sha256": "43ed255c77d8ef9809383d0fef148e952dabddbbf434c69b0276790b6da5816d",
+    "protected_room_seals": {
+      "gas_station_casino": "1e9a88be562db041248d4561619d0110d0b267310f42be25acd362bfae64b560",
+      "corner_store": "6f1e76d5cb4f44dd73f494e4cf52fcf2eb433a0e849c6ee6bd0c090a36897dcb",
+      "back_alley": "f42919a146d4fdc17d7cd120ef926b44f6ccaefabcaf6a8a171e805db2150b68",
+      "motel": "4b22c9cfda8ad88f0d989b544c50cc84efd4fc290583a3e87464f9963821b971",
+      "bar": "e001ad4d76344f0bb2e0542a21fa3f4936656c8c2a63ace475a6294cb9ca723e",
+      "pawn_shop": "85a22382e63379b340c21121e4d78ad6d82abea17efb8a20ad876afb01cb80a3",
+      "jazz_club": "2c9e93f50f150242a9d4f6a14059e466eb48295e3170d50fd61bb646f4b5bce7",
+      "punchline_club": "c617fb48dbbb22f8fcf9ea8b9c80369d007fa8beef5d1953231eb1956ac5b373",
+      "small_underground_casino": "f5bf6336e1a1c5d981a83ce6e0e8642f687c31f1710d0141a3282ca5ae23556f",
+      "punchline_back_room": "b00395c89d8108db01549326a928e0df78be44e1f9c4321faf09b3b1aa8fef5a",
+      "kitty_cat_lounge": "080ee7bfab97168ce4dd67a592add6e7254c6baca2ce0d2326ee8bb7aba04bab",
+      "delta_queen": "efb3561c8fc4ac00dcefb1191d0db8795c628cada75847cf2c6a54a771780d7d",
+      "beach": "ef5e45f3f6cba547e43f421e506a4c2a64a55bdbec632c217c9ff6dbcdf86bd5",
+      "grand_casino": "563ef08fec04e980c9cb2e215b2801f3612a22dd8f8250ba6247293c12f069d4",
+      "grand_casino_high_limit": "481e858ee3c484b06ba6df935983c29979a188e7e59ff5f44eaf22ecdbe020e4",
+      "grand_casino_cage": "a228a9e91f6d387fd4790703fa6a2e0038e1df03a92762f3be8cfa9602dace0b",
+      "motel_room": "3c6a5dbda5fca2b2fdf3d36a88027c778486e65a5f2412a19197eba87e65a3e6",
+      "apartment": "d37ad2ca8a34b20a53e00ce693e1fa2d52b1d6d35cd9f245a518022d1924e978",
+      "house": "3a076309f40b5dfad0317d06055fb589d5d91834991dc84016827eb61a477028"
+    },
+    "stage": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-HLBUILD2-20261116/qa_source/.tmp/web-release-b35412ac/stage",
+    "high_limit_approval_path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/high_limit_spatial_v2_test_build_approval_20261116.json",
+    "high_limit_served_proof_path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-HLBUILD2-20261116-v2-served/evidence/served.json",
+    "high_limit_delivery_index_path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/high_limit_spatial_test_delivery_20261116.json"
+  },
+  "release_policy": {
+    "profile": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/grand_back_room_spatial_test_release_profile.py",
+      "sha256": "306a4f49126ac7cae6caa9461834f69b629de646432d55f6d0e8262b9dc962c0"
+    },
+    "build_entrypoint": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/grand_back_room_spatial_test_build.py",
+      "sha256": "75144acd4986c06508d07b9f824c83b714fe97e77ee7c5f0900572ebca17b022"
+    },
+    "served_entrypoint": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/verify_grand_back_room_spatial_test_served.py",
+      "sha256": "64207b1fe7df14466ab88c688b94f125b88f1c89f495aa19e84dcc4d2d48007e"
+    },
+    "baseline_loader": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/high_limit_spatial_delivered_baseline.py",
+      "sha256": "fe17fa193e5ce5d4df2e250f7cf5858b3500e8e2e0582d608ae75a93be27f9c1"
+    },
+    "pure_policy": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/grand_back_room_spatial_test_profile_v2.py",
+      "sha256": "0af8ccae95bea02dbb772c02ade08e9fc25804d7bc62cbed7a38ac1f03b75574"
+    }
+  },
+  "release_validation": {
+    "static_code_reviewer": "/root/audit_spatial_handoff",
+    "delivered_baseline_static_auditor": "/root/bar_clearance_audit/dark_feet_source_audit",
+    "pure_tests": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/tests/test_grand_back_room_spatial_test_profile_v2.py",
+      "sha256": "da4e5ee0302a2c39a09cd7284471a07158c0926a7939e4359d68de54e0088468"
+    },
+    "release_tests": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/tests/test_grand_back_room_spatial_test_release.py",
+      "sha256": "6b7878b92352a3c8ffdd8315c68ddabf3cc76d0696b67861db386a3886559c8f"
+    },
+    "readme": {
+      "path": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/grand_back_room_spatial_test_release.README.md",
+      "sha256": "a4e91e43bb6c291e064b0476c3ced9bff939fbc9dfbd432074620f689ce7fda4"
+    },
+    "guarded_regression": {
+      "status": "PASS",
+      "test_count": 89,
+      "pure_tests": 37,
+      "release_tests": 52,
+      "seconds": 1.455,
+      "job": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRRELEASE-20261116-tests01/evidence/job.json",
+        "sha256": "c6e5ef63e6d5f59ef3bd803d3012a0a1dfb916809f9ac75b6c214d22209e69cd"
+      },
+      "worker_log": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRRELEASE-20261116-tests01/evidence/worker.log",
+        "sha256": "0f89d6b292d9cbebd2cc384af73d2cbd1dee8a67dc04a3e8c6d1b1b116b966d6"
+      },
+      "pid": 37684,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "assigned_before_execution": true,
+      "timeout": false,
+      "error": null,
+      "cleanup_errors": [],
+      "log_truncated": false,
+      "cpu_percent": 12,
+      "job_memory_limit_bytes": 2147483648,
+      "kill_on_close": true,
+      "breakaway_allowed": false,
+      "storage_manifest": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRRELEASE-20261116-tests01/evidence/storage-manifest.json",
+        "sha256": "c1a1a43e17d51ddf1161620961ddb82210cd9b8fe7bf9e864dcc2633db10efa9"
+      },
+      "launch_claim": {
+        "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRRELEASE-20261116-tests01/evidence/launch-claim.json",
+        "sha256": "c43efee25b1f0f679676d54f41cef55091cbc3f06031dd6c75964b38cc0216e8"
+      },
+      "manifest_claim_job_hashes_equal": true,
+      "expected_write_bytes": 4294967296,
+      "reserve_bytes": 21474836480,
+      "prepared": true,
+      "workspace": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-SIDEBAR-20261116",
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "-c",
+        "import unittest,sys; p='D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/tests';loader=unittest.TestLoader();suite=unittest.TestSuite([loader.discover(p,pattern=n) for n in ('test_grand_back_room_spatial_test_profile_v2.py','test_grand_back_room_spatial_test_release.py')]);assert suite.countTestCases()==89,suite.countTestCases();result=unittest.TextTestRunner(verbosity=2).run(suite);sys.exit(0 if result.wasSuccessful() else 1)"
+      ]
+    }
+  },
+  "actual_baseline_certificate_receipt": {
+    "status": "ACTUAL_IMMUTABLE_HIGH_LIMIT_BASELINE_AUTHENTICATED",
+    "schema": "bth.high_limit_delivered_baseline_certificate/v1",
+    "baseline_qualified": true,
+    "canonical_certificate_sha256": "c4855fca42f7b7990b853e7cd9786c2562c634d0e923b1f509e48ad819d8c465",
+    "canonical_fingerprint_independently_recomputed_from_actual_stdout": true,
+    "job": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRBASELINE-20261116-certificate01/evidence/job.json",
+      "sha256": "8eb7bf348199df505f1986514bf429f440dd81c6a8ac67261537210af3bda147"
+    },
+    "worker_log": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRBASELINE-20261116-certificate01/evidence/worker.log",
+      "sha256": "fccac938d811a852be519d0f87bdfdaa26f5c54e8bc251f5a021c6b9164b56f2"
+    },
+    "pid": 37584,
+    "exit_code": 0,
+    "active_at_release": 0,
+    "assigned_before_execution": true,
+    "timeout": false,
+    "error": null,
+    "cleanup_errors": [],
+    "log_truncated": false,
+    "cpu_percent": 12,
+    "job_memory_limit_bytes": 2147483648,
+    "kill_on_close": true,
+    "breakaway_allowed": false,
+    "storage_manifest": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRBASELINE-20261116-certificate01/evidence/storage-manifest.json",
+      "sha256": "7c3bc791a879cdc220e43776e854039cdd9b3234607dc6fea77432b74ba2fb3e"
+    },
+    "launch_claim": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRBASELINE-20261116-certificate01/evidence/launch-claim.json",
+      "sha256": "0af143db988c504c67ba2412699dfba8cfa29df39cf6d6043a9e9baedb8fcf78"
+    },
+    "manifest_claim_job_hashes_equal": true,
+    "expected_write_bytes": 4294967296,
+    "reserve_bytes": 21474836480,
+    "prepared": true,
+    "workspace": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-SIDEBAR-20261116",
+    "command": [
+      "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+      "-B",
+      "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/high_limit_spatial_delivered_baseline.py"
+    ],
+    "actual_loader_sha256": "fe17fa193e5ce5d4df2e250f7cf5858b3500e8e2e0582d608ae75a93be27f9c1",
+    "strict_pck_proof_canonical_sha256": "f1d75253897b9f7dbd79a9204f5f8e2eac1e988f4237ca7c28b14614da3aba6c",
+    "native_export_original_code_files_equal": 760,
+    "all421_sources_and15_build_receipts_authenticated_by_closed_certificate": true,
+    "immutable_default_TLS_streams": 13,
+    "ancestor_grand_certificate_sha256": "c355c3fb638233016d0bb169ceb92942376db24011d1e2ef48c6443da9140356",
+    "browser_acceptance": "NOT_RUN",
+    "NEXT_scope": "Historical 11:56:22..12:02:01 publication window only; current NEXT is not read or asserted.",
+    "inherited_HL_native_authority_scope": "Frozen HLv2 five final native receipts, firstGO871 and current3964-file/dependency identity. Its earlier eight setup receipts were reviewed for original approvals; this loader freshly authenticates all15 HL build receipts. GBR native authority independently preserves all13 detailed receipts."
+  },
+  "independent_documentary_custody": {
+    "all13_native_phase_refs_job_log_and_artifact_hashes_rechecked": true,
+    "all13_native_jobs_closed_assigned_zero_with12percent2GiB_caps_and_storage_claims": true,
+    "current_native_files_rehashed": 3964,
+    "current_native_file_mismatches": [],
+    "native_identity_sha256_rechecked": "2794328aaef0818cd7ccee0774343eab50642f43ea17ad93afed9c05a9506c4d",
+    "native_capture_inputs_sha256_rechecked": "239b82527dfef4c9d1f1cf83654de8b411671ea018237d8215037428a62cb275",
+    "final_first_review_and_all5_release_helper_hashes_rechecked": true,
+    "no_repository_helper_test_or_QA_execution_by_wrapper_author": true
+  },
+  "evidence": [
+    "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/grand_back_room_spatial_v2_native_art_approval_20261116.json",
+    "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRRELEASE-20261116-tests01/evidence/job.json",
+    "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRRELEASE-20261116-tests01/evidence/worker.log",
+    "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRBASELINE-20261116-certificate01/evidence/job.json",
+    "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-GBRBASELINE-20261116-certificate01/evidence/worker.log",
+    "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/high_limit_spatial_test_delivery_20261116.json"
+  ],
+  "approved_build_scope": {
+    "package": "Exact21-source GBR V2 package e206; nine changed PNGs plus sole typed casino_light_2.rect.x integer450->448 in full JSON. All16 native/7 low animation IDs/timing/other geometry remain unchanged.",
+    "baseline": "Actual immutable deliveredHL b354/8fff/4f0b/fab304/b465 only, with Grand/Bar and every other room/doorway preserved by source and strict packed comparison.",
+    "source_and_pck_gates": "All421 raw sources, exact9 canonical imports and400 compiled bindings. PCK2107 resource names/1605 UID/cache/class/SCN/GDC equality; exact delta only nineGBR CTEXs, GBR JSON and embedded identity.",
+    "execution": "Fresh admitted E campaign, exact fifteen-phase reviewed builder, selected-source archive/attribute provenance and native/export original-code bridge, existing storage/caps/closure gates, exact source/package qualification before and after export.",
+    "publication": "This document authorizes build preparation only. It does not publish or establish a qualified future export, HTTPS delivery, NEXT/main change or browser acceptance."
+  },
+  "test_build_approved": true,
+  "test_publication_approved": false,
+  "browser_acceptance": "NOT_RUN",
+  "limits_and_remaining_gates": [
+    "Native evidence is Base only: Craps, Blackjack and Travel;7969 context checks,66 motion checks,16 native/7 simulated-low entries and original no-pointer liveness.",
+    "152 actual-clock frames span20.1293881904762s, shorter than57.7777777777778s maximum cycle. Existing art review is bounded sampling and does not establish every long-cycle position.",
+    "Native1800 captures exclude live objects/fronts; full-app is actual populated production and board900 is an aligned diagnostic clone. This wrapper adds no visual judgment or new animated-preview claim.",
+    "Later Rourke/boss/showdown/heist/lifecycle/work outcomes/save/revisit and browser gameplay remain outside this native cohort.",
+    "Root must integrate exact reviewed source, commit actual export identity, run fresh complete build/import/export/strict verify gates and obtain concrete publication/delivery evidence. The all20-room objective remains open.",
+    "Only this explicitly authorized new absolute-D build-approval file was created. No E write, helper/test/job/runtime, Git, active-art edit, cleanup, deletion or move was performed by its author."
+  ]
+}
