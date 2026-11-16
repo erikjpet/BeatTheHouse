@@ -1,0 +1,38 @@
+{
+  "schema": "bth.hidden_completion_transports/v1",
+  "project_source_writes": false,
+  "code_and_assertion_edits": false,
+  "transports": {
+    "thin-strong": {
+      "source": "tools/envart_hidden_thin_wrap_r2c.gd",
+      "sha256": "865149f08afbabd2d8d74d0ce1e898324a127c266d17b59f260c5beb02ee4d8c",
+      "historical_evidence": "BTH-ENVART-HIDDENR2-20261114-thin-wrap02",
+      "historical_job_sha256": "feceed4f8d54194f6a3af198e875c88e83946040d5b054beea94f622259c44dd",
+      "historical_report_sha256": "7192ce8120fd59eb7578f1599dd91ce235cf031b3b80abd141bc28541c2e911a",
+      "report": "thin_wrap_probe.json",
+      "substitutions": []
+    },
+    "effective-hits": {
+      "source": "tools/envart_hidden_effective_hits_r2b.gd",
+      "sha256": "d70e95ae6f00579eadd3c25d9666941140119cf793b058fad95d0747d98d4de6",
+      "historical_evidence": "BTH-ENVART-HIDDENR2-20261114-hits02",
+      "historical_job_sha256": "36233f71766fcb0cc2f28ad259224f980e0a033e44450b9353b457d69beb6ec8",
+      "historical_report_sha256": "c09d5ab7545c2ebddd0a6501267cab47a6b25bc442ccbf1c6221a4cddb928972",
+      "report": "hidden_effective_hit_proof.json",
+      "substitutions": [
+        {
+          "original_literal": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-current4-01/evidence/hidden_r2_initial_metadata.json",
+          "role": "retained_v4_contexts"
+        },
+        {
+          "original_literal": "E:/CodexQA/BTH/runs/BTH-ENVART-HIDDENR2-20261114-sequence-",
+          "role": "fresh_completion_work_prefix"
+        },
+        {
+          "original_literal": "-01/evidence/hidden_sequence_live_proof.json",
+          "role": "fresh_completion_work_suffix"
+        }
+      ]
+    }
+  }
+}
