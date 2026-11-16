@@ -1,0 +1,56 @@
+*** Begin Patch
+*** Update File: tools/bar_spatial_test_build.py
+@@
+ import shutil
++import struct
+ import tarfile
+@@
+-def stage_links(workspace, stage, baseline):
++def decode_uid_cache(raw):
++    """Decode the complete UID path map, rejecting truncated or aliased records."""
++    if len(raw) < 4:
++        raise ValueError("UID cache header is truncated")
++    count = struct.unpack_from("<I", raw)[0]
++    if not 1 <= count <= 10000:
++        raise ValueError("UID cache count is outside the bounded parser")
++    cursor, result, seen_ids = 4, {}, set()
++    for _ in range(count):
++        if cursor + 12 > len(raw):
++            raise ValueError("UID cache record is truncated")
++        uid, size = struct.unpack_from("<QI", raw, cursor)
++        cursor += 12
++        if not 0 < size <= 65536 or cursor + size > len(raw):
++            raise ValueError("UID cache path is truncated or oversized")
++        path = raw[cursor:cursor + size].decode("utf-8")
++        cursor += size
++        name = PurePosixPath(path.removeprefix("res://"))
++        if (not path.startswith("res://") or name.is_absolute() or ".." in name.parts or
++                "\\" in path or "res://" + name.as_posix() != path or path in result or uid in seen_ids):
++            raise ValueError("UID cache contains a noncanonical or duplicate binding: " + path)
++        result[path] = str(uid)
++        seen_ids.add(uid)
++    if cursor != len(raw) or len(result) != count:
++        raise ValueError("UID cache trailing bytes/count mismatch")
++    return result
++
++
++def stage_links(workspace, stage, baseline):
+@@
+-    required = {"build_manifest.json", bar_compiled}
++    uid_path = ".godot/uid_cache.bin"
++    old_uid_map = decode_uid_cache(pck_entry_bytes(old_data, old_directory, old_entries[uid_path]))
++    new_uid_map = decode_uid_cache(pck_entry_bytes(data, directory, entries[uid_path]))
++    if len(old_uid_map) != 1605 or old_uid_map != new_uid_map:
++        differences = [path for path in sorted(old_uid_map.keys() | new_uid_map.keys())
++                       if old_uid_map.get(path) != new_uid_map.get(path)]
++        raise ValueError("Complete retained 1605-entry UID mapping differs: " + repr(differences[:20]))
++    uid_map_digest = hashlib.sha256(json.dumps(old_uid_map, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
++    uid_equivalence = {"entry": uid_path, "entries": len(old_uid_map), "complete_mapping_equal": True,
++                       "bytes_equal": uid_path not in changed, "old_mapping_sha256": uid_map_digest,
++                       "new_mapping_sha256": uid_map_digest, "path_to_uid": old_uid_map,
++                       "scope": "All bindings compared; no additional QA paths or UID aliases are allowed."}
++    required = {"build_manifest.json", bar_compiled}
+@@
+     write_new(layout.evidence / "bar-package-seal.json", seal)
++    write_new(layout.evidence / "uid-cache-equivalence.json", uid_equivalence)
+*** End Patch

@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T02:24:18.571188+00:00",
+  "updated_at": "2026-11-16T04:25:02Z",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -38045,13 +38045,13 @@
       "name": "Audit and correct all-room spatial support and seams",
       "group": "current",
       "state": "open",
-      "status": "ACTIVE_BAR_BUILD_AND_NATIVE_QUALIFICATION",
+      "status": "ACTIVE_CANONICAL_TEST_BUILD",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [{"sha": "6f430446ccc3f3217f5bc481dbbbc1c5ebee569c", "evidence": ["docs/testing/bar_spatial_v4_art_approval_20261116.json", "docs/testing/bar_spatial_delivery_attempt1_20261116.json"]}],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -38097,9 +38097,14 @@
           "kind": "v4_native_qualification",
           "reference": "docs/testing/bar_spatial_v4_native_checkpoint_20261116.json",
           "summary": "V4 fixes Numbers contact and gold-foot label contrast. Independent8context still review,1017checks,17motion35checks and no-pointer liveness pass. Authentic152frame recording preserved; remaining sequence/technical qualification active."
+        },
+        {
+          "kind": "native_complete_delivery_rebuild",
+          "reference": "docs/testing/bar_spatial_delivery_attempt1_20261116.json",
+          "summary": "All58sequence and remaining native gates pass. Lossless152frame APNG verified and saved. First Web-stage strict delta rejected regenerated IDs; reviewed canonical metadata restores25sidecars/3root IDs, preserves1605bindings and leaves the PCK allowlist unchanged. Fresh build pending; TEST unchanged."
         }
       ],
-      "next_action": "Exact V4 Bar background has independent art approval and is integrated on the art branch. Finish remaining native suite and prepare its exact guarded TEST build; publish after technical and build-identity gates pass.",
+      "next_action": "All Bar native gates and the lossless animated preview pass. Rebuild the approved art with preserved canonical resource and scene IDs; require the complete1605UID map and unchanged strict PCK gate before TEST publication and served-byte verification.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -38108,7 +38113,7 @@
         "observed_at": "2026-11-16T01:33:32.332629+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T02:24:18.571188+00:00",
+      "updated_at": "2026-11-16T04:25:02Z",
       "scope": [
         "Audit all environment art packages for seams, grounded supports, perspective and live object clearance; preserve existing animations and gameplay geometry."
       ],
@@ -38140,13 +38145,13 @@
       "name": "Correct Bar pool-table support and perspective",
       "group": "current",
       "state": "open",
-      "status": "ACTIVE_BAR_BUILD_AND_NATIVE_QUALIFICATION",
+      "status": "ACTIVE_CANONICAL_TEST_BUILD",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [{"sha": "6f430446ccc3f3217f5bc481dbbbc1c5ebee569c", "evidence": ["docs/testing/bar_spatial_v4_art_approval_20261116.json", "docs/testing/bar_spatial_delivery_attempt1_20261116.json"]}],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -38192,9 +38197,14 @@
           "kind": "v4_native_qualification",
           "reference": "docs/testing/bar_spatial_v4_native_checkpoint_20261116.json",
           "summary": "V4 fixes Numbers contact and gold-foot label contrast. Independent8context still review,1017checks,17motion35checks and no-pointer liveness pass. Authentic152frame recording preserved; remaining sequence/technical qualification active."
+        },
+        {
+          "kind": "native_complete_delivery_rebuild",
+          "reference": "docs/testing/bar_spatial_delivery_attempt1_20261116.json",
+          "summary": "All58sequence and remaining native gates pass. Lossless152frame APNG verified and saved. First Web-stage strict delta rejected regenerated IDs; reviewed canonical metadata restores25sidecars/3root IDs, preserves1605bindings and leaves the PCK allowlist unchanged. Fresh build pending; TEST unchanged."
         }
       ],
-      "next_action": "Exact V4 Bar background has independent art approval and is integrated on the art branch. Finish remaining native suite and prepare its exact guarded TEST build; publish after technical and build-identity gates pass.",
+      "next_action": "All Bar native gates and the lossless animated preview pass. Rebuild the approved art with preserved canonical resource and scene IDs; require the complete1605UID map and unchanged strict PCK gate before TEST publication and served-byte verification.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -38203,7 +38213,7 @@
         "observed_at": "2026-11-16T01:33:32.332629+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T02:24:18.571188+00:00",
+      "updated_at": "2026-11-16T04:25:02Z",
       "scope": [
         "Repair Bar decorative pool-table rails, apron, legs and shadow in y264-294, preserving all17 motions, ball paths and live geometry; require visual audit before TEST delivery."
       ],

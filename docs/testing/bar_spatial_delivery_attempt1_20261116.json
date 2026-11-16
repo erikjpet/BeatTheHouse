@@ -1,0 +1,37 @@
+{
+  "task_id": "BTH-ENV-SPATIAL-BAR-001",
+  "source_commit": "6f430446ccc3f3217f5bc481dbbbc1c5ebee569c",
+  "source_tree": "9ed32980a9a07b3d1305c72b7c1a248ae260c9c9",
+  "background_sha256": "a870d3652a72d3ebb5067fe9e46b412f3c2a5b938a40e4c3b2cf72e0be7a2408",
+  "bar_package_sha256": "e001ad4d76344f0bb2e0542a21fa3f4936656c8c2a63ace475a6294cb9ca723e",
+  "native_qualification": {
+    "initial_contexts": {"count": 8, "checks": 1017, "findings": []},
+    "sequence": {"cases": 58, "checks": 5780, "findings": [], "coverage": "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-BARTRIAL-20261116-v4-suite-sequence-bar_dead_tuesday/evidence/sequence-coverage.json"},
+    "motion": {"entries": 17, "checks": 35, "failures": []},
+    "composite": {"contexts": 8, "checks": 600, "findings": []},
+    "reduce_motion_composite": {"contexts": 1, "checks": 75, "findings": []},
+    "floor_wrap": {"movers": 7, "checks": 71, "findings": []},
+    "smoke_wrap": {"checks": 11, "findings": []},
+    "counter_replay": "PASS: BTH-ENV-SPATIAL-BARTRIAL-20261116-v4-suite-counter-replay",
+    "placement_closing": {"checks": 9, "findings": []},
+    "no_pointer_liveness": "PASS",
+    "corrected_glint_observer": {"run": "BTH-ENV-SPATIAL-BARTRIAL-20261116-v4-glint28", "checks_including_source_custody": 7005, "contexts": 2, "findings": [], "serialized_palette_values_restored": 8},
+    "historical_glint_reader": "FAILED and retained: old JSON Color strings caused painter errors. New observer restores only eight typed palette fields with unchanged serialized snapshot/geometry; production code unchanged."
+  },
+  "build": {
+    "workspace": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-BARBUILD-20261116",
+    "run_prefix": "BTH-ENV-SPATIAL-BARBUILD-20261116-v4",
+    "passed": ["source-identity", "archive", "extract", "seed", "identity", "import", "export", "webgl-apply", "webgl-verify"],
+    "finalize": "FAILED_STRICT_PCK_DELTA",
+    "failed_job": {"pid": 29436, "exit_code": 1, "active_at_release": 0},
+    "diagnosis": "All421 raw art and400 imported texture links passed before the strict delta gate. Twenty PNG import records differ only in UID; UID cache changes those20 plus5script IDs. Three compiled single-node scenes differ only in the four-byte root node_ids integer. No GDScript code delta was observed.",
+    "next": "Preserve canonical UID sidecars and native-supported scene root unique_id metadata, then build fresh source in a new admitted E workspace. Keep the strict PCK gate unchanged; never patch the failed PCK."
+  },
+  "native_scene_probe": {"run": "BTH-ENV-SPATIAL-BARTRIAL-20261116-scene-metadata29", "status": "FAILED_RAW_BUNDLE_ROUNDTRIP_ASSERTION", "usable_discovery": "Godot ResourceSaver emits root unique_id attributes and retains all three original root IDs. It reorders internal name/index tables, so raw bundle equality was not proved. Failure retained, not counted as a passing check."},
+  "preview": {"frames": 152, "source_scene_clock_span": 20.1192493333333, "native_size": [900,430], "apng_encode": "PASS", "apng_bytes": 10198298, "apng_sha256": "b09721ade5eab8bf2a56cc52bfc116459b8db472feac74888ad6fee14332af9d", "independent_rgba_verification": "PASS: every frame exactly recomposes to its original captured RGBA; source hashes unchanged", "review_page": "https://chatgpt.com/space/page_0245fc4fdf288191a7f36bf65e490f6e", "ffmpeg_alias": "Access denied during read-only plan; no child launched, alias not retried, permissions unchanged. Standard-library APNG uses only admitted captures."},
+  "canonical_metadata": {"artifact": "review_artifacts/environment_art_sources/bar-spatial-v4-canonical-metadata", "independent_review": "GO_FOR_SCOPED_METADATA_APPLY", "before_check": "PASS", "after_check": "PASS", "sidecars": 25, "root_attributes": 3, "unchanged_uid_bindings": 1605, "strict_pck_allowlist_widened": false, "fresh_build": "PENDING"},
+  "live_test_source": "0ef525e012df485bc3312e0d2ea89e3aa05b4d55",
+  "test_updated": false,
+  "main_merged": false,
+  "scope": "Bar only; all-room parent and remaining19 room work remain open."
+}

@@ -2,5 +2,5 @@
 
 [ext_resource path="res://scripts/games/coin_pusher/coin_pusher_export_parity_runner.gd" type="Script" id="1"]
 
-[node name="CoinPusherExportParity" type="Node"]
+[node name="CoinPusherExportParity" type="Node" unique_id=788171216]
 script = ExtResource("1")
