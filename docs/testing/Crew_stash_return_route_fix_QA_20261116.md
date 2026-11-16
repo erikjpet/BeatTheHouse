@@ -52,4 +52,6 @@ Every case used admitted E: layouts and manifests, both capacity/launch gates, v
 | crew-sidebar-sw15-261116 | `a15a05c4` + scoped working diff | 11/11 | `b24efc86cf8d86cd416672ae0b62d59ef3f46849097231fc169fc43d7660604d` |
 | crew-sidebar-sw16-261116 | `a15a05c4` + scoped working diff | 11/11 | `fbf354c61ddd11ddbf8aa9e327fabfaadbea583b3c0f692fa30ab89b255adefc` |
 
-Total **50/50** in 4 closed native Jobs. Exact GD copies and source/custody/storage/launch/cleanup receipts remain beside each log. Consolidated receipt: `E:\CodexQA\BTH\runs\crew-stash-fix-record4-261116\evidence\cases.json`. Manual reconciliation: `E:\CodexQA\BTH\runs\crew-stash-fix-record4-261116\evidence\reconciliation.json`.
+Total **50/50** in 4 closed native Jobs. Exact GD copies and source/custody/storage/launch/cleanup receipts remain beside each log. Consolidated receipt: `E:\CodexQA\BTH\runs\crew-stash-fix-accept1-261116\evidence\cases.json`. Manual reconciliation: `E:\CodexQA\BTH\runs\crew-stash-fix-accept1-261116\evidence\reconciliation.json`.
+
+Accepted source/QA proof commit: `6a773e7733f368b9a2cd02bf9ee2e5090ce78eee`. The narrow native stash recovery-road/cache defect is Complete only with associated tested code/proof commit and exact required NEXT delivery recorded here. Browser/WASM startup, pointer, visual and Web gameplay remain Open; broader Crew route/pacing scope is separate.

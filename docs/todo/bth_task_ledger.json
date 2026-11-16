@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T12:53:05.441940+00:00",
+  "updated_at": "2026-11-16T12:55:50.388221+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -4982,7 +4982,7 @@
             },
             {
               "id": "native-switch-two-stop-and-stash-recovery",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
                 "docs/testing/Crew_Switch_route_and_stash_QA_20261116.md"
               ]
@@ -4991,7 +4991,7 @@
         }
       },
       "state": "open",
-      "status": "SWITCH_TWO_STOP_RECOVERY_NATIVE_COMPLETE_PROOF_ASSOC_PENDING",
+      "status": "SWITCH_ROUTE_AND_STASH_FIX_COMPLETE_BROADER_CREW_OPEN",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -5074,6 +5074,12 @@
           "sha": "18feafe9665d72bbc542199c8426642ae365176b",
           "evidence": [
             "docs/testing/Crew_abandonment_and_replacement_QA_20261116.md"
+          ]
+        },
+        {
+          "sha": "6a773e7733f368b9a2cd02bf9ee2e5090ce78eee",
+          "evidence": [
+            "docs/testing/Crew_Switch_route_and_stash_QA_20261116.md"
           ]
         },
         {
@@ -5196,7 +5202,7 @@
         "BTH-QA-CREW-ENDING-001-SWITCH-ROUTE-STASH-20261116",
         "CREW-STASH-RETURN-ROUTE-HIDDEN-20261116"
       ],
-      "next_action": "Associate full scoped proof commit for completed Switch two-stop/stash flow:sw22 atPawn2490,174cash/100reputation/Switchtrust36/zeroowedCrewduties/debt[],postmissfalse/anchor2850. Firstdrop correctly deferred reward; final34paidonce and cold/stale checks pass. Related97d47e35/bfc1a087 routingfix is NEXTidentity/assets verified. Broader browser/pacing/route balance remain Open.",
+      "next_action": "Preserve sw22 successful two-stop/stash campaign:174cash/100sharedreputation/Switchtrust36/zeroCrewduties/debt[],clock2490/anchor2850. Bounded Switch flow and related97d47e35/bfc1a087 native/NEXT fix are accepted with scoped proof; continue highest-value remaining Crew native route/route-balance coverage. Browser and human pacing remain Open under existing restriction.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -5210,7 +5216,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T12:53:05.441940+00:00"
+      "updated_at": "2026-11-16T12:55:50.388221+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -39528,8 +39534,14 @@
       "aliases": [],
       "group": "current",
       "parent_id": "BTH-QA-CREW-ENDING-001",
-      "state": "open",
+      "state": "complete",
       "commits": [
+        {
+          "sha": "6a773e7733f368b9a2cd02bf9ee2e5090ce78eee",
+          "evidence": [
+            "docs/testing/Crew_stash_return_route_fix_QA_20261116.md"
+          ]
+        },
         {
           "sha": "97d47e352612c336768885b076a1cb8a8cc566cd",
           "evidence": [
@@ -39557,7 +39569,7 @@
         "Focused pure regression, mandatory animation liveness for cache-performance change, actual saved-state fixed-map and normal return/retrieval, then main/NEXT follow-through."
       ],
       "acceptance_scope": "Confirmed native presentation fix with targeted cache/cap/visibility invariants and exact served NEXT identity/assets where available. Browser startup, pointer, visuals and Web gameplay remain restricted/Open.",
-      "status": "STASH_RECOVERY_FIX_NATIVE_NEXT_VERIFIED_PROOF_ASSOC_PENDING",
+      "status": "STASH_RECOVERY_ROAD_FIXED_NATIVE_NEXT_VERIFIED",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -39570,7 +39582,7 @@
           "summary": "Fix97d47e35 integrated/pushedmainbfc1a087. Focused59contracts,50nativefixedMap/return/retrieval/coldchecks and requiredliveness pass, includingpostmerge gate; sourcehashesunchanged. Exact NEXTbfc/tree8c20 cleanBUILD/manifest/REF/version/entry match; freshPCK/nativehashes and3exactpriorenginehashes matchcurrentstage. Originalfixturefailure excluded. No browser runtimeclaim."
         }
       ],
-      "next_action": "Associate completed proof commit, then close only the narrow stash recovery-road/cache fix. Exact deployedbfc1a087 identity/sidecars/assets verified;59focused/50native and requiredliveness gates pass. Broader Crew/browser/pacing scope remains Open.",
+      "next_action": "Preserve faithful blocked-map baseline and fixed-map/normal return/retrieval/cold checkpoints. Narrow stash recovery road/cache fix is Complete through native checks and exact NEXT identity/assets; broader Crew route balance, pacing and restricted browser coverage remain Open. Bounded Switch flow is accepted separately.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -39579,7 +39591,7 @@
         "observed_at": "2026-11-16T11:47:34.358972+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T12:53:00.960101+00:00"
+      "updated_at": "2026-11-16T12:55:42.377773+00:00"
     },
     {
       "id": "BTH-QA-CREW-ENDING-001-SWITCH-ROUTE-STASH-20261116",
@@ -39587,8 +39599,14 @@
       "aliases": [],
       "group": "current",
       "parent_id": "BTH-QA-CREW-ENDING-001",
-      "state": "open",
+      "state": "complete",
       "commits": [
+        {
+          "sha": "6a773e7733f368b9a2cd02bf9ee2e5090ce78eee",
+          "evidence": [
+            "docs/testing/Crew_Switch_route_and_stash_QA_20261116.md"
+          ]
+        },
         {
           "sha": "97d47e352612c336768885b076a1cb8a8cc566cd",
           "evidence": [
@@ -39615,7 +39633,7 @@
         "Follow normal multi-stop recipient sequence, delayed whole-job reward and cold/stale guards, or document the actual availability/blocker."
       ],
       "acceptance_scope": "Native normal-control multi-stop package/recovery coverage. Only the current release Count is enabled; excluded Whale/Game plans are not treated as reachable. Broader route balance, human pacing and restricted browser/WASM acceptance stay Open.",
-      "status": "SWITCH_TWO_STOP_RECOVERY_NATIVE_COMPLETE_PROOF_ASSOC_PENDING",
+      "status": "NATIVE_SWITCH_MULTI_STOP_STASH_COMPLETE",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -39633,7 +39651,7 @@
           "summary": "NormalSwitchrecruitment/timedtwo-stopoffer,pickup/stash/cold/remoteguard pass. Confirmed stash-roadUIbug fixed/tested/main/NEXTbfc verified. RealMapreturn/retrieval recovered samepackage. Committed-sourcefirstdrop2340 paidnothing/duty1preserved;finalPawn2490 paid34once,cash174/trust36/reputation100/duty0/debt[],anchor2850. Coldpartial/final staleguards pass. One door diagnostic excluded; no browser/humanpacingclaim."
         }
       ],
-      "next_action": "Associate full scoped proof commit for completed Switch two-stop/stash flow:sw22 atPawn2490,174cash/100reputation/Switchtrust36/zeroowedCrewduties/debt[],postmissfalse/anchor2850. Firstdrop correctly deferred reward; final34paidonce and cold/stale checks pass. Related97d47e35/bfc1a087 routingfix is NEXTidentity/assets verified. Broader browser/pacing/route balance remain Open.",
+      "next_action": "Preserve actual stashed/remote/returned/partial/final Signal checkpoints and fixed-map proof. Bounded native Switch route acceptance is Complete; parent/sidebar remain Open for broader route balance, human pacing and restricted browser/WASM acceptance.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -39642,7 +39660,7 @@
         "observed_at": "2026-11-16T11:22:15.740419+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T12:53:05.441940+00:00"
+      "updated_at": "2026-11-16T12:55:50.388221+00:00"
     },
     {
       "id": "BTH-QA-CREW-ENDING-001-ABANDONMENT-REPLACEMENT-20261116",
@@ -43781,6 +43799,12 @@
           ]
         },
         {
+          "sha": "6a773e7733f368b9a2cd02bf9ee2e5090ce78eee",
+          "evidence": [
+            "docs/testing/Crew_Switch_route_and_stash_QA_20261116.md"
+          ]
+        },
+        {
           "sha": "97d47e352612c336768885b076a1cb8a8cc566cd",
           "evidence": [
             "docs/testing/Crew_Switch_route_and_stash_QA_20261116.md"
@@ -43805,7 +43829,7 @@
         "No duplicate worker or bypass of browser/computer denials."
       ],
       "acceptance_scope": "Owner restart request Sentinel_3464b568ddc48191af59e314081b75ef and sidebar request Sentinel_11391c7e280c81918ac7603758e4721d; transferred intact checkpoint and explicit three-directory custody. Native ending reached and persisted; deployed browser/WASM acceptance remains separately required.",
-      "status": "SWITCH_TWO_STOP_RECOVERY_NATIVE_COMPLETE_PROOF_ASSOC_PENDING",
+      "status": "SWITCH_ROUTE_AND_STASH_FIX_COMPLETE_BROADER_CREW_OPEN",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -43888,7 +43912,7 @@
           "summary": "NormalSwitchrecruitment/timedtwo-stopoffer,pickup/stash/cold/remoteguard pass. Confirmed stash-roadUIbug fixed/tested/main/NEXTbfc verified. RealMapreturn/retrieval recovered samepackage. Committed-sourcefirstdrop2340 paidnothing/duty1preserved;finalPawn2490 paid34once,cash174/trust36/reputation100/duty0/debt[],anchor2850. Coldpartial/final staleguards pass. One door diagnostic excluded; no browser/humanpacingclaim."
         }
       ],
-      "next_action": "Associate full scoped proof commit for completed Switch two-stop/stash flow:sw22 atPawn2490,174cash/100reputation/Switchtrust36/zeroowedCrewduties/debt[],postmissfalse/anchor2850. Firstdrop correctly deferred reward; final34paidonce and cold/stale checks pass. Related97d47e35/bfc1a087 routingfix is NEXTidentity/assets verified. Broader browser/pacing/route balance remain Open.",
+      "next_action": "Preserve sw22 successful two-stop/stash campaign:174cash/100sharedreputation/Switchtrust36/zeroCrewduties/debt[],clock2490/anchor2850. Bounded Switch flow and related97d47e35/bfc1a087 native/NEXT fix are accepted with scoped proof; continue highest-value remaining Crew native route/route-balance coverage. Browser and human pacing remain Open under existing restriction.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -43901,7 +43925,7 @@
           "user:Sentinel_b9ecabacc1848191bed579864eef4f2a"
         ]
       },
-      "updated_at": "2026-11-16T12:53:05.441940+00:00"
+      "updated_at": "2026-11-16T12:55:50.388221+00:00"
     },
     {
       "id": "CREW-NOAUDIT-ENABLED-LOCK-20261116",

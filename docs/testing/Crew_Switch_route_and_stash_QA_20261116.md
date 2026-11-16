@@ -67,4 +67,6 @@ Every case used admitted E: layouts and manifests, both capacity/launch gates, v
 | crew-sidebar-sw21-261116 | `bfc1a087` | 19/19 | `52e79b01be76060213c5436e97ce10e16fa751ecf22791f02f193b61948d6b90` |
 | crew-sidebar-sw22-261116 | `bfc1a087` | 14/14 | `39d486d3741cf71eca781220fc3d2125ead3c67b4c3d941d8f6034cd7261151e` |
 
-Total **260/260** in 21 closed native Jobs. Exact GD copies and source/custody/storage/launch/cleanup receipts remain beside each log. Consolidated receipt: `E:\CodexQA\BTH\runs\crew-switch-record5-261116\evidence\cases.json`. Manual reconciliation: `E:\CodexQA\BTH\runs\crew-switch-record5-261116\evidence\reconciliation.json`.
+Total **260/260** in 21 closed native Jobs. Exact GD copies and source/custody/storage/launch/cleanup receipts remain beside each log. Consolidated receipt: `E:\CodexQA\BTH\runs\crew-switch-accept1-261116\evidence\cases.json`. Manual reconciliation: `E:\CodexQA\BTH\runs\crew-switch-accept1-261116\evidence\reconciliation.json`.
+
+Accepted source/QA proof commit: `6a773e7733f368b9a2cd02bf9ee2e5090ce78eee`. This bounded native Switch multi-stop and stash recovery acceptance is Complete only through the actual recorded full route, whole-job payment/duty credit and cold/stale persistence. The associated stash-return UI fix has separate focused/liveness/native/NEXT evidence. Broader Crew and browser/WASM/human-pacing coverage remain Open.
