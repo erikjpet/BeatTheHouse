@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T10:47:08.913702+00:00",
+  "updated_at": "2026-11-16T11:15:43.019619+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -38668,7 +38668,7 @@
       "parent_ids": [],
       "group": "current",
       "state": "open",
-      "status": "NATIVE_1366_GENERAL_CONTINUING_LAST_DOLLAR_TICKET_TRAVEL",
+      "status": "NATIVE_1366_GENERAL_BLACKJACK_47_19_LIVENESS_MAIN_NEXT_PENDING",
       "owner": {
         "assignment_state": "assigned",
         "name": "Sidebar general NEXT gameplay QA",
@@ -38812,6 +38812,12 @@
             "docs/testing/BTH-ROULETTE-REPAID-DRAFT-001_20261116.md",
             "docs/testing/NEXT_sidebar_shop_menu_QA_20261116.md"
           ]
+        },
+        {
+          "sha": "9d25cd06a6effe6514ab02011c34504f6ea507a2",
+          "evidence": [
+            "docs/testing/BTH-BLACKJACK-FIRST-DRAFT-001_20261116.md"
+          ]
         }
       ],
       "deployment": {
@@ -38929,15 +38935,25 @@
           "reference": "docs/testing/NEXT_sidebar_last_dollar_ticket_travel_QA_20261116.md",
           "kind": "continued_native_low_bankroll_all_in_ticket_travel_cold",
           "summary": "128 additional qualified checks; naturally earned last1 cash, actual ChangeStake/ConfirmBet, sealed zero-liquid deferral/cold/reveal; paid four-ticket away/return IDs, natural LightsOut response,106-chip redemption/menu persistence/empty repeat. Probe diagnostics excluded. General1366. No verified new product defect; original native identities and browser gap retained."
+        },
+        {
+          "reference": "docs/testing/BTH-BLACKJACK-FIRST-DRAFT-001_20261116.md",
+          "kind": "fourth_native_gameplay_defect_investigating",
+          "summary": "Reproducible native missing-authority overdue Blackjack cadence clears first side-bet draft; tracked separately asBTH-BLACKJACK-FIRST-DRAFT-001. No qualified fix or delivery claim yet."
+        },
+        {
+          "reference": "docs/testing/BTH-BLACKJACK-FIRST-DRAFT-001_20261116.md",
+          "kind": "fourth_qualified_native_gameplay_root_fix",
+          "summary": "Blackjack first-draft idle initialization corrected and qualified47 native/19 synthetic/liveness; separate from1366 general checks. Scoped main/NEXT pending, browser acceptance open."
         }
       ],
-      "next_action": "Continue distinct ordinary native gameplay from the retained95cash106chips/no marker/Grand Casino checkpoint and the genuinely resolved last-dollar path. Preserve owner saves, other campaigns, exact source identities and the open browser acceptance; do not close the parent on a bounded test record.",
+      "next_action": "Complete authorized main/NEXT delivery of BTH-BLACKJACK-FIRST-DRAFT-001, then continue distinct ordinary native play from the retained95cash105chips/no-marker settled checkpoint. Preserve owner saves, separate ending owners and browser gap.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T10:43:38.074500+00:00",
+        "observed_at": "2026-11-16T11:15:43.019619+00:00",
         "evidence": [
           "docs/testing/NEXT_sidebar_general_QA_20261116.md",
           "docs/testing/NEXT_sidebar_scratch_travel_QA_20261116.md",
@@ -38947,7 +38963,7 @@
           "docs/testing/NEXT_sidebar_Beach_Slot_QA_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T10:43:38.074500+00:00",
+      "updated_at": "2026-11-16T11:15:43.019619+00:00",
       "planned_app_changes": []
     },
     {
@@ -39277,6 +39293,150 @@
         ]
       },
       "updated_at": "2026-11-16T09:09:32.307221+00:00",
+      "planned_app_changes": []
+    },
+    {
+      "id": "BTH-BLACKJACK-FIRST-DRAFT-001",
+      "name": "Preserve the first Blackjack draft after restoring an overdue table cadence",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "BTH-NEXT-QA-GENERAL-SIDEBAR-001"
+      ],
+      "group": "current",
+      "state": "open",
+      "status": "FIXED_47_NATIVE_19_SYNTH_LIVENESS_MAIN_NEXT_PENDING",
+      "owner": {
+        "assignment_state": "assigned",
+        "name": "Sidebar general NEXT gameplay QA",
+        "task_ref": "6afa5080-2f00-8191-804a-d401aa98a020"
+      },
+      "objective": {
+        "text": "Advance a legitimately overdue restored Blackjack settled-table timer autonomously when authority has not yet been initialized, so catch-up never discards the first new player draft. Preserve canonical no-wager/funding, tutorial, active-hand, malformed/pending authority and receipt safeguards; keep independent general/endings and browser acceptance open.",
+        "source": "User ongoing ordinary native NEXT playtesting and tested root-fix/main/NEXT authorization through parent01a1a147-7f07-7583-baf0-771a839f1013. Discovered from the earned95cash106chips campaign using actual Continue/room/canvas controls and normal idle.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "faithful-reproduction",
+            "description": "Original ordinary native/cold overdue timer, emitted first click and missing authority evidence.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-BLACKJACK-FIRST-DRAFT-001_20261116.md"
+            ]
+          },
+          {
+            "id": "root-cause-fix",
+            "description": "Narrow cadence initialization without weakening pending/malformed/tutorial/active-hand guards.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-BLACKJACK-FIRST-DRAFT-001_20261116.md"
+            ]
+          },
+          {
+            "id": "fixed-native-cold",
+            "description": "Same unchanged owned profile, idle progress and first side-bet/cold/paid behavior.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-BLACKJACK-FIRST-DRAFT-001_20261116.md"
+            ]
+          },
+          {
+            "id": "focused-compatibility",
+            "description": "Meaningful authority/cadence compatibility and no-pointer liveness.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-BLACKJACK-FIRST-DRAFT-001_20261116.md"
+            ]
+          },
+          {
+            "id": "main-next-delivery",
+            "description": "Scoped authorized main push and exact existing NEXT identity/served assets.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "exact-web-startup",
+            "description": "Browser startup/rendered acceptance remains separately unverified under retained restriction.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": true,
+          "complete": false,
+          "areas": [
+            {
+              "name": "Faithful native no-input/first-draft reproduction and isolated custody",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/BTH-BLACKJACK-FIRST-DRAFT-001_20261116.md"
+              ]
+            },
+            {
+              "name": "Narrow cadence initialization correction and relevant native/cold/authority compatibility",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/BTH-BLACKJACK-FIRST-DRAFT-001_20261116.md"
+              ]
+            },
+            {
+              "name": "Authorized scoped main/NEXT exact served identity and assets",
+              "state": "remaining",
+              "evidence": []
+            },
+            {
+              "name": "Exact browser startup/rendered acceptance under retained control restriction",
+              "state": "remaining",
+              "evidence": []
+            }
+          ]
+        }
+      },
+      "implementation_batches": [],
+      "commits": [
+        {
+          "sha": "9d25cd06a6effe6514ab02011c34504f6ea507a2",
+          "evidence": [
+            "docs/testing/BTH-BLACKJACK-FIRST-DRAFT-001_20261116.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/testing/BTH-BLACKJACK-FIRST-DRAFT-001_20261116.md",
+          "kind": "actual_native_cold_first_side_draft_discarded_after_overdue_idle",
+          "summary": "Actual native emitted21+3 click disappears after overdue20-second timer stalls without authority until manual input; repeat source9b9d13ae, no pause/modal/presentation guard, actual95cash106chips/RNG unchanged, source custody and owned0."
+        },
+        {
+          "reference": "docs/testing/BTH-BLACKJACK-FIRST-DRAFT-001_20261116.md",
+          "kind": "qualified_native_cold_draft_paid_surrender_menu_and_authority_liveness",
+          "summary": "47 native,19 synthetic,no-pointer PASS. Same original first draft persists; cold9 quote paid once; actual cold13/late Surrender/main-side settlement/menu returns95cash105chips. Original failures and three native assertion diagnostics preserved/excluded."
+        }
+      ],
+      "next_action": "Push the scoped tested fix and qualification records to authorized main, follow the existing NEXT watcher and exact served assets/source. Keep browser startup/rendered acceptance unverified; continue general native playtesting separately.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-16T11:15:43.019619+00:00",
+        "evidence": [
+          "docs/testing/BTH-BLACKJACK-FIRST-DRAFT-001_20261116.md"
+        ]
+      },
+      "updated_at": "2026-11-16T11:15:43.019619+00:00",
       "planned_app_changes": []
     }
   ],
