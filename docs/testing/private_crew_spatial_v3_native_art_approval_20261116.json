@@ -1,0 +1,509 @@
+{
+  "schema": "bth.private_crew_spatial_native_art_review/v1",
+  "reviewed_on": "2026-11-16",
+  "reviewed_at": "2026-11-16T16:23:29.595666+00:00",
+  "task_id": "BTH-ENV-SPATIAL-PRIVATE-001",
+  "room": "punchline_back_room",
+  "environment": "punchline_back_room",
+  "decision": "GO_FOR_TEST_BUILD",
+  "independent_reviewer": "/root (independent of the original art generator and assembler)",
+  "evidence_custody_auditor": "/root plus /root/review_test_adapter maintained full21 revalidation",
+  "production_activation_approved": true,
+  "test_publication_approved": false,
+  "browser_acceptance": "NOT_RUN",
+  "full_work_or_release_acceptance": false,
+  "approval_scope": "Integrate only this exact Private Crew V2 background with the unchanged7motions/fullJSON/index and prepare its separately gated TEST build. This bounded art approval does not claim natural Crew work/C3/save/revisit or release/publication acceptance.",
+  "source_commit": "aaef5bbe0a15dbdb07cae352861d5fd722cc68fd",
+  "source_tree": "91c4af9b20934465d0238188386b2d83ffdbeeef",
+  "source_scope": "PARTIAL_SELECTED_PATH_ARCHIVE",
+  "candidate_root": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-PRIVATETRIAL-20261116\\candidate_sources\\private-crew-spatial-r1-assembled-v2",
+  "package_10_file_sha256": "11fb1cb50971100bd21404fdb73a0ca3550f487f656aa694874f4159c15dcfe4",
+  "room_9_file_sha256": "eb5d1119473c2bef36b650a6e6ef528f426a2155b1108977992774bdbf4228f3",
+  "approved_package_files_sha256": {
+    "assets/art/environments/punchline_back_room/anim/floor_glint_0.png": "4a6d0f35054fff1e66e5d208c04579315ef9e177a695da98903745f4b2d4fcc0",
+    "assets/art/environments/punchline_back_room/anim/floor_glint_1.png": "90c802a9dda2dc591e1d3faed2ae5e17f1cbd93451480ac6dfb2422039925016",
+    "assets/art/environments/punchline_back_room/anim/floor_glint_2.png": "95cf2166aaf1a3be8fa0379b7e051f2278e8f29be18ed50766e11bf0c45c1e3d",
+    "assets/art/environments/punchline_back_room/anim/floor_glint_3.png": "5df5b9a1483ed57014a5cb2e09e8b0a7f0d8566fafa5ee66bb0e90dec4d68472",
+    "assets/art/environments/punchline_back_room/anim/floor_glint_4.png": "7fe35aa3eb2b6df3bd307a2c04d9212a59b7cbe481c3dc94612d5d87f48172ba",
+    "assets/art/environments/punchline_back_room/anim/floor_glint_5.png": "cdec42943461d79b19283e18037b0c28eac2781607c0d46b7287c835475a0abe",
+    "assets/art/environments/punchline_back_room/anim/floor_glint_6.png": "6d3a46e2613d871e0e4783bfb519b34f737d4fdf0a4c317c25385c4b75855748",
+    "assets/art/environments/punchline_back_room/background.png": "1939afd50bc5df04524c45965e9a895d6cb2f9fd17b30dc1824df9671892242b",
+    "data/art/environments/index.json": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+    "data/art/environments/punchline_back_room.json": "c8734f4d3a00a0e3620167216e18faabdfb87551ee1d8f05fd89a5ed47cbc059"
+  },
+  "private_json_sha256": "c8734f4d3a00a0e3620167216e18faabdfb87551ee1d8f05fd89a5ed47cbc059",
+  "native_adapter_sha256": "c62aafc0a1eabc8f9786e14c138176d5add5e2022df89f1993a389816606fe3e",
+  "native_policy_sha256": "2bd508738aeeb4bdc0f07f793aaca1d3d54399e8dab65164b45abbbc8e8554b7",
+  "selected_source_helper_sha256": "051ae002c310602175b89b2db624ca7777651ce69ee89057dbcff2f540e53625",
+  "native_source_config_sha256": "7bf3e43b0ca48d03a6ce2b127480c8c222bed15854cf78999c78a62c6c5f5d68",
+  "native_identity_sha256": "7cf77ea99369b9ee2c4b170b631b02e4bab816feb8620fb56275106525e3707b",
+  "native_capture_inputs_sha256": "e649740b3a45d448ef75134a17ed1a929d0891b748648288867a02adb60f5b24",
+  "native_contexts_sha256": "c70b13d520d4d39ea3927c2bfd98ff00fda5b0fdd0efda77f3cc82e65a5247d0",
+  "native_motion_sha256": "c34a0993041fd262bfa665cf59efb0b0344e00125efe4e7d8fd8cd3a631e3bc5",
+  "native_liveness_sha256": "e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b",
+  "native_capture_sha256": "d4b09c4fbbd1339d67aadb3c201d2c4f4d1eb1d204fef1cb1ea89e6bf357e52c",
+  "native_phase_receipts": {
+    "source-identity": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-source-identity\\evidence\\phase-result.json",
+      "sha256": "90bb66b0e330febfb50f645329ceaa01f38bcc595058074545645cba42088e17",
+      "job_sha256": "5db544e5c3af7fe4db4af7e62f0fa0a7e1b66c37611c239db537ea2b34bffcc7",
+      "log_sha256": "7002dac0d5ebcce0d9d43997f601a03fcd6474fea13f1da823b1fae879c8d620",
+      "pid": 26024,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {}
+    },
+    "tree": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-tree\\evidence\\phase-result.json",
+      "sha256": "040bd547e408bc60356096081173f39b9cc8fd11dc302a335723d105dae4c134",
+      "job_sha256": "75d79c42050afe6dae2ba40e9ce020e4fede57ae40b1f571b9e8182dd0a0c384",
+      "log_sha256": "b0ecd7001fd27d70bdfb48ef8f58bd914a6cfdb9ee1877c3fdb41bfc4d4effe7",
+      "pid": 39540,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {}
+    },
+    "baseline-tree": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-baseline-tree\\evidence\\phase-result.json",
+      "sha256": "fec0a04c74cb02410710be6b3b76b22123fb48425df77bb48b18e55d4b78a09b",
+      "job_sha256": "c007ededc99b4660c315d604d15a5d9961075ab13f7042290e9fe1c6bd2dd904",
+      "log_sha256": "2d10cb875de127677736b61e6cd9a8cf79a47d042c0caff04474eeef8bfaad2b",
+      "pid": 36284,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {}
+    },
+    "select": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-select\\evidence\\phase-result.json",
+      "sha256": "8dcbfe4b2394ad242490fada32849c86b1c75dfa7dab50d6758c46ceb3abd88c",
+      "job_sha256": "f78ff5662df261bbe5bba2c5980210a4bf70943081edb27f573b6381af38abda",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pid": 21012,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "closure.json": "d9c2728c7dcdfafc262836e196501468257a999f45a26e114edef0e26357589f",
+        "selection.json": "5f7ff82614355a2e08b492de2a3105f9b2a552b99e0e90fd768034df3f60d21d",
+        "worker-result.json": "f6bcfda6a652839c07636ef0281f389e806080106cc726e0e7b5d9a02b899f3d"
+      }
+    },
+    "archive": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-archive\\evidence\\phase-result.json",
+      "sha256": "f7a64b8ec78d15106bd18649e90be8fb895e6387fe8112d424848da65ed6f1ce",
+      "job_sha256": "682e164850f8b90e6da41af87319e4b770479b18747e531058b0b61aceab9ea4",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pid": 28364,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {}
+    },
+    "prepare": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-prepare\\evidence\\phase-result.json",
+      "sha256": "611d6cdc37430a0a91e06e3e7361d14f5061862f453704cb240dbf5c9fdc299c",
+      "job_sha256": "f7823a1f4267e9d9520f13d38b6d8d64d5bfbe55f6ad38d36e374ec09254ac9b",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pid": 33944,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "worker-result.json": "62101274326ba1280dc759b50bf57d977dd9607ce4d9de550c55a0eb5021ae6d"
+      }
+    },
+    "install": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-install\\evidence\\phase-result.json",
+      "sha256": "e3d498c9f2a5499ea1ddfb0409ac58bec3581308933af03c8e36eddc83000b8a",
+      "job_sha256": "656142d701bbd6d588ac6dcc1c05da2f07011c9fe8781990bb5f6d6a8f70aa89",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pid": 40540,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "worker-result.json": "3d97355b5ca3662102984b2a8ee93d2a556e7021c815495ae1331e5518e2b6d9"
+      }
+    },
+    "import": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-import\\evidence\\phase-result.json",
+      "sha256": "47fa46193c4a5e89d1cf548c65996f1111ca0c0bc07c8b224eb15732bd38affc",
+      "job_sha256": "4972a986067e03ffa934992a215ab74e6a4511ff0ca7777831574d43bb620c24",
+      "log_sha256": "e81efc68e5587c04d8143aaf05bcb6532614fb4093afbd1c72db170a1000d817",
+      "pid": 39728,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {}
+    },
+    "identity": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-identity\\evidence\\phase-result.json",
+      "sha256": "8a63604aaa733ddba594b77026bc9414a5ca81857d9182ecda6de7dde1161488",
+      "job_sha256": "e05b68949241518089bd5c370b65771077dec397c1ce0e5712897549fbecd24f",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pid": 40152,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "worker-result.json": "ddf8dfd2fa92fdf69dc8b72d55980509722d98409f0c1138bb067a0f68a4e795"
+      }
+    },
+    "contexts": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-contexts\\evidence\\phase-result.json",
+      "sha256": "99bb137b5423bdfd7998f54c6865c1f0ed558fbeb970744260020475ff2f22c7",
+      "job_sha256": "afbd8cec500f7b90d6b4d5f1dcffb6bbfcc2c8f356924709bfcffb81b430d663",
+      "log_sha256": "3850756790d984ca0bcfed6260cf7c3aa49adce0aa6e2b344dcbd65f4fe1e715",
+      "pid": 43172,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "private_preart_metadata.json": "c70b13d520d4d39ea3927c2bfd98ff00fda5b0fdd0efda77f3cc82e65a5247d0"
+      }
+    },
+    "motion": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-motion\\evidence\\phase-result.json",
+      "sha256": "0db2a3190f03e3587001d11d16f2a00d18761048209d662942b4801d33903aca",
+      "job_sha256": "40195e51c1c6b43d67cc4122dc06160a40885d2c48c9f1d44f45fcb61d57425a",
+      "log_sha256": "adb4939d8b6f1c08af30f3df302b01cd2bfe15bbe7d21008ecc727ddefc290c9",
+      "pid": 39272,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "private_animation_probe.json": "c34a0993041fd262bfa665cf59efb0b0344e00125efe4e7d8fd8cd3a631e3bc5"
+      }
+    },
+    "liveness": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-liveness\\evidence\\phase-result.json",
+      "sha256": "5b41e12a01fd615e3ee09428289c4fc9f82340a32e40adccbaea8d6ce8d684c8",
+      "job_sha256": "552dbee03739734adfab004aa99216cdbe81e874910d3ba98401f76b2dfc7c21",
+      "log_sha256": "e29852b691121d700756c634d444d153d5c55c48fcf9fa04bec6ee71adb85e6b",
+      "pid": 43084,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {}
+    },
+    "capture": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-capture\\evidence\\phase-result.json",
+      "sha256": "3a0e15c90299178cbde5976117039cbb385660dc091d5c2f717b5d8e3bfce554",
+      "job_sha256": "19034264a0ad9966a6bc946d0d66ea26c7177716cf00b171bb433f223c3f96c2",
+      "log_sha256": "e557e6a3ab998f2210926d71354b6c7d03b9128e1f33d218dfbfc43398ad0ad3",
+      "pid": 39964,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "capture/animation_capture.json": "d4b09c4fbbd1339d67aadb3c201d2c4f4d1eb1d204fef1cb1ea89e6bf357e52c"
+      }
+    },
+    "lifecycle": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-lifecycle\\evidence\\phase-result.json",
+      "sha256": "76975345fba390c39903eed66e6105279536f8002077354d89522807c29ca65a",
+      "job_sha256": "f3a4a58b14626cc857d305b7824fb9d3f76c8a1fc1814b2e833e2221207757bb",
+      "log_sha256": "8e2b32a6234ad0fe40666822eaf8e13a8e4494037e8ae477f3efcbd1638d148d",
+      "pid": 36160,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "private_lifecycle_result.json": "0c09e6fed5f528035c2c05be58d904b2a83878f2206c237513d6dc292993fc0a"
+      }
+    },
+    "composite": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-composite\\evidence\\phase-result.json",
+      "sha256": "2a62fee0cf78dd8613c8753c0c4eb0bb52de1b59b413ccecfc971d3f3aece235",
+      "job_sha256": "7cf7f54353179ad2327943d4867deb0d4bcab144321a3452c1f489a5e26720bb",
+      "log_sha256": "3122047588d3b83fa42f610ed7e8a7eccbaaa445ce5b5543b79614057871229a",
+      "pid": 43396,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "private_spatial_acceptance.json": "f2407238e7876cee87258031f5a1dba9c04e600b516765a192b4c18c895e9379"
+      }
+    },
+    "composite-rm": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-composite-rm\\evidence\\phase-result.json",
+      "sha256": "efd37acc380d2866bb0d4713740e5b3d9473db3bdaab751c08f10a1db11c2d02",
+      "job_sha256": "fa4fb37993559002e97d78339db5b664d93a6566b6ac6af6eabe6e9f2162164e",
+      "log_sha256": "4302d3c10b17e8b27daa8fd7562ec64b031ee60158912b3f240d0711ba755594",
+      "pid": 5296,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "private_spatial_acceptance.json": "bb2279b7575852813ff23eddf172b743a08b7bca553dc94e7bc804ea13f11f4d"
+      }
+    },
+    "depth": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-depth\\evidence\\phase-result.json",
+      "sha256": "423bfc39b3764d97430c4ff99d09a1850e4a9098df98870342b326ccd76e3565",
+      "job_sha256": "61b2619acbd9364908eed93072fa9649b7b133cf2375445449cf3cf0ff795606",
+      "log_sha256": "3122047588d3b83fa42f610ed7e8a7eccbaaa445ce5b5543b79614057871229a",
+      "pid": 15384,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "private_spatial_acceptance.json": "81fd8604c2410992af68e8efd0e288fb455c495b97f717f7e34f02f210960793"
+      }
+    },
+    "placement": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-placement\\evidence\\phase-result.json",
+      "sha256": "bf3a41b172612c50db888579c64f031c7372c84c6e308a165fcc3afd2d3c2903",
+      "job_sha256": "8e773c60deeafec2b4d6afde4d97e2f8cf04979f266139c1b57c5fa1e616f788",
+      "log_sha256": "3122047588d3b83fa42f610ed7e8a7eccbaaa445ce5b5543b79614057871229a",
+      "pid": 35108,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "private_spatial_acceptance.json": "0251015e2b7d1c0a27a5b55b3403cc35b0cd136f7f994171c7106f3baa41099f"
+      }
+    },
+    "lucky-glyph": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-lucky-glyph\\evidence\\phase-result.json",
+      "sha256": "f037de4fb2efa5987689fbf155e72b0c469ba1bb8f6b3f7b73b947d3b3bf19ec",
+      "job_sha256": "b12cc1c972118643fe5c080021fd437413036bcc5c046cf6443d0f69736de560",
+      "log_sha256": "bc07309949133cb9fad661334443ed6825fc1c503ec4e58d47496bd2b5fc8332",
+      "pid": 41520,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "private_spatial_acceptance.json": "88ee6f79a12af164364469c9886aaec3d6e19060b231374baa1a878a00608ec4"
+      }
+    },
+    "work-coverage": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-work-coverage\\evidence\\phase-result.json",
+      "sha256": "10c91e62d3272aaffcc0d23c9428976bfa7c9bdf9087adaca7b0e96fdc299b38",
+      "job_sha256": "3c9a0c7c3e2d33996df3ea371f4e275b46fb77ae09771a5251e0002d05b7eac4",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pid": 36424,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "worker-result.json": "7d168c3a7c808d7f17bfb94454c6f3c5b2adf15641c560c7b9ae10638a2a8ff5"
+      }
+    },
+    "acceptance-summary": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-acceptance-summary\\evidence\\phase-result.json",
+      "sha256": "1126f32504587913fad400bd99d35eeb2fef26db31532b2f4b32d426cd74abcc",
+      "job_sha256": "6205bf4773e4cd76c08311d6ffdb07f9cc7f4d627819e0324758bf0b84e0e318",
+      "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "pid": 43752,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "artifact_sha256": {
+        "worker-result.json": "3bfcb34a153d64fe3c26dd2fa95af0274000e725f7fac6959e86bc4fa27c65c9"
+      }
+    }
+  },
+  "native_acceptance": {
+    "source-identity": {},
+    "tree": {},
+    "baseline-tree": {},
+    "select": {},
+    "archive": {},
+    "prepare": {},
+    "install": {},
+    "import": {},
+    "identity": {},
+    "contexts": {
+      "initial_contexts": 1,
+      "initial_objects": 10,
+      "selected_labels": 10,
+      "typed_host_pairs": 6,
+      "direct_private_scenarios": 0,
+      "work_outcome_coverage": false
+    },
+    "motion": {
+      "native_entries": 7,
+      "default_low_detail_entries": 7,
+      "unique_motion_pngs": 7,
+      "checks": 15
+    },
+    "liveness": {
+      "no_pointer_liveness": true
+    },
+    "capture": {
+      "frames": 152,
+      "actual_clock_span": 20.1249284444445,
+      "native_entries": 7,
+      "fullapp_is_actual_production": true,
+      "board900_is_diagnostic_clone": true,
+      "native1800_excludes_live_objects": true,
+      "no_pointer_input_during_capture": true,
+      "no_interpolation_resizing_or_frame_clock_rewrite": true
+    },
+    "lifecycle": {
+      "constructed_cases": 5,
+      "objects_and_selected": 70,
+      "typed_character_pairs": 19,
+      "Base_plus_lifecycle_typed_PNGs": 50,
+      "C3": "NOT REACHED: Mags absent in bounded C2 segments0..6; no forced job offer or membership",
+      "UI_earned_work_save_revisit": false
+    },
+    "composite": {
+      "new_probe": true,
+      "mode": "composite",
+      "case": "__none",
+      "checks": 34,
+      "independent_actual_visual_review_still_required": true
+    },
+    "composite-rm": {
+      "new_probe": true,
+      "mode": "composite-rm",
+      "case": "__none",
+      "checks": 34,
+      "independent_actual_visual_review_still_required": true
+    },
+    "depth": {
+      "new_probe": true,
+      "mode": "depth",
+      "case": "__none",
+      "checks": 7,
+      "independent_actual_visual_review_still_required": true
+    },
+    "placement": {
+      "new_probe": true,
+      "mode": "placement",
+      "case": "__none",
+      "checks": 7,
+      "independent_actual_visual_review_still_required": true
+    },
+    "lucky-glyph": {
+      "new_probe": true,
+      "mode": "lucky-glyph",
+      "case": "C1_marker",
+      "checks": 9,
+      "independent_actual_visual_review_still_required": true
+    },
+    "work-coverage": {
+      "status": "WORK_NOT_COVERED_BY_RETAINED_PRIVATE_OBSERVERS",
+      "C3": "NOT REACHED: Mags absent in bounded C2 segments0..6; no forced job offer or membership",
+      "lifecycle_receipt_sha256": "76975345fba390c39903eed66e6105279536f8002077354d89522807c29ca65a",
+      "executed_work_transactions": 0,
+      "UI_earned_work_save_revisit": false,
+      "full_work_or_release_acceptance": false,
+      "reason": "Original helper constructs trust/owner-clock fixtures; it never reaches Mags/C3 or runs a Crew job."
+    },
+    "acceptance-summary": {
+      "status": "PRIVATE_NATIVE_ART_ASSERTIONS_PASS_PENDING_VISUAL_AND_WORK_COVERAGE",
+      "core_phases": [
+        "source-identity",
+        "tree",
+        "baseline-tree",
+        "select",
+        "archive",
+        "prepare",
+        "install",
+        "import",
+        "identity",
+        "contexts",
+        "motion",
+        "liveness",
+        "capture"
+      ],
+      "acceptance_phases": [
+        "lifecycle",
+        "composite",
+        "composite-rm",
+        "depth",
+        "placement",
+        "lucky-glyph"
+      ],
+      "native_entries": 7,
+      "default_low_detail_entries": 7,
+      "initial_contexts": 1,
+      "initial_objects": 10,
+      "constructed_lifecycle_cases": 5,
+      "typed_host_plus_character_PNGs": 50,
+      "zero_counters_and_replays": true,
+      "source_commit": "aaef5bbe0a15dbdb07cae352861d5fd722cc68fd",
+      "source_tree": "91c4af9b20934465d0238188386b2d83ffdbeeef",
+      "phase_receipt_sha256": {
+        "contexts": "99bb137b5423bdfd7998f54c6865c1f0ed558fbeb970744260020475ff2f22c7",
+        "motion": "0db2a3190f03e3587001d11d16f2a00d18761048209d662942b4801d33903aca",
+        "liveness": "5b41e12a01fd615e3ee09428289c4fc9f82340a32e40adccbaea8d6ce8d684c8",
+        "capture": "3a0e15c90299178cbde5976117039cbb385660dc091d5c2f717b5d8e3bfce554",
+        "lifecycle": "76975345fba390c39903eed66e6105279536f8002077354d89522807c29ca65a",
+        "composite": "2a62fee0cf78dd8613c8753c0c4eb0bb52de1b59b413ccecfc971d3f3aece235",
+        "composite-rm": "efd37acc380d2866bb0d4713740e5b3d9473db3bdaab751c08f10a1db11c2d02",
+        "depth": "423bfc39b3764d97430c4ff99d09a1850e4a9098df98870342b326ccd76e3565",
+        "placement": "bf3a41b172612c50db888579c64f031c7372c84c6e308a165fcc3afd2d3c2903",
+        "lucky-glyph": "f037de4fb2efa5987689fbf155e72b0c469ba1bb8f6b3f7b73b947d3b3bf19ec",
+        "work-coverage": "10c91e62d3272aaffcc0d23c9428976bfa7c9bdf9087adaca7b0e96fdc299b38"
+      },
+      "work_coverage": {
+        "status": "WORK_NOT_COVERED_BY_RETAINED_PRIVATE_OBSERVERS",
+        "C3": "NOT REACHED: Mags absent in bounded C2 segments0..6; no forced job offer or membership",
+        "lifecycle_receipt_sha256": "76975345fba390c39903eed66e6105279536f8002077354d89522807c29ca65a",
+        "executed_work_transactions": 0,
+        "UI_earned_work_save_revisit": false,
+        "full_work_or_release_acceptance": false,
+        "reason": "Original helper constructs trust/owner-clock fixtures; it never reaches Mags/C3 or runs a Crew job."
+      },
+      "full_work_or_release_acceptance": false,
+      "art_approval": false,
+      "production_art_written": false,
+      "test_updated": false,
+      "scope": "No UI-earned Crew work, C3/Mags, save/revisit, final independent art or TEST acceptance inferred."
+    }
+  },
+  "authenticated_evidence": {
+    "all21_closed_zero_and_all_receipt_artifacts": true,
+    "generated_png_inventory_rows_rehashed": 870,
+    "all4047_identity_source_files_rehashed_unchanged": true,
+    "original_source_static_review": "docs/testing/private_crew_spatial_r1_static_review_v2_20261116.json",
+    "original_source_static_review_sha256": "cd0ba14d82ea8317436d9983ded0b34b53cf72212fe5dfa796a5c4a104385395"
+  },
+  "visual_samples": [
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-contexts\\evidence\\__none_actual_play.png",
+      "sha256": "57b679fb25acf9bde96d143559de51b7f4e3728ef1192cb8ae5fd2fa3f5faea2",
+      "personally_viewed": true
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-lifecycle\\evidence\\C1_marker_actual_play.png",
+      "sha256": "1606a989c0cdbeaf92ab32856b73fc30f17150e0457073d4bbb56e9647814c76",
+      "personally_viewed": true
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-lifecycle\\evidence\\C2_associate_0_actual_play.png",
+      "sha256": "6d022e271f8871a6fa49a4be0b7de60189452b9384fee63db87709e50cc2a50c",
+      "personally_viewed": true
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-lifecycle\\evidence\\C2_associate_2_actual_play.png",
+      "sha256": "cfbd8270eeb6551dbc8b2e2738b9c47cdd0fe6da42666e540cfa13e66e52f46a",
+      "personally_viewed": true
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-lifecycle\\evidence\\C2_associate_5_actual_play.png",
+      "sha256": "b3c9e7cf3cd9398162461ff77d35119d789ff6aea21d91cfdca9a105ae1b408d",
+      "personally_viewed": true
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-lifecycle\\evidence\\C4_silas_actual_play.png",
+      "sha256": "ac48e8f02dfffdec2dca6006b4c696685352cc53ef3b331ba78c5ec23843dba2",
+      "personally_viewed": true
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-PRIVNATIVE-20261116-v3-lucky-glyph\\evidence\\Base_recruitment_Lucky_actual_composite.png",
+      "sha256": "464bc25571e965166dcc782d7f003af373b16f1ed9101166a224d977e6bcc747",
+      "personally_viewed": true
+    }
+  ],
+  "source_master_viewed": {
+    "path": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-PRIVATETRIAL-20261116\\candidate_sources\\private-crew-spatial-r1-assembled-v2\\assets\\art\\environments\\punchline_back_room\\background.png",
+    "sha256": "1939afd50bc5df04524c45965e9a895d6cb2f9fd17b30dc1824df9671892242b",
+    "personally_viewed": true
+  },
+  "source_replay_crops": "NONE; zero counters and replays remain unchanged",
+  "visual_judgment": [
+    "Felt reads as a shallow horizontal surface with a separately shaded wood apron, two grounded feet and coherent contact on the existing floor.",
+    "Base and all five actual constructed lifecycle views preserve live positions, silhouettes and readable relevant labels; no support cutout halo, brick patch or new floor seam observed.",
+    "Lucky recruitment label's actual composite was inspected after the native Vector2 binding fix. It is a constructed eligibility fixture and does not establish clean-Base or all-progression legibility.",
+    "Normal and Reduce Motion composites34each/depth/placement plus original no-pointer liveness passed; all7native/default-low motifs retained."
+  ],
+  "findings": [],
+  "preserved_predecessor": {
+    "v2_first18_then_Lucky_script_error_STOP": "docs/testing/private_crew_spatial_v2_stop_20261116.md",
+    "v2_receipts_modified": false
+  },
+  "limits_and_remaining_gates": [
+    "C3/Mags NOT REACHED; zero work transactions; no UI-earned recruitment/work/save/revisit. No waiver or positive full-work claim.",
+    "Actualcapture152frames/20.1249284444445scene seconds; does not prove full57.7778s floor cycle. Separate animated preview still required.",
+    "TEST builder/strict PCK delta/actualGBR96 baseline/source-code UID bridge/qualifiedpublication/default-TLS served bytes remain separate gates.",
+    "Browser startup/gameplay NOT_RUN. Native and future HTTPS bytes do not imply browser acceptance.",
+    "The parent all20 objective remains open:4rooms delivered/16remaining at this approval."
+  ]
+}

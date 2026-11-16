@@ -1,0 +1,50 @@
+{
+  "schema": "bth.private_crew_spatial_integration/v1",
+  "recorded_at": "2026-11-16T16:26:03.944949+00:00",
+  "task_id": "BTH-ENV-SPATIAL-PRIVATE-001",
+  "status": "EXACT_APPROVED_BACKGROUND_INTEGRATED_ON_ART_BRANCH_ONLY",
+  "worktree_head_before_integration": "542f10d58e7d642ddab5e21eeb7a872d433b244a",
+  "native_source_commit": "aaef5bbe0a15dbdb07cae352861d5fd722cc68fd",
+  "native_source_tree": "91c4af9b20934465d0238188386b2d83ffdbeeef",
+  "art_approval": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\docs\\testing\\private_crew_spatial_v3_native_art_approval_20261116.json",
+  "art_approval_sha256": "94c93bfbf03b2aad757cd205258885d8b449ff0009de26c0a05625c555de4843",
+  "changed_files": [
+    "assets/art/environments/punchline_back_room/background.png"
+  ],
+  "before": {
+    "assets/art/environments/punchline_back_room/anim/floor_glint_0.png": "4a6d0f35054fff1e66e5d208c04579315ef9e177a695da98903745f4b2d4fcc0",
+    "assets/art/environments/punchline_back_room/anim/floor_glint_1.png": "90c802a9dda2dc591e1d3faed2ae5e17f1cbd93451480ac6dfb2422039925016",
+    "assets/art/environments/punchline_back_room/anim/floor_glint_2.png": "95cf2166aaf1a3be8fa0379b7e051f2278e8f29be18ed50766e11bf0c45c1e3d",
+    "assets/art/environments/punchline_back_room/anim/floor_glint_3.png": "5df5b9a1483ed57014a5cb2e09e8b0a7f0d8566fafa5ee66bb0e90dec4d68472",
+    "assets/art/environments/punchline_back_room/anim/floor_glint_4.png": "7fe35aa3eb2b6df3bd307a2c04d9212a59b7cbe481c3dc94612d5d87f48172ba",
+    "assets/art/environments/punchline_back_room/anim/floor_glint_5.png": "cdec42943461d79b19283e18037b0c28eac2781607c0d46b7287c835475a0abe",
+    "assets/art/environments/punchline_back_room/anim/floor_glint_6.png": "6d3a46e2613d871e0e4783bfb519b34f737d4fdf0a4c317c25385c4b75855748",
+    "assets/art/environments/punchline_back_room/background.png": "0913167ca23cb0422a11e8fa7a7be429e04ff19c0ead3ddfb6a751598029f4ee",
+    "data/art/environments/index.json": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+    "data/art/environments/punchline_back_room.json": "c8734f4d3a00a0e3620167216e18faabdfb87551ee1d8f05fd89a5ed47cbc059"
+  },
+  "after": {
+    "assets/art/environments/punchline_back_room/anim/floor_glint_0.png": "4a6d0f35054fff1e66e5d208c04579315ef9e177a695da98903745f4b2d4fcc0",
+    "assets/art/environments/punchline_back_room/anim/floor_glint_1.png": "90c802a9dda2dc591e1d3faed2ae5e17f1cbd93451480ac6dfb2422039925016",
+    "assets/art/environments/punchline_back_room/anim/floor_glint_2.png": "95cf2166aaf1a3be8fa0379b7e051f2278e8f29be18ed50766e11bf0c45c1e3d",
+    "assets/art/environments/punchline_back_room/anim/floor_glint_3.png": "5df5b9a1483ed57014a5cb2e09e8b0a7f0d8566fafa5ee66bb0e90dec4d68472",
+    "assets/art/environments/punchline_back_room/anim/floor_glint_4.png": "7fe35aa3eb2b6df3bd307a2c04d9212a59b7cbe481c3dc94612d5d87f48172ba",
+    "assets/art/environments/punchline_back_room/anim/floor_glint_5.png": "cdec42943461d79b19283e18037b0c28eac2781607c0d46b7287c835475a0abe",
+    "assets/art/environments/punchline_back_room/anim/floor_glint_6.png": "6d3a46e2613d871e0e4783bfb519b34f737d4fdf0a4c317c25385c4b75855748",
+    "assets/art/environments/punchline_back_room/background.png": "1939afd50bc5df04524c45965e9a895d6cb2f9fd17b30dc1824df9671892242b",
+    "data/art/environments/index.json": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+    "data/art/environments/punchline_back_room.json": "c8734f4d3a00a0e3620167216e18faabdfb87551ee1d8f05fd89a5ed47cbc059"
+  },
+  "before_native10_sha256": "ce147a7e45f5252460d3a19dbe180b71ef0863fc9201097b8e3f9e20bd5ebb13",
+  "after_native10_sha256": "11fb1cb50971100bd21404fdb73a0ca3550f487f656aa694874f4159c15dcfe4",
+  "after_room9_sha256": "eb5d1119473c2bef36b650a6e6ef528f426a2155b1108977992774bdbf4228f3",
+  "all7_animation_PNGs_full_JSON_index_unchanged": true,
+  "all_other_room_assets_and_gameplay_coordinates_unchanged": true,
+  "canonical_background_import_sha256": "42bfe5f50cd92e5116a82180ad0735e284d8ae75fb8c630d508a34919766bc14",
+  "original_source_retained_in_Git_and_baseline": true,
+  "no_game_saves_or_active_profiles_accessed": true,
+  "TEST_source_still": "e07ca9280f4eebc531ef83dd50a79d76ec51ad23",
+  "test_updated": false,
+  "main_or_NEXT_changed": false,
+  "remaining": "Separate strict TEST build/publication/served checks and animated preview; fullwork/C3/UI/save/browser limitations retained."
+}
