@@ -38157,13 +38157,20 @@
       "name": "Investigate shared NEXT and TEST travel slowdown",
       "group": "current",
       "state": "open",
-      "status": "IN_PROGRESS_EXACT_MATCH_CACHE_REVIEW",
+      "status": "PARTIAL_OPTIMIZATION_PUSHED_DELIVERY_PENDING",
       "owner": {
         "name": "dot gameplay QA and independent performance reviewer",
         "task_ref": "/root/find_next_game_bugs",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "7ce76838cec9397251aff8a1e6fc2e7d5a254992",
+          "evidence": [
+            "docs/testing/BTH-TEST-TRAVEL-PERF-001_20261115.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -38186,7 +38193,7 @@
           "summary": "Actual GPU rendered route10/10; immutable snapshot193.9 to157.9ms with optional receipt; not WASM. Pressure refinement preserves encoded core cache under4MiB."
         }
       ],
-      "next_action": "Finish reviewed optional exact-byte match cache with core-first receipt reclamation, focused gates and scoped main/NEXT plus TEST delivery. User-reported sustained Web slowdown remains open.",
+      "next_action": "Verify existing NEXT watcher promotion; coordinate same scoped TEST patch with art owners. Keep sustained Web slowdown parent open.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -38195,7 +38202,7 @@
         "observed_at": "2026-11-15T22:42:52.236538+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-15T23:59:09.334960+00:00",
+      "updated_at": "2026-11-16T00:05:23.266391+00:00",
       "scope": [
         "Shared travel slowdown diagnosis and scoped correction on main/NEXT and art/TEST if supported.",
         "Preserve immutable save snapshots, exact numeric/packed values, durability, animation and source authority."
