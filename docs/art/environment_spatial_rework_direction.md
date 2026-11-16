@@ -39,15 +39,15 @@ All 20 backgrounds were independently inspected. Evidence classifications below 
 | jazz_club / JAZZ-001 | Curtain continues through stage contact plane | Confirmed native populated R3; visible deck absent beneath musicians |
 | kitty_cat_lounge / KITTY-001 | Performers' feet meet vertical stage fascia | Confirmed native populated; add coherent deck. Candle tray intent remains separate |
 | punchline_club / PUNCH-001 | Four upright disks described as round tables | Static plus source brief; current6 actor clearance review |
-| motel / MOTEL-001 | Right low slab support ambiguous | Candidate, inspect actual replay/actors |
+| motel / MOTEL-001 | Right low slab support ambiguous | Confirmed native R3: right merchandise counter floats; central table has supports |
 | apartment / APARTMENT-001 | Sofa feet terminate on brick wall | Confirmed native populated |
 | house / HOUSE-001 | Furniture/rug read on wall plane | Confirmed native populated |
 | grand_casino_cage / CAGE-001 | Counter depth/support unclear | Candidate; actual composition review |
-| beach / BEACH-001 | Unsupported sky neon; umbrella/boardwalk join | Candidate; compare modest distant-pier brief and actual actors |
+| beach / BEACH-001 | Unsupported sky neon; umbrella/boardwalk join | Confirmed native R1 visible sky bars/umbrella join; source brief specifies distant pier |
 | back_alley / BACK-001 | Right crate appears suspended | Candidate; inspect live/replay composition |
 | gas_station_casino / GAS-001 | No severe standalone support defect in initial scan | Open seam/composite/motion review, not passed |
 | corner_store / CORNER-001 | No severe standalone support defect in initial scan | Open seam/composite/motion review, not passed |
-| motel_room / MOTELROOM-001 | No confirmed issue yet | Open full populated support/seam/motion review |
+| motel_room / MOTELROOM-001 | Confirmed native R3: Sleep bed lies in wall field; rug reads vertical | Reconstruct coherent floor/bed support, preserve live anchors |
 
 LIGHT-002 covers the four verified Grand-area rectangular sign masks as a distinct correction, not a reason to regenerate whole rooms. Work one room to completion; other rows retain explicit pending state rather than vanishing when Bar lands.
 

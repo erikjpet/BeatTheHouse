@@ -63,6 +63,26 @@
       "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PRIVATETRIAL-20261115-r4-video-01\\evidence\\capture\\frame_000.png",
       "sha256": "e951dfc07d3d426c1421cd2d6765f774330f1330e0ec59ec019105a7aceef89c",
       "bytes": 736235
+    },
+    "beach": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BEACHTRIAL-20261115-r1-video-01\\evidence\\capture\\frame_000.png",
+      "sha256": "31f51dff0a70aef32d209ffae13b1aff408a319e6129a044d1a80d8a7d3be9f4",
+      "bytes": 696788
+    },
+    "grand_casino_cage": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-CAGETRIAL-20261115-r1-video-01\\evidence\\capture\\frame_000.png",
+      "sha256": "2bd6c6447bf6c4d686243783be21ebbcb5bcfee91427551e5a44f9bf1e756d00",
+      "bytes": 455630
+    },
+    "motel": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELTRIAL-20261114-r3-base-preview-01\\evidence\\frames\\settled_play.png",
+      "sha256": "2fec12ee8a970cfee38c7edd848e98d3a57d3ddfc99c4427d65177b6959144dc",
+      "bytes": 772008
+    },
+    "motel_room": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-MOTELROOMTRIAL-20261115-r3-video-01\\evidence\\capture\\frame_000.png",
+      "sha256": "2bf068ee32e44c8fc2513125e2c10d8a445156bcc90db89acf66a487c68daeac",
+      "bytes": 699302
     }
   }
 }
