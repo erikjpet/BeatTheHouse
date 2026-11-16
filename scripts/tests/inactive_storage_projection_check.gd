@@ -10,6 +10,7 @@ static func check(run: RunState) -> Dictionary:
 	var expect := func(ok: bool, label: String) -> void:
 		checks.append(label)
 		if not ok: failures.append(label)
+	_check_match_receipts(expect)
 	var input := ProjectionScript.owned(run.world_map) as Dictionary
 	var before := var_to_bytes(run.to_dict())
 	var rng := [run.rng_seed, run.rng_state]
@@ -99,7 +100,7 @@ static func check(run: RunState) -> Dictionary:
 	var plain := {"id":"encoded_cache_probe", "kind":"test", "game_states":{}, "nested":[{"n":7}]}
 	var cached := ProjectionScript.compile(plain, identity, 8192)
 	expect.call(not cached._encoded_projection.is_empty(), "plain_graph_uses_encoded_cache")
-	expect.call(cached.retained_bytes == var_to_bytes(cached._source).size() + var_to_bytes(cached._projection).size() + var_to_bytes(cached._encoded_projection).size(), "encoded_graph_counts_toward_same_byte_budget")
+	expect.call(cached.retained_bytes == var_to_bytes(cached._source).size() + var_to_bytes(cached._projection).size() + var_to_bytes(cached._encoded_projection).size() + cached._source_receipt.size(), "encoded_graph_counts_toward_same_byte_budget")
 	var shallow_budget := var_to_bytes(plain).size() * 2
 	var uncached := ProjectionScript.compile(plain, identity, shallow_budget)
 	expect.call(uncached != null and uncached._encoded_projection.is_empty() and uncached.retained_bytes <= shallow_budget, "encoded_cache_declines_without_growing_budget")
@@ -152,3 +153,61 @@ static func check(run: RunState) -> Dictionary:
 	return {"passed":failures.is_empty(), "checks":checks, "failures":failures,
 		"same_input_native_world_projection_usec":{"original":original_usec,"compiled":compiled_usec},
 		"cache_serialized_bytes":run._inactive_storage_projection_bytes}
+
+
+static func _check_match_receipts(expect: Callable) -> void:
+	var identity := func(body: Dictionary) -> Dictionary: return body
+	var negative: float = PackedByteArray([0,0,0,0,0,0,0,128]).decode_double(0)
+	var negative32: float = PackedByteArray([0,0,0,128]).decode_float(0)
+	var numeric: Script = load("res://scripts/core/storage_numeric_json.gd")
+	expect.call(numeric._bits(negative) != numeric._bits(0.0) and numeric._bits(negative32) != numeric._bits(0.0), "runtime_negative_zero_fixture_bits")
+	var typed: Array[int] = [1,2]
+	var typed_dict: Dictionary[String,int] = {"a":1}
+	var cases := [{"n":1}, {"n":negative}, {"n":PackedFloat32Array([negative32])}, {"n":PackedFloat64Array([negative])}, {"typed":typed,"dict":typed_dict}]
+	for source in cases:
+		var entry := ProjectionScript.compile(source, identity, 65536)
+		expect.call(not entry._source_receipt.is_empty() and entry.matches(source), "exact_receipt_accepts_original")
+		var changed: Dictionary = ProjectionScript.owned(source)
+		if source.has("n"):
+			if typeof(source.n) == TYPE_INT: changed.n = 1.0
+			elif typeof(source.n) == TYPE_FLOAT: changed.n = 0.0
+			elif typeof(source.n) == TYPE_PACKED_FLOAT32_ARRAY: changed.n = PackedFloat32Array([0.0])
+			else: changed.n = PackedFloat64Array([0.0])
+			var original_match: bool = changed == entry._source and CodecScript._storage_numeric_refinement(changed, entry._source)
+			expect.call(not original_match and not entry.matches(changed), "receipt_preserves_original_numeric_rejection")
+		var snapshot := var_to_bytes(entry.snapshot())
+		var encoded := var_to_bytes(entry._encoded_projection)
+		var old_bytes: int = entry.retained_bytes
+		var receipt_bytes: int = entry._source_receipt.size()
+		expect.call(entry.release_source_receipt() == receipt_bytes and entry.retained_bytes == old_bytes - receipt_bytes, "receipt_release_exact_accounting")
+		expect.call(entry.release_source_receipt() == 0, "receipt_release_idempotent")
+		expect.call(entry.matches(source) and var_to_bytes(entry.snapshot()) == snapshot and var_to_bytes(entry._encoded_projection) == encoded, "release_preserves_core_and_matching")
+		if source.has("n"): expect.call(not entry.matches(changed), "released_receipt_preserves_numeric_rejection")
+	var ordered := {"a":1,"b":2}
+	var entry := ProjectionScript.compile(ordered, identity, 8192)
+	expect.call(entry.matches({"b":2,"a":1}), "reordered_dictionary_keeps_legacy_fallback")
+	var run := RunState.new()
+	var baseline_bytes := 0
+	var source := {"id":"receipt_pressure", "archetype_id":"back_alley", "game_states":{}, "description":"x".repeat(180000)}
+	var projector := func(body: Dictionary) -> Dictionary: return run._environment_for_persistent_storage(body, false)
+	for index in range(8):
+		var expected := ProjectionScript.compile(source, projector, RunState.INACTIVE_STORAGE_PROJECTION_BUDGET - baseline_bytes)
+		if expected != null:
+			expected.release_source_receipt()
+			baseline_bytes += expected.retained_bytes
+		var actual := run._inactive_storage_projection("pressure_%d" % index, source)
+		expect.call((expected == null) == (actual == null), "receipt_pressure_preserves_core_admission")
+		if actual != null:
+			expect.call(var_to_bytes(actual.snapshot()) == var_to_bytes(expected.snapshot()) and var_to_bytes(actual._encoded_projection) == var_to_bytes(expected._encoded_projection), "receipt_pressure_preserves_encoded_core")
+		expect.call(run._inactive_storage_projection_bytes <= RunState.INACTIVE_STORAGE_PROJECTION_BUDGET, "receipt_pressure_aggregate_bounded")
+	var sum := 0
+	var receipts := 0
+	for cached in run._inactive_storage_projections.values():
+		sum += cached.retained_bytes
+		receipts += cached._source_receipt.size()
+	expect.call(sum == run._inactive_storage_projection_bytes, "receipt_pressure_exact_aggregate")
+	var before := run._inactive_storage_projection_bytes
+	expect.call(run._inactive_storage_projection("opaque_decline", {"opaque":RefCounted.new()}) == null, "failed_compile_declines")
+	var after_receipts := 0
+	for cached in run._inactive_storage_projections.values(): after_receipts += cached._source_receipt.size()
+	expect.call(run._inactive_storage_projection_bytes == before and after_receipts == receipts, "failed_compile_keeps_existing_receipts")
