@@ -1,0 +1,68 @@
+{
+  "task": "BTH-ENV-SPATIAL-001",
+  "observed_at": "2026-11-16T00:21:20.996231+00:00",
+  "status": "EXISTING_CAPTURE_REVIEW_FINDINGS_OPEN",
+  "limits": [
+    "Existing native captures are not current live Web acceptance.",
+    "Bar source has served Web proof.",
+    "Kitty R5 static source reportedly unchanged in R6; retain version distinction.",
+    "No new native launch or art change by director."
+  ],
+  "captures": {
+    "bar": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-BARWEB01-probe-6\\evidence\\screen.png",
+      "sha256": "cf6a38919a04332357e770d2cdd0d1ff27b2dd3b0d48809d03e01c46d57abc29",
+      "bytes": 790591
+    },
+    "grand_casino": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDTRIAL-20261115-r4-video-01\\evidence\\capture\\frame_000.png",
+      "sha256": "3c41e0c6703dff93ec281bbb8d9cea3dcb466fbd07ab2325a3ee8d0652c83a6a",
+      "bytes": 748382
+    },
+    "grand_casino_high_limit": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HIGHLIMITTRIAL-20261115-r1-video-01\\evidence\\capture\\frame_000.png",
+      "sha256": "540cd6ef8c6573bc4a632a94d4f3d86b3c1c83529d8b51828479c26f3676546d",
+      "bytes": 881679
+    },
+    "grand_casino_back_room": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-GRANDBACKTRIAL-20261115-r1-video-01\\evidence\\capture\\frame_000.png",
+      "sha256": "2455f19b9791adf13d7252ad4148ca066ba34cbc83c5f07258e80d162c2d11eb",
+      "bytes": 546679
+    },
+    "delta_queen": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-DELTATRIAL-20261115-r3-capture-01\\evidence\\__none_actual_play.png",
+      "sha256": "e125f6f707abcb18d97b25dd058d76a7433ec5654cedfb8b1834ae676dba639e",
+      "bytes": 733376
+    },
+    "kitty_cat_lounge": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-KITTYTRIAL-20261115-r5-capture-01\\evidence\\kitty_cat_lounge_amateur_night_actual_play.png",
+      "sha256": "8904d91d77d26d56679046d50049768aa0901229e919a63dd9fe6caf5916be1a",
+      "bytes": 715582
+    },
+    "apartment": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-APARTMENTTRIAL-20261115-r2-video-01\\evidence\\capture\\frame_000.png",
+      "sha256": "48a3517d8214c7d3d5162c5e6770cd4a1dbc3ef36d617b6e737007cb067f68ba",
+      "bytes": 712607
+    },
+    "house": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-HOUSETRIAL-20261115-r3-video-01\\evidence\\capture\\frame_000.png",
+      "sha256": "eb801d44c07a7a2f10b0f42a4da72d89bd6941adf5126dccee35e6408bb72935",
+      "bytes": 499988
+    },
+    "pawn_shop": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PAWNTRIAL-20261114-r2-animation-base-01\\evidence\\frames\\settled_play.png",
+      "sha256": "c553a801db8081c9a1ef37b92e219fe1c07f8f4560f2f3d204b539557772d840",
+      "bytes": 771231
+    },
+    "jazz_club": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-JAZZTRIAL-20261114-r3-animation-base-01\\evidence\\frames\\settled_play.png",
+      "sha256": "463fa79c8ed4be442d123f5f3dcb1276399f41fa4f1fb384c9b32e918e7f61a0",
+      "bytes": 691236
+    },
+    "punchline_back_room": {
+      "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENVART-PRIVATETRIAL-20261115-r4-video-01\\evidence\\capture\\frame_000.png",
+      "sha256": "e951dfc07d3d426c1421cd2d6765f774330f1330e0ec59ec019105a7aceef89c",
+      "bytes": 736235
+    }
+  }
+}

@@ -38167,7 +38167,7 @@
       "name": "Apply shared travel performance fix to TEST",
       "group": "current",
       "state": "open",
-      "status": "FOCUSED_VALIDATION",
+      "status": "TEST_ARTIFACT_VERIFIED_BROWSER_PENDING",
       "owner": {
         "name": "find_next_game_bugs",
         "task_ref": "/root/find_next_game_bugs",
@@ -38176,16 +38176,28 @@
       "commits": [
         {
           "sha": "0ef525e012df485bc3312e0d2ea89e3aa05b4d55",
-          "evidence": []
+          "evidence": [
+            "docs/testing/BTH-TEST-TRAVEL-PERF-001_TEST_20261116.md"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "evidence": []
+        "state": "verified",
+        "commit": "0ef525e012df485bc3312e0d2ea89e3aa05b4d55",
+        "evidence": [
+          "docs/testing/BTH-TEST-TRAVEL-PERF-001_TEST_20261116.md"
+        ],
+        "scope": "Exact TEST artifact and HTTPS PCK hash verified; browser startup/behavior unverified; sustained slowdown parent remains open."
       },
-      "evidence": [],
-      "next_action": "Exact scoped fix pushed;95/95 and required liveness passed. Verify TEST export/source and behavior; keep parent slowdown open.",
+      "evidence": [
+        {
+          "kind": "test_delivery",
+          "reference": "docs/testing/BTH-TEST-TRAVEL-PERF-001_TEST_20261116.md",
+          "summary": "NEXT ca6c646f retained; TEST0ef525e0 exact3-entry PCK diff;421 raw and400 compiled art unchanged;95/95+liveness pass."
+        }
+      ],
+      "next_action": "Verify browser travel performance when supported; shared fix delivered but sustained slowdown is not closed.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -38194,7 +38206,7 @@
         "observed_at": "2026-11-15T16:42:52.236538-06:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T00:15:06.753044+00:00",
+      "updated_at": "2026-11-16T00:21:35.587637+00:00",
       "scope": [
         "Shared exact-byte save/projection cache performance correction; preserve all art, save outcomes and no-input animation."
       ],
