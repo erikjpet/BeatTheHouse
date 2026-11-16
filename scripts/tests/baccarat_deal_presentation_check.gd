@@ -36,7 +36,7 @@ func _run() -> void:
 		await _check_hand(game, canvas, fixture)
 	canvas.free()
 	if failures.is_empty():
-		print("BACCARAT_DEAL_PRESENTATION PASS natural=true both_draw=true player_only=true banker_only=true clocks=true replay=true save_load=true repeated_deal=true")
+		print("BACCARAT_DEAL_PRESENTATION PASS natural=true both_draw=true player_only=true banker_only=true clocks=true replay=true save_load=true repeated_deal=true auto_min_controls=true auto_paid=true auto_sitout=true")
 	else:
 		for failure in failures: push_error(failure)
 	quit(0 if failures.is_empty() else 1)
@@ -152,6 +152,58 @@ func _check_hand(game, canvas, fixture: Dictionary) -> void:
 	var next_money := run.grand_casino_total_money()
 	var next_result: Dictionary = host._sealed_action_host_resolve_intent("deal_baccarat", 20, {})
 	_check(bool(next_result.get("blackjack_host_committed", false)) and run.grand_casino_total_money() == next_money + int(next_result.get("chips_delta", next_result.get("bankroll_delta", 0))), "%s repeated deal conserved funds" % fixture.name)
+
+	if str(fixture.name) == "natural":
+		# An invalid timed draft must remain editable, with no pending delivery.
+		var guard_time := start + 20000
+		run.simulation_msec = guard_time
+		host._sealed_action_host_surface_intent("baccarat_clear", 0, false, guard_time)
+		host._sealed_action_host_surface_intent("baccarat_chip", 0, false, guard_time)
+		var guard_targets: Array = game.surface_state(run, run.current_environment, host._current_game_surface_ui_state()).get("bet_targets", [])
+		var guard_player := -1
+		for index in range(guard_targets.size()):
+			if str((guard_targets[index] as Dictionary).get("id", "")) == "player":
+				guard_player = index
+				break
+		host._sealed_action_host_surface_intent("baccarat_bet", guard_player, false, guard_time)
+		var guard_ledger: Dictionary = host._sealed_action_host_ledger(run, false, false)
+		_check(guard_player >= 0 and int((guard_ledger.get("session", {}) as Dictionary).get("baccarat_bets", {}).get("player", 0)) == 5, "timed minimum fixture stages an ordinary unpaid five-unit Player draft")
+		var guard_money := run.grand_casino_total_money()
+		var guard_rng := run.rng_state
+		var guard_hand := Runtime.canonical_json(game._table_state_preview(run, run.current_environment).get("last_hand", {}))
+		host._sealed_action_host_auto_intent(guard_time)
+		run.simulation_msec = guard_time + GameModule.TABLE_ROUND_START_DELAY_MSEC + 1
+		var guarded_auto: Dictionary = host._sealed_action_host_auto_intent(run.simulation_msec)
+		_check(not bool(guarded_auto.get("direct_resolve", false)) and not bool(guarded_auto.get("resolve", false)), "below-minimum timer does not request a sealed hand")
+		guard_ledger = host._sealed_action_host_ledger(run, false, false)
+		_check((guard_ledger.get("pending_delivery", {}) as Dictionary).is_empty() and run.grand_casino_total_money() == guard_money and run.rng_state == guard_rng and Runtime.canonical_json(game._table_state_preview(run, run.current_environment).get("last_hand", {})) == guard_hand, "timed rejection leaves no delivery or money/RNG/card effect")
+		var guard_clear: Dictionary = host._sealed_action_host_surface_intent("baccarat_clear", 0, false, run.simulation_msec)
+		guard_ledger = host._sealed_action_host_ledger(run, false, false)
+		_check(bool(guard_clear.get("handled", false)) and ((guard_ledger.get("session", {}) as Dictionary).get("baccarat_bets", {}) as Dictionary).is_empty(), "normal Clear remains usable after timed minimum rejection")
+
+		if (guard_ledger.get("pending_delivery", {}) as Dictionary).is_empty():
+			# The new guard must keep valid funded and sit-out auto hands working.
+			run.simulation_msec += 1
+			host._sealed_action_host_surface_intent("baccarat_chip", 2, false, run.simulation_msec)
+			host._sealed_action_host_surface_intent("baccarat_bet", guard_player, false, run.simulation_msec)
+			host._sealed_action_host_auto_intent(run.simulation_msec)
+			run.simulation_msec += GameModule.TABLE_ROUND_START_DELAY_MSEC + 1
+			var paid_before := run.grand_casino_total_money()
+			var paid_auto: Dictionary = host._sealed_action_host_auto_intent(run.simulation_msec)
+			var paid_delivery: Dictionary = paid_auto.get("_sealed_action_host_delivery", {})
+			var paid_result: Dictionary = host._sealed_action_host_resolve_intent("deal_baccarat", int(paid_delivery.get("stake", 0)), paid_delivery)
+			guard_ledger = host._sealed_action_host_ledger(run, false, false)
+			_check(bool(paid_auto.get("direct_resolve", false)) and bool(paid_result.get("blackjack_host_committed", false)) and int(paid_result.get("baccarat_total_wager", -1)) == 20 and run.grand_casino_total_money() == paid_before + int(paid_result.get("chips_delta", 0)) and (guard_ledger.get("pending_delivery", {}) as Dictionary).is_empty(), "valid funded auto hand still commits its exact twenty-unit wager")
+			run.simulation_msec += 6000
+			host._sealed_action_host_surface_intent("baccarat_clear", 0, false, run.simulation_msec)
+			host._sealed_action_host_auto_intent(run.simulation_msec)
+			run.simulation_msec += GameModule.TABLE_ROUND_START_DELAY_MSEC + 1
+			var sitout_before := run.grand_casino_total_money()
+			var sitout_auto: Dictionary = host._sealed_action_host_auto_intent(run.simulation_msec)
+			var sitout_delivery: Dictionary = sitout_auto.get("_sealed_action_host_delivery", {})
+			var sitout_result: Dictionary = host._sealed_action_host_resolve_intent("deal_baccarat", int(sitout_delivery.get("stake", 0)), sitout_delivery)
+			guard_ledger = host._sealed_action_host_ledger(run, false, false)
+			_check(bool(sitout_auto.get("direct_resolve", false)) and bool(sitout_result.get("blackjack_host_committed", false)) and bool(sitout_result.get("baccarat_sat_out", false)) and int(sitout_result.get("baccarat_total_wager", -1)) == 0 and run.grand_casino_total_money() == sitout_before and (guard_ledger.get("pending_delivery", {}) as Dictionary).is_empty(), "valid automatic sit-out hand keeps zero stake and no pending delivery")
 	host.free()
 
 

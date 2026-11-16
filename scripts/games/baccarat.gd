@@ -629,18 +629,17 @@ func surface_auto_action_command(ui_state: Dictionary, run_state: RunState, envi
 	if not bool(timer.get("due", false)):
 		return {"handled": false}
 	session["baccarat_sit_out"] = _bet_dict(session.get("baccarat_bets", {})).is_empty()
+	# Reuse manual Deal validation before the host can publish a delivery.
+	# An under-minimum draft stays editable instead of becoming pending.
+	var command := surface_action_command("baccarat_deal", 0, false, session, run_state, environment)
 	GameModule.reset_table_round_timer(table)
 	_update_environment_table(environment, table)
-	return GameModule.surface_command({
-		"handled": true,
-		"ui_state": session,
-		"action_id": "deal_baccarat",
-		"action_kind": "legal",
-		"direct_resolve": true,
-		"skip_stake_validation": true,
-		"preserve_surface_ui_state": false,
-		"message": "The croupier deals; you sit this hand out." if bool(session.get("baccarat_sit_out", false)) else "The croupier deals the working baccarat bets.",
-	})
+	if not bool(command.get("resolve", false)):
+		return command
+	command.erase("resolve")
+	command["direct_resolve"] = true
+	command["message"] = "The croupier deals; you sit this hand out." if bool(session.get("baccarat_sit_out", false)) else "The croupier deals the working baccarat bets."
+	return command
 
 
 func surface_action_command(surface_action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:

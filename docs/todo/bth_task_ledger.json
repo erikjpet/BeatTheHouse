@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T05:12:16.616395+00:00",
+  "updated_at": "2026-11-16T05:55:53.852238+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -38590,7 +38590,7 @@
       "parent_ids": [],
       "group": "current",
       "state": "open",
-      "status": "NATIVE_709_GENERAL_OPEN_SLOT_MAIN_NEXT_SERVED",
+      "status": "NATIVE_774_GENERAL_OPEN_BACCARAT_FIXED_MAIN_NEXT_PENDING",
       "owner": {
         "assignment_state": "assigned",
         "name": "Sidebar general NEXT gameplay QA",
@@ -38644,7 +38644,8 @@
                 "docs/testing/NEXT_sidebar_Bar_Dice_QA_20261116.md",
                 "docs/testing/NEXT_sidebar_Beach_Slot_QA_20261116.md",
                 "docs/testing/NEXT_sidebar_G_invitation_QA_20261116.md",
-                "docs/testing/NEXT_sidebar_Craps_QA_20261116.md"
+                "docs/testing/NEXT_sidebar_Craps_QA_20261116.md",
+                "docs/testing/NEXT_sidebar_Cage_Baccarat_QA_20261116.md"
               ]
             },
             {
@@ -38700,6 +38701,12 @@
           "evidence": [
             "docs/testing/NEXT_sidebar_G_invitation_QA_20261116.md"
           ]
+        },
+        {
+          "sha": "bd4413c65ff462253ccb69d3230956579fc8cc3f",
+          "evidence": [
+            "docs/testing/NEXT_sidebar_Craps_QA_20261116.md"
+          ]
         }
       ],
       "deployment": {
@@ -38747,15 +38754,20 @@
           "reference": "docs/testing/NEXT_sidebar_Craps_QA_20261116.md",
           "kind": "current_main_native_normal_cash_chips_working_point_cold",
           "summary": "118 qualified checks: real cash-funded5 Pass,10 zero-new-wager continuations through a natural11-roll point and once-only10-chip credit across cold Save/Continue. Three failed probe diagnostics excluded. No Craps defect reproduced."
+        },
+        {
+          "reference": "docs/testing/NEXT_sidebar_Cage_Baccarat_QA_20261116.md",
+          "kind": "ordinary_native_Cage_and_Baccarat_new_timer_defect",
+          "summary": "65 qualified checks for real cashout, High-Limit entry, under-minimum controls and actual zero-wager public hand. Genuine timed-rejection control lock tracked separately; public-history oracle excluded."
         }
       ],
-      "next_action": "Continue ordinary G Cage counter/cashout and next actually available game path from the natural57-cash10-chip payout. Keep full general/endings acceptance Open and exact-build Web startup unverified.",
+      "next_action": "Finish scoped main/NEXT delivery of BTH-BACCARAT-AUTO-MIN-SELECTION-001 while retaining broader varied QA/endings scope and explicit Web startup limits.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T04:58:21.815832+00:00",
+        "observed_at": "2026-11-16T05:55:53.852238+00:00",
         "evidence": [
           "docs/testing/NEXT_sidebar_general_QA_20261116.md",
           "docs/testing/NEXT_sidebar_scratch_travel_QA_20261116.md",
@@ -38765,7 +38777,144 @@
           "docs/testing/NEXT_sidebar_Beach_Slot_QA_20261116.md"
         ]
       },
-      "updated_at": "2026-11-16T04:58:21.815832+00:00",
+      "updated_at": "2026-11-16T05:55:53.852238+00:00",
+      "planned_app_changes": []
+    },
+    {
+      "id": "BTH-BACCARAT-AUTO-MIN-SELECTION-001",
+      "name": "Keep Baccarat controls usable after a rejected timed minimum",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "BTH-NEXT-QA-GENERAL-SIDEBAR-001"
+      ],
+      "group": "current",
+      "state": "open",
+      "status": "NATIVE_FIXED_55_CHECKS_COMPAT_LIVENESS_MAIN_NEXT_PENDING",
+      "owner": {
+        "assignment_state": "assigned",
+        "name": "Sidebar general NEXT gameplay QA",
+        "task_ref": "6afa5080-2f00-8191-804a-d401aa98a020"
+      },
+      "objective": {
+        "text": "Prevent an actual timed Baccarat minimum rejection from stranding normal chip/Clear controls. Preserve authoritative minimum/funding/seal/replay checks, money/RNG/cards/clock, existing saves, valid manual/auto/sit-out hands and no-input animation. Broader general/endings work remains Open.",
+        "source": "User requested visible sidebar general NEXT bug-finding and authorized root-cause fixes/main/NEXT through parent01a1a147-7f07-7583-baf0-771a839f1013. Discovered in normal owned G campaign after actual60 High-Limit buy-in; original failure retained.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "faithful-reproduction",
+            "description": "Retain exact own normal campaign, first public hand/cold/actual active countdown and real canvas failure, source unchanged and bounded Job closed.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+            ]
+          },
+          {
+            "id": "root-cause-fix",
+            "description": "Trace the actual pending/dispatch boundary and correct rejection before stranding controls while retaining all authority/funding/replay guards.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+            ]
+          },
+          {
+            "id": "fixed-native-cold",
+            "description": "Same actual timer/input path and cold persistence keep controls usable with unchanged money/RNG/cards on rejection.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+            ]
+          },
+          {
+            "id": "focused-compatibility",
+            "description": "Relevant valid manual/auto/sit-out, rejection and no-input liveness evidence passes without broad unqualified claims.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+            ]
+          },
+          {
+            "id": "main-next-delivery",
+            "description": "Scoped authorized main commit/push and exact existing NEXT provenance/assets; retain explicit startup/rendered Web limits.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+            ]
+          },
+          {
+            "id": "exact-web-startup",
+            "description": "Confirm exact served startup/rendered acceptance where permitted; native/HTTP evidence alone does not prove Web launch.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": true,
+          "complete": false,
+          "areas": [
+            {
+              "name": "Ordinary owned native active-timer failure",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+              ]
+            },
+            {
+              "name": "Root correction and focused actual/cold/old-save/synthetic/no-pointer compatibility",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+              ]
+            },
+            {
+              "name": "Authorized main/NEXT delivery and exact-build startup/rendered Web limits",
+              "state": "remaining",
+              "evidence": [
+                "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+              ]
+            }
+          ]
+        }
+      },
+      "implementation_batches": [],
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md",
+          "kind": "ordinary_owned_native_active_timer_failure",
+          "summary": "Real mainbd441 active timer rejects Player5 under minimum90, preserves7 cash/RNG/cards, but actual chip10/Clear controls fail.17 checks/two failures retained; clean engine log and owned0."
+        },
+        {
+          "reference": "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md",
+          "kind": "faithful_native_fix_old_state_and_synthetic_compatibility",
+          "summary": "Pending-delivery root confirmed;55 native/recovery checks, four-case suite with six new minimum/valid-auto assertions and no-pointer liveness pass. Actual old Cancel works and stale replay rejects; evidence classes remain separate."
+        }
+      ],
+      "next_action": "Commit/push only tested Baccarat source/test and scoped evidence, observe existing NEXT, verify exact deployed/served identity/PCK and retain startup/rendered Web gap.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-16T05:55:53.852238+00:00",
+        "evidence": [
+          "docs/testing/BTH-BACCARAT-AUTO-MIN-SELECTION-001_20261116.md"
+        ]
+      },
+      "updated_at": "2026-11-16T05:55:53.852238+00:00",
       "planned_app_changes": []
     }
   ],
