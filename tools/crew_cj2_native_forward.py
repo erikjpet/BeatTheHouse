@@ -16,13 +16,13 @@ def read(path):return json.loads(path.read_text(encoding='utf-8-sig'))
 def new_json(path,value):
  with path.open('xb') as stream:stream.write(native.receipt_bytes(value))
 def assert_closed(job):
- assert type(job.get('exit_code')) is int and job['exit_code']==0
+ assert type(job.get('exit_code')) is int and job['exit_code']==0,'Native worker failed; inspect its immutable campaign and Job receipts'
  assert type(job.get('active_at_release')) is int and job['active_at_release']==0
  assert job.get('timed_out') is False and job.get('assigned_before_execution') is True
  assert job.get('error') is None and job.get('cleanup_errors')==[]
 def verify_qualification(run_id, filename):
- assert filename in ('qualification.json','syntax-qualification.json'),'Unknown qualification kind'
- prefix='crew-native-guards' if filename=='qualification.json' else 'crew-native-syntax'
+ assert filename in ('qualification.json','syntax-qualification.json','control-qualification.json'),'Unknown qualification kind'
+ prefix={'qualification.json':'crew-native-guards','syntax-qualification.json':'crew-native-syntax','control-qualification.json':'crew-native-controls'}[filename]
  assert native._case(run_id) and run_id.startswith(prefix),'Qualification must be an explicit own-campaign guard/syntax run'
  path=ROOT/'runs'/run_id/'evidence'/filename
  value,_=native._owned_json(path);assert value.get('qualified') is True,'Qualification did not pass'
@@ -49,24 +49,36 @@ def assigned_worker(worker,job,install_start):
  except BaseException as exc:error=exc
  return OwnedWorker(worker,error)
 
+def parse_args(argv=None):
+ tokens=list(sys.argv[1:] if argv is None else argv)
+ p=argparse.ArgumentParser(allow_abbrev=False);p.add_argument('--run-id',required=True);p.add_argument('--expected-commit',required=True);p.add_argument('--guards',required=True);p.add_argument('--syntax',required=True);p.add_argument('--controls',required=True);p.add_argument('--mode',choices=['inspect','wait','interact','respond','travel-back-alley','handoff-back-alley','wait-recipient'],default='inspect');p.add_argument('--object-id',default='');p.add_argument('--event-id',default='');p.add_argument('--choice-id',default='');p.add_argument('--wait-seconds',type=int,default=60);p.add_argument('--root-confirmed-no-duplicate-crew-job',action='store_true',required=True)
+ flags=[token.split('=',1)[0] for token in tokens if token.startswith('--')]
+ if len(flags)!=len(set(flags)):p.error('Duplicate flags are forbidden')
+ a=p.parse_args(tokens)
+ if not native._case(a.run_id) or len(a.run_id)>65:p.error('Exact bounded native case ID required')
+ if len(a.expected_commit)!=40 or any(c not in '0123456789abcdef' for c in a.expected_commit):p.error('Full lowercase source commit required')
+ if not 1<=a.wait_seconds<=90:p.error('Wait must be between1 and90 seconds')
+ if a.mode in ('travel-back-alley','handoff-back-alley','wait-recipient') and any((a.object_id,a.event_id,a.choice_id)):p.error('Fixed route controls cannot be overridden')
+ return a
+
 def main():
- p=argparse.ArgumentParser();p.add_argument('--run-id',required=True);p.add_argument('--expected-commit',required=True);p.add_argument('--guards',required=True);p.add_argument('--syntax',required=True);p.add_argument('--mode',choices=['inspect','wait','interact','respond'],default='inspect');p.add_argument('--object-id',default='');p.add_argument('--event-id',default='');p.add_argument('--choice-id',default='');p.add_argument('--wait-seconds',type=int,default=60);p.add_argument('--root-confirmed-no-duplicate-crew-job',action='store_true',required=True);a=p.parse_args();PIN=a.expected_commit
- assert native._case(a.run_id) and len(a.run_id)<=65 and 1<=a.wait_seconds<=90
+ a=parse_args();PIN=a.expected_commit
  # Standard admission precedes every new adapter directory/write. It never
  # binds a profile or launches a child; persistent paths use only native mode.
  admission=g.prepare_layout(g.plan_layout(ROOT,SOURCE,a.run_id+'-admit'))
  qualified,qual_path=verify_qualification(a.guards,'qualification.json')
  for name,sha in qualified_sources(qualified).items():assert digest(SOURCE/name)==sha,'Qualified source changed: '+name
  syntax,syntax_path=verify_qualification(a.syntax,'syntax-qualification.json')
+ controls,controls_path=verify_qualification(a.controls,'control-qualification.json')
  script=SOURCE/'tools/crew_cj2_native_forward.gd';script_sha=digest(script)
- assert script_sha==syntax['script_sha256'],'Native worker changed after syntax qualification'
+ assert script_sha==syntax['script_sha256']==controls['script_sha256'],'Native worker changed after syntax/control qualification'
  assert native._current_head()==PIN,'QA source pin changed'
  g.validate_layout(admission,extra_write_paths=[native.CUSTODY_PATH.parent])
  if not native.CUSTODY_PATH.exists():
   initial=native.bootstrap_custody(PIN)
   native.CUSTODY_PATH.parent.mkdir(parents=True,exist_ok=True)
   new_json(native.CUSTODY_PATH,initial)
- new_json(admission.evidence/'admission.json',{'source_commit':PIN,'qualification':str(qual_path),'syntax':str(syntax_path),'script_sha256':script_sha,'campaign_id':native.CAMPAIGN_ID,'autosave_slot':native.SLOT,'native_custody':str(native.CUSTODY_PATH),'no_profile_copy':True,'root_runtime_check_no_duplicate_crew_job':True})
+ new_json(admission.evidence/'admission.json',{'source_commit':PIN,'qualification':str(qual_path),'syntax':str(syntax_path),'controls':str(controls_path),'script_sha256':script_sha,'campaign_id':native.CAMPAIGN_ID,'autosave_slot':native.SLOT,'native_custody':str(native.CUSTODY_PATH),'no_profile_copy':True,'root_runtime_check_no_duplicate_crew_job':True})
  layout=g.prepare_layout(g.plan_native_forward_layout(ROOT,SOURCE,a.run_id,expected_commit=PIN,custody=native.CUSTODY_PATH))
  binding=layout.native_binding;record=None;started=None;worker_created=False;successor=False;released=False;error=None;outcome={}
  try:
@@ -79,7 +91,7 @@ def main():
   target=layout.temp/'native_forward.gd'
   with target.open('xb') as stream:stream.write(script.read_bytes())
   engine_sha=digest(native.GODOT)
-  new_json(layout.evidence/'native-inputs.json',{'source_commit':PIN,'original_fresh_source_commit':native.ORIGIN_COMMIT,'origin_product_digest':native.PRODUCT_DIGEST,'admitted_product_digest':binding.product_inputs_sha256,'qualification':str(qual_path),'qualified_guard_sources':qualified['source_files'],'syntax_qualification':str(syntax_path),'script_sha256':script_sha,'engine_sha256':engine_sha,'slot':native.SLOT,'mode':a.mode,'persistent_paths':dict(binding.persistent_paths),'directory_identities':binding.as_dict()['directory_identities'],'previous_case':binding.last_case,'previous_campaign_sha256':binding.previous_campaign_sha256,'profile_copy_performed':False,'original_evidence_modified':False,'persistence_note':'Normal forward autosaves may update this same QA campaign; no old-save bytes are copied, migrated or replayed.'})
+  new_json(layout.evidence/'native-inputs.json',{'source_commit':PIN,'original_fresh_source_commit':native.ORIGIN_COMMIT,'origin_product_digest':native.PRODUCT_DIGEST,'admitted_product_digest':binding.product_inputs_sha256,'qualification':str(qual_path),'qualified_guard_sources':qualified['source_files'],'syntax_qualification':str(syntax_path),'control_qualification':str(controls_path),'script_sha256':script_sha,'engine_sha256':engine_sha,'slot':native.SLOT,'mode':a.mode,'persistent_paths':dict(binding.persistent_paths),'directory_identities':binding.as_dict()['directory_identities'],'previous_case':binding.last_case,'previous_campaign_sha256':binding.previous_campaign_sha256,'profile_copy_performed':False,'original_evidence_modified':False,'persistence_note':'Normal forward autosaves may update this same QA campaign; no old-save bytes are copied, migrated or replayed.'})
   helpers=Path(r'D:\Projects\site\scripts\bth_cpu_job');sys.path.insert(0,str(helpers))
   from native_proof_worker import SuspendedWorker
   def factory(job,command,**kwargs):

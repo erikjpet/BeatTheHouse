@@ -29,6 +29,8 @@ ORIGIN_COMMIT = "6bfbecfb959b28a3148a1bafb44e85e0bee6ed0d"
 PRODUCT_DIGEST = "2161dd546f16b8255b696db2a07bc6a08a3d0b432e9202c95fc890e6980650ab"
 # Exact UI-only build audited in crew-concurrent-audit1-261116; origin receipts stay unchanged.
 AUDITED_UI_PRODUCT_DIGEST = "0b159b5a405769f2189d978010e874916820b1852eb789f77879deac9848a471"
+# Exact world-only Continue projection fix, audited in crew-contact-audit1-261116.
+AUDITED_CONTACT_PRODUCT_DIGEST = "7ac7b06314586d0271c2d0a3184c54a8a3d17e148a8089c60c497c112b1c30f0"
 CUSTODY_PATH = WORKSPACE / "evidence" / (CAMPAIGN_ID + "-native-custody.json")
 GODOT = Path(r"D:\Projects\Beat-The-House\.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe")
 PERSISTENT_LEAVES = ("profile", "save_dir", "appdata", "localappdata", "home", "cache")
@@ -331,7 +333,7 @@ def _source_ok(expected_commit):
     if _current_head() != expected_commit:
         _fail("source_identity", WORKSPACE, "current linked HEAD differs from the admitted commit")
     actual_digest = _current_product_digest()
-    if not _hash_text(actual_digest) or actual_digest not in (PRODUCT_DIGEST, AUDITED_UI_PRODUCT_DIGEST):
+    if not _hash_text(actual_digest) or actual_digest not in (PRODUCT_DIGEST, AUDITED_UI_PRODUCT_DIGEST, AUDITED_CONTACT_PRODUCT_DIGEST):
         _fail("product_changed", WORKSPACE, "current product inputs are not an exact qualified CJ2 build")
     return actual_digest
 
@@ -434,7 +436,7 @@ def validate_structure(layout, paths):
             or binding.workspace != str(WORKSPACE) or binding.origin_run_root != str(ORIGIN_RUN_ROOT)
             or binding.custody != str(CUSTODY_PATH)
             or not _hash_text(binding.product_inputs_sha256)
-            or binding.product_inputs_sha256 not in (PRODUCT_DIGEST, AUDITED_UI_PRODUCT_DIGEST)
+            or binding.product_inputs_sha256 not in (PRODUCT_DIGEST, AUDITED_UI_PRODUCT_DIGEST, AUDITED_CONTACT_PRODUCT_DIGEST)
             or dict(binding.persistent_paths) != _paths()):
         _fail("binding_invalid", layout.profile, "native binding identity differs", layout)
     for name in PERSISTENT_LEAVES:

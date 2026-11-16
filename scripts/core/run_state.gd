@@ -3446,6 +3446,23 @@ func world_sequence_sync_owner(token: String, owner_active: bool, reason: String
 		registration["lifecycle"] = "cleaned"
 		world_sequence_registrations[token] = registration
 		return {"ok": true, "cancelled_pending": true, "errors": []}
+	# Retiring the last world owner also retires the causal renderer that owns
+	# its physical rows. Authenticate that live seal before cleanup, then publish
+	# the new composition in the same owner transaction rather than leaving stale
+	# rows for a later catalog getter to repair.
+	var room_node_id := str(current_environment.get("world_node_id", current_environment.get("archetype_id", "")))
+	var cleanup_room_boundary := not owner_active and reason not in ["expired", "abandoned"] \
+			and bool(current_environment.get("scenario_semantic_ready", false)) \
+			and not room_node_id.is_empty() and str(registration.get("node_id", "")) == room_node_id
+	var previous_environment: Dictionary = {}
+	var previous_registration: Dictionary = {}
+	var previous_publication: RefCounted = _room_presentation_publication
+	if cleanup_room_boundary:
+		var incoming_proof := RoomPresentationPublicationScript.validate(current_environment)
+		if not bool(incoming_proof.get("ok", false)):
+			return {"ok": false, "errors": JsonCoerceScript._copy_array(incoming_proof.get("errors", []))}
+		previous_environment = current_environment.duplicate(true)
+		previous_registration = registration.duplicate(true)
 	var result := CrewWorldSequenceAdapterScript.sync_owner(current_environment, token, _world_sequence_definition(token), owner_active, reason)
 	if bool(result.get("ok", false)) and not owner_active:
 		_refresh_world_sequence_registration(token)
@@ -3457,7 +3474,24 @@ func world_sequence_sync_owner(token: String, owner_active: bool, reason: String
 	if bool(result.get("ok", false)) and not bool(result.get("inactive", false)):
 		_room_presentation_publication = null
 		if not owner_active:
-			current_environment["scenario_restore_pending_trusted_rebuild"] = true
+			if cleanup_room_boundary and str(JsonCoerceScript._copy_dict(world_sequence_registrations.get(token, {})).get("lifecycle", "")) == "cleaned":
+				current_environment.erase("scenario_restore_pending_trusted_rebuild")
+				var primary_projection := ScenarioEngineScript.sequence_projection(current_environment, _scenario_sequence_definition_readonly())
+				var composed := _resolve_world_sequence_composed_layout(
+					JsonCoerceScript._copy_array(previous_environment.get("scenario_layout_base_records", [])),
+					JsonCoerceScript._copy_dict(previous_environment.get("scenario_layout_context", {})),
+					primary_projection
+				)
+				if not bool(composed.get("ok", false)):
+					# Settlement and acknowledgement already belong to their durable
+					# checkpoint. Restore only the uncompleted cleanup boundary so a
+					# retry can finish publication without reissuing those consequences.
+					current_environment = previous_environment
+					world_sequence_registrations[token] = previous_registration
+					_room_presentation_publication = previous_publication
+					return {"ok": false, "errors": JsonCoerceScript._copy_array(composed.get("errors", ["World sequence cleanup publication failed."]))}
+			else:
+				current_environment["scenario_restore_pending_trusted_rebuild"] = true
 	return result
 
 
