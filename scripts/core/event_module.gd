@@ -196,7 +196,7 @@ func choices(run_state: RunState = null, environment: Dictionary = {}) -> Array:
 func choice_views(run_state: RunState = null, environment: Dictionary = {}) -> Array:
 	var payload := JsonCoerceScript._copy_dict(definition.get("payload", {}))
 	# Dynamic choice providers already return their complete player-facing view.
-	# None currently author displayable unmet conditions.
+	# Preserve provider availability and its player-facing explanation.
 	if get_id() in ["crew_planning_table", "heist_live_table"] \
 			or str(payload.get("kind", "")) in [
 				"crew_rook_signpost", "crew_rook_leads", "crew_contact",
@@ -209,8 +209,14 @@ func choice_views(run_state: RunState = null, environment: Dictionary = {}) -> A
 			if typeof(choice_value) != TYPE_DICTIONARY:
 				continue
 			var choice_data := (choice_value as Dictionary).duplicate(true)
-			choice_data["enabled"] = true
-			choice_data["disabled_reason"] = ""
+			var choice_enabled := not bool(choice_data.get("disabled", false)) and bool(choice_data.get("enabled", true))
+			choice_data["enabled"] = choice_enabled
+			var reason := str(choice_data.get("disabled_reason", "")).strip_edges()
+			if not choice_enabled and reason.is_empty():
+				reason = str(choice_data.get("text", "")).strip_edges()
+				if reason.is_empty():
+					reason = "This response is unavailable."
+			choice_data["disabled_reason"] = "" if choice_enabled else reason
 			dynamic_views.append(choice_data)
 		return dynamic_views
 	var result: Array = []

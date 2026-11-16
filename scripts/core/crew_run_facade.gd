@@ -2140,10 +2140,16 @@ func crew_stake_horse_loss_choices() -> Array:
 	var pending = _run._pending_crew_job("stake_horse", "loss_choice_pending")
 	if pending.is_empty():
 		return []
+	var repayment := _crew_stake_horse_repayment_amount(pending)
 	return [
-		{"id": "repay", "label": "Repay the stake", "text": "Make the crew whole. The loss still costs trust.", "consequences": {"event_hooks": [{"type": "crew_stake_loss_choice", "choice": "repay"}], "resolve_event": true}},
+		{"id": "repay", "label": "Repay the stake", "text": "Repay $%d. The loss still costs trust." % repayment, "presentation_consequence_summary": "Bankroll -%d; loss still costs trust" % repayment, "requires_confirm": repayment > 0, "consequences": {"event_hooks": [{"type": "crew_stake_loss_choice", "choice": "repay"}], "resolve_event": true}},
 		{"id": "shrug", "label": "Shrug it off", "text": "Call it the cost of doing business.", "consequences": {"event_hooks": [{"type": "crew_stake_loss_choice", "choice": "shrug"}], "resolve_event": true}},
 	]
+
+
+func _crew_stake_horse_repayment_amount(pending: Dictionary) -> int:
+	var payload := JsonCoerceScript._copy_dict(pending.get("payload", {}))
+	return mini(_run.bankroll, maxi(1, int(payload.get("crew_stake", 1))))
 
 
 func crew_resolve_stake_horse_loss(choice_id: String) -> Dictionary:
@@ -2151,9 +2157,8 @@ func crew_resolve_stake_horse_loss(choice_id: String) -> Dictionary:
 	if pending.is_empty() or not ["repay", "shrug"].has(choice_id):
 		return {"ok": false}
 	var job_id := str(pending.get("id", ""))
-	var payload := JsonCoerceScript._copy_dict(pending.get("payload", {}))
 	if choice_id == "repay":
-		_run.change_bankroll(-mini(_run.bankroll, maxi(1, int(payload.get("crew_stake", 1)))), true)
+		_run.change_bankroll(-_crew_stake_horse_repayment_amount(pending), true)
 	var resolved = _run.job_resolve(job_id, "failed", _crew_job_host_capability)
 	if choice_id == "shrug":
 		_run.grievance_add({"member_id": str(pending.get("member_id", "")), "kind": "stake_horse_loss_shrugged", "weight": 1, "source_ref": job_id})

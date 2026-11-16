@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T02:39:48.629157+00:00",
+  "updated_at": "2026-11-16T03:03:02.947699+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -4879,7 +4879,7 @@
         }
       },
       "state": "open",
-      "status": "NATIVE_ALTERNATE_ENDING_QA_UI_FINDINGS_WEB_OPEN",
+      "status": "NATIVE_UI_FIX_REGRESSION_PASS_NEXT_PENDING",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -4942,12 +4942,19 @@
           "kind": "bounded_native_terms_recruitment_stake",
           "reference": "docs/testing/NEXT_Crew_terms_and_stake_QA_20261116.md",
           "summary": "Continued normal terms, recruits and stake branches; original enabled no-audit Lock assertion retained (3/4), independent safe-rejection repro9/9. Dynamic choice_views overrides authored disabled. Repay UI omits $20 debit. Alternate actual Hold/Dump/Dock ending and cold terminal8/8 retain one Clean Sweep payout1150, cash1327/chips14. Browser/WASM open."
+        },
+        {
+          "kind": "native_focused_regression",
+          "reference": "docs/testing/Crew_dynamic_choice_UI_fixes_20261116.md",
+          "summary": "86/86: dynamic disabled/price contracts23; captured no-audit14; actual repayment20; settled cold9; unchanged shrug20. Both confirmed UI findings corrected without changing authority/economy."
         }
       ],
       "implementation_batches": [
-        "BTH-QA-CREW-ENDING-001-SIDEBAR-20261116"
+        "BTH-QA-CREW-ENDING-001-SIDEBAR-20261116",
+        "CREW-NOAUDIT-ENABLED-LOCK-20261116",
+        "CREW-STAKE-REPAY-DISCLOSURE-20261116"
       ],
-      "next_action": "Review CREW-NOAUDIT-ENABLED-LOCK-20261116 (dynamic choice view forces enabled=true) and CREW-STAKE-REPAY-DISCLOSURE-20261116 with the gameplay-fix owner. Continue genuine Crew leads from crew-sidebar-noaudit-lock-repro-20261116-01 or remaining normal Go decision from intact Count checkpoint. Alternate Dump ending retained at crew-sidebar-alt8-261116 ($1327/14 chips). Browser/WASM remains Open.",
+      "next_action": "Push the scoped tested UI fix to main, follow the existing NEXT watcher and verify served identity/available launch evidence; resume ordinary Crew leads on disposable profiles.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -4961,7 +4968,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T02:39:48.629157+00:00"
+      "updated_at": "2026-11-16T03:03:02.947699+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -41995,7 +42002,7 @@
         "No duplicate worker or bypass of browser/computer denials."
       ],
       "acceptance_scope": "Owner restart request Sentinel_3464b568ddc48191af59e314081b75ef and sidebar request Sentinel_11391c7e280c81918ac7603758e4721d; transferred intact checkpoint and explicit three-directory custody. Native ending reached and persisted; deployed browser/WASM acceptance remains separately required.",
-      "status": "NATIVE_ALTERNATE_ENDING_QA_UI_FINDINGS_WEB_OPEN",
+      "status": "NATIVE_UI_FIX_REGRESSION_PASS_NEXT_PENDING",
       "owner": {
         "name": "Playtest Crew ending",
         "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
@@ -42016,9 +42023,14 @@
           "kind": "bounded_native_terms_recruitment_stake",
           "reference": "docs/testing/NEXT_Crew_terms_and_stake_QA_20261116.md",
           "summary": "Continued normal terms, recruits and stake branches; original enabled no-audit Lock assertion retained (3/4), independent safe-rejection repro9/9. Dynamic choice_views overrides authored disabled. Repay UI omits $20 debit. Alternate actual Hold/Dump/Dock ending and cold terminal8/8 retain one Clean Sweep payout1150, cash1327/chips14. Browser/WASM open."
+        },
+        {
+          "kind": "native_focused_regression",
+          "reference": "docs/testing/Crew_dynamic_choice_UI_fixes_20261116.md",
+          "summary": "86/86: dynamic disabled/price contracts23; captured no-audit14; actual repayment20; settled cold9; unchanged shrug20. Both confirmed UI findings corrected without changing authority/economy."
         }
       ],
-      "next_action": "Review CREW-NOAUDIT-ENABLED-LOCK-20261116 (dynamic choice view forces enabled=true) and CREW-STAKE-REPAY-DISCLOSURE-20261116 with the gameplay-fix owner. Continue genuine Crew leads from crew-sidebar-noaudit-lock-repro-20261116-01 or remaining normal Go decision from intact Count checkpoint. Alternate Dump ending retained at crew-sidebar-alt8-261116 ($1327/14 chips). Browser/WASM remains Open.",
+      "next_action": "Push the scoped tested UI fix to main, follow the existing NEXT watcher and verify served identity/available launch evidence; resume ordinary Crew leads on disposable profiles.",
       "blocker": {
         "state": "active",
         "kind": "browser_profile_control",
@@ -42031,7 +42043,101 @@
           "user:Sentinel_b9ecabacc1848191bed579864eef4f2a"
         ]
       },
-      "updated_at": "2026-11-16T02:39:48.629157+00:00"
+      "updated_at": "2026-11-16T03:03:02.947699+00:00"
+    },
+    {
+      "id": "CREW-NOAUDIT-ENABLED-LOCK-20261116",
+      "name": "Preserve authored disabled Crew responses",
+      "aliases": [],
+      "group": "current",
+      "parent_id": "BTH-QA-CREW-ENDING-001",
+      "state": "open",
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "scope": [
+        "Preserve disabled/enabled and unavailable reason from dynamic providers without weakening authoritative action guards."
+      ],
+      "acceptance_scope": "Confirmed native player-path findings in NEXT_Crew_terms_and_stake_QA_20261116.md; current delegated instruction to fix, regress, publish to main and follow NEXT.",
+      "status": "NATIVE_UI_FIX_REGRESSION_PASS_NEXT_PENDING",
+      "owner": {
+        "name": "Playtest Crew ending",
+        "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
+        "assignment_state": "assigned"
+      },
+      "evidence": [
+        {
+          "kind": "native_reproduction",
+          "reference": "docs/testing/NEXT_Crew_terms_and_stake_QA_20261116.md",
+          "summary": "Preserve disabled/enabled and unavailable reason from dynamic providers without weakening authoritative action guards."
+        },
+        {
+          "kind": "native_focused_regression",
+          "reference": "docs/testing/Crew_dynamic_choice_UI_fixes_20261116.md",
+          "summary": "86/86: dynamic disabled/price contracts23; captured no-audit14; actual repayment20; settled cold9; unchanged shrug20. Both confirmed UI findings corrected without changing authority/economy."
+        }
+      ],
+      "next_action": "Push the scoped tested UI fix to main, follow the existing NEXT watcher and verify served identity/available launch evidence; resume ordinary Crew leads on disposable profiles.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-16T02:49:15.101154+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T03:03:02.947699+00:00"
+    },
+    {
+      "id": "CREW-STAKE-REPAY-DISCLOSURE-20261116",
+      "name": "Show actual Crew stake repayment debit",
+      "aliases": [],
+      "group": "current",
+      "parent_id": "BTH-QA-CREW-ENDING-001",
+      "state": "open",
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "scope": [
+        "Show the exact min(bankroll, stake) debit and use normal confirmation before a positive repayment; preserve exactly-once settlement and low-cash behavior."
+      ],
+      "acceptance_scope": "Confirmed native player-path findings in NEXT_Crew_terms_and_stake_QA_20261116.md; current delegated instruction to fix, regress, publish to main and follow NEXT.",
+      "status": "NATIVE_UI_FIX_REGRESSION_PASS_NEXT_PENDING",
+      "owner": {
+        "name": "Playtest Crew ending",
+        "task_ref": "6afa5073-0cb4-8191-82b0-326a14a3e029",
+        "assignment_state": "assigned"
+      },
+      "evidence": [
+        {
+          "kind": "native_reproduction",
+          "reference": "docs/testing/NEXT_Crew_terms_and_stake_QA_20261116.md",
+          "summary": "Show the exact min(bankroll, stake) debit and use normal confirmation before a positive repayment; preserve exactly-once settlement and low-cash behavior."
+        },
+        {
+          "kind": "native_focused_regression",
+          "reference": "docs/testing/Crew_dynamic_choice_UI_fixes_20261116.md",
+          "summary": "86/86: dynamic disabled/price contracts23; captured no-audit14; actual repayment20; settled cold9; unchanged shrug20. Both confirmed UI findings corrected without changing authority/economy."
+        }
+      ],
+      "next_action": "Push the scoped tested UI fix to main, follow the existing NEXT watcher and verify served identity/available launch evidence; resume ordinary Crew leads on disposable profiles.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-16T02:49:15.101154+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-16T03:03:02.947699+00:00"
     }
   ]
 }
