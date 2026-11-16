@@ -1,0 +1,10 @@
+{
+  "task_id": "BTH-ENV-SPATIAL-BAR-001",
+  "reviewer": "/root/audit_spatial_handoff",
+  "candidate_sha256": "a870d3652a72d3ebb5067fe9e46b412f3c2a5b938a40e4c3b2cf72e0be7a2408",
+  "verdict": "GO_FOR_NATIVE_TRIAL_ONLY",
+  "findings": ["Rear-left support covers the observed Numbers contact/glow without a concave kink.", "Dark generated timber feet retain coherent volume, floor contact and shadows.", "No conspicuous clamp streaks, bright gold remnants or rectangular cutouts in the feet.", "Conservative felt plane and continuous wall joins remain intact."],
+  "required_populated_review": ["Numbers actual painted contact support", "Fight Night labels over darkened feet", "Floor movers crossing feet", "17motion entries and ReduceMotion", "58sequence contexts, replay, placement/closing and liveness"],
+  "production_activation_approved": false,
+  "test_publication_approved": false
+}

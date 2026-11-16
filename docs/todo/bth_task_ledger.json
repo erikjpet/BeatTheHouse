@@ -38045,7 +38045,7 @@
       "name": "Audit and correct all-room spatial support and seams",
       "group": "current",
       "state": "open",
-      "status": "ACTIVE_BAR_POPULATED_REVISION",
+      "status": "ACTIVE_BAR_V4_QUALIFICATION",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38092,9 +38092,14 @@
           "kind": "static_native_trial_go",
           "reference": "docs/testing/bar_spatial_r2_static_review_v2_20261116.json",
           "summary": "V2 resolves wall joins; exact5df5041d candidate GO for isolated native trial only. No final art or TEST approval."
+        },
+        {
+          "kind": "v4_native_qualification",
+          "reference": "docs/testing/bar_spatial_v4_native_checkpoint_20261116.json",
+          "summary": "V4 fixes Numbers contact and gold-foot label contrast. Independent8context still review,1017checks,17motion35checks and no-pointer liveness pass. Authentic152frame recording preserved; remaining sequence/technical qualification active."
         }
       ],
-      "next_action": "Native8contexts1017checks pass; independent visual review requires fixed Numbers contact support and darker feet behind Fight labels. Assemble new bounded candidate, then native/sequence/motion/replay/liveness and independent approval before TEST.",
+      "next_action": "V4 clears8context still review,1017nativechecks,17motion35checks and no-pointer liveness. Complete58sequence/composite/replay/placement checks and independent recorded-motion review, then integrate approved Bar PNG and verify TEST delivery.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -38135,7 +38140,7 @@
       "name": "Correct Bar pool-table support and perspective",
       "group": "current",
       "state": "open",
-      "status": "ACTIVE_BAR_POPULATED_REVISION",
+      "status": "ACTIVE_BAR_V4_QUALIFICATION",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38182,9 +38187,14 @@
           "kind": "static_native_trial_go",
           "reference": "docs/testing/bar_spatial_r2_static_review_v2_20261116.json",
           "summary": "V2 resolves wall joins; exact5df5041d candidate GO for isolated native trial only. No final art or TEST approval."
+        },
+        {
+          "kind": "v4_native_qualification",
+          "reference": "docs/testing/bar_spatial_v4_native_checkpoint_20261116.json",
+          "summary": "V4 fixes Numbers contact and gold-foot label contrast. Independent8context still review,1017checks,17motion35checks and no-pointer liveness pass. Authentic152frame recording preserved; remaining sequence/technical qualification active."
         }
       ],
-      "next_action": "Native8contexts1017checks pass; independent visual review requires fixed Numbers contact support and darker feet behind Fight labels. Assemble new bounded candidate, then native/sequence/motion/replay/liveness and independent approval before TEST.",
+      "next_action": "V4 clears8context still review,1017nativechecks,17motion35checks and no-pointer liveness. Complete58sequence/composite/replay/placement checks and independent recorded-motion review, then integrate approved Bar PNG and verify TEST delivery.",
       "blocker": {
         "state": "none",
         "kind": "none",
