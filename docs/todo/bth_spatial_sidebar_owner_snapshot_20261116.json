@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-16T09:43:18.961615+00:00",
+  "observed_at": "2026-11-16T10:13:52.670980+00:00",
   "tasks": [
     {
       "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
       "title": "Repair environment art",
       "state": "active",
-      "observed_at": "2026-11-16T09:43:18.961615+00:00",
-      "source": "Actual active sidebar owner: Bar and Grand public bounded native/visual plus TEST artifact delivered at verified25cc; all20 parent OPEN with18 remaining. High Limit v3 duration normalization independently reviewed and24 guarded regressions PASS; fresh qualification next. Back Room V2 static-native GO and canonical9 metadata verified. Hidden/Private bounded assembler code active; Delta source trial frozen. Browser acceptance NOT_RUN; no main/NEXT or original-save writes."
+      "observed_at": "2026-11-16T10:13:52.670980+00:00",
+      "source": "Actual active sidebar owner: Bar and Grand public delivered on verified TEST25cc; all20 parent OPEN with18 remaining. High Limit source-v2 policy52 tests and native-v4 custody24 tests PASS; fresh committed-source qualification next. Back Room V2 and Hidden V1 static-native GO; no new room engine qualification yet. Private/Delta bounded assemblers and HL release adapters in independent review. Original game saves untouched; metadata-worker main-checkout cleanup incident is under separate read-only audit, no further cleanup authorized."
     }
   ]
 }

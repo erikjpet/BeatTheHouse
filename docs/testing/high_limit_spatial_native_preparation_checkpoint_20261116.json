@@ -1,8 +1,8 @@
 {
   "schema": "bth.high_limit_spatial_native_preparation_checkpoint/v1",
   "task_id": "BTH-ENV-SPATIAL-HL-001",
-  "observed_at": "2026-11-16T09:37:24.500912+00:00",
-  "status": "V3_TRANSPORT_FIX_REVIEWED_24_REGRESSIONS_PASS_FRESH_RUN_NEXT",
+  "observed_at": "2026-11-16T10:13:52.670980+00:00",
+  "status": "V4_EXACT_ATTRIBUTE_POLICY_AND_TRANSPORT_REGRESSIONS_PASS",
   "source_commit": "25cc8b279d35c5ec00d836db150354b77790e825",
   "source_tree": "1cbbe22e7ff650f331ae79534b7cef97b0b88823",
   "candidate_package_21_file_sha256": "481e858ee3c484b06ba6df935983c29979a188e7e59ff5f44eaf22ecdbe020e4",
@@ -39,7 +39,7 @@
     }
   },
   "selection_gate_error": "Prior exact guarded phase is not qualified: source-identity",
-  "next_action": "Commit the reviewed v3 runner/tests, then run a fresh admitted v3 selected-source campaign. Do not reuse v2 phase IDs or weaken any receipt, sentinel, UID, geometry or liveness check.",
+  "next_action": "Commit the reviewed source helper and native v4 runner, then use fresh v4 phase IDs for exact selected archive, cold import and original Base9/motion/liveness/capture qualification.",
   "selected_archive_created": false,
   "qa_source_created": false,
   "native_runtime_launched": false,
@@ -69,5 +69,43 @@
       "worker_log_sha256": "f99a0afd98c556be15a0810801faa7d97ff0935661d0234161f405458d3d1377"
     },
     "original_versions_preserved": true
+  },
+  "v3_selected_source_stop": {
+    "source_commit": "c5f9636c6e1c121b158d451521f1f17bde93ae38",
+    "pid": 36500,
+    "exit_code": 1,
+    "active_at_release": 0,
+    "error": "Original project/export/icon/attribute pin changed: .gitattributes",
+    "archive_or_qa_source_created": false
+  },
+  "v4_selected_source_policy": {
+    "helper": "tools/bth_qa_selected_source_v2.py",
+    "helper_sha256": "051ae002c310602175b89b2db624ca7777651ce69ee89057dbcff2f540e53625",
+    "runner": "tools/high_limit_spatial_native_trial_v4.py",
+    "runner_sha256": "e1fe5dc3168a23f07aad03c0c6270e1915c1714182769d70ce2496ad1576c72d",
+    "tests_sha256": "3eb825348f6a624cd5edf44c63985e876c5c3697d47d8967b257dd375673b3f3",
+    "baseline_attributes_bytes": 1892,
+    "baseline_attributes_sha256": "8aee1678b0fbba7a01fb435680f33e011cb17161d77666875e7913d029528699",
+    "allowed_attributes_bytes": 2097,
+    "allowed_attributes_sha256": "8d7388ac3cd2be265a2de7730c8f695230649e05856f608d225ff2e99586f79a",
+    "allowed_delta": "Only the exact205-byte LF review-only suffix authenticating the High Limit metadata receipt. All original attributes remain byte-identical. Runtime paths, unknown review paths, export-ignore, directive and line-ending changes are rejected. Actual new Git bytes are archived; baseline bytes are never substituted.",
+    "unchanged_closure": "All900 visible GDs,502 tests,five documentation fixtures,421 art sources,1605 UID bindings and all other project/export/icon pins remain required.",
+    "guarded_tests": {
+      "BTH-ENV-SPATIAL-SELECTED-V2-20261116-tests01": {
+        "count": 52,
+        "pid": 26740,
+        "exit_code": 0,
+        "active_at_release": 0,
+        "worker_log_sha256": "d4cd18e30565d3ea7fabfe470533b9cb0d0d43c700e34c0977e176c6d5c474be"
+      },
+      "BTH-ENV-SPATIAL-HLNATIVE-V4-20261116-tests01": {
+        "count": 24,
+        "pid": 39844,
+        "exit_code": 0,
+        "active_at_release": 0,
+        "worker_log_sha256": "df12aa424211f14164f4053f481cf2e83db86f11f3cff4878765762267d26c49"
+      }
+    },
+    "old_helpers_and_failed_receipts_preserved": true
   }
 }

@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T09:43:18.961615+00:00",
+  "updated_at": "2026-11-16T10:13:52.670980+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -38727,7 +38727,7 @@
       "name": "Grand high-limit spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "V3_TRANSPORT_FIX_24_REGRESSIONS_PASS_NATIVE_PREPARATION_NEXT",
+      "status": "V4_EXACT_SOURCE_POLICY_52_PLUS_24_REGRESSIONS_PASS",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38776,16 +38776,16 @@
           "summary": "V2 authenticated21 payloads plus exact external sentinel; source/tree/baseline-tree passed, select21052 stopped at prior-phase custody gate before any archive/QA source/engine. Fresh v3 normalization and focused regressions in progress."
         }
       ],
-      "next_action": "Commit the reviewed v3 runner/tests and run fresh admitted v3 phases from an explicit source commit/tree. All24 transport/closed-receipt regressions pass; preserve the unchanged common custody gates, exact73-byte auxiliary and failed v2 receipts. Actual selected archive/import/Base9/motion/liveness/capture and final art/TEST remain pending.",
+      "next_action": "Commit the reviewed v4 runner and exact-source v2 policy, then run fresh admitted phases. All52 source-policy and24 actual v4 transport/custody regressions pass. Only the exact review-only attribute suffix is admitted; all runtime/root pins remain strict. Original Base9,16/7 motion66,liveness,capture and final art/TEST remain pending.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T09:43:18.961615+00:00",
+        "observed_at": "2026-11-16T10:13:52.670980+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T09:43:18.961615+00:00",
+      "updated_at": "2026-11-16T10:13:52.670980+00:00",
       "scope": [
         "Review and correct Grand high-limit physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
@@ -38903,7 +38903,7 @@
       "name": "Hidden casino spatial and seam review",
       "group": "current",
       "state": "open",
-      "status": "SOURCE_FROZEN_BOUNDED_ASSEMBLY_CODE_ACTIVE",
+      "status": "V1_STATIC_NATIVE_GO_METADATA_PREPARATION_ACTIVE",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38930,18 +38930,23 @@
           "kind": "verified_spatial_checkpoint",
           "reference": "docs/art/briefs/hidden_spatial_repair_20261116.md",
           "summary": "One frozen raw8a46 trial and own wall/floor/contact brief;31 genuine motions and one right foreground retained. Bounded assembler code active, no candidate or native launch yet."
+        },
+        {
+          "kind": "independent_static_native_trial_go",
+          "reference": "docs/testing/hidden_spatial_r1_static_review_v1_20261116.json",
+          "summary": "Exact30seal508b/BGab846/proofad79, guarded34388 and196036 actual donor pixels verified; all31 motion inputs/26PNGs and protected geometry exact. Fresh native and final acceptance pending."
         }
       ],
-      "next_action": "Implement and independently review the room-specific bounded assembler from frozen8a46 source. Preserve current30-file package, all31 motions/default low-detail, ONE full right replay, cart/door/glint pixels and four populated contact constraints; own healed wall and original same-XY floor only. No active integration yet.",
+      "next_action": "Frozen candidate508b passed independent actual-pixel/donor/exterior/cart/door/glint and historical contact review. Authenticate the two canonical import additions, commit a reviewed original four-context native adapter, then run all31 motion/low-detail entries,RMs,liveness and authentic capture. No active art or TEST integration yet.",
       "blocker": {
         "state": "none",
         "kind": "none",
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-16T09:29:46.238938+00:00",
+        "observed_at": "2026-11-16T10:13:52.670980+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-16T09:29:46.238938+00:00",
+      "updated_at": "2026-11-16T10:13:52.670980+00:00",
       "scope": [
         "Review and correct Hidden casino physical support, perspective and seams; distinguish candidates from confirmed findings."
       ],
