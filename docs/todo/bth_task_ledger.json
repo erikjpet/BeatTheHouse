@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T00:45:23.175587+00:00",
+  "updated_at": "2026-11-16T01:20:05.995418+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -38045,7 +38045,7 @@
       "name": "Audit and correct all-room spatial support and seams",
       "group": "current",
       "state": "open",
-      "status": "SIDEBAR_SOURCE_AUDIT_BAR_HANDOFF_BLOCKED",
+      "status": "BAR_PREPARATION_PASS_LIBRARY_WINDOWS_BLOCKED",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38067,20 +38067,31 @@
           "kind": "sidebar_handoff",
           "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
           "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
+        },
+        {
+          "kind": "explicit_resumption",
+          "reference": "docs/art/briefs/bar_spatial_repair_20261116.md",
+          "summary": "Owner requests continued progress. Earlier generated trial remains available to generator; preservation pending. It failed framing and ball-path review. Prepare bounded assembly and all-frame containment checks without duplicating it."
+        },
+        {
+          "kind": "verified_preparation",
+          "reference": "docs/testing/bar_spatial_preparation_20261116.json",
+          "summary": "Fresh E source/harness, cold import and no-pointer baseline PASS; candidate-check regressions and unchanged R4 baseline PASS. R1 source remains uninspected due official Library helper Windows metadata failure; no art/TEST changes."
         }
       ],
-      "next_action": "Obtain existing Bar trial task identity and exact immutable candidate path, then independently review and run isolated guarded native/animation qualification when the shared runtime is available; publish only exact passed package to TEST.",
+      "next_action": "Receive exact preserved R1 through supported materialization or original-generator local source; inspect actual pixels and revise one separate table patch. Prepared E trial source, native harness, no-pointer baseline and all-frame/clearance/framing preflight are ready; audit exact candidate before TEST.",
       "blocker": {
         "state": "active",
-        "kind": "worker_handoff",
-        "description": "Existing internal Bar pool-table trial has no located task/checkpoint/output in this sidebar handoff. Host process inspection returned Get-CimInstance: Access denied. Do not duplicate or activate until trial ownership/output is known.",
+        "kind": "library_materialization_runtime",
+        "description": "Existing R1 is preserved in Library. Official transfer helper on Windows failed at os.setxattr (AttributeError); no candidate file installed. Need supported materialization or original-generator local source to inspect before correction. No competing generation or helper/raw-download workaround.",
         "requires_user_input": false,
-        "observed_at": "2026-11-16T00:45:23.175587+00:00",
+        "observed_at": "2026-11-16T01:20:05.995418+00:00",
         "evidence": [
-          "docs/testing/environment_spatial_sidebar_handoff_20261116.md"
+          "docs/art/briefs/bar_spatial_repair_20261116.md",
+          "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-BARTRIAL-20261116-library08/evidence/job.json"
         ]
       },
-      "updated_at": "2026-11-16T00:45:23.175587+00:00",
+      "updated_at": "2026-11-16T01:20:05.995418+00:00",
       "scope": [
         "Audit all environment art packages for seams, grounded supports, perspective and live object clearance; preserve existing animations and gameplay geometry."
       ],
@@ -38112,7 +38123,7 @@
       "name": "Correct Bar pool-table support and perspective",
       "group": "current",
       "state": "open",
-      "status": "SIDEBAR_SOURCE_AUDIT_BAR_HANDOFF_BLOCKED",
+      "status": "BAR_PREPARATION_PASS_LIBRARY_WINDOWS_BLOCKED",
       "owner": {
         "name": "Repair environment art",
         "task_ref": "6afa5098-a83c-8191-9486-9c03c92ed02a",
@@ -38134,20 +38145,31 @@
           "kind": "sidebar_handoff",
           "reference": "docs/testing/environment_spatial_sidebar_handoff_20261116.md",
           "summary": "Sidebar source audit resumed. Existing Bar trial not located; no replacement trial, game runtime or deployment launched."
+        },
+        {
+          "kind": "explicit_resumption",
+          "reference": "docs/art/briefs/bar_spatial_repair_20261116.md",
+          "summary": "Owner requests continued progress. Earlier generated trial remains available to generator; preservation pending. It failed framing and ball-path review. Prepare bounded assembly and all-frame containment checks without duplicating it."
+        },
+        {
+          "kind": "verified_preparation",
+          "reference": "docs/testing/bar_spatial_preparation_20261116.json",
+          "summary": "Fresh E source/harness, cold import and no-pointer baseline PASS; candidate-check regressions and unchanged R4 baseline PASS. R1 source remains uninspected due official Library helper Windows metadata failure; no art/TEST changes."
         }
       ],
-      "next_action": "Obtain existing Bar trial task identity and exact immutable candidate path, then independently review and run isolated guarded native/animation qualification when the shared runtime is available; publish only exact passed package to TEST.",
+      "next_action": "Receive exact preserved R1 through supported materialization or original-generator local source; inspect actual pixels and revise one separate table patch. Prepared E trial source, native harness, no-pointer baseline and all-frame/clearance/framing preflight are ready; audit exact candidate before TEST.",
       "blocker": {
         "state": "active",
-        "kind": "worker_handoff",
-        "description": "Existing internal Bar pool-table trial has no located task/checkpoint/output in this sidebar handoff. Host process inspection returned Get-CimInstance: Access denied. Do not duplicate or activate until trial ownership/output is known.",
+        "kind": "library_materialization_runtime",
+        "description": "Existing R1 is preserved in Library. Official transfer helper on Windows failed at os.setxattr (AttributeError); no candidate file installed. Need supported materialization or original-generator local source to inspect before correction. No competing generation or helper/raw-download workaround.",
         "requires_user_input": false,
-        "observed_at": "2026-11-16T00:45:23.175587+00:00",
+        "observed_at": "2026-11-16T01:20:05.995418+00:00",
         "evidence": [
-          "docs/testing/environment_spatial_sidebar_handoff_20261116.md"
+          "docs/art/briefs/bar_spatial_repair_20261116.md",
+          "E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-BARTRIAL-20261116-library08/evidence/job.json"
         ]
       },
-      "updated_at": "2026-11-16T00:45:23.175587+00:00",
+      "updated_at": "2026-11-16T01:20:05.995418+00:00",
       "scope": [
         "Repair Bar decorative pool-table rails, apron, legs and shadow in y264-294, preserving all17 motions, ball paths and live geometry; require visual audit before TEST delivery."
       ],
