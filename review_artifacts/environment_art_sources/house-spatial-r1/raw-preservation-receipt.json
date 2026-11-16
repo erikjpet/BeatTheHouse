@@ -1,0 +1,83 @@
+{
+  "schema": "bth.house_spatial_raw_preservation/v1",
+  "recorded_at": "2026-11-16T16:03:33.421684+00:00",
+  "task_id": "BTH-ENV-SPATIAL-HOUSE-001",
+  "status": "EXACT_ONE_RAW_PNG_PRESERVED_SOURCE_AND_LIBRARY",
+  "raw_sha256": "76b64ab7d78543c685b6fcecf9bf1f6e4afaf33f1ce3a97e0532a8f13ccb1d19",
+  "raw_bytes": 1628912,
+  "raw_size": [
+    1815,
+    867
+  ],
+  "source_png": "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\review_artifacts\\environment_art_sources\\house-spatial-r1\\house-spatial-r1.png",
+  "preserved_E_png": "E:\\CodexQA\\BTH\\workspaces\\BTH-ENV-SPATIAL-HOUSETRIAL-20261116\\raw_source\\house-spatial-r1.png",
+  "b64_sha256": "1b0ccc11610af34b8f7a72f1cfbb45c2d6835130a24a2cb4561cc9d8923b8306",
+  "source_provenance_sha256": "0612c65b3f68a2c3b8b576e996ca9b3ca8c83bbed1905b1af2268ca19d2c3844",
+  "decoder_sha256": "1300f37ccccb23790395641884d703bcf2d642a9a3b2387d812d7a9852f332a4",
+  "closed_job": {
+    "path": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-HOUSETRIAL-20261116-rawdecode01\\evidence\\job.json",
+    "sha256": "83d0ae1bc9c827cffcf8cf958c3ebf4660e24fa89186b1711e6a31d74b1e1cfe",
+    "pid": 36436,
+    "exit_code": 0,
+    "active_at_release": 0,
+    "assigned_before_execution": true,
+    "limits": {
+      "control_flags": 5,
+      "cpu_rate": 1200,
+      "aggregate_job_cpu_percent": 12.0,
+      "kill_on_close": true,
+      "breakaway_allowed": false,
+      "job_memory_limit_bytes": 2147483648,
+      "active_processes": 0
+    },
+    "manifest_sha256": "806bc396bac3ebdbe475384318c326da4ecee63f8962a756759accd723b6ee3f",
+    "claim_sha256": "b68a65138884d5e4201869b90cd8b96bf9d2ab3531c34e3b7cd2b970c2a8af10",
+    "log_sha256": "d859dc039ebf78deba6f65b69a8b9c24f0c2a113558287cab0bd4d2ba2a2cfd7",
+    "decode_proof_sha256": "e51ea6b0f37cd5053df9f37c86731602f911fcd39dd8b43c82df74c431e177e5"
+  },
+  "library": {
+    "operation": "create_library_file",
+    "status": "succeeded",
+    "path": "/house-spatial-r1.png",
+    "file_id": "file_00000000ed7081fdb7d589923eb73ee7",
+    "library_file_id": "libfile_fde3_f-0e3dd7cf4fcc8191bb95eb89019c4a6e_b2e6deecb030819197ad6510125a1c29",
+    "file_name": "house-spatial-r1.png",
+    "current_version_number": 0,
+    "restored_from_version_number": null,
+    "xattrs": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ],
+    "directory_id": "personal-root:v1",
+    "mime_type": "image/png",
+    "library_artifact_type": "image_gen",
+    "file_size_bytes": 1628912,
+    "external_connectors_accessed": false
+  },
+  "library_xattrs": {
+    "requested": [
+      {
+        "name": "user.library-file-version",
+        "value": "0"
+      }
+    ],
+    "applied": false,
+    "reason": "Windows Python os.setxattr is unavailable; exact file/library identity and version preserved in this receipt. No ADS substitute or repeated upload."
+  },
+  "root_actual_pixel_review": {
+    "whole_master_approved": false,
+    "findings": [
+      "Generated floor remains near old476 rather than proposed384; actual liveBedfeet remain unsupported atnewrequiredplane.",
+      "Misleading exposedstaticleftbase retained.",
+      "Right supportpositionsshifted; surroundingpixels regenerated.",
+      "Rawrughas perspective improvement but donorquality and exactprotectedassembly remain unproved."
+    ]
+  },
+  "remaining": "One rawgeneration preserved, no replacementgeneration. Trace exactoriginalprotectedmaterials and boundedfloor/rugdonors before any candidateassembly; centralstrip/rightpulse materialrisksOPEN.",
+  "production_art_written": false,
+  "candidate_assembled": false,
+  "native_trial_approved": false,
+  "test_updated": false
+}

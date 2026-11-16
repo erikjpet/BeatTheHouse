@@ -1,0 +1,353 @@
+{
+  "schema": "bth.apartment_kitchen_strip_material_proposal/v1",
+  "task_id": "BTH-ENV-SPATIAL-APARTMENT-001",
+  "room": "apartment",
+  "author": "/root/bar_clearance_audit/dark_feet_source_audit",
+  "date": "2026-11-16",
+  "status": "SOURCE_ONLY_RECT_REANCHOR_PROPOSAL_NOT_APPLIED",
+  "decision": "EXISTING_COUNTERTOP_FRONT_IS_A_VALID_MATERIAL_TARGET_FOR_A_BOUNDED_TRIAL",
+  "kitchen_strip_material_disposition": "OPEN_PENDING_ROOT_AUTHORIZATION_AND_FRESH_NATIVE_READABILITY_MOTION_ACCEPTANCE",
+  "art_approved": false,
+  "native_trial_approved": false,
+  "production_activation_approved": false,
+  "whole_room_closed": false,
+  "TEST_updated": false,
+  "authority": "Root requested actual material identification and an exact source-only proposal. The provisional rect is a hypothesis, not edit approval. This document changes no PNG, full manifest, active candidate, gameplay geometry or E artifact.",
+  "floor_candidate_remains_separate": {
+    "root": "E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-APARTMENTTRIAL-20261116/candidate_sources/apartment-spatial-r1-assembled-v1",
+    "room16_seal": "429cbf7fa9e85f2c77612fcb9ee107dd9d28e88e4158c71b1a8103922013a7d6",
+    "background_sha256": "686990fa7fd73b7f6af112eb76a43e98c11e2f7ea55e7d53f9edad66e4af4ef4",
+    "floor_review": {
+      "path": "docs/testing/apartment_spatial_r1_static_review_v1_20261116.json",
+      "sha256": "f32f73cbce05fe7951b7efddc0669662937e56daa2600694b8fcf3ff3c6c63e5",
+      "scope": "FLOOR_CONTACT_REPAIR_ONLY"
+    }
+  },
+  "current_source": {
+    "background": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/assets/art/environments/apartment/background.png",
+    "background_sha256": "30ef28ec1cde5329b2ac3f6244df850b32d8ef423e77ee23ccdc0943c7fe1f44",
+    "manifest_path": "data/art/environments/apartment.json",
+    "manifest_sha256": "fbf295a0ecb2b6f22497db5afd8c44e791ce15f3894b0500ae7c59b350f244b9",
+    "global_index_sha256": "11d6a7fe6444c2e3be2091d875cf89c7a6fb3380ac529fde9206363b0e242f24",
+    "native_entries": 14,
+    "default_low_detail_entries": 14,
+    "counter_replay_entries": 0,
+    "entry": {
+      "id": "kitchen_strip",
+      "type": "pulse",
+      "texture": "anim/kitchen_strip.png",
+      "rect": [
+        624,
+        96,
+        136,
+        8
+      ],
+      "min_opacity": 0.18,
+      "max_opacity": 0.3,
+      "period": 1.3089969389957472,
+      "phase": 0,
+      "blend": "add",
+      "still": "first",
+      "web_low_detail": true
+    },
+    "texture": {
+      "sha256": "5569d55f5ee1dd1f8517ad567acd2d26829bc0a76a75106b66dd2a668f35e0a4",
+      "bytes": 139,
+      "width": 272,
+      "height": 16,
+      "positive_alpha_pixels": 4352,
+      "alpha_histogram": {
+        "255": 4352
+      },
+      "RGB_values": [
+        "255,179,45"
+      ],
+      "bbox_inclusive": [
+        0,
+        0,
+        271,
+        15
+      ]
+    }
+  },
+  "actual_material_finding": {
+    "personally_viewed": [
+      "Actual original Apartment master1800x860",
+      "Actual assembled floor candidate1800x860 (counter area outside the repair and exact)",
+      "Retained actual Base fullapp __none_actual_play.png"
+    ],
+    "old_native_rect": [
+      1248,
+      192,
+      272,
+      16
+    ],
+    "old_material": "An opaque rectangular source pulse drawn additively across upper cabinet-door faces/frame and the left edge outside that cabinet module. It is not aligned to an actual existing lamp or countertop edge.",
+    "identified_fixture": "The existing horizontal gold/amber wooden kitchen countertop front/lip below the two upper cabinet doors, immediately above the sink/faucet. This is visible physical counter material, not a new light fitting.",
+    "material_role": "Decorative warm sheen on that existing countertop front; no claim of an electrical lamp or under-cabinet emitter.",
+    "observed_top_front_rows": [
+      {
+        "native_y": 264,
+        "warm_contiguous_x_half_open": [
+          1268,
+          1542
+        ]
+      },
+      {
+        "native_y": 266,
+        "warm_contiguous_x_half_open": [
+          1266,
+          1544
+        ]
+      },
+      {
+        "native_y": 268,
+        "warm_contiguous_x_half_open": [
+          1266,
+          1546
+        ]
+      }
+    ],
+    "actual_rgb_support_query": {
+      "native_rect": [
+        1268,
+        264,
+        272,
+        16
+      ],
+      "pixels": 4352,
+      "R_gt_G_gt_B_failures": 0,
+      "nonwarm_examples": [],
+      "cyan_pixels": 0,
+      "minimum_RGB": [
+        62,
+        33,
+        24
+      ],
+      "maximum_RGB": [
+        255,
+        244,
+        194
+      ],
+      "first_visible_cyan_row_in_faucet_patch": 280,
+      "scope": "Color counts corroborate directly inspected wood-front contour; color alone does not define semantic fixture membership."
+    },
+    "source_only_donor_or_color_semantic_limit": "Actual visible fixture contour and original pixels establish the placement. R>G>B over the4352 target texels is corroboration, not a universal semantic material mask."
+  },
+  "exact_proposal": {
+    "entry_id": "kitchen_strip",
+    "texture_path": "anim/kitchen_strip.png",
+    "before_board_rect": [
+      624,
+      96,
+      136,
+      8
+    ],
+    "after_board_rect": [
+      634,
+      132,
+      136,
+      8
+    ],
+    "before_native_rect": [
+      1248,
+      192,
+      272,
+      16
+    ],
+    "after_native_rect": [
+      1268,
+      264,
+      272,
+      16
+    ],
+    "native_bounds_half_open": {
+      "x": [
+        1268,
+        1540
+      ],
+      "y": [
+        264,
+        280
+      ]
+    },
+    "allowed_manifest_delta_only": "The kitchen_strip.rect x624->634 and y96->132. Width136,height8 and every other field/member stay exact.",
+    "source_texture_same_dimensions_as_native_target": true,
+    "new_fixture_pixels": false,
+    "PNG_alpha_or_RGB_change_required": false,
+    "alpha_mask_required_for_this_material_fit": false,
+    "alpha_mask_reason": "The complete unchanged4352-texel opaque rectangle lies on the actual warm countertop front. Its half-open y end280 stops before the cyan/metal faucet pixels beginning at280. No label-shaped or invented fixture mask is proposed.",
+    "timing_opacity_and_render_contract_unchanged": {
+      "type": "pulse",
+      "blend": "add",
+      "min_opacity": 0.18,
+      "max_opacity": 0.3,
+      "period": 1.3089969389957472,
+      "phase": 0,
+      "still": "first",
+      "web_low_detail": true
+    },
+    "source_PNGs_to_remain_exact": 14,
+    "full_animation_catalog_to_remain": 14,
+    "no_gameplay_slot_label_anchor_or_cache_edits": true,
+    "no_new_counter_replay": true,
+    "no_skipping_or_freezing_motion": true
+  },
+  "faucet_boundary_correction": {
+    "initial_coarse_concern_retracted": true,
+    "reason": "An early visual/color-run inference suggested cyan at278. Exact RGB scanning found warm wood/shade at278 and the first cyan/metal pixels at280. The proposed half-open target ends280, so it does not touch those faucet pixels.",
+    "actual_proposed_rect_cyan_pixels": 0,
+    "actual_local_faucet_dark_outline_pixels": 0,
+    "query_for_dark_outline": "Within x1334..1356 and the proposed y264..280, max(R,G,B)<40; zero. This is a diagnostic count, not a complete faucet mask."
+  },
+  "actual_label_and_live_paint_overlap": {
+    "Pay_Rent_identity": "home_tenure:status",
+    "retained_state": "Base Day1: disabled, rent not due until day8; view-only. No due-day/later transaction or UI-earned state is inferred.",
+    "retained_board_label_rect": {
+      "x": 721.799987792969,
+      "y": 133,
+      "w": 58.4000244140625,
+      "h": 15
+    },
+    "approx_native_label_rect": {
+      "x": 1443.599975585938,
+      "y": 266,
+      "w": 116.800048828125,
+      "h": 30
+    },
+    "actual_bounded_source_paint_queries": [
+      {
+        "file": "__none_host_2_body.png",
+        "sha256": "4c3b336b14fcbdc449e163943ff0878e1005660100b54598b8f3b47a1339fd37",
+        "queries": [
+          {
+            "native_query": [
+              1248,
+              192,
+              272,
+              16
+            ],
+            "alpha_positive": 0,
+            "alpha_ge64": 0,
+            "maximum_alpha": 0,
+            "bbox_inclusive": null
+          },
+          {
+            "native_query": [
+              1268,
+              264,
+              272,
+              16
+            ],
+            "alpha_positive": 98,
+            "alpha_ge64": 0,
+            "maximum_alpha": 3,
+            "bbox_inclusive": [
+              1442,
+              279,
+              1539,
+              279
+            ]
+          }
+        ]
+      },
+      {
+        "file": "__none_host_2_adorn.png",
+        "sha256": "039a412d4536263bfe6a2f7e90e352d16a4439134d5660f03c8088026dce566e",
+        "queries": [
+          {
+            "native_query": [
+              1248,
+              192,
+              272,
+              16
+            ],
+            "alpha_positive": 0,
+            "alpha_ge64": 0,
+            "maximum_alpha": 0,
+            "bbox_inclusive": null
+          },
+          {
+            "native_query": [
+              1268,
+              264,
+              272,
+              16
+            ],
+            "alpha_positive": 408,
+            "alpha_ge64": 280,
+            "maximum_alpha": 203,
+            "bbox_inclusive": [
+              1458,
+              272,
+              1539,
+              279
+            ]
+          }
+        ]
+      }
+    ],
+    "conclusion": "Material alignment is valid but readable glyph contrast is NOT proven by this source review. Proposed glow overlaps408 alpha-positive adornment pixels (280 alpha>=64) in the retained query;98 faint body pixels atalpha<=3 also overlap. Source adornments include label/shadow paint and are not a final visibility proof.",
+    "no_label_move_plate_or_alpha_hole_authorized": true,
+    "mandatory_future_gate": "Fresh actual populated normal/selected Pay Rent visibility and contrast at identical-clock control, pulse minimum/maximum and Reduce Motion, with all original objects/labels unchanged. Do not claim a pass from this static bounding query."
+  },
+  "retained_refs": {
+    "actual_play": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-APARTMENTTRIAL-20261115-r2-contexts-01/evidence/__none_actual_play.png",
+      "sha256": "9da6de807523a078abc45232ed3a34e3d27fd077c9549f9a9843b24c1f3cdc78",
+      "bytes": 713061
+    },
+    "selected_rent": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-APARTMENTTRIAL-20261115-r2-contexts-01/evidence/__none_selected_02.png",
+      "sha256": "8429587a39e00ce5cd4eb30a0b593cbcea7cd34667e4bf71973d32e62f023b38",
+      "bytes": 474199
+    },
+    "context": {
+      "path": "E:/CodexQA/BTH/runs/BTH-ENVART-APARTMENTTRIAL-20261115-r2-contexts-01/evidence/__none_metadata.json",
+      "sha256": "a553c9031b9cbae07690031b4e1a7f5c7811902c5ec9679faa4a05ba36b3e1c6",
+      "bytes": 268455
+    },
+    "legacy_recipe": {
+      "path": "E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261115/assemble_apartment_r1.py",
+      "sha256": "3470bbf6925d652f60affbc139f8481a27237bb1f5e7d90710b8f15a57c38422",
+      "bytes": 6261
+    }
+  },
+  "recipe_origin_evidence": {
+    "path": "E:/CodexQA/BTH/workspaces/BTH-ENVART-AUDIT-20261115/assemble_apartment_r1.py",
+    "sha256": "3470bbf6925d652f60affbc139f8481a27237bb1f5e7d90710b8f15a57c38422",
+    "finding": "Original recipe line46 authored a solid rectangular additive kitchen pulse rather than a traced fixture texture. Current R2 PNG was inspected directly and its actual RGB255,179,45/hash5569 are authoritative; do not substitute the old recipe RGB literal."
+  },
+  "required_next_actions": [
+    "Root reviews and explicitly authorizes a new bounded versioned candidate with this manifest-rect-only exception. No change is authorized merely by this document.",
+    "Preserve floor-v1 package/master/report immutable; any new manifest bytes create a distinct candidate/package identity and require separate source/static admission.",
+    "Prove all14 PNGs including kitchen_strip5569... remain byte-identical, all other manifest values byte-identical or exact typed-equivalent under the separately approved minimal patch, and current index/gameplay source unchanged.",
+    "Fresh source-bound native Base7/selected labels/typed paints, all14 normal/default-low motifs, matching-clock controls, Reduce Motion and no-input/placement liveness. Specifically inspect Pay Rent text and the countertop/faucet boundary across pulse extrema.",
+    "If contrast fails, stop the candidate. Do not automatically mask out the label, move the label, reduce alpha, widen/narrow the physical fixture or invent an emitter; any alternative needs its own evidence and bounded source proposal.",
+    "Keep Apartment and all-room parent OPEN until final art/native acceptance, scoped commit and exact TEST delivery. No transaction/save/revisit/browser/full-cycle claim."
+  ],
+  "limits": {
+    "source_only": true,
+    "current_manifest_or_PNGs_modified": false,
+    "any_QA_helper_import_test_or_engine_executed": false,
+    "any_E_write_job_Git_cleanup_or_generation": false,
+    "actual_new_rect_native_render_performed": false,
+    "prior_retained_native_is_new_candidate_approval": false
+  },
+  "prewrite": {
+    "target": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/docs/testing/apartment_kitchen_strip_material_proposal_20261116.json",
+    "wrong_main": "D:/Projects/Beat-The-House/docs/testing/apartment_kitchen_strip_material_proposal_20261116.json",
+    "target_absent": true,
+    "wrong_main_absent": true,
+    "ordinary_ancestors": [
+      "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\docs\\testing",
+      "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\docs",
+      "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers",
+      "D:\\Projects\\Beat-The-House\\.tmp",
+      "D:\\Projects\\Beat-The-House",
+      "D:\\Projects",
+      "D:\\"
+    ],
+    "observed_utc": "2026-11-16T16:08:07.7000675Z"
+  }
+}

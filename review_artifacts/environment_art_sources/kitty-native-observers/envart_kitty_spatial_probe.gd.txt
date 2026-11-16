@@ -1,0 +1,404 @@
+# Inert Kitty-only QA source; installed as .gd only by the guarded Git-bound overlay.
+extends Node
+const CanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
+const PackScript := preload("res://scripts/ui/environment_art_pack.gd")
+const RendererScript := preload("res://scripts/ui/environment_art_renderer.gd")
+const CASES: Array[String] = ["__none","kitty_cat_lounge_amateur_night","kitty_cat_lounge_buyout","kitty_cat_lounge_slow_night","kitty_cat_lounge_bachelorette_storm"]
+const MODES: Array[String] = ["composite","composite-rm","low-detail","depth","placement"]
+const EXPECTED_OBJECT_COUNTS: Dictionary = {"__none":13,"kitty_cat_lounge_amateur_night":22,"kitty_cat_lounge_buyout":20,"kitty_cat_lounge_slow_night":19,"kitty_cat_lounge_bachelorette_storm":19}
+
+class FixedClockCanvas:
+    extends CanvasScript
+    var qa_fixed_draw: bool = false
+    var qa_object_clock: float = 0.0
+    var qa_route_clock: float = 0.0
+    var qa_art_clock: float = 0.0
+    var qa_last_view: Dictionary = {}
+    var qa_last_native_objects: Array = []
+    func _draw() -> void:
+        if not qa_fixed_draw:
+            super._draw()
+            return
+        var normal_clock: float = flicker
+        var normal_route: float = actor_route_time
+        flicker = qa_object_clock
+        actor_route_time = qa_route_clock
+        super._draw()
+        qa_last_native_objects = _active_scene_objects().duplicate(true)
+        qa_last_view = current_view_snapshot()
+        qa_last_view["qa_draw_route_clock"] = actor_route_time
+        flicker = normal_clock
+        actor_route_time = normal_route
+    func _draw_environment_art_animations(pack: EnvironmentArtPack) -> void:
+        if not qa_fixed_draw:
+            super._draw_environment_art_animations(pack)
+            return
+        var normal_clock: float = flicker
+        flicker = qa_art_clock
+        super._draw_environment_art_animations(pack)
+        flicker = normal_clock
+
+var checks: int = 0
+var findings: Array[String] = []
+var png_files: Array[String] = []
+
+func _check(ok: bool,message: String) -> void:
+    checks += 1
+    if not ok:
+        findings.append(message)
+        push_error(message)
+
+func _json(value: Variant) -> Variant:
+    return JSON.parse_string(JSON.stringify(value))
+
+func _admitted_output(output: String) -> bool:
+    var expected: String = OS.get_environment("BTH_QA_EVIDENCE_DIR").replace("\\","/").trim_suffix("/")
+    var actual: String = output.replace("\\","/").trim_suffix("/")
+    return actual == expected and actual.begins_with("E:/CodexQA/BTH/runs/") and actual.get_file() == "evidence" and not actual.contains("/../") and not actual.contains("/./")
+
+func _save_png(image: Image,output: String,name: String) -> void:
+    _check(_admitted_output(output) and name == name.get_file() and name.ends_with(".png"),"Exact admitted case PNG path")
+    if not _admitted_output(output) or name != name.get_file() or not name.ends_with(".png"):
+        return
+    var path: String = output.path_join(name)
+    _check(not FileAccess.file_exists(path),"Fresh case PNG must not overwrite: "+name)
+    if FileAccess.file_exists(path):
+        return
+    var error: int = image.save_png(path)
+    _check(error == OK,"PNG save succeeded: "+name+" error="+str(error))
+    if error == OK:
+        png_files.append(name)
+
+func _settle(tree: SceneTree,frames: int = 5) -> void:
+    for index in range(frames):
+        await tree.process_frame
+        await RenderingServer.frame_post_draw
+
+func _arrivals(tree: SceneTree,canvas: Control) -> void:
+    await tree.create_timer(4.0).timeout
+    var waited: float = 4.0
+    while not (canvas.get("person_transits") as Dictionary).is_empty() and waited < 12.0:
+        await tree.create_timer(0.25).timeout
+        waited += 0.25
+    _check((canvas.get("person_transits") as Dictionary).is_empty(),"QA clone natural arrivals complete")
+
+func _native_object_binding(objects: Array,view: Dictionary) -> Dictionary:
+    # Shape checks precede JSON transport; these native dictionaries alone may
+    # be passed to production object/depth APIs. No coordinate-string parsing.
+    var ids: Array[String] = []
+    var unique: Dictionary = {}
+    var typed_vectors: bool = not objects.is_empty()
+    var typed_dictionaries: bool = true
+    for value in objects:
+        if typeof(value) != TYPE_DICTIONARY:
+            typed_dictionaries = false
+            typed_vectors = false
+            continue
+        var object_data: Dictionary = value
+        var identity: String = str(object_data.get("id",""))
+        var position_value: Variant = object_data.get("position",null)
+        var size_value: Variant = object_data.get("size",null)
+        typed_vectors = typed_vectors and typeof(position_value) == TYPE_VECTOR2 and typeof(size_value) == TYPE_VECTOR2
+        if identity.is_empty() or unique.has(identity):
+            typed_dictionaries = false
+        unique[identity] = true
+        ids.append(identity)
+    var native_view_equal: bool = objects == view.get("objects",[])
+    _check(typed_dictionaries and typed_vectors and native_view_equal,"Actual native object dictionaries/Vector2 positions/sizes equal native view before JSON")
+    return {"source_api":"PixelSceneCanvas._active_scene_objects","native_object_count":objects.size(),
+        "actual_object_ids":ids,"all_objects_are_unique_native_dictionaries":typed_dictionaries,
+        "all_position_and_size_are_native_Vector2":typed_vectors,
+        "native_objects_equal_native_view":native_view_equal,
+        "native_type_guard_before_json":true,"serialized_objects_used_as_paint_target":false}
+
+func _image(tree: SceneTree,viewport: SubViewport,canvas: FixedClockCanvas,clock: float) -> Dictionary:
+    canvas.qa_art_clock = clock
+    for index in range(6):
+        canvas.queue_redraw()
+        await tree.process_frame
+        await RenderingServer.frame_post_draw
+    var image: Image = viewport.get_texture().get_image()
+    _check(image.get_width() == 1800 and image.get_height() == 860,"Actual populated native1800 image dimensions")
+    # Both authoritative clock records are captured before any JSON transport.
+    var native_clocks: Dictionary = _native_clock_pair(canvas.qa_last_view["scene_animation_time"],canvas.qa_last_view["qa_draw_route_clock"])
+    var native_objects: Array = canvas.qa_last_native_objects
+    var native_binding: Dictionary = _native_object_binding(native_objects,canvas.qa_last_view)
+    var serialized_view: Dictionary = _json(canvas.qa_last_view)
+    return {"image":image,"native_clocks":native_clocks,"native_objects":native_objects,
+        "native_binding":native_binding,"view":serialized_view}
+
+func _float64_hex_le(value: float) -> String:
+    var raw: PackedByteArray = PackedByteArray()
+    raw.resize(8)
+    raw.encode_double(0,value)
+    return raw.hex_encode()
+
+func _native_clock_pair(object_clock: float,route_clock: float) -> Dictionary:
+    return {"object_clock":{"value":object_clock,"ieee754_hex_le":_float64_hex_le(object_clock)},
+        "route_clock":{"value":route_clock,"ieee754_hex_le":_float64_hex_le(route_clock)}}
+
+func _native_clock_proof(replay: Dictionary,a: Dictionary,control: Dictionary,b: Dictionary) -> Dictionary:
+    var expected: Dictionary = _native_clock_pair(float(replay["capture_clock"]),float(replay["route_clock"]))
+    var native_a: Dictionary = a["native_clocks"]
+    var native_control: Dictionary = control["native_clocks"]
+    var native_b: Dictionary = b["native_clocks"]
+    # Exact native comparisons only. No tolerance, rounded game clock or rescheduling.
+    var exact_native: bool = native_a["object_clock"]["value"] == float(replay["capture_clock"]) and native_b["object_clock"]["value"] == native_a["object_clock"]["value"] and native_control["object_clock"]["value"] == native_a["object_clock"]["value"] and native_a["route_clock"]["value"] == float(replay["route_clock"]) and native_b["route_clock"]["value"] == native_a["route_clock"]["value"] and native_control["route_clock"]["value"] == native_a["route_clock"]["value"]
+    # Retain the old cross-representation comparison as evidence, never acceptance.
+    var legacy: bool = a["view"]["scene_animation_time"] == float(replay["capture_clock"]) and b["view"]["scene_animation_time"] == a["view"]["scene_animation_time"] and control["view"]["scene_animation_time"] == a["view"]["scene_animation_time"] and a["view"]["qa_draw_route_clock"] == float(replay["route_clock"]) and b["view"]["qa_draw_route_clock"] == a["view"]["qa_draw_route_clock"] and control["view"]["qa_draw_route_clock"] == a["view"]["qa_draw_route_clock"]
+    var serialized: Dictionary = {}
+    for name in ["a","control","b"]:
+        var frame: Dictionary = {"a":a,"control":control,"b":b}[name]
+        serialized[name] = {"object_clock":frame["view"]["scene_animation_time"],"route_clock":frame["view"]["qa_draw_route_clock"]}
+    return {"schema":"bth.kitty_native_clock_proof/v1","encoding":"IEEE754_BINARY64_LITTLE_ENDIAN",
+        "native":{"expected":expected,"a":native_a,"control":native_control,"b":native_b},"serialized":serialized,
+        "native_values_equal_raw_replay":exact_native,"legacy_cross_representation_equal":legacy,
+        "json_numeric_values_are_diagnostics":true}
+
+func _clock_pair(entry: EnvironmentArtPack.AnimationEntry) -> Array[float]:
+    # Exact original Kitty ef4b motion-pair formulas, including four-frame strips.
+    var t0: float = 0.0
+    var t1: float = 0.5
+    match entry.kind:
+        PackScript.AnimationKind.PULSE:
+            t0 = entry.period*10.25-entry.phase
+            t1 = t0+entry.period*0.5
+        PackScript.AnimationKind.MOVER:
+            t0 = (entry.duration+entry.gap)*2.0-entry.phase+entry.duration*0.12
+            t1 = t0+1.0
+        PackScript.AnimationKind.FRAMES:
+            t0 = 0.05/entry.fps-entry.phase
+            t1 = (float(entry.frame_count/4)+0.05)/entry.fps-entry.phase
+        PackScript.AnimationKind.SCROLL:
+            t0 = 0.0
+            t1 = 0.37
+    return [t0,t1]
+
+func _solo(pack: EnvironmentArtPack,entry: EnvironmentArtPack.AnimationEntry) -> EnvironmentArtPack:
+    var result: EnvironmentArtPack = PackScript.new()
+    result.environment_id = pack.environment_id
+    result.background = pack.background
+    result.background_rect = pack.background_rect
+    result.counters = pack.counters
+    result.animations.append(entry)
+    return result
+
+func _pack_contract(pack: EnvironmentArtPack) -> bool:
+    if pack == null:
+        return false
+    var expected: Array[String] = ["kitty_sign_pulse"]
+    for index in range(5):
+        expected.append("pink_air_"+str(index))
+    for index in range(5):
+        expected.append("cool_air_"+str(index))
+    for index in range(5):
+        expected.append("candle_light_"+str(index))
+    for index in range(4):
+        expected.append("warm_sparkle_"+str(index))
+    for index in range(7):
+        expected.append("floor_glint_"+str(index))
+    var actual: Array[String] = []
+    var default_low: bool = true
+    for entry in pack.animations:
+        actual.append(entry.id)
+        default_low = default_low and entry.web_low_detail
+    return pack.environment_id == "kitty_cat_lounge" and actual.size() == 27 and actual == expected and default_low and pack.counters.size() == 1 and pack.counters.has("kitty_champagne_bar")
+
+func _counter_contract(pack: EnvironmentArtPack) -> Dictionary:
+    var counter: EnvironmentArtPack.CounterEntry = pack.counters["kitty_champagne_bar"]
+    var geometry: bool = counter.rect == Rect2(584,190,268,48)
+    var front: Image = counter.texture.get_image()
+    var master: Image = pack.background.get_image()
+    var dimensions: bool = front.get_width() == 536 and front.get_height() == 96 and master.get_width() == 1800 and master.get_height() == 860
+    var identical: bool = false
+    if dimensions:
+        var crop_image: Image = master.get_region(Rect2i(1168,380,536,96))
+        front.convert(Image.FORMAT_RGBA8)
+        crop_image.convert(Image.FORMAT_RGBA8)
+        identical = front.get_data() == crop_image.get_data()
+    _check(geometry and dimensions and identical,"Sole champagne-bar replay exact native master crop/geometry")
+    return {"id":"kitty_champagne_bar","board_rect":[584,190,268,48],"native_rect":[1168,380,536,96],"geometry_equal":geometry,"dimensions_equal":dimensions,"master_crop_RGBA_equal":identical}
+
+func _low_image(tree: SceneTree,renderer: Node,clock: float,reduced: bool,low: bool) -> Image:
+    renderer.call("present",clock,reduced,low)
+    await _settle(tree,3)
+    var texture: Texture2D = renderer.get("texture")
+    _check(texture != null,"Simulated low-detail actual renderer texture exists")
+    if texture == null:
+        return Image.new()
+    var image: Image = texture.get_image()
+    _check(image.get_width() == 1800 and image.get_height() == 860,"Native renderer image dimensions")
+    return image
+
+func _low_detail(tree: SceneTree,pack: EnvironmentArtPack,output: String,prefix: String) -> Array:
+    var rows: Array = []
+    for entry in pack.animations:
+        var renderer: Node = RendererScript.new()
+        tree.root.add_child(renderer)
+        renderer.call("configure",_solo(pack,entry))
+        var pair: Array[float] = _clock_pair(entry)
+        var native_a: Image = await _low_image(tree,renderer,pair[0],false,false)
+        var low_a: Image = await _low_image(tree,renderer,pair[0],false,true)
+        var control: Image = await _low_image(tree,renderer,pair[0],false,true)
+        var low_b: Image = await _low_image(tree,renderer,pair[1],false,true)
+        var reduced_a: Image = await _low_image(tree,renderer,pair[0],true,true)
+        var reduced_b: Image = await _low_image(tree,renderer,pair[1]+10.0,true,true)
+        var same_control: bool = low_a.get_data() == control.get_data()
+        var native_equal: bool = low_a.get_data() == native_a.get_data()
+        var changed: bool = low_a.get_data() != low_b.get_data()
+        var stable: bool = reduced_a.get_data() == reduced_b.get_data()
+        _check(entry.web_low_detail and same_control and native_equal and changed and stable,entry.id+" actual simulated-low inclusion/control/motion/RM")
+        var stem: String = prefix+"_"+entry.id+"_low"
+        _save_png(native_a,output,stem+"_native_a.png")
+        _save_png(low_a,output,stem+"_a.png")
+        _save_png(low_b,output,stem+"_b.png")
+        _save_png(reduced_a,output,stem+"_reduced.png")
+        rows.append({"id":entry.id,"web_low_detail":entry.web_low_detail,"identical_control_pixels":same_control,
+            "native_and_simulated_low_pixels_equal":native_equal,"live_visible_change":changed,"reduce_motion_stable":stable,
+            "clock_a":pair[0],"clock_b":pair[1],"renderer_present_low_detail_argument":true,
+            "surface":"Actual EnvironmentArtRenderer background/one-entry texture; excludes counter fronts/live objects/labels",
+            "browser_execution":false})
+        renderer.free()
+        await tree.process_frame
+    return rows
+
+func run_probe(tree: SceneTree,snapshot: Dictionary,replay: Dictionary,mode: String,output: String,prefix: String) -> Dictionary:
+    var report: Dictionary = {"schema":"bth.kitty_spatial_acceptance_case/v1","mode":mode,"context":"kitty_cat_lounge","case":prefix,
+        "new_probe":true,"original_observer_assertions_not_modified":true,"browser_execution":false,
+        "scope":"Named settled initial Kitty snapshot only; no open-hours/later lifecycle/work/outcomes/save/revisit/Web or complete-cycle acceptance."}
+    _check(mode in MODES and prefix in CASES and _admitted_output(output),"Exact Kitty mode/case/admitted E evidence")
+    _check(str(snapshot.get("archetype_id","")) == "kitty_cat_lounge" and str(snapshot.get("current_layer_id","")).is_empty(),"Actual Kitty source snapshot namespace")
+    if not MODES.has(mode) or not CASES.has(prefix) or not _admitted_output(output):
+        report.merge({"checks":checks,"findings":findings,"png_files":png_files},true)
+        return report
+    var source_snapshot_json: String = JSON.stringify(snapshot)
+    var expected: Dictionary = _json(replay["view"])
+    var actual_ids: Array[String] = []
+    for object_data in expected["objects"]:
+        actual_ids.append(str(object_data["id"]))
+    report["actual_object_count"] = actual_ids.size()
+    report["actual_object_ids"] = actual_ids
+    report["pointer_events_injected_by_new_probe"] = false
+    _check(str(snapshot.get("scenario_id","")) == ("" if prefix == "__none" else prefix),"Exact named Kitty source scenario")
+    var pack: EnvironmentArtPack = PackScript.load_pack("kitty_cat_lounge")
+    _check(_pack_contract(pack),"Exact Kitty27/defaultlow27/sole champagne-bar replay pack")
+    if not _pack_contract(pack):
+        report.merge({"checks":checks,"findings":findings,"png_files":png_files},true)
+        return report
+    report["counter"] = _counter_contract(pack)
+    report["object_clock"] = replay["capture_clock"]
+    report["route_clock"] = replay["route_clock"]
+    var viewport: SubViewport = SubViewport.new()
+    viewport.size = Vector2i(1800,860)
+    viewport.disable_3d = true
+    viewport.canvas_item_default_texture_filter = Viewport.DEFAULT_CANVAS_ITEM_TEXTURE_FILTER_NEAREST
+    viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
+    tree.root.add_child(viewport)
+    var canvas: FixedClockCanvas = FixedClockCanvas.new()
+    canvas.size = Vector2(1800,860)
+    viewport.add_child(canvas)
+    var clone_snapshot: Dictionary = snapshot.duplicate(true)
+    if mode == "composite-rm":
+        clone_snapshot["reduce_motion"] = true
+    canvas.call("render_environment_snapshot",clone_snapshot)
+    await _arrivals(tree,canvas)
+    var active_value: Variant = canvas.call("_active_scene_objects")
+    _check(typeof(active_value) == TYPE_ARRAY,"Actual native canvas object API returns an Array")
+    if typeof(active_value) != TYPE_ARRAY:
+        report.merge({"checks":checks,"findings":findings,"png_files":png_files},true)
+        viewport.free()
+        return report
+    var native_objects: Array = active_value
+    var native_view: Dictionary = canvas.call("current_view_snapshot")
+    var binding: Dictionary = _native_object_binding(native_objects,native_view)
+    var expected_count: int = int(EXPECTED_OBJECT_COUNTS[prefix])
+    var native_valid: bool = bool(binding["all_objects_are_unique_native_dictionaries"]) and bool(binding["all_position_and_size_are_native_Vector2"]) and bool(binding["native_objects_equal_native_view"]) and native_objects.size() == expected_count
+    _check(native_valid,"Exact case native typed object count and model binding")
+    if not native_valid:
+        report["native_target_binding"] = binding
+        report.merge({"checks":checks,"findings":findings,"png_files":png_files},true)
+        viewport.free()
+        return report
+    var serialized_native_equal: bool = _json(native_objects) == expected["objects"]
+    _check(serialized_native_equal,"Actual native object model equals original replay after diagnostic serialization")
+    binding["serialized_objects_equal_replay"] = serialized_native_equal
+    binding["expected_object_count"] = expected_count
+    report["native_target_binding"] = binding
+    report["actual_object_count"] = native_objects.size()
+    report["actual_object_ids"] = binding["actual_object_ids"]
+    canvas.qa_object_clock = float(replay["capture_clock"])
+    canvas.qa_route_clock = float(replay["route_clock"])
+    canvas.qa_fixed_draw = true
+    if mode in ["composite","composite-rm"]:
+        var rows: Array = []
+        for entry in pack.animations:
+            canvas.call("_set_environment_art_pack",_solo(pack,entry))
+            var pair: Array[float] = _clock_pair(entry)
+            var a: Dictionary = await _image(tree,viewport,canvas,pair[0])
+            var control: Dictionary = await _image(tree,viewport,canvas,pair[0])
+            var b: Dictionary = await _image(tree,viewport,canvas,pair[1])
+            var image_a: Image = a["image"]
+            var image_b: Image = b["image"]
+            var control_image: Image = control["image"]
+            var same: bool = image_a.get_data() == control_image.get_data()
+            var geometry: bool = a["view"]["object_layout"] == expected["object_layout"] and a["view"]["object_layout"] == b["view"]["object_layout"] and a["view"]["objects"] == expected["objects"] and b["view"]["objects"] == expected["objects"] and control["view"]["object_layout"] == expected["object_layout"] and control["view"]["objects"] == expected["objects"]
+            var clock_proof: Dictionary = _native_clock_proof(replay,a,control,b)
+            var clocks: bool = clock_proof["native_values_equal_raw_replay"]
+            var changed: bool = image_a.get_data() != image_b.get_data()
+            _check(same,entry.id+" actual populated identical-clock control")
+            _check(geometry,entry.id+" actual source objects/layout/labels retained")
+            _check(clocks,entry.id+" exact native object/route clocks equal replay")
+            _check(not changed if mode == "composite-rm" else changed,entry.id+" actual populated motion/RM")
+            var stem: String = prefix+"_"+entry.id+"_"+mode
+            _save_png(image_a,output,stem+"_a.png")
+            _save_png(control_image,output,stem+"_control.png")
+            _save_png(image_b,output,stem+"_b.png")
+            rows.append({"id":entry.id,"identical_control_pixels":same,"actual_objects_layout_equal":geometry,
+                "object_route_label_clocks_equal":clocks,"clock_proof":clock_proof,"visible_composite_change":changed,
+                "reduce_motion_composite_stable":not changed,"art_clock_a":pair[0],"art_clock_b":pair[1],
+                "counter_id":"kitty_champagne_bar","actual_counter_retained":true})
+        report["entries"] = rows
+    elif mode == "low-detail":
+        report["entries"] = await _low_detail(tree,pack,output,prefix)
+        report["simulated_low_detail_only"] = true
+        report["actual_low_detail_browser_execution"] = false
+    elif mode == "placement":
+        canvas.qa_fixed_draw = false
+        canvas.call("_set_environment_art_pack",pack)
+        canvas.call("set_developer_placement_mode",true)
+        await _settle(tree)
+        var before: Dictionary = canvas.call("current_view_snapshot")
+        var clock0: float = float(canvas.get("flicker"))
+        var redraw0: int = int(before["scene_idle_animation_redraw_count"])
+        await tree.create_timer(0.4).timeout
+        await _settle(tree)
+        var after: Dictionary = canvas.call("current_view_snapshot")
+        var placement: Dictionary = canvas.call("developer_placement_snapshot")
+        var equal: bool = _json(before["object_layout"]) == _json(after["object_layout"]) and _json(before["object_layout"]) == expected["object_layout"] and _json(before["objects"]) == _json(after["objects"]) and _json(after["objects"]) == expected["objects"]
+        var advanced: bool = float(canvas.get("flicker")) > clock0
+        var redrawn: bool = int(after["scene_idle_animation_redraw_count"]) > redraw0
+        var untouched: bool = not bool(placement["dragging"]) and not bool(placement["pending"]) and int(placement["undo_count"]) == 0
+        _check(bool(placement["enabled"]) and equal and advanced and redrawn and untouched,"Actual Kitty placement overlay stays live without pointer or authored edits")
+        _save_png(viewport.get_texture().get_image(),output,prefix+"_placement_actual.png")
+        report.merge({"placement_enabled":placement["enabled"],"geometry_equal":equal,"no_saved_override_or_drag":untouched,
+            "clock_advanced_without_pointer":advanced,"redraw_advanced_without_pointer":redrawn,
+            "clock_before":clock0,"clock_after":canvas.get("flicker"),"redraw_before":redraw0,
+            "redraw_after":after["scene_idle_animation_redraw_count"],"saved_or_dragged":false,"placement":placement},true)
+    else:
+        canvas.call("_set_environment_art_pack",pack)
+        var actual: Dictionary = await _image(tree,viewport,canvas,float(replay["capture_clock"]))
+        var equal: bool = actual["view"]["object_layout"] == expected["object_layout"] and actual["view"]["objects"] == expected["objects"]
+        _check(equal,"Actual populated Kitty depth objects/layout/labels retained")
+        _save_png(actual["image"],output,prefix+"_depth_actual.png")
+        var layers: Array = []
+        for object_value in actual["native_objects"]:
+            var object_data: Dictionary = object_value
+            layers.append({"id":object_data["id"],"body_draw_layer":canvas.call("_scene_object_draw_layer",object_data)})
+        report.merge({"geometry_equal":equal,"actual_object_count":actual["view"]["objects"].size(),
+            "actual_draw_layers":layers,"depth_uses_native_typed_objects":true,"counter_count":1,"counter_id":"kitty_champagne_bar"},true)
+    report["production_snapshot_unchanged"] = JSON.stringify(snapshot) == source_snapshot_json
+    report["processing_remained_active"] = canvas.is_processing()
+    _check(bool(report["production_snapshot_unchanged"]) and bool(report["processing_remained_active"]),"Source snapshot unchanged; diagnostic canvas keeps processing")
+    report.merge({"checks":checks,"findings":findings,"png_files":png_files},true)
+    viewport.free()
+    return report

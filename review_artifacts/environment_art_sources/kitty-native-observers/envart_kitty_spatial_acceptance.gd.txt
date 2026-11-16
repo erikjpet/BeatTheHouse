@@ -1,0 +1,84 @@
+# Inert three-argument hook; original Kitty51c preart observer stays unchanged.
+extends "res://tools/envart_kitty_preart_metadata.gd"
+const SpatialProbe := preload("res://tools/envart_kitty_spatial_probe.gd")
+const KITTY_CASES: Array[String] = ["__none","kitty_cat_lounge_amateur_night","kitty_cat_lounge_buyout","kitty_cat_lounge_slow_night","kitty_cat_lounge_bachelorette_storm"]
+var kitty_cases: Dictionary = {}
+var kitty_case_order: Array[String] = []
+var kitty_findings: Array[String] = []
+var kitty_probe_checks: int = 0
+var kitty_mode: String = ""
+
+func _kitty_failure(message: String) -> void:
+    kitty_findings.append(message)
+    push_error(message)
+
+func _kitty_parse_mode() -> String:
+    var modes: Array[String] = []
+    for argument in OS.get_cmdline_user_args():
+        if argument.begins_with("--kitty-mode="):
+            modes.append(argument.trim_prefix("--kitty-mode="))
+    if modes.size() != 1 or not SpatialProbe.MODES.has(modes[0]):
+        _kitty_failure("Exactly one supported --kitty-mode is required")
+        return ""
+    return modes[0]
+
+func _kitty_write_aggregate() -> void:
+    var complete: bool = kitty_cases.size() == KITTY_CASES.size()
+    for name in KITTY_CASES:
+        complete = complete and kitty_cases.has(name)
+    complete = complete and kitty_case_order == KITTY_CASES
+    var all_pngs: Array[String] = []
+    for name in kitty_case_order:
+        var row: Dictionary = kitty_cases[name]
+        for filename in row.get("png_files",[]):
+            all_pngs.append(str(filename))
+    var report: Dictionary = {"schema":"bth.kitty_spatial_acceptance/v1","mode":kitty_mode,"context":"kitty_cat_lounge",
+        "catalog":KITTY_CASES,"case_order":kitty_case_order,"cases":kitty_cases,
+        "checks":kitty_probe_checks,"findings":kitty_findings,"png_files":all_pngs,
+        "all_five_contexts_captured":complete,"new_QA_acceptance":true,
+        "original_observers_modified":false,"original_checks_are_separate":true,
+        "original_helper_checks_observed_at_callback":checks,
+        "expected_final_original_core_check_formula":"2*N+734; asserted separately on kitty_preart_metadata.json",
+        "production_guard_relaxed":false,"browser_execution":false,
+        "later_lifecycle_work_save_revisit_coverage":false,
+        "scope":"Actual settled initial five-context Kitty diagnostic only. Low-detail is simulated native renderer evidence, not browser. No open-hours/later lifecycle/work/outcomes/save/revisit/Web/every-cycle acceptance."}
+    var admitted: String = OS.get_environment("BTH_QA_EVIDENCE_DIR").replace("\\","/").trim_suffix("/")
+    var actual: String = out_dir.replace("\\","/").trim_suffix("/")
+    if actual != admitted or not actual.begins_with("E:/CodexQA/BTH/runs/") or actual.get_file() != "evidence" or actual.contains("/../") or actual.contains("/./"):
+        _kitty_failure("Aggregate path must equal this admitted E evidence")
+        return
+    # Same fresh phase-owned partial aggregate is refreshed after every case.
+    # Supervisor authenticates only its final post-Job bytes and full five cases.
+    var file: FileAccess = FileAccess.open(out_dir.path_join("kitty_spatial_acceptance.json"),FileAccess.WRITE)
+    if file == null:
+        _kitty_failure("Cannot write Kitty aggregate: "+str(FileAccess.get_open_error()))
+        return
+    file.store_string(JSON.stringify(report,"  "))
+    var error: int = file.get_error()
+    file.close()
+    if error != OK:
+        _kitty_failure("Kitty aggregate write failed: "+str(error))
+
+func _paint_hosts(snapshot: Dictionary,replay: Dictionary,prefix: String) -> Dictionary:
+    var original: Dictionary = await super._paint_hosts(snapshot,replay,prefix)
+    var mode: String = _kitty_parse_mode()
+    if mode.is_empty() or not KITTY_CASES.has(prefix) or kitty_cases.has(prefix):
+        _kitty_failure("Invalid or duplicate Kitty acceptance callback: "+prefix)
+        return original
+    if kitty_mode.is_empty():
+        kitty_mode = mode
+    if kitty_mode != mode:
+        _kitty_failure("Kitty acceptance mode changed within this phase")
+        return original
+    var probe: Node = SpatialProbe.new()
+    root.add_child(probe)
+    var result: Dictionary = await probe.call("run_probe",self,snapshot,replay,mode,out_dir,prefix)
+    kitty_cases[prefix] = result
+    kitty_case_order.append(prefix)
+    kitty_probe_checks += int(result.get("checks",0))
+    for message in result.get("findings",[]):
+        kitty_findings.append(prefix+": "+str(message))
+    probe.free()
+    _kitty_write_aggregate()
+    # No inherited _check call: the original core2N+734 counter remains separate.
+    return original

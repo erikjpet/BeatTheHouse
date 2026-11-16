@@ -1,0 +1,179 @@
+{
+  "schema": "bth.kitty_external_qa_observers/v1",
+  "task_id": "BTH-ENV-SPATIAL-KITTY-001",
+  "author": "/root/bar_clearance_audit/dark_feet_source_audit",
+  "observer_specs": {
+    "tools/envart_kitty_spatial_probe.gd": {
+      "artifact_relative": "review_artifacts/environment_art_sources/kitty-native-observers/envart_kitty_spatial_probe.gd.txt",
+      "sha256": "3fd7922e854e32b267f5dbb0aa9449546de3fcfb9ad2871ff3488e5f7a3501e4",
+      "bytes": 25250
+    },
+    "tools/envart_kitty_spatial_acceptance.gd": {
+      "artifact_relative": "review_artifacts/environment_art_sources/kitty-native-observers/envart_kitty_spatial_acceptance.gd.txt",
+      "sha256": "5bd7e0ed72be61d8e7a971b720c509ec9c86cd579ed836733692be045d8e1f9e",
+      "bytes": 4644
+    }
+  },
+  "new_QA_acceptance": true,
+  "original_observers_modified": false,
+  "production_guard_relaxed": false,
+  "ignore_workaround": false,
+  "functional_change": true,
+  "native_clock_capture_before_json": true,
+  "exact_native_equality_no_tolerance": true,
+  "legacy_cross_representation_comparison_is_diagnostic_only": true,
+  "old_failure_cause_claimed": false,
+  "native_typed_objects_before_json": true,
+  "serialized_objects_used_as_paint_targets": false,
+  "derived_from_frozen_reviewed_sources": {
+    "delta-queen-native-observers-v2/envart_delta_spatial_probe.gd.txt": "6962cd422cb20e5c1e522f18b928629b705aad78385669c3a7facd772e8b5e85",
+    "delta-queen-native-observers-v2/envart_delta_spatial_acceptance.gd.txt": "ab0f7037115e0c7116970c2b843b138a9858b528c516157a35c44d1a42fbbc64"
+  },
+  "actual_production_API_readonly_controls": {
+    "scripts/ui/pixel_scene_canvas.gd": {
+      "sha256": "c2ce2abee8827372d66fd6c9647a74e06f5db8fed520bbd812b8c7eb29f4af38",
+      "bytes": 566959
+    },
+    "scripts/ui/environment_art_pack.gd": {
+      "sha256": "067cf5f9673bd85705f4971e9c4db70aaafcfe1cec912b926ed9edc685fb5d8f",
+      "bytes": 28671
+    },
+    "scripts/ui/environment_art_renderer.gd": {
+      "sha256": "900b44af05602f6259eed0a2cb33a45d1899cb30bd71aaaed5a744bcc9ccad96",
+      "bytes": 5158
+    },
+    "data/art/environments/kitty_cat_lounge.json": {
+      "sha256": "03da076bad28b512c463bf6d620f9a037e36678545f1c06fb685102da923fd6a",
+      "bytes": 11163
+    }
+  },
+  "original_Kitty_helper_readonly_controls": {
+    "tools/envart_kitty_preart_metadata.gd": {
+      "sha256": "51c191725faffeb4b9467e15dc41b4e0ace14d28d91d04214b952ba10c1c4a38",
+      "bytes": 22728
+    },
+    "tools/envart_kitty_animation_probe.gd": {
+      "sha256": "ef4b1b7ab50340543c358bd8d27c383ae1c2c991f6c8015a72307f0de1c32da1",
+      "bytes": 4693
+    },
+    "tools/envart_kitty_animation_capture.gd": {
+      "sha256": "b75c8b8f09b0ba6e77a69b9c9a9e6ecaa290582d457667b4d46f2a8c2235abfa",
+      "bytes": 16016
+    },
+    "tools/environment_art_baseline_capture.gd": {
+      "sha256": "89d7ae812bedd203f49830bf367863bced32d08cfcc5e0327ebaf4450317de8f",
+      "bytes": 4755
+    },
+    "tools/environment_layout_screenshots.gd": {
+      "sha256": "eadf8f113aff55113ecf59e764503fd5bc2e4a64d00689573e0b56489b1a78e5",
+      "bytes": 201672
+    }
+  },
+  "original_helper_source_workspace": "E:/CodexQA/BTH/workspaces/BTH-ENVART-KITTY-TRIAL-20261115",
+  "original_semantic_assertion_counter_unchanged": true,
+  "expected_final_original_core_formula": "2*N+734; checked separately on original kitty_preart_metadata.json",
+  "case_catalog": [
+    "__none",
+    "kitty_cat_lounge_amateur_night",
+    "kitty_cat_lounge_buyout",
+    "kitty_cat_lounge_slow_night",
+    "kitty_cat_lounge_bachelorette_storm"
+  ],
+  "expected_object_counts": {
+    "__none": 13,
+    "kitty_cat_lounge_amateur_night": 22,
+    "kitty_cat_lounge_buyout": 20,
+    "kitty_cat_lounge_slow_night": 19,
+    "kitty_cat_lounge_bachelorette_storm": 19
+  },
+  "object_occurrences": 93,
+  "native_entries": 27,
+  "default_low_detail_entries": 27,
+  "counter": {
+    "id": "kitty_champagne_bar",
+    "board_rect": [
+      584,
+      190,
+      268,
+      48
+    ],
+    "native_crop": [
+      1168,
+      380,
+      536,
+      96
+    ],
+    "native_texture_dimensions": [
+      536,
+      96
+    ],
+    "retain_in_all_solo_packs": true,
+    "require_RGBA_equal_master_crop": true
+  },
+  "modes": [
+    "composite",
+    "composite-rm",
+    "low-detail",
+    "depth",
+    "placement"
+  ],
+  "mode_argument": "--kitty-mode=<mode>",
+  "report": {
+    "filename": "kitty_spatial_acceptance.json",
+    "aggregate_schema": "bth.kitty_spatial_acceptance/v1",
+    "case_schema": "bth.kitty_spatial_acceptance_case/v1",
+    "clock_schema": "bth.kitty_native_clock_proof/v1",
+    "all_contexts_field": "all_five_contexts_captured",
+    "refresh_same_phase_partial_aggregate_after_every_callback": true,
+    "qualify_final_post_Job_aggregate_only": true,
+    "original_helper_checks_remain_separate": true
+  },
+  "new_probe_PNG_counts_excluding_inherited_core": {
+    "composite": 405,
+    "composite-rm": 405,
+    "low-detail": 540,
+    "depth": 5,
+    "placement": 5
+  },
+  "required_supervisor_controls": [
+    "Full committed Git-tree/blob/mode/bytes proof of these inert text sources before exactly two exclusive QA .gd overlay copies.",
+    "Unchanged selected-source production900GD/161toolsGD closure first; no .gd.txt discovery, .uid generation or ignore workaround.",
+    "Explicit E storage manifest and immediate launch gates; configured4GiB expected plus20GiB reserve; CPU1200/2GiB caps; assignment before resume and closed-zero Job.",
+    "All5 catalog cases in exact order/counts, complete native model/layout/report/PNG custody, original core checks and separate stage-material/original135 conservative-occlusion phases.",
+    "Actual-clock original fullapp/nativeclone/art capture and no-input liveness remain separate source-bound phases."
+  ],
+  "scope_limits": {
+    "settled_initial_contexts_only": true,
+    "stage_material_acceptance_in_this_GD": false,
+    "original135_conservative_occlusion_reproduced_in_this_GD": false,
+    "simulated_low_detail_native_renderer_only": true,
+    "browser_execution": false,
+    "open_hours_or_later_lifecycle": false,
+    "work_or_transaction_outcomes": false,
+    "save_or_revisit": false,
+    "complete_cycle": false,
+    "candidate_or_art_approval": false,
+    "TEST_updated": false
+  },
+  "native_execution_by_source_author": false,
+  "QA_jobs_or_E_writes_by_source_author": false,
+  "existing_sources_modified": false,
+  "prewrite": {
+    "absolute_folder": "D:/Projects/Beat-The-House/.tmp/environment-art-layers/review_artifacts/environment_art_sources/kitty-native-observers",
+    "folder_and_four_targets_absent": true,
+    "ordinary_non_reparse_ancestors": true,
+    "wrong_main_artifact_folder_absent": true,
+    "observed_utc": "2026-11-16T15:27:21.9040426Z",
+    "immediate_recheck_utc": "2026-11-16T15:33:59.9813015Z",
+    "immediate_recheck_all_six_paths_absent": true,
+    "ordinary_ancestors": [
+      "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\review_artifacts\\environment_art_sources",
+      "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers\\review_artifacts",
+      "D:\\Projects\\Beat-The-House\\.tmp\\environment-art-layers",
+      "D:\\Projects\\Beat-The-House\\.tmp",
+      "D:\\Projects\\Beat-The-House",
+      "D:\\Projects",
+      "D:\\"
+    ]
+  }
+}

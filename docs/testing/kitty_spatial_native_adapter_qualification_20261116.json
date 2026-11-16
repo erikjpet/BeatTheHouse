@@ -1,0 +1,122 @@
+{
+  "schema": "bth.kitty_spatial_native_adapter_qualification/v1",
+  "recorded_at": "2026-11-16T16:11:39.060461+00:00",
+  "task_id": "BTH-ENV-SPATIAL-KITTY-001",
+  "status": "ACTUAL_75_TESTS_AND_ALL135_HISTORICAL_PARITY_PASS",
+  "source_files": {
+    "tools/kitty_spatial_native_profile.py": {
+      "sha256": "df8966a354390bf60c5725fd74142d5f781499fc1ba02aeb78de81a2b04a5762",
+      "bytes": 32614
+    },
+    "tools/kitty_spatial_native_trial.py": {
+      "sha256": "05c15ffd86a7c3932103a0172b81d9c4cca998ae0b244574295b30b3e031c25d",
+      "bytes": 48732
+    },
+    "tools/kitty_spatial_native_pixels.py": {
+      "sha256": "723ad86e8f8403c07c8f71b00f8a163c06bb40ab8ed50e5e7613d66b85187f68",
+      "bytes": 20645
+    },
+    "tools/test_kitty_spatial_native_trial.py": {
+      "sha256": "ef8e5a06dfb793fbaecea1c9909eee5acefef4e8048d8ce1a34ccb5342a45728",
+      "bytes": 55992
+    },
+    "review_artifacts/environment_art_sources/kitty-native-observers/envart_kitty_spatial_acceptance.gd.txt": {
+      "sha256": "5bd7e0ed72be61d8e7a971b720c509ec9c86cd579ed836733692be045d8e1f9e",
+      "bytes": 4644
+    },
+    "review_artifacts/environment_art_sources/kitty-native-observers/envart_kitty_spatial_probe.gd.txt": {
+      "sha256": "3fd7922e854e32b267f5dbb0aa9449546de3fcfb9ad2871ff3488e5f7a3501e4",
+      "bytes": 25250
+    },
+    "review_artifacts/environment_art_sources/kitty-native-observers/provenance.json": {
+      "sha256": "c979fa2910b84ca7572a6587e1b8f12d760ab8530a4e1e3c608a87760745d1cd",
+      "bytes": 7259
+    },
+    "review_artifacts/environment_art_sources/kitty-native-observers/README.md": {
+      "sha256": "b750ceacba291f2a5cd45b16ae331fb9ffc496ea197fc2e4456249642fe139b3",
+      "bytes": 5461
+    }
+  },
+  "closed_receipts": {
+    "unit": {
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-KITTY-NATIVE-20261116-tests01\\evidence",
+      "job_pid": 16716,
+      "job_sha256": "3a24cec73bf6880829575fff9c62362a565c006b55c0c09a80363acf32367765",
+      "log_sha256": "e1ead4e9ae7a84cddd7cefb612aae37ff570b4734b3750cdfa44661a43a35111",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/test_kitty_spatial_native_trial.py"
+      ],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "manifest_sha256": "ccfd91a76bb6b1bd50edcd1ef240d2c2c3219e63d7b00f32f092479d6f1736a3",
+      "claim_sha256": "9a0d0aae6acfcd272ee1ef0faf52a71c74f008b465104b4b7ddf9f44a7d4e2d5",
+      "actual_test_count": 75,
+      "seconds": 1.791,
+      "log": "...........................................................................\n----------------------------------------------------------------------\nRan 75 tests in 1.791s\n\nOK\n"
+    },
+    "historical_parity": {
+      "evidence": "E:\\CodexQA\\BTH\\runs\\BTH-ENV-SPATIAL-KITTY-PARITY-20261116-reference01\\evidence",
+      "job_pid": 33864,
+      "job_sha256": "e62e0df2e797dd14d72b3d8fbe8ed0c01755e42dd7a1e60ce34e2e8a338dd3a5",
+      "log_sha256": "b79b00c694bded3579135c51988bb5a0d6ccbcb8e631d267203867abbdc2c0e2",
+      "exit_code": 0,
+      "active_at_release": 0,
+      "command": [
+        "C:/Users/theep/AppData/Local/Programs/Python/Python310/python.exe",
+        "-B",
+        "D:/Projects/Beat-The-House/.tmp/environment-art-layers/tools/kitty_spatial_native_pixels.py",
+        "--historical-reference-only",
+        "--root=E:/CodexQA/BTH",
+        "--workspace=E:/CodexQA/BTH/workspaces/BTH-ENV-SPATIAL-KITTYPARITY-20261116",
+        "--profile=E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-KITTY-PARITY-20261116-reference01/profile",
+        "--temp=E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-KITTY-PARITY-20261116-reference01/temp",
+        "--evidence=E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-KITTY-PARITY-20261116-reference01/evidence",
+        "--out=E:/CodexQA/BTH/runs/BTH-ENV-SPATIAL-KITTY-PARITY-20261116-reference01/evidence/historical-parity.json"
+      ],
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 1200,
+        "aggregate_job_cpu_percent": 12.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "manifest_sha256": "21ceeebf0b71ee6fcf35d3a8ec3925c2802e05efddc707b0a3cab08179de6626",
+      "claim_sha256": "1d44142ee8aebb49c834a03659ecea8b94e399c4a70930bc4b516bd52bf1d7b8",
+      "proof_sha256": "92fb21db89dcd0089a81bbc48b95c45ea3b6b8893200434edf7e76bdeafb0c1f",
+      "rows": 135,
+      "source_masks": 191,
+      "motion_pngs": 54,
+      "all_counts_and_max_deltas_exact": true,
+      "source_unchanged": true,
+      "Pillow_or_alternate_interpreter_used": false
+    }
+  },
+  "source_peer": "/root/audit_spatial_handoff; fullbody/testAPI/actualreferencebindings staticGO at frozenhashes",
+  "candidate_room_only30_sha256": "ba8a2c2ab3e812673cb9ad39b84c22a2a9769171282eb3ff7f357ba5f226d06e",
+  "static_review_sha256": "ebb0acf227f15b39842af495a103e92ec9ac990f4887c936c9d7b593c82ceb6e",
+  "canonical_metadata_application_sha256": "3c1e2c6a4179cde82a4e9b3efd8ecc996aff0a5e7a1ff7047829142138f88b35",
+  "boundaries": [
+    "Actual unittest runner count75 is authority; source author counted74namedmethods.",
+    "Historical135 law reproduced before freshnative, never stands in for fresh candidatepixelacceptance.",
+    "Native21phase campaign notyetprepared/executed; sourcecommit+first7+exclusiveengineadmission remain.",
+    "No original5GDassertions/production921code/1605UID/224class namespace/scheduling/anchors changed; newobservers inert Git-bound .gd.txt.",
+    "Background30payload andcanonical1scope are distinct; historical31activationseal includesindex."
+  ],
+  "native_trial_runtime_complete": false,
+  "production_art_written": false,
+  "test_updated": false,
+  "browser_acceptance": "NOT_RUN"
+}
