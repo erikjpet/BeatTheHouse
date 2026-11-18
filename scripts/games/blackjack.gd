@@ -3838,19 +3838,27 @@ func _draw_side_bet_felt(surface, surface_state: Dictionary) -> void:
 	if side_bets.is_empty():
 		surface.surface_label_centered("none on this table", Rect2(panel.position + Vector2(12, 32), Vector2(panel.size.x - 24, 18)), 11, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.58))
 		return
-	for i in range(mini(side_bets.size(), BLACKJACK_MAX_SIDE_BETS)):
+	# Insurance is a conditional offer in addition to the permanent table pair.
+	# Keep the ordinary geometry exact; fit that temporary third choice in the
+	# same panel instead of clipping an enabled action or growing another row.
+	var offer_count := mini(side_bets.size(), BLACKJACK_MAX_SIDE_BETS + 1)
+	var compact := offer_count > BLACKJACK_MAX_SIDE_BETS
+	var compact_width := (panel.size.x - 24.0 - 8.0 * float(offer_count - 1)) / float(maxi(1, offer_count))
+	for i in range(offer_count):
 		var bet: Dictionary = side_bets[i]
 		var col := i % 2
 		var row := int(i / 2)
 		var rect := Rect2(panel.position.x + 12.0 + float(col) * 146.0, panel.position.y + 24.0 + float(row) * 30.0, 134, 24)
+		if compact:
+			rect = Rect2(panel.position.x + 12.0 + float(i) * (compact_width + 8.0), panel.position.y + 24.0, compact_width, 24)
 		var bet_id := str(bet.get("id", ""))
 		var selected := active.has(bet_id)
 		var enabled := bool(bet.get("surface_enabled", bool(surface_state.get("can_change_side_bets", false))))
 		var accent := C_YELLOW if selected else C_SOFT
 		surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.15 if selected else 0.06))
 		surface.draw_rect(rect, accent if enabled else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.24), false, 1)
-		surface.surface_label(str(bet.get("label", bet_id)).left(14), rect.position + Vector2(6, 15), 9, accent)
-		surface.surface_label("$%d" % int(stakes.get(bet_id, 1)), rect.position + Vector2(104, 15), 9, accent)
+		surface.surface_label(str(bet.get("label", bet_id)).left(10 if compact else 14), rect.position + Vector2(6, 15), 9, accent)
+		surface.surface_label("$%d" % int(stakes.get(bet_id, 1)), rect.position + Vector2(rect.size.x - 30.0, 15), 9, accent)
 		if enabled:
 			surface.surface_add_hit(rect, "blackjack_side_bet", i)
 
@@ -3860,7 +3868,7 @@ func _draw_side_bet_rule_overlay(surface, surface_state: Dictionary) -> void:
 	if side_bets.is_empty():
 		return
 	var target_index := -1
-	for i in range(mini(side_bets.size(), BLACKJACK_MAX_SIDE_BETS)):
+	for i in range(mini(side_bets.size(), BLACKJACK_MAX_SIDE_BETS + 1)):
 		if bool(surface.surface_region_hovered("blackjack_side_bet", i)):
 			target_index = i
 			break
