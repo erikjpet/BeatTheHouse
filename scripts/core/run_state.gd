@@ -13046,7 +13046,7 @@ func begin_travel_suspicion_decay(route_data: Dictionary, destination_archetype_
 	if source_after != before:
 		_record_heat_history(false)
 	var carried_heat := before if same_location else _decayed_suspicion_level(before, effective_route_decay)
-	return {
+	var result := {
 		"distance": distance,
 		"risk_decay": effective_route_decay,
 		"source_location_id": source_location_id,
@@ -13057,6 +13057,20 @@ func begin_travel_suspicion_decay(route_data: Dictionary, destination_archetype_
 		"return_decay": 0 if same_location else LOCAL_HEAT_RETURN_DECAY_PERCENT,
 		"same_location": same_location,
 	}
+	var prestige := grand_casino_prestige_status()
+	if destination_location_id == GRAND_CASINO_ARCHETYPE_ID and not source_location_id.is_empty() \
+			and source_location_id != GRAND_CASINO_ARCHETYPE_ID \
+			and str(narrative_flags.get("grand_casino_entry_environment_id", "")) != GRAND_CASINO_ARCHETYPE_ID \
+			and bool(prestige.get("active", false)) and not bool(prestige.get("recognition_applied", false)) \
+			and int(prestige.get("recognition_heat_delta", 0)) < 0:
+		# First-entry recognition and its Heat baselines must see the arrival Heat.
+		# Full-travel rollback is owned by the caller before begin mutates Heat.
+		var destination_before := clampi(int(levels.get(destination_location_id, 0)), 0, 100)
+		levels[destination_location_id] = maxi(destination_before, carried_heat)
+		suspicion["local_levels"] = levels
+		result["grand_prestige_heat_preinstalled"] = true
+		result["destination_before"] = destination_before
+	return result
 
 
 # Activates destination heat after RunGenerator has assigned the new environment.
@@ -13071,7 +13085,13 @@ func finish_travel_suspicion_decay(travel_heat: Dictionary) -> Dictionary:
 	var levels := _local_suspicion_levels()
 	var remembered_destination: int = clampi(int(levels.get(destination_location_id, 0)), 0, 100) if not destination_location_id.is_empty() else 0
 	var same_location := bool(travel_heat.get("same_location", false)) or (not source_location_id.is_empty() and source_location_id == destination_location_id)
-	var destination_after: int = carried_heat if same_location else maxi(remembered_destination, carried_heat)
+	var prestige_heat_preinstalled := bool(travel_heat.get("grand_prestige_heat_preinstalled", false)) \
+		and not same_location and destination_location_id == GRAND_CASINO_ARCHETYPE_ID \
+		and expected_destination_id == destination_location_id \
+		and not source_location_id.is_empty() and source_location_id != destination_location_id
+	# Preserve recognition and any intervening destination effects; carried Heat
+	# was already merged before installation for this matched first arrival.
+	var destination_after: int = remembered_destination if prestige_heat_preinstalled else (carried_heat if same_location else maxi(remembered_destination, carried_heat))
 	destination_after = clampi(destination_after, 0, 100)
 	if not destination_location_id.is_empty():
 		levels[destination_location_id] = destination_after
@@ -13081,7 +13101,7 @@ func finish_travel_suspicion_decay(travel_heat: Dictionary) -> Dictionary:
 	_evaluate_immediate_terminal_state()
 	var result := travel_heat.duplicate(true)
 	result["destination_location_id"] = destination_location_id
-	result["destination_before"] = remembered_destination
+	result["destination_before"] = clampi(int(travel_heat.get("destination_before", remembered_destination)), 0, 100) if prestige_heat_preinstalled else remembered_destination
 	result["destination_after"] = destination_after
 	result["after"] = destination_after
 	result["cooled"] = maxi(0, before - destination_after)
