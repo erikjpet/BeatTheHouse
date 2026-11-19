@@ -75,7 +75,7 @@ func _run() -> void:
 	app.set("continuous_environment_clock_enabled", false)
 	root.add_child(app)
 	await _settle()
-	app.call("_on_start_pressed")
+	app.call("start_generated_foundation_run")
 	await _settle()
 	var run_state: RunState = app.get("run_state")
 	_check(run_state != null, "Isolated view host initialized")

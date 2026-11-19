@@ -39959,6 +39959,124 @@
       },
       "updated_at": "2026-11-16T11:34:06.663332+00:00",
       "planned_app_changes": []
+    },
+    {
+      "id": "BTH061-FIRST-LESSON-CHOICE-001",
+      "name": "Choose Start Lesson or Skip Tutorial on first run",
+      "aliases": [],
+      "group": "current",
+      "state": "open",
+      "commits": ["7cc63ab100acc18f3e93e643a5ddddb4e8170258"],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": "",
+        "evidence": []
+      },
+      "status": "COMBINED_NATIVE_AND_PRIVATE_WEB_PASSED_NEXT_PENDING",
+      "owner": {
+        "name": "Beat the House 0.6.1 integration",
+        "task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c",
+        "assignment_state": "assigned"
+      },
+      "evidence": [
+        {
+          "kind": "source_only_candidate",
+          "reference": "docs/testing/BTH061_FIRST_LESSON_CHOICE_source_readiness.md",
+          "summary": "Historical source-only checkpoint before native execution; see BTH061_FIRST_LESSON_CHOICE_native_qualification.md for later scoped results."
+        },
+        {
+          "kind": "native_qualification",
+          "reference": "docs/testing/BTH061_FIRST_LESSON_CHOICE_native_qualification.md",
+          "summary": "Lesson 18/18, Skip 22/22, saved-run confirmation 85/85, tutorial Resume 19/19 and two-process cold Save/Continue 12/12. Private rendered mouse/touch passed; strict reload transport and NEXT pending."
+        },
+        {
+          "kind": "private_web_qualification",
+          "reference": "docs/testing/BTH061_FIRST_LESSON_CHOICE_web_qualification.md",
+          "summary": "Mouse and touchscreen Play, Back, Start Lesson and Skip passed in fresh private profiles; cold reload visually restored ordinary Continue but strict PCK-abort transport check failed. No deployed NEXT claim."
+        }
+      ],
+      "next_action": "Publish qualified combined tutorial commit on current main and verify exact NEXT Start Lesson, Skip and cold Continue. Preserve earlier no-store failure and keep user-operated ledger reconciliation reserved.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-19T00:00:00+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-19T16:32:01.355933+00:00",
+      "kind": "objective",
+      "parent_ids": [],
+      "objective": {
+        "text": "Offer Start Lesson and Skip Tutorial when a fresh player begins the First Night for the first time. Skip starts the ordinary new-run path and persists the explicit choice without tutorial rewards or unrelated progress. Cancel/Back creates no run or profile mutation. Preserve authored Lesson, Replay Lessons, old-profile Continue and the existing New Run replacement confirmation.",
+        "source": "Erik's 2026-11-19 request relayed in delegated parent thread 6afc9600-f7f0-8191-926d-d8ae551e500c: option to skip the initial Lesson tutorial on first start, similar to the existing Start a new run popup.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "fresh-choice",
+            "description": "Fresh profile shows explicit Start Lesson, Skip Tutorial and safe Back; Back creates no run or onboarding/save mutation.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "branches",
+            "description": "Start Lesson retains the authored lesson; Skip starts an ordinary generated run and persists the explicit onboarding choice without tutorial reward/completion or unrelated progress.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "compatibility",
+            "description": "Returning profiles, Continue/old saves, Replay Lessons and New Run replacement confirmation retain their existing semantics.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "save-input",
+            "description": "Save/full-process Continue preserve Skip; mouse, controller and touch choices and cancel work in the UI.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "delivery",
+            "description": "Scoped tested commit on main and exact NEXT deployment/changed behavior verification.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": true,
+          "complete": false,
+          "areas": [
+            {
+              "name": "Source and focused synthetic regressions",
+              "state": "remaining",
+              "evidence": []
+            },
+            {
+              "name": "Actual native and rendered input/Save/Continue behavior",
+              "state": "remaining",
+              "evidence": []
+            },
+            {
+              "name": "Main/NEXT delivery",
+              "state": "remaining",
+              "evidence": []
+            }
+          ]
+        }
+      },
+      "implementation_batches": [],
+      "planned_app_changes": [
+        {
+          "description": "Add the first-run Lesson choice dialog and ordinary Skip entry without altering fixed viewport, camera or environment input."
+        }
+      ]
     }
   ],
   "batches": [

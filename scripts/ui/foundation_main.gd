@@ -525,6 +525,8 @@ var run_config_content_stack: VBoxContainer
 var run_config_start_button: Button
 var delete_saved_run_button: Button
 var new_run_confirmation: ConfirmationDialog
+var first_lesson_choice: ConfirmationDialog
+var first_lesson_skip_button: Button
 var _pending_new_run_start := Callable()
 var save_delete_confirmation: ConfirmationDialog
 var leave_without_saving_confirmation: ConfirmationDialog
@@ -990,7 +992,7 @@ func _advance_environment_turns_checked(amount: int = 1, debug_timing: Dictionar
 func _input(event: InputEvent) -> void:
 	# The embedded confirmation Window owns navigation in its own viewport.
 	# Root handling would move focus a second time for the same gesture.
-	if new_run_confirmation != null and new_run_confirmation.visible:
+	if (new_run_confirmation != null and new_run_confirmation.visible) or (first_lesson_choice != null and first_lesson_choice.visible):
 		return
 	if _web_manual_save_pending:
 		get_viewport().set_input_as_handled()
@@ -19428,10 +19430,83 @@ func _on_start_pressed() -> bool:
 		return false
 	var seed_text := seed_input.text.strip_edges()
 	if selected_challenge_id.is_empty() and _fresh_profile_needs_tutorial():
-		return start_tutorial_run()
+		return _request_new_run_start(Callable(self, "_open_first_lesson_choice"))
 	if seed_text.is_empty() or seed_text == generated_menu_seed_text:
 		return start_generated_foundation_run()
 	return _request_new_run_start(Callable(self, "start_foundation_run").bind(seed_text, _new_run_challenge_for_seed(seed_text)))
+
+
+func _open_first_lesson_choice() -> bool:
+	if first_lesson_choice == null:
+		return false
+	if first_lesson_choice.visible:
+		return true
+	var dialog := first_lesson_choice
+	dialog.popup_centered(Vector2i(650, 220))
+	var controls: Array = [dialog.get_cancel_button(), dialog.get_ok_button(), first_lesson_skip_button]
+	if modal_focus_scope != null:
+		modal_focus_scope.call("push_scope", dialog.get_cancel_button().get_parent(), dialog.get_cancel_button(), null, controls)
+	dialog.get_cancel_button().grab_focus()
+	return true
+
+
+func _on_first_lesson_choice_input(event: InputEvent) -> void:
+	if first_lesson_choice == null or not first_lesson_choice.visible:
+		return
+	# The embedded dialog owns Tab, as the existing New Run confirmation does.
+	if event is InputEventKey and (event as InputEventKey).keycode == KEY_TAB:
+		return
+	if modal_focus_scope != null and bool(modal_focus_scope.call("handle_input", event)):
+		first_lesson_choice.set_input_as_handled()
+	elif event.is_action_pressed("ui_cancel"):
+		first_lesson_choice.set_input_as_handled()
+		_cancel_first_lesson_choice()
+	elif event.is_action_pressed("ui_accept"):
+		first_lesson_choice.set_input_as_handled()
+		if first_lesson_choice.get_ok_button().has_focus():
+			_confirm_first_lesson_start()
+		elif first_lesson_skip_button != null and first_lesson_skip_button.has_focus():
+			_confirm_first_lesson_skip()
+		else:
+			_cancel_first_lesson_choice()
+
+
+func _close_first_lesson_choice() -> void:
+	if first_lesson_choice == null or not first_lesson_choice.visible:
+		return
+	if modal_focus_scope != null:
+		modal_focus_scope.call("pop_scope", first_lesson_choice.get_cancel_button().get_parent())
+		var previous_root: Control = modal_focus_scope.call("active_root")
+		if previous_root != null:
+			modal_focus_scope.call("push_scope", previous_root)
+	first_lesson_choice.hide()
+
+
+func _cancel_first_lesson_choice() -> void:
+	_close_first_lesson_choice()
+
+
+func _confirm_first_lesson_start() -> void:
+	if first_lesson_choice == null or not first_lesson_choice.visible:
+		return
+	_close_first_lesson_choice()
+	start_tutorial_run()
+
+
+func _on_first_lesson_custom_action(action: StringName) -> void:
+	if action == &"skip_tutorial":
+		_confirm_first_lesson_skip()
+
+
+func _confirm_first_lesson_skip() -> void:
+	if first_lesson_choice == null or not first_lesson_choice.visible:
+		return
+	_close_first_lesson_choice()
+	# Persist the explicit onboarding decision before entering an ordinary run.
+	# The mid-lesson Skip path also clears a Resume Slot; it is not used here.
+	if not _complete_tutorial_profile("Could not save the tutorial choice."):
+		return
+	_start_generated_foundation_run_confirmed()
 
 
 func _request_new_run_start(action: Callable) -> bool:
@@ -19655,7 +19730,7 @@ func _on_run_report_main_menu_requested() -> void:
 	return_to_main_menu()
 
 
-func _complete_tutorial_profile() -> bool:
+func _complete_tutorial_profile(error_message: String = "Could not save lesson completion.") -> bool:
 	if _crt_practice_active():
 		return true
 	if profile_inventory == null:
@@ -19667,7 +19742,7 @@ func _complete_tutorial_profile() -> bool:
 	if error == OK:
 		return true
 	profile_inventory.tutorial_completed = false
-	_show_message("Could not save lesson completion.")
+	_show_message(error_message)
 	return false
 
 
@@ -21609,13 +21684,13 @@ func _refresh_start_screen() -> void:
 	var tutorial_seed_locked := _mandatory_tutorial_seed_locked()
 	if seed_input != null:
 		seed_input.editable = not tutorial_seed_locked
-		seed_input.tooltip_text = "The mandatory First Night lesson uses its fixed teaching seed." if tutorial_seed_locked else "Set a deterministic seed for the next new run."
+		seed_input.tooltip_text = "Start Lesson uses a fixed teaching seed; Skip Tutorial starts an ordinary generated run." if tutorial_seed_locked else "Set a deterministic seed for the next new run."
 	if seed_status_label != null:
 		seed_status_label.visible = tutorial_seed_locked
-		seed_status_label.text = "First Night uses a fixed lesson seed; later runs use your seed." if tutorial_seed_locked else ""
+		seed_status_label.text = "Start Lesson uses a fixed seed. Skip Tutorial starts an ordinary run." if tutorial_seed_locked else ""
 	if tutorial_seed_locked and start_status_label != null and not has_save \
 			and content_validation_status_message.is_empty() and run_ui_build_failure_reason.is_empty():
-		start_status_label.text = "Your first run is the First Night lesson, so its teaching seed is fixed."
+		start_status_label.text = "Choose Start Lesson or Skip Tutorial for your first run."
 	_refresh_content_group_controls()
 	_refresh_challenge_controls()
 	if not run_ui_build_failure_reason.is_empty():

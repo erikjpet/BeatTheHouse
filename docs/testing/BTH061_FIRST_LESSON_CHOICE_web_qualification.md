@@ -1,0 +1,16 @@
+# BTH061-FIRST-LESSON-CHOICE-001 private Web qualification
+
+Base remote main is `89403f389a5807e050a450cd27b1bd93b3a4a41e`. The isolated tutorial patch is not on main or NEXT. Guarded export `lesson-choice-private-pack-20261119-02` passed; candidate PCK SHA-256 `c83f7ee292ba28432821ca0b091a84591449b768d391ff0b031c363506d438a4` contains both changed UI resources. The first export attempt failed on absent native editor DLLs; corrected hash-pinned inputs passed. All jobs released zero owned processes.
+
+| Run | Actual result |
+| --- | --- |
+| `lesson-choice-browser-mouse-20261119-02` | PASS at 1280x720. First Play showed Start Lesson, Back and Skip; Back returned to title; Play reopened the chooser; Start Lesson opened authored Apartment/Pal/X-Ray guidance. Six screenshots, no page/console/asset/request errors. |
+| `lesson-choice-browser-touch-20261119-02` | PASS at 390x844 with actual `page.touchscreen.tap`. Play, Back, reopen, Skip entered ordinary run. Six screenshots, no page/console/asset/request errors. |
+| `lesson-choice-browser-touch-20261119-01` | Scoped visual cold observation only: after Skip, reload showed Continue; touch Continue reopened ordinary run without chooser. Strict runner FAIL due an unexpected PCK `net::ERR_ABORTED` during reload. Do not count as a full transport pass. |
+
+Native full-process Skip Save/Continue separately passed 12/12 with typed seed, cash, time, room and inventory unchanged. The earlier guarded distribution fixture still fails before gameplay because it expects `user://` while the guard uses direct isolated persistence paths; it is not regraded. No physical phone, deployed NEXT, protected profile, reward transaction or user-reserved ledger check was exercised. This task remains Open pending scoped integration and exact NEXT acceptance. Receipts/screenshots: `E:\CodexQA\BTH\runs\lesson-choice-*\evidence`.
+
+
+## Combined CRT integration
+
+Private composite used current served CRT static Web assets (10 hash-matched files), its qualified native side module SHA-256 `f4a38527b9982275cb7fa5626efa9ffae3467f416e70453bcb2d911ea5043fc5`, and a fresh merged-head PCK SHA-256 `7bbfddc9d15abc6f0f98a3c1488027d200d9efe95345605ee67d1dc68f7067a5` (125,032,268 bytes). This is a QA composite, not a production deployment. The mouse run visibly showed Play, safe Back, reopened choice and authored Apartment Lesson with CRT Practice Console; its strict `no-store` server retained an unexpected initial PCK `ERR_ABORTED` despite game-ready load. A separate no-cache touch run showed Play/Back/reopen/Skip, then stopped on a BOM in the authored reload control JSON; that fixture failure is retained. The corrected fresh-profile, no-cache run passed actual touchscreen Play/Skip, ordinary reload, touch Continue into the same ordinary run, with zero failed requests, console or page errors and full browser/server closure. The matched no-cache policy is QA-only; physical phone and deployed NEXT behavior remain unqualified here. Receipts: `E:\CodexQA\BTH\runs\lesson-choice-combined-mouse-20261119-01\evidence`, `E:\CodexQA\BTH\runs\lesson-choice-combined-nocache-touch-20261119-01\evidence`, and `E:\CodexQA\BTH\runs\lesson-choice-combined-nocache-cold-20261119-03\evidence`.

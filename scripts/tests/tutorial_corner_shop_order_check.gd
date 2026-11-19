@@ -22,7 +22,7 @@ func _run() -> void:
 	root.add_child(app)
 	await process_frame
 	await process_frame
-	app.call("_on_start_pressed")
+	app.call("start_tutorial_run")
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	if run_state == null or not run_state.is_tutorial_run():

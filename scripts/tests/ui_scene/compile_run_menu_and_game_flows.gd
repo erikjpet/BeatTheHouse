@@ -1073,6 +1073,12 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 		return false
 	app.call("_on_start_pressed")
 	await process_frame
+	var first_choice: ConfirmationDialog = app.get("first_lesson_choice")
+	if first_choice == null or not first_choice.visible or app.get("run_state") != null:
+		push_error("Fresh profile did not offer the initial Lesson choice before starting a run.")
+		return false
+	first_choice.get_ok_button().pressed.emit()
+	await process_frame
 	var run_state: RunState = app.get("run_state")
 	if run_state == null or not run_state.is_tutorial_run() or str(run_state.challenge_config.get("id", "")) != "tutorial_first_card":
 		push_error("Lessons replay did not start the fixed tutorial challenge.")

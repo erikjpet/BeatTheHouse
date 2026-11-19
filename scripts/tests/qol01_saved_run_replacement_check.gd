@@ -112,8 +112,13 @@ func run() -> void:
 	app.profile_inventory.tutorial_completed = false
 	app.selected_challenge_id = ""
 	app._on_start_pressed()
-	check(app.run_state != null and app.run_state.is_tutorial_run(), "mandatory tutorial path begins without confirmation")
-	check(final_dialog == null or not final_dialog.visible, "tutorial has no prompt")
+	check(app.new_run_confirmation.visible or app.first_lesson_choice.visible, "first lesson requires explicit consent")
+	if app.new_run_confirmation.visible:
+		app._confirm_new_run_start()
+	check(app.first_lesson_choice.visible, "replacement consent leads to Lesson choice")
+	app._confirm_first_lesson_start()
+	check(app.run_state != null and app.run_state.is_tutorial_run(), "Start Lesson begins authored tutorial")
+	check(final_dialog == null or not final_dialog.visible, "replacement confirmation closes after consent")
 	app.run_state.run_status = RunState.RUN_STATUS_FAILED
 	app._on_run_report_new_run_requested()
 	check(final_dialog == null or not final_dialog.visible, "finished report New Run has no prompt")

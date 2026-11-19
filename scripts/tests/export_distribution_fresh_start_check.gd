@@ -54,11 +54,18 @@ func _run() -> void:
 		return
 
 	app.call("_on_start_pressed")
+	for _frame in range(3):
+		await process_frame
+	var first_choice: ConfirmationDialog = app.get("first_lesson_choice")
+	if first_choice == null or not first_choice.visible or app.get("run_state") != null or profile.tutorial_completed:
+		_fail("The first Play press did not open the safe Lesson choice.")
+		return
+	first_choice.get_ok_button().pressed.emit()
 	for _frame in range(6):
 		await process_frame
 	var run_state: RunState = app.get("run_state")
 	if run_state == null or not run_state.is_tutorial_run():
-		_fail("The first Play press in a clean distribution did not launch the tutorial.")
+		_fail("Start Lesson did not launch the authored tutorial.")
 		return
 
 	var app_save_service: SaveService = app.get("save_service")

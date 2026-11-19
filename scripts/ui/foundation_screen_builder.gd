@@ -258,6 +258,20 @@ static func _build_redesigned_start_screen(host: Variant) -> void:
 	host.new_run_confirmation.window_input.connect(host._on_new_run_confirmation_input)
 	host.add_child(host.new_run_confirmation)
 
+	host.first_lesson_choice = ConfirmationDialog.new()
+	host.first_lesson_choice.title = "Your first run"
+	host.first_lesson_choice.dialog_text = "Start the First Night lesson, or begin an ordinary run. You can replay Lessons later."
+	host.first_lesson_choice.dialog_autowrap = true
+	host.first_lesson_choice.ok_button_text = "Start Lesson"
+	host.first_lesson_choice.cancel_button_text = "Back"
+	host.first_lesson_choice.dialog_hide_on_ok = false
+	host.first_lesson_skip_button = host.first_lesson_choice.add_button("Skip Tutorial", true, "skip_tutorial")
+	host.first_lesson_choice.confirmed.connect(host._confirm_first_lesson_start)
+	host.first_lesson_choice.canceled.connect(host._cancel_first_lesson_choice)
+	host.first_lesson_choice.custom_action.connect(host._on_first_lesson_custom_action)
+	host.first_lesson_choice.window_input.connect(host._on_first_lesson_choice_input)
+	host.add_child(host.first_lesson_choice)
+
 	host.save_delete_confirmation = ConfirmationDialog.new()
 	host.save_delete_confirmation.title = "Delete saved run?"
 	host.save_delete_confirmation.dialog_text = "Delete the current saved run? This cannot be undone."
