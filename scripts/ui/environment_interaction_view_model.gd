@@ -729,6 +729,7 @@ static func layout_spot_field_name(object_type: String) -> String:
 		"lender": return "lender_spots"
 		"home_tenure": return "home_tenure_spots"
 		"home_sleep": return "home_sleep_spots"
+		"home_console": return "home_console_spots"
 		"home_storage": return "home_storage_spots"
 		"home_container": return "home_container_spots"
 		"numbers": return "numbers_spots"
@@ -770,6 +771,7 @@ static func context_border_color(object_type: String, enabled: bool) -> Color:
 		"shopkeeper", "game_hook", "home_tenure", "meta_bag", "meta_upgrade", "meta_trade_up", "meta_pawn_counter", "service", "lender": return VisualStyleScript.YELLOW
 		"dialogue": return VisualStyleScript.CYAN_2
 		"home_sleep": return VisualStyleScript.CYAN
+		"home_console": return VisualStyleScript.CYAN
 		"home_storage", "home_container": return VisualStyleScript.TEAL
 		"travel": return VisualStyleScript.PURPLE_2
 	return VisualStyleScript.CYAN_2
@@ -785,6 +787,7 @@ static func context_type_label(object_type: String) -> String:
 		"dialogue": return "Talk"
 		"home_tenure": return "Home"
 		"home_sleep": return "Rest"
+		"home_console": return "Practice"
 		"home_storage": return "Storage"
 		"home_container": return "Container"
 		"meta_bag": return "Bag"

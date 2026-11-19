@@ -1,0 +1,25 @@
+{
+  "schema": "bth.crt_private_web_caller_proof/v1",
+  "observed_at": "2026-11-19T08:57:37.363342+00:00",
+  "source_checkout": "C:\\Users\\theep\\Documents\\Codex\\2026-11-18\\task\\crt-source",
+  "baseline_commit": "89403f389a5807e050a450cd27b1bd93b3a4a41e",
+  "source_head": "89403f389a5807e050a450cd27b1bd93b3a4a41e",
+  "comparison": "git diff --name-only BASE -- native addons project.godot export_presets.cfg",
+  "changed_paths": [],
+  "tracked_input_sha256": {
+    "export_presets.cfg": "ebf93c38034595a9ac7356250fe8378b55674e4cca5fa6015530733fef22fdad",
+    "native/coin_pusher/SConstruct": "4a29cfec4660991fa7c5eb876ebe404a81910d1c88100d7f344657d4f3b302e2",
+    "native/coin_pusher/build_profile.json": "5e79c6262dc260aeb8c98a52baef18282c8eef46ed95b460014b996c176c0942",
+    "native/coin_pusher/coin_pusher_native.gdextension.template": "407b2cc4b2c3ca01775158518e44b1caca3fb929be0e46eca44429733825d115",
+    "native/coin_pusher/godot_web_release_build_profile.json": "cee1cdec05511d97107d8bf66bd44642cd32735880e09364c381e1aa889b4ce6",
+    "native/coin_pusher/src/coin_pusher_native_core.cpp": "d3109b8ee9341246fbbfdd346088075d0333e1196d86068210d660a131cc06bd",
+    "native/coin_pusher/src/coin_pusher_native_core.h": "c6550e42ea479935b6bbfaaeb97cc2abddbce7ac0054660d3bea125cbbc09867",
+    "native/coin_pusher/src/coin_pusher_render_batch.cpp": "2ddeee50021185fc217336555fcc71f9b222b25b59c60588958fb265888c0144",
+    "native/coin_pusher/src/coin_pusher_step_kernel.cpp": "1661d2d8144dd10e926052912b745ba389e91762dcef6a6e4452da50b07cb076",
+    "native/coin_pusher/src/register_types.cpp": "3dd97d2b6016f106e59fc328bb019b79ee02bcc7f0af00a6543af39cc70ef747",
+    "native/coin_pusher/src/register_types.h": "239a7a42aaef3074dab2a5b5aec2a37e97f22f086ad12ddd0445ed56dc58528b",
+    "native/coin_pusher/toolchain.lock.json": "36ffe336c62c3e02ae0e2237c7a1ab5b60a531dfe5aa4dddf90b53ea5791367b",
+    "project.godot": "d9eb64e9635c66f230bbe779956f3d8763e8ba701eabca905209a4cdd8fc01b3"
+  },
+  "scope": "Read-only source comparison. Exact baseline runtime pins remain independently enforced by the private pack adapter; no deployment identity claim."
+}

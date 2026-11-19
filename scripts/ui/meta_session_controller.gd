@@ -525,6 +525,9 @@ func _home_interactable_objects(run_state: RunState, hover_target_id: String, fo
 	var objects: Array = []
 	if run_state == null:
 		return objects
+	if EnvironmentPlacementScript.HomePracticeConsoleScript.eligible(run_state.current_environment):
+		objects.append(_make_interactable_object(EnvironmentPlacementScript.HomePracticeConsoleScript.interactable_record(
+			_interaction_rect_for_object(run_state, "home_console:tv", "home_console", 0)), hover_target_id, focus_target_id, selected_object_id))
 	var home := home_summary_view()
 	var gold := int(home.get("gold_balance", 0))
 	var containers := run_state.current_home_containers()

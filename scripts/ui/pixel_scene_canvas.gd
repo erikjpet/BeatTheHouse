@@ -5377,8 +5377,47 @@ func _draw_scene_object_body(object_data: Dictionary) -> void:
 			_draw_scenario_prop(rect, object_data, active)
 		"drink":
 			_draw_drink_prop(rect, active)
+		"home_console":
+			_draw_home_practice_console(rect, active)
 		_:
 			_draw_item_prop(rect, object_data, active, str(object_data.get("surface", "counter")))
+
+
+func _draw_home_practice_console(rect: Rect2, active: bool) -> void:
+	var accent := C_YELLOW if active else C_CYAN
+	var television := Rect2(rect.position, Vector2(rect.size.x * 0.66, rect.size.y * 0.83))
+	var screen := Rect2(television.position + Vector2(5, 5), Vector2(television.size.x * 0.75, television.size.y - 11))
+	# Chunky television bezel and glass, with a separate wired console and pad.
+	draw_rect(television, Color("#302b38"))
+	draw_rect(television.grow(-2), Color("#736474"), false, 2)
+	draw_rect(screen.grow(2), Color("#100e1c"))
+	draw_rect(screen, Color("#102737"))
+	draw_rect(Rect2(screen.position + Vector2(3, 3), Vector2(screen.size.x - 6, 2)), Color(accent, 0.35))
+	for index in range(1, 5):
+		var band_y := screen.position.y + screen.size.y * float(index) / 5.0
+		draw_line(Vector2(screen.position.x + 2, band_y), Vector2(screen.end.x - 2, band_y), Color(accent, 0.10), 1)
+	_neon_text("BTH", screen.position + Vector2(7, screen.size.y * 0.65), 12, accent)
+	var knob_x := television.end.x - television.size.x * 0.10
+	draw_circle(Vector2(knob_x, television.position.y + television.size.y * 0.28), 3, Color("#b6a28e"))
+	draw_circle(Vector2(knob_x, television.position.y + television.size.y * 0.52), 3, Color("#b6a28e"))
+	for index in range(3):
+		draw_rect(Rect2(knob_x - 4, television.end.y - 12 + index * 3, 8, 1), Color("#171321"))
+	draw_rect(Rect2(television.position.x + 7, television.end.y, television.size.x - 14, 3), Color("#241c2b"))
+	var console := Rect2(rect.position + Vector2(rect.size.x * 0.72, rect.size.y * 0.50), Vector2(rect.size.x * 0.28, rect.size.y * 0.27))
+	draw_line(Vector2(television.end.x, television.end.y - 5), console.position + Vector2(4, 3), Color("#0d0b17"), 2)
+	draw_rect(console, Color("#96858f"))
+	draw_rect(Rect2(console.position + Vector2(3, 3), Vector2(console.size.x - 6, 3)), Color("#302b38"))
+	draw_rect(Rect2(console.position + Vector2(3, console.size.y - 5), Vector2(4, 2)), C_PINK)
+	draw_rect(Rect2(console.position + Vector2(console.size.x * 0.53, -4), Vector2(console.size.x * 0.30, 5)), Color("#494150"))
+	var pad := Rect2(rect.position + Vector2(rect.size.x * 0.75, rect.size.y * 0.84), Vector2(rect.size.x * 0.23, rect.size.y * 0.14))
+	draw_line(console.position + Vector2(console.size.x * 0.7, console.size.y), pad.position + Vector2(8, 1), Color("#0d0b17"), 2)
+	draw_rect(pad, Color("#6b6072"))
+	draw_rect(Rect2(pad.position + Vector2(4, 2), Vector2(6, 2)), Color("#181522"))
+	draw_rect(Rect2(pad.position + Vector2(6, 0), Vector2(2, 6)), Color("#181522"))
+	draw_circle(pad.position + Vector2(pad.size.x - 9, 3), 2, C_PINK)
+	draw_circle(pad.position + Vector2(pad.size.x - 4, 3), 2, C_ORANGE)
+	if active:
+		draw_rect(television.grow(1), Color(accent, 0.60), false, 1)
 
 
 func _draw_manifest_specific_object(rect: Rect2, object_data: Dictionary, active: bool) -> bool:
@@ -6519,6 +6558,9 @@ func _apply_draw_hints(object_data: Dictionary, object_type: String, index: int)
 		"home_sleep":
 			object_data["surface"] = "floor"
 			object_data["prop"] = "bed"
+		"home_console":
+			object_data["surface"] = "floor"
+			object_data["prop"] = "crt_console"
 		"home_storage":
 			object_data["surface"] = "floor"
 		"home_container":
@@ -6841,6 +6883,8 @@ func _player_facing_object_type(object_type: String) -> String:
 			return "Home"
 		"home_sleep":
 			return "Rest"
+		"home_console":
+			return "Practice"
 		"home_storage":
 			return "Storage"
 		"home_container":
@@ -8210,6 +8254,8 @@ func _natural_model_size_for_type(object_type: String) -> Vector2:
 			return Vector2(116.0, 58.0)
 		"home_sleep":
 			return Vector2(150.0, 74.0)
+		"home_console":
+			return Vector2(148.0, 80.0)
 		"home_storage":
 			return Vector2(108.0, 58.0)
 		"home_container":
@@ -8837,6 +8883,8 @@ func _color_for_object_type(object_type: String) -> Color:
 		"home_tenure":
 			return C_AMBER
 		"home_sleep":
+			return C_CYAN
+		"home_console":
 			return C_CYAN
 		"home_storage", "home_container":
 			return C_TEAL

@@ -20,8 +20,8 @@ func _run():
  check(bool(result.get("ok",false)),"Public Slot practice opens")
  var state:RunState=app.get("run_state")
  check(bool(state.validate_room_action_authority().get("ok",false)),"Six-cabinet room passes unchanged strict authority")
- app.call("back_to_environment")
- for _frame in range(4):await process_frame
+ # Inspect the practice room while it is installed. Leave now returns to the
+ # CRT selector and deliberately parks no practice RunState on the host.
  var spatial:Dictionary=app.call("current_spatial_interaction_snapshot")
  var ids:Array=[]
  for value in spatial.get("objects",[]):ids.append(str(value.get("object_id","")))
@@ -38,6 +38,24 @@ func _run():
  var damaged=restored.current_environment.duplicate(true)
  damaged.layout.object_rects["game:slot"]["x"]+=0.01
  check(not bool(Binder.validate_base_layout_authority(damaged).get("ok",false)),"Edited practice geometry still fails strict validation")
+ var practice_seed=state.seed_text
+ var practice_digest=Binder.slot_map_digest(Placement.surface_map(state.current_environment))
+ var selector:Control=app.get("game_test_menu")
+ app.call("back_to_environment")
+ for _frame in range(4):await process_frame
+ check(selector!=null and selector.is_visible_in_tree(),"Slot Leave returns to the retained CRT selector")
+ check(app.get("current_game")==null and app.get("run_state")==null,"CRT selector releases its isolated practice session")
+ var repeated:Dictionary=app.call("start_game_test_session","slot")
+ check(bool(repeated.get("ok",false)),"Retained CRT selector launches Slot again")
+ var repeated_state:RunState=app.get("run_state")
+ if repeated_state!=null:
+  check(repeated_state!=state and repeated_state.seed_text==practice_seed,"Repeat launch uses a fresh practice RunState with the same seed")
+  check(bool(repeated_state.validate_room_action_authority().get("ok",false)),"Repeat six-cabinet room retains strict authority")
+  check(Binder.slot_map_digest(Placement.surface_map(repeated_state.current_environment))==practice_digest,"Repeat launch retains the same practice placement authority")
+ app.call("back_to_environment")
+ for _frame in range(4):await process_frame
+ app.call("close_game_test_menu")
+ check(str(app.get("current_screen"))=="START" and not bool(app.call("_crt_practice_active")),"Exit CRT returns the title origin")
  app.queue_free()
  await process_frame
  print("CLOSE01_SLOT_PRACTICE "+JSON.stringify({"checks":checks,"failures":failures}))

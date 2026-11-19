@@ -580,6 +580,7 @@ static func _entry_source(entry: Dictionary, presentation_id: String) -> Diction
 		"home_storage": "home_profile",
 		"home_tenure": "home_profile",
 		"home_sleep": "home_profile",
+		"home_console": "home_profile",
 		"numbers": "numbers_state",
 		"numbers_silas": "numbers_state",
 	}.get(object_type, "environment_instance"))

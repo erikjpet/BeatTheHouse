@@ -531,6 +531,11 @@ static func _identity_for_record(source: Dictionary, environment: Dictionary, li
 			# The authored hook row owns the stable presentation identity. A producer may
 			# select one of that row's authorized dialogue variants without changing it.
 			source_record_id = "%s:%s" % [dialogue_parent_game, str(authored_dialogue.get("id", ""))]
+		"home_console":
+			source_field = "home_profile"
+			if str(source.get("object_type", "")) != domain or presentation_id != "home_console:tv" or source_id != "tv" \
+					or not EnvironmentPlacementScript.HomePracticeConsoleScript.eligible(environment) \
+					or _dict(environment.get("home_profile", {})).is_empty(): return {}
 		"home_tenure", "home_sleep", "home_storage":
 			source_field = "home_profile"
 			var expected_id: String = str({"home_tenure": "status", "home_sleep": "bed", "home_storage": "place"}.get(domain, ""))

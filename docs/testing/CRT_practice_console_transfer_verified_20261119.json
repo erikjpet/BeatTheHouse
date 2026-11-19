@@ -1,0 +1,38 @@
+{
+  "schema": "bth.crt_verified_transfer_checkpoint/v1",
+  "observed_at": "2026-11-19T10:53:13.917664+00:00",
+  "scope": "Completed export3 proof, recorded before final packaging; external manifests identify immutable payloads. No self-hash or production delivery claim.",
+  "baseline_commit": "89403f389a5807e050a450cd27b1bd93b3a4a41e",
+  "baseline_tree": "1723e2f077f1c8dadbf0dbd8f740aa0ca3db33f4",
+  "verified_export": {
+    "schema": "bth.crt_transfer_export/v1",
+    "passed": true,
+    "storage_manifest": "E:\\CodexQA\\BTH\\runs\\crt061-transfer3-20261119\\evidence\\storage-manifest.json",
+    "export": "E:\\CodexQA\\BTH\\runs\\crt061-transfer3-20261119\\evidence\\artifact-export",
+    "artifact_manifest": "E:\\CodexQA\\BTH\\runs\\crt061-transfer3-20261119\\evidence\\artifact-export\\artifact_manifest.json",
+    "artifact_manifest_sha256": "d4a7dfac203cc583d6787330f29b81152c9cb6b0023fa2aff3ca1f550990fe8d",
+    "exported_artifact": "E:\\CodexQA\\BTH\\runs\\crt061-transfer3-20261119\\evidence\\artifact-export\\.tmp\\crt-transfer-crt061-transfer3-20261119\\artifact",
+    "patch_sha256": "feab0a3dbe89fecf1cc802e73c2deb7dcf0ca18f8ffbaaf1a36c2fa5cd4b621d",
+    "verified_tree": "f21d3ba842ea621bcfe847c2efcbd3f467d2a1c6",
+    "baseline_commit": "89403f389a5807e050a450cd27b1bd93b3a4a41e",
+    "file_count": 41,
+    "real_index_refs_unchanged": true
+  },
+  "transfer_manifest_sha256": "393769fe2e825ebf311c3735c403947d76a2c5eb5b67fda1ba13c53e7584b5da",
+  "job": {
+    "path": "E:\\CodexQA\\BTH\\runs\\crt061-transfer3-20261119\\evidence\\job.json",
+    "sha256": "0ade094e05137c7b8d3f5e9710b3cff06653ec555c449a04109f7e17deed5d2f",
+    "exit_code": 0,
+    "active_at_release": 0,
+    "timed_out": false,
+    "cleanup_errors": []
+  },
+  "source_files": 41,
+  "remaining": [
+    "Cold3 strict new-loader PCK transport failure; working Continue is separate.",
+    "Portrait readability/touch ergonomics open.",
+    "Inherited baseline Save acknowledgement warning.",
+    "No feature commit or main/NEXT/TEST publication."
+  ],
+  "manual_checks": "User-reserved checks/reconciliation not run; earlier reports remain historical."
+}

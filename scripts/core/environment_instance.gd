@@ -1283,6 +1283,8 @@ static func _active_object_layout_entries(environment_data: Dictionary, surface_
 		entries.append({"object_id": "home_tenure:status", "object_type": "home_tenure", "index": 0, "spot_field": "home_tenure_spots"})
 	if _home_sleep_should_exist(environment_data):
 		entries.append({"object_id": "home_sleep:bed", "object_type": "home_sleep", "index": 0, "spot_field": "home_sleep_spots"})
+	if EnvironmentPlacementScript.HomePracticeConsoleScript.eligible(environment_data):
+		entries.append({"object_id": "home_console:tv", "object_type": "home_console", "index": 0, "spot_field": "home_console_spots", "placement_class": "floor_fixture", "visual_prop": "crt_console"})
 	if _home_storage_should_exist(environment_data):
 		entries.append({"object_id": "home_storage:place", "object_type": "home_storage", "index": 0, "spot_field": "home_storage_spots"})
 	_append_string_layout_entries(entries, "home_container", _home_container_ids(environment_data), "home_container_spots")

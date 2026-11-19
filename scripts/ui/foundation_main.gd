@@ -7,6 +7,7 @@ const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 const GameRitualRuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 const MoneyFeedbackViewModelScript := preload("res://scripts/ui/money_feedback_view_model.gd")
 const WebSaveDurabilityBridgeScript := preload("res://scripts/ui/web_save_durability_bridge.gd")
+const CrtPracticeMenuScript := preload("res://scripts/ui/crt_practice_menu.gd")
 const TravelJourneyReceiptScript := preload("res://scripts/core/travel_journey_receipt.gd")
 const TravelCinematicOverlayScript := preload("res://scripts/ui/travel_cinematic_overlay.gd")
 const CharacterAppearanceSnapshotScript := preload("res://scripts/ui/character_appearance_snapshot.gd")
@@ -32,6 +33,7 @@ const ACTION_CATEGORY_EVENTS := "events"
 const ACTION_CATEGORY_ITEMS := "items"
 const ACTION_CATEGORY_TRAVEL := "travel"
 const SCREEN_START := "START"
+const SCREEN_CRT := "CRT"
 const SCREEN_ENVIRONMENT := "ENVIRONMENT"
 const SCREEN_GAME := "GAME"
 const SCREEN_RESULT := "RESULT"
@@ -53,6 +55,7 @@ const CONTEXT_MODE_DIALOGUE := "dialogue"
 const CONTEXT_MODE_CASINO_FIXTURE := "casino_fixture"
 const CONTEXT_MODE_HOME_TENURE := "home_tenure"
 const CONTEXT_MODE_HOME_SLEEP := "home_sleep"
+const CONTEXT_MODE_HOME_CONSOLE := "home_console"
 const CONTEXT_MODE_HOME_STORAGE := "home_storage"
 const CONTEXT_MODE_HOME_CONTAINER := "home_container"
 const CONTEXT_MODE_ENVIRONMENT_LAYER := "environment_layer"
@@ -457,6 +460,8 @@ var application_pause_owners: Dictionary = {}
 var environment_clock_fractional_minutes := 0.0
 var stored_grand_casino_runtime_last_msec := -100000
 var dev_game_test_mode := false
+var crt_practice_origin: Dictionary = {}
+var crt_practice_overlay: MarginContainer
 var dev_environment_test_mode := false
 var environment_test_refresh_counter := 0
 var meta_session_active := false
@@ -1003,6 +1008,16 @@ func _input(event: InputEvent) -> void:
 		if procedural_music_player != null and procedural_music_player.has_method("web_audio_user_gesture"):
 			procedural_music_player.web_audio_user_gesture()
 		_schedule_web_audio_unlock_refresh()
+	if _crt_practice_active() and current_screen == SCREEN_CRT:
+		if event.is_action_pressed("ui_cancel"):
+			# Back first leaves the console's setup sheet. A second Back exits
+			# the television and restores its parked room/title lifecycle.
+			if game_test_menu == null or not game_test_menu.has_method("consume_back") or not bool(game_test_menu.call("consume_back")):
+				close_game_test_menu()
+			get_viewport().set_input_as_handled()
+		# The console forwards navigation to its displayed viewport, preserving
+		# native caret/SpinBox editing without the room's modal focus scope.
+		return
 	if _handle_environment_test_random_scenario_hotkey(event):
 		get_viewport().set_input_as_handled()
 		return
@@ -1736,6 +1751,9 @@ func _finish_chunked_game_exit() -> void:
 
 
 func _complete_back_to_environment() -> void:
+	if _crt_practice_active():
+		_return_to_crt_selector()
+		return
 	_sync_presented_bankroll_to_actual()
 	_reset_game_surface_runtime_state()
 	_set_active_game_binding()
@@ -7101,6 +7119,8 @@ func save_foundation_run() -> void:
 
 
 func _autosave_foundation_run(status_text: String = "Autosaved.", force: bool = false) -> bool:
+	if _crt_practice_active():
+		return false
 	if run_state == null:
 		return false
 	if run_state.is_terminal() and not _settle_terminal_meta_outcome(run_state):
@@ -7148,6 +7168,8 @@ func _prepare_foundation_run_save() -> void:
 
 
 func _write_foundation_run_save(status_text: String = "Autosaved.", synchronous: bool = false) -> bool:
+	if _crt_practice_active():
+		return false
 	if run_state == null:
 		return false
 	if save_service == null:
@@ -7202,6 +7224,8 @@ func _write_foundation_run_save(status_text: String = "Autosaved.", synchronous:
 
 
 func _flush_pending_autosave_if_ready() -> void:
+	if _crt_practice_active():
+		return
 	_poll_async_foundation_save()
 	if not pending_autosave:
 		return
@@ -7219,6 +7243,8 @@ func _flush_pending_autosave_if_ready() -> void:
 
 
 func _poll_async_foundation_save() -> void:
+	if _crt_practice_active():
+		return
 	if save_service == null or not save_service.async_save_in_flight():
 		return
 	var result := save_service.poll_async_save()
@@ -7266,6 +7292,8 @@ func _queue_environment_runtime_autosave() -> void:
 
 
 func _queue_pending_autosave(status_text: String, defer_frames: int, debounce_override_msec: int = -1, max_defer_override_msec: int = -1) -> void:
+	if _crt_practice_active():
+		return
 	var now_msec := Time.get_ticks_msec()
 	if not pending_autosave or pending_autosave_first_queued_msec <= 0:
 		pending_autosave_first_queued_msec = now_msec
@@ -7424,6 +7452,8 @@ func load_foundation_run() -> bool:
 
 
 func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
+	if _crt_practice_active():
+		return false
 	if _web_manual_save_pending:
 		return false
 	if run_state != null and run_state.is_terminal() and not _settle_terminal_meta_outcome(run_state):
@@ -7617,6 +7647,8 @@ func repay_family_loan_from_menu() -> void:
 
 
 func save_run_from_menu() -> void:
+	if _crt_practice_active():
+		return
 	if _web_manual_save_pending:
 		return
 	_manual_save_error = ""
@@ -7672,6 +7704,8 @@ func load_run_from_menu() -> void:
 
 
 func abandon_run_from_menu() -> void:
+	if _crt_practice_active():
+		return
 	if _web_manual_save_pending:
 		return
 	if run_state == null:
@@ -9838,6 +9872,8 @@ func _sync_scratch_ticket_discovery_to_run() -> void:
 
 
 func _persist_or_warn(store: Object, context: String, player_warning: bool = false) -> bool:
+	if _crt_practice_active() and (store == profile_inventory or store == meta_collection_service):
+		return false
 	if store == null:
 		return false
 	var identity := store.get_instance_id()
@@ -9876,6 +9912,8 @@ func _schedule_meta_store_retry() -> void:
 
 func _retry_pending_meta_store() -> void:
 	_meta_store_retry_scheduled = false
+	if _crt_practice_active():
+		return
 	if not _meta_store_save_pending() or is_queued_for_deletion():
 		return
 	if not _event_response_transaction.is_empty() or not _rourke_resolution.is_empty():
@@ -9899,6 +9937,8 @@ func _meta_store_save_recovered() -> void:
 
 
 func _record_scratch_ticket_discovery(type_id: String) -> Dictionary:
+	if _crt_practice_active():
+		return {}
 	var normalized := type_id.strip_edges()
 	if normalized.is_empty() or profile_inventory == null:
 		return {}
@@ -11497,125 +11537,21 @@ func _build_career_stats_screen(parent: Node) -> void:
 	parent.add_child(career_stats_screen)
 
 
-func _build_game_test_menu(parent: Node) -> void:
-	game_test_menu = VBoxContainer.new()
+func _build_game_test_menu(_parent: Node) -> void:
+	# A dedicated screen, independent of the title menu column.
+	crt_practice_overlay = MarginContainer.new()
+	crt_practice_overlay.name = "PracticeConsoleScreen"
+	crt_practice_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	crt_practice_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	for side in ["left", "right", "top", "bottom"]:
+		crt_practice_overlay.add_theme_constant_override("margin_%s" % side, 16)
+	crt_practice_overlay.visible = false
+	add_child(crt_practice_overlay)
+	var console_menu := CrtPracticeMenuScript.new()
+	console_menu.configure(self)
+	game_test_menu = console_menu
 	game_test_menu.visible = false
-	game_test_menu.add_theme_constant_override("separation", 6)
-	game_test_menu.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	game_test_menu.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	parent.add_child(game_test_menu)
-
-	var header_row := HBoxContainer.new()
-	header_row.add_theme_constant_override("separation", 8)
-	game_test_menu.add_child(header_row)
-	var heading := _label("Game Library", 20)
-	_set_control_font_color(heading, VisualStyle.YELLOW)
-	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header_row.add_child(heading)
-	var back_button := _button("Back", Callable(self, "close_game_test_menu"))
-	back_button.custom_minimum_size = Vector2(96, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
-	header_row.add_child(back_button)
-
-	var description := _label("Practice any available table with its real interface. Practice sessions do not autosave.", 12)
-	_set_control_font_color(description, VisualStyle.CYAN)
-	description.max_lines_visible = 1
-	description.clip_text = true
-	game_test_menu.add_child(description)
-
-	var settings_panel := _panel_container(Color("#050611", 0.78), VisualStyle.CYAN_2)
-	settings_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	game_test_menu.add_child(settings_panel)
-	var settings_stack := VBoxContainer.new()
-	settings_stack.add_theme_constant_override("separation", 4)
-	settings_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	settings_panel.add_child(settings_stack)
-	var generation_heading := _label("Generation Inputs", 12)
-	_set_control_font_color(generation_heading, VisualStyle.YELLOW)
-	settings_stack.add_child(generation_heading)
-
-	var seed_row := HBoxContainer.new()
-	seed_row.add_theme_constant_override("separation", 6)
-	seed_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	settings_stack.add_child(seed_row)
-	var seed_label := _label("Seed", 11)
-	seed_label.custom_minimum_size = Vector2(52, 26)
-	seed_row.add_child(seed_label)
-	game_test_seed_input = LineEdit.new()
-	game_test_seed_input.text = "PRACTICE"
-	game_test_seed_input.custom_minimum_size = Vector2(0, 26)
-	game_test_seed_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_set_control_font_color(game_test_seed_input, VisualStyle.WHITE)
-	game_test_seed_input.add_theme_stylebox_override("normal", VisualStyle.pixel_box(Color("#080817", 0.98), VisualStyle.CYAN_2, 1))
-	game_test_seed_input.add_theme_stylebox_override("focus", VisualStyle.pixel_box(Color("#111024", 0.98), VisualStyle.CYAN, 1))
-	seed_row.add_child(game_test_seed_input)
-
-	var numeric_row := HBoxContainer.new()
-	numeric_row.add_theme_constant_override("separation", 6)
-	numeric_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	settings_stack.add_child(numeric_row)
-	numeric_row.add_child(_game_test_spin_group("Bankroll", "_game_test_bankroll"))
-	numeric_row.add_child(_game_test_spin_group("Min", "_game_test_stake_floor"))
-	numeric_row.add_child(_game_test_spin_group("Max", "_game_test_stake_ceiling"))
-	var security_group := VBoxContainer.new()
-	security_group.add_theme_constant_override("separation", 3)
-	security_group.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	numeric_row.add_child(security_group)
-	var security_label := _label("Security", 11)
-	_set_control_font_color(security_label, VisualStyle.CYAN_2)
-	security_group.add_child(security_label)
-	game_test_security_option = OptionButton.new()
-	game_test_security_option.custom_minimum_size = Vector2(0, 26)
-	game_test_security_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	game_test_security_option.add_item("Low")
-	game_test_security_option.set_item_metadata(0, "low")
-	game_test_security_option.add_item("High")
-	game_test_security_option.set_item_metadata(1, "high")
-	game_test_security_option.add_item("Boss")
-	game_test_security_option.set_item_metadata(2, "boss")
-	game_test_security_option.select(2)
-	security_group.add_child(game_test_security_option)
-
-	game_test_generation_overrides_text = TextEdit.new()
-	game_test_generation_overrides_text.text = "{}"
-	game_test_generation_overrides_text.custom_minimum_size = Vector2(0, 48)
-	game_test_generation_overrides_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_set_control_font_color(game_test_generation_overrides_text, VisualStyle.WHITE)
-	game_test_generation_overrides_text.add_theme_stylebox_override("normal", VisualStyle.pixel_box(Color("#080817", 0.98), VisualStyle.PURPLE_2, 1))
-	settings_stack.add_child(game_test_generation_overrides_text)
-
-	var implemented_game_ids := _implemented_game_ids()
-	game_test_status_label = _label("%d games available. Choose one to enter its real interface." % implemented_game_ids.size(), 12)
-	_set_control_font_color(game_test_status_label, VisualStyle.CYAN_2)
-	game_test_status_label.max_lines_visible = 1
-	game_test_status_label.clip_text = true
-	game_test_menu.add_child(game_test_status_label)
-
-	var scroll := ScrollContainer.new()
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	scroll.custom_minimum_size = Vector2(0, 130)
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	game_test_menu.add_child(scroll)
-
-	var list := GridContainer.new()
-	list.columns = 2
-	list.add_theme_constant_override("h_separation", 8)
-	list.add_theme_constant_override("v_separation", 8)
-	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(list)
-
-	for game_id in implemented_game_ids:
-		var definition := library.game(game_id)
-		var display_name := str(definition.get("display_name", game_id.capitalize()))
-		var description_text := str(definition.get("description", ""))
-		var button := _button(display_name, Callable(self, "start_game_test_session").bind(game_id))
-		button.name = "Launch_%s" % game_id
-		button.set_meta("game_test_id", game_id)
-		button.tooltip_text = description_text
-		button.custom_minimum_size = Vector2(0, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
-		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		list.add_child(button)
+	crt_practice_overlay.add_child(game_test_menu)
 
 
 func _build_environment_test_menu(parent: Node) -> void:
@@ -12149,6 +12085,8 @@ func _ensure_environment_test_overlay_built() -> void:
 
 
 func open_environment_test_menu() -> void:
+	if _crt_practice_active():
+		return
 	if not show_game_library_launcher:
 		return
 	_ensure_environment_test_menu_built()
@@ -12364,6 +12302,8 @@ func _refresh_environment_test_session_with_random_seed() -> Dictionary:
 
 
 func start_environment_test_session() -> Dictionary:
+	if _crt_practice_active():
+		return {"ok": false, "errors": ["Exit the practice console before opening Environment Library."]}
 	if not show_game_library_launcher:
 		return {"ok": false, "errors": ["The environment test launcher is disabled."]}
 	if not _ensure_run_ui_built():
@@ -12896,6 +12836,8 @@ func _refresh_venue_scenario_cycle_at_boundary() -> bool:
 
 
 func _refresh() -> void:
+	if _crt_practice_active() and current_screen == SCREEN_CRT:
+		return
 	if not _rourke_resolution.is_empty() and not _rourke_resolution_dispatch_active:
 		_rourke_resolution["refresh_requested"] = true
 		return
@@ -14198,6 +14140,8 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 					_add_card_button(card, str(delivery_action.get("label", delivery_verb.replace("_", " ").capitalize())), Callable(self, "_activate_delivery_physical_action").bind(delivery_verb), false, true)
 		CONTEXT_MODE_HOME_TENURE:
 			_add_card_button(card, str(object_data.get("label", "Pay")), Callable(self, "confirm_home_tenure_action"), false, true)
+		CONTEXT_MODE_HOME_CONSOLE:
+			_add_card_button(card, "Play Games", Callable(self, "open_practice_console"), false, true)
 		CONTEXT_MODE_HOME_SLEEP:
 			_add_card_button(card, "Sleep", Callable(self, "confirm_home_sleep_action"), false, true)
 		CONTEXT_MODE_HOME_STORAGE:
@@ -15822,6 +15766,9 @@ func _trap_event_choice_popup_focus(event: InputEvent) -> bool:
 
 
 func _route_topmost_modal_cancel() -> bool:
+	if _crt_practice_active() and current_screen == SCREEN_CRT:
+		close_game_test_menu()
+		return true
 	if _web_manual_save_pending:
 		return true
 	if _hud_details_is_visible():
@@ -16969,6 +16916,8 @@ func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, ca
 			return _complete_delivery_handoff(source_id)
 		CONTEXT_MODE_HOME_TENURE:
 			return confirm_home_tenure_action()
+		CONTEXT_MODE_HOME_CONSOLE:
+			return open_practice_console()
 		CONTEXT_MODE_HOME_SLEEP:
 			return confirm_home_sleep_action()
 		CONTEXT_MODE_HOME_STORAGE:
@@ -18059,6 +18008,8 @@ func _activate_meta_interactable_object(object_id: String) -> bool:
 	var object_type := str(object_data.get("object_type", ""))
 	var source_id := str(object_data.get("source_id", ""))
 	match object_type:
+		CONTEXT_MODE_HOME_CONSOLE:
+			return open_practice_console()
 		CONTEXT_MODE_HOME_CONTAINER:
 			open_meta_container(source_id)
 			return true
@@ -19484,6 +19435,8 @@ func _on_start_pressed() -> bool:
 
 
 func _request_new_run_start(action: Callable) -> bool:
+	if _crt_practice_active():
+		return false
 	if not _has_foundation_save():
 		return bool(action.call())
 	if new_run_confirmation == null:
@@ -19665,6 +19618,9 @@ func _start_meta_quick_run_confirmed() -> bool:
 
 
 func _on_run_report_new_run_requested() -> void:
+	if _crt_practice_active():
+		_return_to_crt_selector()
+		return
 	if _terminal_reward_selection_pending():
 		_show_message("Choose and store each earned reward before leaving the run report.")
 		return
@@ -19677,6 +19633,9 @@ func _on_run_report_new_run_requested() -> void:
 
 
 func _on_run_report_home_requested() -> void:
+	if _crt_practice_active():
+		_return_to_crt_selector()
+		return
 	if _terminal_reward_selection_pending():
 		_show_message("Choose and store each earned reward before leaving the run report.")
 		return
@@ -19697,6 +19656,8 @@ func _on_run_report_main_menu_requested() -> void:
 
 
 func _complete_tutorial_profile() -> bool:
+	if _crt_practice_active():
+		return true
 	if profile_inventory == null:
 		_initialize_profile_inventory()
 	if profile_inventory.tutorial_completed:
@@ -19711,6 +19672,8 @@ func _complete_tutorial_profile() -> bool:
 
 
 func _clear_tutorial_resume_slot() -> bool:
+	if _crt_practice_active():
+		return true
 	if save_service == null:
 		return true
 	var clear_error := save_service.clear_run(autosave_slot_id)
@@ -19798,6 +19761,14 @@ func _save_foundation_run_before_leaving(status_text: String) -> bool:
 
 
 func return_to_main_menu() -> bool:
+	if _crt_practice_active():
+		if current_screen == SCREEN_CRT:
+			close_game_test_menu()
+		elif current_game != null and not run_state.is_terminal():
+			back_to_environment()
+		else:
+			_return_to_crt_selector()
+		return true
 	if _web_manual_save_pending:
 		return false
 	if _is_meta_session():
@@ -19890,6 +19861,9 @@ func _restore_main_menu_surface_visibility() -> void:
 
 
 func exit_game() -> void:
+	if _crt_practice_active():
+		_return_to_crt_selector()
+		close_game_test_menu()
 	if _web_manual_save_pending:
 		return
 	_drain_event_response_before_exit()
@@ -20426,6 +20400,8 @@ func _refresh_developer_authored_environment() -> Dictionary:
 
 
 func _on_reset_coach_tips_requested() -> void:
+	if _crt_practice_active():
+		return
 	if profile_inventory == null:
 		return
 	profile_inventory.reset_tips()
@@ -20435,6 +20411,8 @@ func _on_reset_coach_tips_requested() -> void:
 
 
 func _on_coach_lesson_seen(lesson_id: String) -> void:
+	if _crt_practice_active():
+		return
 	if library != null and TutorialFlowScript.lesson_is_tutorial(lesson_id, library.tutorial_lessons):
 		return
 	if profile_inventory == null or not profile_inventory.mark_tip_seen(lesson_id):
@@ -20443,6 +20421,8 @@ func _on_coach_lesson_seen(lesson_id: String) -> void:
 
 
 func _on_coach_lesson_completed(lesson_id: String) -> void:
+	if _crt_practice_active():
+		return
 	if run_state == null or library == null or not TutorialFlowScript.lesson_is_tutorial(lesson_id, library.tutorial_lessons):
 		return
 	var completed: Dictionary = run_state.narrative_flags.get("tutorial_lessons_completed", {}) if typeof(run_state.narrative_flags.get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
@@ -21269,44 +21249,186 @@ func _refresh_career_stats_screen() -> void:
 	career_stats_screen.set_profile(profile_inventory)
 
 
+# One parked origin survives the entire selector/game/selector loop. Practice
+# never receives that RunState, and its clock and pending saves stay suspended.
+func _crt_practice_active() -> bool:
+	return not crt_practice_origin.is_empty()
+
+
 func open_game_test_menu() -> void:
-	if not show_game_library_launcher:
+	if not show_game_library_launcher or _web_manual_save_pending:
+		return
+	if _crt_practice_active():
+		if current_game != null:
+			back_to_environment()
+		else:
+			_return_to_crt_selector()
+		return
+	if not _event_response_transaction.is_empty() or not _rourke_resolution.is_empty() or travel_presentation_active:
 		return
 	_ensure_game_test_menu_built()
 	if game_test_menu == null:
 		return
+	# Web phased saves retain their source until completion. Drain an already
+	# accepted save before capturing the original run's autosave counters.
+	var ordinary_save_waiting: bool = pending_autosave or (save_service != null and save_service.async_save_in_flight())
+	_poll_async_foundation_save()
+	if save_service != null and save_service.async_save_in_flight():
+		var saving_generation := autosave_inflight_generation
+		var save_error := save_service.wait_for_async_save()
+		if save_service.async_save_in_flight():
+			_show_message("The run is still saving. Open the console when it finishes.")
+			return
+		autosave_inflight_generation = 0
+		if save_error == OK:
+			autosave_completed_generation = maxi(autosave_completed_generation, saving_generation)
+			autosave_loadable_available = true
+			_clear_autosave_failure_state()
+			pending_autosave = autosave_dirty_generation > autosave_completed_generation
+		else:
+			_record_autosave_failure(save_error, "console_entry_save_failed", saving_generation)
+	# The deferred writer normally owns a completed ordinary action. Commit its
+	# queued generation while that RunState is still current, before practice
+	# takes ownership. Otherwise closing/backgrounding a Web tab inside the TV
+	# could discard legitimate progress parked behind the practice write guard.
+	var ordinary_origin: bool = run_state != null and not _is_meta_session() and not dev_game_test_mode
+	if ordinary_origin and pending_autosave:
+		if not _write_foundation_run_save(pending_autosave_status_text, true):
+			_show_message("Finish saving your run before opening the console.")
+			return
+	if ordinary_origin and ordinary_save_waiting and OS.has_feature("web"):
+		if _web_save_durability_bridge == null:
+			_web_save_durability_bridge = WebSaveDurabilityBridgeScript.new()
+		# Queue the existing engine-owned lifecycle sync now: pagehide may stop
+		# animation frames before the next automatic filesystem sync can start.
+		if not _web_save_durability_bridge.request_lifecycle_sync():
+			_record_autosave_failure(ERR_UNAVAILABLE, "console_entry_browser_sync_failed", autosave_dirty_generation)
+			_show_message("Finish saving your run before opening the console.")
+			return
+	var origin_lifecycle := _foundation_lifecycle_snapshot()
+	_protect_foundation_coach_attention(origin_lifecycle)
+	var origin_attention: Dictionary = JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(origin_lifecycle.get("coach", {})).get("attention", {}))
+	var retained_tween: Variant = origin_attention.get("tween")
+	var resume_attention: bool = retained_tween is Tween and retained_tween.is_valid() and retained_tween.is_running()
+	if resume_attention:
+		retained_tween.pause()
+	crt_practice_origin = {
+		"lifecycle": origin_lifecycle,
+		"attention_tween": retained_tween,
+		"resume_attention": resume_attention,
+		"environment_key_input": environment_canvas.is_processing_unhandled_key_input() if environment_canvas != null else true,
+		"generator": generator,
+		"runtime_scheduler": environment_runtime_scheduler,
+		"simulation_msec": _environment_simulation_time_msec(),
+		"clock_fraction": environment_clock_fractional_minutes,
+		"focus": get_viewport().gui_get_focus_owner() if is_inside_tree() else null,
+	}
+	environment_runtime_scheduler = EnvironmentRuntimeSchedulerScript.new()
+	if environment_canvas != null:
+		environment_canvas.set_process_unhandled_key_input(false)
 	close_content_group_config()
 	close_challenge_selection()
 	if settings_menu != null:
 		settings_menu.visible = false
-	if inventory_page != null:
-		inventory_page.visible = false
-	if career_stats_screen != null:
-		career_stats_screen.visible = false
-	if start_menu_controls != null:
-		start_menu_controls.visible = false
-	if start_menu_intro != null:
-		start_menu_intro.visible = false
+	if settings_overlay != null:
+		settings_overlay.visible = false
+	_return_to_crt_selector()
+
+
+func _return_to_crt_selector() -> void:
+	if not _crt_practice_active():
+		return
+	_reset_game_surface_runtime_state()
+	if run_ui_built:
+		_clear_input_guard_modal_state()
+	_set_active_game_binding()
+	current_game = null
+	run_state = null
+	meta_session_active = false
+	meta_session_location_id = ""
+	dev_game_test_mode = true
+	dev_environment_test_mode = false
+	pending_autosave = false
+	pending_autosave_after_frame = -1
+	terminal_game_result_presentation = {}
+	_refresh_run_action_service()
+	_set_current_screen(SCREEN_CRT)
+	if start_screen != null:
+		start_screen.visible = false
+	if run_screen != null:
+		run_screen.visible = false
+	if coach_overlay != null:
+		coach_overlay.suspend()
+	if talk_dock != null:
+		talk_dock.visible = false
+	crt_practice_overlay.visible = true
+	crt_practice_overlay.move_to_front()
 	game_test_menu.visible = true
+	game_test_menu.call("focus_selected_game")
 	if game_test_status_label != null:
-		game_test_status_label.text = "%d games available. Choose one to enter its real interface." % _implemented_game_ids().size()
+		game_test_status_label.text = "%d games · Practice only · Leave returns here" % _implemented_game_ids().size()
 
 
 func close_game_test_menu() -> void:
-	if game_test_menu != null:
-		game_test_menu.visible = false
-	if start_menu_intro != null:
-		start_menu_intro.visible = true
-	if start_menu_controls != null:
-		start_menu_controls.visible = true
-	_refresh_start_screen()
+	if not _crt_practice_active():
+		if game_test_menu != null:
+			game_test_menu.visible = false
+		return
+	if current_game != null:
+		back_to_environment()
+		return
+	var origin := crt_practice_origin
+	_reset_game_surface_runtime_state()
+	if run_ui_built:
+		_clear_input_guard_modal_state()
+	crt_practice_overlay.visible = false
+	game_test_menu.visible = false
+	crt_practice_origin = {}
+	generator = origin.get("generator") as RunGenerator
+	environment_runtime_scheduler = origin.get("runtime_scheduler")
+	_restore_foundation_lifecycle_snapshot(origin.get("lifecycle", {}))
+	environment_clock_fractional_minutes = float(origin.get("clock_fraction", 0.0))
+	# Keep absolute autonomous deadlines in the parked room's original epoch.
+	environment_clock_epoch_offset_msec += int(origin.get("simulation_msec", 0)) - _environment_simulation_time_msec()
+	_invalidate_environment_runtime_schedule()
+	_refresh_run_action_service()
+	_bind_run_state_presentation_signals()
+	if environment_canvas != null:
+		environment_canvas.set_process_unhandled_key_input(bool(origin.get("environment_key_input", true)))
+	# A fresh attention checkpoint protects the restored fade through refresh.
+	var restored_coach := {"coach": _coach_lifecycle_snapshot()}
+	_protect_foundation_coach_attention(restored_coach)
+	_refresh()
+	_restore_coach_lifecycle_snapshot(JsonCoerceScript._copy_dict(restored_coach.get("coach", {})))
+	var retained_tween: Variant = origin.get("attention_tween")
+	if bool(origin.get("resume_attention", false)) and retained_tween is Tween and retained_tween.is_valid():
+		retained_tween.play()
+	var old_focus: Variant = origin.get("focus")
+	if old_focus is Control and is_instance_valid(old_focus) and old_focus.is_visible_in_tree():
+		old_focus.grab_focus()
+	if _meta_store_save_pending():
+		_schedule_meta_store_retry()
+
+
+func open_practice_console() -> bool:
+	var object_data := _interactable_object("home_console:tv")
+	if object_data.is_empty() or not bool(object_data.get("enabled", true)):
+		return false
+	open_game_test_menu()
+	return _crt_practice_active()
 
 
 func start_game_test_session(game_id: String) -> Dictionary:
+	if not _crt_practice_active():
+		open_game_test_menu()
+	if not _crt_practice_active():
+		return {"ok": false, "errors": ["The practice console could not be opened."]}
 	if not show_game_library_launcher:
 		return {"ok": false, "errors": ["The game test launcher is disabled."]}
 	if not _ensure_run_ui_built():
 		return {"ok": false, "errors": [RUN_UI_UNAVAILABLE_MESSAGE]}
+	if environment_canvas != null:
+		environment_canvas.set_process_unhandled_key_input(false)
 	if library == null:
 		_initialize_foundation()
 	_ensure_full_content_library_loaded()
@@ -21326,17 +21448,25 @@ func start_game_test_session(game_id: String) -> Dictionary:
 func _start_game_test_session_with_lifecycle_snapshot(game_id: String, game: GameModule, rollback: Dictionary) -> Dictionary:
 	run_state = RunState.new()
 	run_state.start_new(_game_test_seed(game_id))
+	run_state.challenge_config["exclude_profile_stats"] = true
+	meta_session_active = false
+	meta_session_location_id = ""
+	dev_environment_test_mode = false
+	pending_autosave = false
+	pending_autosave_after_frame = -1
 	run_state.bankroll = _game_test_bankroll()
 	if structured_hud != null:
 		structured_hud.reset_wallet_delta()
 	dev_game_test_mode = true
 	var environment := _game_test_environment(game_id, game)
+	environment_runtime_scheduler.clear()
 	_prepare_game_test_prerequisites(game_id, environment)
 	var installed := _install_lifecycle_environment(environment)
 	if not bool(installed.get("ok", false)):
 		_restore_foundation_lifecycle_snapshot(rollback)
 		var install_errors := JsonCoerceScript._copy_array(installed.get("errors", []))
 		var install_error := str(install_errors[0]) if not install_errors.is_empty() else "Could not enter the test room."
+		_return_to_crt_selector()
 		if game_test_status_label != null: game_test_status_label.text = install_error
 		return {"ok": false, "errors": [install_error]}
 	_bind_run_state_presentation_signals()
@@ -21370,8 +21500,11 @@ func _start_game_test_session_with_lifecycle_snapshot(game_id: String, game: Gam
 		start_menu_controls.visible = true
 	if start_menu_intro != null:
 		start_menu_intro.visible = true
+	if crt_practice_overlay != null:
+		crt_practice_overlay.visible = false
 	if not enter_game(game_id):
 		_restore_foundation_lifecycle_snapshot(rollback)
+		_return_to_crt_selector()
 		return {"ok": false, "errors": ["Could not enter the test game."]}
 	return {"ok": true, "errors": [], "environment": run_state.current_environment.duplicate(true)}
 
@@ -21580,7 +21713,7 @@ func _refresh_run_menu() -> void:
 	var has_save := _has_foundation_save()
 	var meta_context := _is_meta_session()
 	var can_save := run_state != null and not dev_game_test_mode and not meta_context
-	var can_abandon := run_state != null and run_state.run_status == RunState.RUN_STATUS_ACTIVE and not meta_context
+	var can_abandon := run_state != null and run_state.run_status == RunState.RUN_STATUS_ACTIVE and not meta_context and not _crt_practice_active()
 	if run_menu_status_label != null:
 		var venue := "No active venue"
 		var status := "No active run"
@@ -21607,7 +21740,7 @@ func _refresh_run_menu() -> void:
 		run_menu_save_button.disabled = not can_save
 		run_menu_save_button.tooltip_text = "Progress here saves automatically." if meta_context else ("Overwrite the Resume Slot with this run." if can_save else "No active savable run.")
 	if run_menu_load_button != null:
-		run_menu_load_button.disabled = not has_save
+		run_menu_load_button.disabled = not has_save or _crt_practice_active()
 		run_menu_load_button.tooltip_text = "Load the Resume Slot and replace this run." if has_save else "No saved run in the Resume Slot."
 	if run_menu_journal_button != null:
 		run_menu_journal_button.disabled = run_state == null
@@ -21618,6 +21751,7 @@ func _refresh_run_menu() -> void:
 		run_menu_abandon_button.disabled = not can_abandon
 		run_menu_abandon_button.tooltip_text = "Home and town visits are separate from your saved run." if meta_context else ("End this run immediately." if can_abandon else "This run is already over.")
 	if run_menu_main_menu_button != null:
+		run_menu_main_menu_button.text = "Games" if _crt_practice_active() else "Main Menu"
 		run_menu_main_menu_button.disabled = false
 	if run_menu_skip_tutorial_button != null:
 		run_menu_skip_tutorial_button.visible = run_state != null and run_state.is_tutorial_run()
@@ -22336,6 +22470,8 @@ func _present_terminal_run_screen() -> void:
 # saves the effects and receipt atomically; the last run save acknowledges it.
 # A failed acknowledgement can replay that receipt without repeating effects.
 func _settle_terminal_meta_outcome(target: RunState) -> bool:
+	if _crt_practice_active() or dev_game_test_mode:
+		return true
 	if target == null or not target.is_terminal():
 		return true
 	if meta_collection_service == null or collection_drop_service == null:
@@ -22404,6 +22540,8 @@ func _settle_terminal_meta_before_replacement() -> bool:
 
 
 func _process_terminal_meta_bag_drops() -> bool:
+	if _crt_practice_active():
+		return true
 	if run_state == null or not run_state.is_terminal():
 		return true
 	if meta_collection_service == null or collection_drop_service == null:
@@ -22430,6 +22568,8 @@ func claim_victory_collection_bag(marker_id: String) -> void:
 
 
 func _persist_victory_bag_claim(marker_id: String, recover_only: bool = false) -> Dictionary:
+	if _crt_practice_active():
+		return {}
 	if run_state == null or run_state.run_status != RunState.RUN_STATUS_ENDED:
 		return {"ok": false, "message": "No completed reward is available."}
 	if save_service == null:
@@ -22456,6 +22596,8 @@ func _persist_victory_bag_claim(marker_id: String, recover_only: bool = false) -
 
 
 func claim_victory_container_item(item_id: String) -> void:
+	if _crt_practice_active():
+		return
 	if run_state == null or run_state.run_status != RunState.RUN_STATUS_ENDED:
 		return
 	if not run_state.meta_collection_enabled_for_run():
@@ -22504,6 +22646,8 @@ func _terminal_reward_selection_pending() -> bool:
 
 
 func _record_profile_run_result_once(terminal_result: Dictionary = {}) -> void:
+	if _crt_practice_active():
+		return
 	if _rourke_resolution_dispatch_active and int(_rourke_resolution.get("step", -1)) == 5:
 		_rourke_resolution["terminal_profile_result"] = terminal_result.duplicate(true)
 		return
@@ -22575,6 +22719,8 @@ func _profile_victory_route() -> String:
 
 
 func _record_challenge_completion_if_needed() -> void:
+	if _crt_practice_active():
+		return
 	if run_state == null or run_state.run_status != RunState.RUN_STATUS_ENDED:
 		return
 	if run_state.excludes_profile_stats():
@@ -24453,6 +24599,10 @@ func _refresh_coach_at_boundary_if_current(expected_generation: int) -> void:
 
 
 func _refresh_coach_at_boundary(surface_transition_wait_satisfied: bool = false) -> void:
+	if _crt_practice_active():
+		if coach_overlay != null:
+			coach_overlay.suspend()
+		return
 	if coach_overlay == null or run_state == null or current_screen == SCREEN_START:
 		return
 	if travel_presentation_active:

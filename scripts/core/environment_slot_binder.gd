@@ -60,7 +60,7 @@ const ABSTRACT_SCENARIO_ID_TOKENS := [
 # Casino fixtures bind interaction targets to room-native desks, counters, and
 # machines that the environment canvas already renders as permanent scenery.
 const BASE_ALWAYS_PHYSICAL_TYPES := [
-	"casino_fixture", "environment_layer", "game", "home_container", "home_storage", "home_tenure", "item",
+	"casino_fixture", "environment_layer", "game", "home_console", "home_container", "home_storage", "home_tenure", "item",
 	"meta_bag", "meta_pawn_counter", "meta_trade_up", "meta_upgrade", "numbers", "shopkeeper", "numbers_silas",
 ]
 const BASE_PERSON_VISUAL_TYPES := ["actor", "character", "npc"]
@@ -633,6 +633,8 @@ static func _base_layout_category_address(environment: Dictionary, object_type: 
 			return {"spot_field": "home_tenure_spots", "index": 0}
 		"home_sleep":
 			return {"spot_field": "home_sleep_spots", "index": 0}
+		"home_console":
+			return {"spot_field": "home_console_spots", "index": 0}
 		"home_storage":
 			return {"spot_field": "home_storage_spots", "index": 0}
 		_:

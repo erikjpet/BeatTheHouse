@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-19T08:08:19.217781+00:00",
+  "updated_at": "2026-11-19T15:49:31.202894+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -182,6 +182,220 @@
     "reconciled_main_commit": "e1e71f26d37040142c5f851b3bbd3d1f89d61355"
   },
   "objectives": [
+    {
+      "id": "BTH061-CRT-PRACTICE-001",
+      "name": "Add the home television CRT practice console",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "state": "open",
+      "status": "NATIVE_COMBINED_QUALIFIED_NEXT_DELIVERY_PENDING_PORTRAIT_UX_OPEN",
+      "owner": {
+        "assignment_state": "assigned",
+        "name": "CRT practice console feature lane",
+        "task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+        "source_root": "E:\\CodexQA\\BTH\\workspaces\\crt-feature-intake-89403-20261119\\source"
+      },
+      "objective": {
+        "text": "Add an interactable television connected to an old-console-style game system in Motel Room, Apartment and Home, including in-run and meta-home contexts. Interaction opens a dedicated original console-inspired CRT environment titled Beat the House, with selectable entries containing each of the eleven actual playable Games registry names and existing icons. Selecting any game uses its existing production practice/generation path, seed controls, rules and setup. Leave returns to the same CRT selector with useful selection and seed state retained; exiting the CRT returns to the originating room or title screen. The title-screen Games button opens this same environment. Preserve all supported generation seed options/defaults and practice setup, including Scratch Ticket machine stock of 100 of each ticket. Protect live run and meta money, Heat, time, inventory, progression, unlocks, RNG, save state and Continue. Deliver focused durable routing/state-boundary regression coverage, fresh native/Web input and visual acceptance, tested scoped main integration and exact existing NEXT deployment verification for 0.6.1.",
+        "source": "Erik Petersen's explicit 2026-11-19 feature request, room message Sentinel_9b2c20b4acbc8191981dcf794fa88be2, delegated by coordinator thread 6afc9600-f7f0-8191-926d-d8ae551e500c, followed by explicit visual correction Sentinel_83b6184147f88191a431dcfb7e571ccb at 06:45:18 UTC. The request authorizes a new agent and tested main-to-existing-NEXT delivery. Verified starting main and NEXT were 89403f389a5807e050a450cd27b1bd93b3a4a41e; isolated source checkout preserves unrelated dirty and unique work. The previous picker-like presentation is withdrawn before publication.",
+        "visual_correction": "Replace the withdrawn picker-like presentation with an actual curved 4:3 CRT matching the Beat the House palette, scanlines, bowed image and irregular analog text shake. Use a bespoke original SNES-era game-select hierarchy inspired by the era of Mario Kart, Mortal Kombat and Street Fighter without importing their artwork or logos. Preserve all eleven production practice games, generation options/defaults, room/title routes and isolation. Reduce Motion disables jitter. Requalify native/Web desktop and mobile edge hits, focus and navigation on the new presentation.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "canonical-eleven-crt-selector",
+            "description": "Show all eleven actual playable games with canonical current names/icons in a bespoke original SNES-era game-select hierarchy inside a curved 4:3 CRT matching the Beat the House palette, with scanlines, bowed image and irregular analog text shake; Reduce Motion disables jitter. Withdraw the prior picker-like presentation before publication and requalify edge hits, focus and native/Web desktop/mobile navigation.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/CRT_practice_console_native_web_evidence_20261119.json"
+            ]
+          },
+          {
+            "id": "entry-return-and-repeated-loops",
+            "description": "Verify title Games, Motel Room, Apartment, Home and meta-home entry, every game launch and Leave, selector state retention, cancel/back, CRT exit to the origin and repeated loops.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/CRT_practice_console_native_web_evidence_20261119.json"
+            ]
+          },
+          {
+            "id": "practice-generation-compatibility",
+            "description": "Retain every existing per-game seed/generation option and default through the production practice path; verify seed repeatability, game prerequisites and Scratch Ticket stock of 100 of each ticket.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/CRT_practice_console_native_web_evidence_20261119.json"
+            ]
+          },
+          {
+            "id": "live-meta-and-save-isolation",
+            "description": "Prove practice cannot leak money, Heat, time, inventory, progression, unlocks, RNG or save state into the real run or meta session, and cannot overwrite Continue. Qualify an ordinary autosave queued immediately before entry, an accepted save in flight, background/reload while in practice, real wager/Leave/CRT Exit and cold Continue/profile/meta retention; retain durable focused boundary regressions.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/CRT_practice_console_native_web_evidence_20261119.json"
+            ]
+          },
+          {
+            "id": "fresh-native-web-input-and-rendering",
+            "description": "After exclusive runtime-window assignment, verify rendered native/Web layouts and keyboard/controller/mouse/touch navigation using fresh disposable QA state and approved E: guarded workloads, with material limits recorded.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/CRT_practice_console_native_web_evidence_20261119.json"
+            ]
+          },
+          {
+            "id": "scoped-tested-main-next-delivery",
+            "description": "After coordinator integration-window assignment, land only this tested feature through the existing reviewed main-to-NEXT workflow and verify exact remote/served commit, assets and feature smoke; record identity and test evidence without a stable release, tag or code-freeze claim.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/CRT_practice_console_native_web_evidence_20261119.json"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": true,
+          "complete": false,
+          "areas": [
+            {
+              "name": "Canonical Games registry, CRT visuals and selector inputs",
+              "state": "remaining",
+              "evidence": [
+                "docs/testing/CRT_practice_console_native_web_evidence_20261119.json"
+              ]
+            },
+            {
+              "name": "Title and all requested in-run/meta room routes and returns",
+              "state": "remaining",
+              "evidence": [
+                "docs/testing/CRT_practice_console_native_web_evidence_20261119.json"
+              ]
+            },
+            {
+              "name": "Production practice generation, seed repeatability, scratch stock and live/meta/save boundaries",
+              "state": "remaining",
+              "evidence": [
+                "docs/testing/CRT_practice_console_native_web_evidence_20261119.json"
+              ]
+            },
+            {
+              "name": "Guarded fresh native/Web acceptance and tested exact main/NEXT delivery",
+              "state": "remaining",
+              "evidence": [
+                "docs/testing/CRT_practice_console_native_web_evidence_20261119.json"
+              ]
+            }
+          ]
+        }
+      },
+      "implementation_batches": [],
+      "commits": [
+        "f13ed66a90f1a3b2b438524d5df7db27373024c5"
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": "",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "current_user_request_and_delegation",
+          "reference": "room:Sentinel_9b2c20b4acbc8191981dcf794fa88be2; coordinator:6afc9600-f7f0-8191-926d-d8ae551e500c",
+          "summary": "Initial registration: current main 89403f389a5807e050a450cd27b1bd93b3a4a41e verified and isolated clean source checkout created. Separate 0.6.1 remediation and unrelated art/TEST/stable/version work remain outside scope."
+        },
+        {
+          "kind": "source_candidate_and_focused_qa_checkpoint",
+          "reference": "docs/testing/CRT_practice_console_20261119.md",
+          "summary": "Historical 06:14 checkpoint: exclusive runtime/integration window assigned; source candidate mirrored for fresh guarded 12% CPU/2 GiB QA in E:\\CodexQA\\BTH\\workspaces\\crt-console-20261119 with crt061-* evidence. Overlapped import1/import2 exit0/active0 receipts unqualified; sequential import3 exposed inferred resume_attention Bool type error, explicitly typed in source. Source whitespace diff--check passed. Later qualification and visual correction are recorded separately below."
+        },
+        {
+          "kind": "withdrawn_visual_candidate_historical_qualification",
+          "reference": "docs/testing/CRT_practice_console_20261119.md",
+          "summary": "Old visual candidate only: parser import4 passed; focused regression5 638 and native Navigation3 359 checks without errors; liveness1 passed. Slot1 reported 19 assertions but a cold-startup SCRIPT ERROR was found and fixed later without rerun. Room2 482 checks had 3 pointer failures; Apartment geometry was fixed and geometry checks passed, but room3 source diagnostics were not run. Cold1 was rejected before engine children by StorageGuardError not_directory at evidence/crt-cold-supervisor.json; client evidence-parent fix and analogous Web template-parent fix remain untested. No export was attempted. These receipts do not qualify the newly requested CRT redesign."
+        },
+        {
+          "kind": "user_visual_correction_and_runtime_release_checkpoint",
+          "reference": "room:Sentinel_83b6184147f88191a431dcfb7e571ccb; docs/testing/CRT_practice_console_20261119.md",
+          "summary": "User's 06:45:18 correction withdraws the old picker-like layout before publication. Source redesign agent /root/crt_menu_ui is active on curved 4:3 CRT and bespoke SNES-era selector; all practice contracts remain required. Exclusive E: runtime/integration window released with every owned guarded Job receipt active_at_release=0 and no owned running jobs. Existing watcher observed stopped with deployed 89403f3 unchanged; this lane did not start/stop it. Original C: source is complete and retained; necessary QA mirroring was performed, with unique E: workspace/run evidence retained. No feature commit, push, deployment or export candidate."
+        },
+        {
+          "kind": "source_only_continuation_and_scoped_manual_reconciliation",
+          "reference": "docs/testing/CRT_practice_console_reconciliation_20261119.json; docs/testing/CRT_practice_console_reconciliation_barrier_20261119.json",
+          "summary": "Current parent explicitly continues corrected source while Coin Pusher owns runtime/integration. /root/crt_menu_redesign and /root/crt_source_tests implement/review the corrected source; no new engine, browser or Job. Fresh owner snapshot preserves all historical owner rows and adds this active task. Nineteen actual guarded receipts are hash-bound and report active_at_release=0 without cleanup errors. Exact CRT JSON/Markdown projection checks the assigned objective with no CRT findings; exit1 retains global RUNTIME_COVERAGE_INCOMPLETE because other tasks/profiles/host census are not observed. Full canonical run is blocked by the inherited unrelated seven-digit ISO timestamp on Python3.10; canonical records/checkers remain unchanged. Corrected visuals and all six acceptance gates remain unqualified/open."
+        },
+        {
+          "kind": "source_only_queued_save_durability_correction_unqualified",
+          "reference": "scripts/ui/foundation_main.gd:open_game_test_menu; docs/testing/CRT_practice_console_20261119.md",
+          "summary": "Additional source audit found a queued legitimate ordinary save could be lost on Web pagehide/reload if merely parked until CRT Exit. Entry now drains any accepted async save and force-writes a queued ordinary generation before parking; a failed write aborts console entry with the pending origin retained. If ordinary saving was waiting on Web, entry requests existing WebSaveDurabilityBridge lifecycle sync without waiting for RAF; bridge rejection records failure/requeues and prevents entry. Changed source and updated background/cold profile/meta regressions have not run. Historical638 does not qualify this newer boundary."
+        },
+        {
+          "kind": "corrected_source_ready_pending_assigned_runtime_qualification",
+          "reference": "scripts/ui/crt_practice_menu.gd; scripts/ui/crt_practice_screen.gdshader; docs/testing/CRT_practice_console_20261119.md",
+          "summary": "Parent confirmed corrected source ready after UI/test contract cross-review: original pixel TV/connected console, true768x576 4:3 SubViewport with bespoke four-column eleven-game selector, bowed glass/scanlines and CPU-owned shader/input transforms for irregular motion and matching hit coordinates; Reduce Motion stops displacement. Source tests cover mapped edge hits/focus, keyboard/controller/touch, Setup/seed edits, smaller viewports, all11 launch/Leave, room pointer diagnostics and newer save/failure/background/cold profile-meta boundaries. Source-only whitespace, Python AST adapters and Node syntax checks passed. No engine parser, rendered/native/Web requalification, new Job, E write, export, commit, push or deployment occurred. Footer targets44 virtual pixels and smaller-window physical legibility require rendered evidence. C source is authoritative; E QA mirror remains old withdrawn inputs."
+        },
+        {
+          "kind": "native_qualification_and_partial_web_pending_final_runtime_checkpoint",
+          "reference": "docs/testing/CRT_practice_console_native_web_evidence_20261119.json; docs/testing/CRT_practice_console_20261119.md",
+          "summary": "Native Nav5 459, regression6 634, cold2 23+16, rooms3 531/six origins, launchers1 all11 normal Leave and Slot2 19 passed with owned0; Nav4 five Windows logical-viewport harness failures retained. Private Webpack1 PCK audit passed with exact pinned baseline inputs. Webdesktop1 timed out480 and Webcold1 retained one intentional-reload index.pck ERR_ABORTED; both raw exits1/failed and owned0, despite useful UI/Continue screenshots. Generic manual-Save warning unattributed. Root Web mobile work active/reported; no final all-zero snapshot or Web-pass claim. All six acceptance gates remainOpen; main/NEXT held, no feature commits/deployment."
+        },
+        {
+          "kind": "browser_css_sizes_and_controlled_baseline_pending_private_trace",
+          "reference": "docs/testing/CRT_practice_console_native_web_evidence_20261119.json; docs/testing/CRT_practice_console_20261119.md",
+          "summary": "Landscape1 and Portrait1 actual touch/seed/Setup/practice/Leave/retention/Exit/reopen images passed observed flow, but both raw protocols exit1/failed/owned0 for unexpected startup index.pck ERR_ABORTED, action null; portrait targets/captions very small, ergonomic legibility unpassed. Exact served894 Baseline1 exit0/protocolpassedtrue/owned0 and clean requests reproduces manualSave Could not finish saving before any CRT, then reload/Continue restores Apartment80 clock12:00: inherited warning, not Save-UX pass. Root webtrace1 private CDP/server observer active at last report, finalclosure unconfirmed. All6 gates Open/mainNEXT held."
+        },
+        {
+          "kind": "clean_private_web_reruns_pending_fresh_cold_and_final_closure",
+          "reference": "docs/testing/CRT_practice_console_native_web_evidence_20261119.json; docs/testing/CRT_practice_console_20261119.md",
+          "summary": "Trace1/Landscape2/Portrait2 each rawpassedtrue, exit0/owned0, explicitstop/browser-serverclosed and no page/console/failedrequest/non200. Trace PCK GET200 length125018680 fully read/finished without premature close. Previous raw failures retained. Portrait physical ergonomics and inherited manual-Save warning remain limitations; fresh Web cold2/final closure and main/NEXT delivery pending. No product layout, guards or caps changed."
+        },
+        {
+          "kind": "final_native_scoped_web_source_identity_and_owned_runtime_handoff",
+          "reference": "docs/testing/CRT_practice_console_native_web_evidence_20261119.json; docs/testing/CRT_practice_console_source_identity_20261119.json; docs/testing/CRT_practice_console_runtime_snapshot_20261119.json",
+          "summary": "Native gates and clean private Trace1/Landscape2/Portrait2 protocols pass; Webcold2 actual Continue semantics pass, but technical acceptance is PARTIAL: CDP aborted21540.18 is NEW reload-page PCK request, so rawexpected/active-reload label does not establish old-page navigation cancellation. E raw result retained. All37 receipts owned0:36assigned/completedJobs+1pre-Jobrejection, no global census; all13 C/E product hashes and required pack-source hashes match, HEAD894 unchanged. Portrait ergonomics remainsOpen, inherited baseline Save-ACK warning/prior startup aborts retained. All6 gates Open; no local commit/push/deployment."
+        },
+        {
+          "kind": "authorized_one_bounded_cdp_followup_and_pre_export_freeze",
+          "reference": "docs/testing/CRT_practice_console_bounded_followup_20261119.json; docs/testing/CRT_practice_console_20261119.md",
+          "summary": "ONE strict loader-aware Cold3 rawfailedexit1/owned0; NEWloader PCK GET200 then unexpectedERR_ABORTED, no old inflight and no later retry/cachecompletion, fullserverbytes/no prematureclose and actualstartGame readiness bothpages. Root inspected realAPT80/clock12 afterLeaveBack and actualContinue, paidpractice99998 firststock99/others100: ContinuePASS buttransportFAIL/technicalPARTIAL, no identifiedproductdefect. Allbrowsersclosed; artifact-onlypending. Previous37snapshot/recon historical; no userreservedchecks. Cfreeze before plannedverifiedtransferpatch894; externalmanifest authoritative, no selfhash/no verifiedartifactclaim; commits[]/deliverypending, no main/NEXT/TEST."
+        },
+        {
+          "kind": "local_commit_and_explicit_main_next_authorization",
+          "reference": "f13ed66a90f1a3b2b438524d5df7db27373024c5; Sentinel_b8c5f143684c8191bb739a8a30448034; Sentinel_951dee9c9ef48191a62f93bd34824b66; C:/Users/theep/Documents/Codex/2026-11-18/task/crt-intake-handoff-20261119.json; C:/Users/theep/Documents/Codex/2026-11-18/task/crt-pck-cache-control-results-20261119.json",
+          "summary": "Erik: Make sure we land the coin pusher and crt changes in next. Why is there a holdup in doing this they need to be pushed that was the request for new work. Erik separately approved all work needed for0.6.1 including pushing, running processes, committing to GitHub and testing. Frozen42-file transfer and local commit verified; matched no-cache controls strictpass4/4 initial/reload PCK transfers. Prior no-store failures retained; no complete production/LAN/TLS claim. Combined CRT gates now pending on exact Coin Pusher a168 base; no completed CRT deployment claim."
+        },
+        {
+          "kind": "combined_coin_pusher_base_focused_native_qualification",
+          "reference": "E:\\CodexQA\\BTH\\runs\\crt061-combined-regression-20261119\\evidence\\job.json; E:\\CodexQA\\BTH\\runs\\crt061-combined-grand-legacy-20261119\\evidence\\job.json; E:\\CodexQA\\BTH\\runs\\crt061-combined-launchers-20261119\\evidence\\job.json; E:\\CodexQA\\BTH\\runs\\crt061-combined-cold-20261119\\evidence\\job.json",
+          "summary": "Exact a168 base with both placement profiles retained. CRT634, Grand legacy48, actual all11 Launch/Leave including QuarterFalls and ExitTV, separateprocess coldContinue23+16 all pass; each guardexit0/owned0. Native DLL4cdeadde reused only after14 matching source inputs and original successful build receipts; no native compilation. Thirty-nine non-overlap frozen CRT files match exact normalized hashes. Only three approved overlap files changed; Coin/all other ledger records preserved. This does not claim deployed CRT or resolve portrait ergonomics."
+        }
+      ],
+      "next_action": "No-force push the scoped combined CRT commit atop verified Coin Pusher a168; submit its exact-input cold-import request to the existing NEXT watcher; verify exact served commit/assets and real title Games to CRT in a fresh browser. Retain portrait ergonomics and inherited Save-ACK feedback as separate limits.",
+      "blocker": {
+        "state": "active",
+        "kind": "next_delivery_and_portrait_ux_pending",
+        "description": "Combined-tree focused CRT634, Grand legacy48, actual eleven-game pointer Launch/Leave plus ExitTV, and coldContinue23+16 passed in fresh guarded E state with zero owned processes. No CRT main/NEXT deployment is claimed yet. Matched no-cache controls passed; prior no-store failures, portrait ergonomics and inherited Save-ACK feedback remain recorded. Erik's explicit approvals cover tests, processes, commits, pushes and NEXT delivery.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-19T15:49:31.202894+00:00",
+        "evidence": [
+          "Sentinel_b8c5f143684c8191bb739a8a30448034",
+          "Sentinel_951dee9c9ef48191a62f93bd34824b66",
+          "C:/Users/theep/Documents/Codex/2026-11-18/task/crt-intake-handoff-20261119.json"
+        ]
+      },
+      "updated_at": "2026-11-19T15:49:31.202894+00:00",
+      "planned_app_changes": [
+        {
+          "kind": "feature",
+          "description": "Curved 4:3 CRT with scanlines, bowing and Reduce-Motion-aware analog text shake, a bespoke original SNES-era selector, requested home television/console interactions and isolated production-practice return routing using project-native assets/style, existing viewport behavior and unchanged resource/storage guards and caps."
+        }
+      ]
+    },
     {
       "id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
       "name": "Shared Coin Pusher drop copy and Grand Casino cabinets",

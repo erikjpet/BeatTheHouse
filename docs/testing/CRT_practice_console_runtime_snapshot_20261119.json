@@ -1,0 +1,3285 @@
+{
+  "schema": "bth.runtime_inventory/v1",
+  "observed_at": "2026-11-19T10:08:57.151578+00:00",
+  "scope": {
+    "description": "CRT lane only:37 nonce/hash-bound closed receipt files;36 assigned/completed guarded Jobs plus1 pre-Job rejected launch receipt. All exact receipts report active_at_release0/no cleanup errors. Earlier failed/overlapping/native/protocol observations remain separate from qualification. Root confirmed no owned engine/browser/runtime remains and no more launches this slot. No global host/process census, unrelated tasks/watchers or protected-profile cleanup. Historical global inventory unchanged.",
+    "complete": false,
+    "evidence": [
+      "parent:/root:final-runtime-closure-confirmation",
+      "docs/testing/CRT_practice_console_native_web_evidence_20261119.json"
+    ]
+  },
+  "instances": [
+    {
+      "instance_id": "crt061-capture2-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "96f8eb3776cea9045fc5e76a77c01959",
+        "key": "guarded-attempt:crt061-capture2-20261119:manifest:1fc7b46980ca4f7ef051545f3b536fe38e525d6ef955b9a9e121ad07fc51c97c",
+        "started_at": "2026-11-19T08:18:59.416179+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-capture2-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-capture2-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T08:19:10.341774+00:00",
+        "key": "guarded-attempt:crt061-capture2-20261119:manifest:1fc7b46980ca4f7ef051545f3b536fe38e525d6ef955b9a9e121ad07fc51c97c",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-capture2-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T08:19:10.341774+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-capture2-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-capture2-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-capture2-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-capture2-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-capture2-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T08:19:10.341774+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "96f8eb3776cea9045fc5e76a77c01959",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-capture2-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-capture2-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T08:19:10.341774+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-capture2-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact guarded attempt receipt reports active_at_release=0 and no cleanup errors. Launch timestamp is the nonce-bound launch-claim boundary, not an inferred process creation time. No host census, profile deletion or unrelated cleanup. Qualification failures and SCRIPT ERRORs are separate from containment closure."
+      },
+      "receipt_metadata": {
+        "pid": 36324,
+        "assigned_before_execution": true,
+        "exit_code": 0,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": [],
+        "sha256": "26dbce16c0612dc41c8ba2c39f8ac4861b7b2267576b12acd307a6a51e66865a"
+      }
+    },
+    {
+      "instance_id": "crt061-clone-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "4ad196e15a33c8508bb3c93743a87d5e",
+        "key": "guarded-attempt:crt061-clone-20261119:manifest:e372275218eada3873d63ae2d46ea0d6edafbba0102e45869b2f77eeb95e3d92",
+        "started_at": "2026-11-19T06:09:57.575838+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-clone-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-clone-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T06:09:57.583838+00:00",
+        "key": "guarded-attempt:crt061-clone-20261119:manifest:e372275218eada3873d63ae2d46ea0d6edafbba0102e45869b2f77eeb95e3d92",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-clone-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T06:09:57.583838+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-clone-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-clone-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-clone-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-clone-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-clone-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T06:09:57.583838+00:00",
+          "outcome": "verified_empty",
+          "identity_nonce": "4ad196e15a33c8508bb3c93743a87d5e",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-clone-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-clone-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T06:09:57.583838+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-clone-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact guarded attempt receipt reports active_at_release=0 and no cleanup errors. Launch timestamp is the nonce-bound launch-claim boundary, not an inferred process creation time. No host census, profile deletion or unrelated cleanup. CreateProcess failed before a child was created."
+      },
+      "receipt_metadata": {
+        "sha256": "6cce3fae891ba9ffe014271ae22a9e0cd45afc7be6dd02fa230b1f829d627370",
+        "pid": null,
+        "assigned_before_execution": null,
+        "exit_code": null,
+        "error": "[WinError 2] The system cannot find the file specified",
+        "timed_out": null,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-clone2-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "e4c4e8454b9abd8c7cf3de22abaa3a44",
+        "key": "guarded-attempt:crt061-clone2-20261119:manifest:5e3c21eb0bdce40367c3679856cd2a0771c3427215c2faf26d467bd16a3e1351",
+        "started_at": "2026-11-19T06:10:17.242823+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-clone2-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-clone2-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T06:10:26.164604+00:00",
+        "key": "guarded-attempt:crt061-clone2-20261119:manifest:5e3c21eb0bdce40367c3679856cd2a0771c3427215c2faf26d467bd16a3e1351",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-clone2-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T06:10:26.164604+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-clone2-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-clone2-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-clone2-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-clone2-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-clone2-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T06:10:26.164604+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "e4c4e8454b9abd8c7cf3de22abaa3a44",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-clone2-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-clone2-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T06:10:26.164604+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-clone2-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact guarded attempt receipt reports active_at_release=0 and no cleanup errors. Launch timestamp is the nonce-bound launch-claim boundary, not an inferred process creation time. No host census, profile deletion or unrelated cleanup. Qualification failures and SCRIPT ERRORs are separate from containment closure."
+      },
+      "receipt_metadata": {
+        "sha256": "1bbc42392b2272b93752dcd8a9d788528eb7572b5f771c82f305aefef98671d2",
+        "pid": 43848,
+        "assigned_before_execution": true,
+        "exit_code": 0,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-cold1-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "d6ed3efbc44be4f124082febee35bf73",
+        "key": "guarded-attempt:crt061-cold1-20261119:manifest:746dc79e9b688bb414ba3ebd8c644aec6fd3b258909dfbb262480888dec62e57",
+        "started_at": "2026-11-19T06:43:44.338581+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-cold1-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-cold1-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T06:43:45.287332+00:00",
+        "key": "guarded-attempt:crt061-cold1-20261119:manifest:746dc79e9b688bb414ba3ebd8c644aec6fd3b258909dfbb262480888dec62e57",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-cold1-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T06:43:45.287332+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-cold1-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-cold1-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-cold1-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-cold1-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-cold1-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T06:43:45.287332+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "d6ed3efbc44be4f124082febee35bf73",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-cold1-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-cold1-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T06:43:45.287332+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-cold1-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact guarded attempt receipt reports active_at_release=0 and no cleanup errors. Launch timestamp is the nonce-bound launch-claim boundary, not an inferred process creation time. No host census, profile deletion or unrelated cleanup. Qualification failures and SCRIPT ERRORs are separate from containment closure."
+      },
+      "receipt_metadata": {
+        "sha256": "4e789ec5e05380bb93f455da9e8e7a05bde13e1f99eaf8195dc77dc44971714e",
+        "pid": 31760,
+        "assigned_before_execution": true,
+        "exit_code": 1,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-cold2-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "1d3af20393c4b8ae96fd5938d0cd7592",
+        "key": "guarded-attempt:crt061-cold2-20261119:manifest:67142c5f15e5a972cbc8459cbd5758dafbd6aee1c49b9bcbf9651cc1c906d8bd",
+        "started_at": "2026-11-19T08:56:56.392613+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-cold2-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-cold2-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T08:57:23.388879+00:00",
+        "key": "guarded-attempt:crt061-cold2-20261119:manifest:67142c5f15e5a972cbc8459cbd5758dafbd6aee1c49b9bcbf9651cc1c906d8bd",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-cold2-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T08:57:23.388879+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-cold2-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-cold2-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-cold2-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-cold2-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-cold2-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T08:57:23.388879+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "1d3af20393c4b8ae96fd5938d0cd7592",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-cold2-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-cold2-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T08:57:23.388879+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-cold2-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact nonce/hash-bound guarded attempt reports active_at_release0 and no cleanup errors. Closure is separate from gameplay/protocol pass; failed attempts retained. No host census, profile cleanup or unrelated process observation."
+      },
+      "receipt_metadata": {
+        "sha256": "814cf481d0c651e0deaab7b5b81b1cae5d6781c16fd5b0e7a50a740c08b0677f",
+        "pid": 48284,
+        "assigned_before_execution": true,
+        "exit_code": 0,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-import-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "628e224e1c27704046bbce88798ff76c",
+        "key": "guarded-attempt:crt061-import-20261119:manifest:0513211a4ffcb1d0305edd7e11b7f9db85f23e3cdad89575a1816b567a4b72aa",
+        "started_at": "2026-11-19T06:11:38.926336+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-import-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-import-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T06:12:27.166258+00:00",
+        "key": "guarded-attempt:crt061-import-20261119:manifest:0513211a4ffcb1d0305edd7e11b7f9db85f23e3cdad89575a1816b567a4b72aa",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-import-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T06:12:27.166258+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-import-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-import-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-import-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-import-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-import-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T06:12:27.166258+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "628e224e1c27704046bbce88798ff76c",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-import-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-import-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T06:12:27.166258+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-import-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact guarded attempt receipt reports active_at_release=0 and no cleanup errors. Launch timestamp is the nonce-bound launch-claim boundary, not an inferred process creation time. No host census, profile deletion or unrelated cleanup. Qualification failures and SCRIPT ERRORs are separate from containment closure."
+      },
+      "receipt_metadata": {
+        "sha256": "f5070fb933c433f9ac608f2aea4bc3eb840c5626ea63939b304b105b8241daaa",
+        "pid": 30508,
+        "assigned_before_execution": true,
+        "exit_code": 0,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-import2-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "c4f328265c0ab6609bfe0be695675b08",
+        "key": "guarded-attempt:crt061-import2-20261119:manifest:1aa96465a6ad721210716a23b88e4af83ed4e5ceee5662727ebf0fc093824d3c",
+        "started_at": "2026-11-19T06:12:10.278806+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-import2-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-import2-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T06:12:35.193893+00:00",
+        "key": "guarded-attempt:crt061-import2-20261119:manifest:1aa96465a6ad721210716a23b88e4af83ed4e5ceee5662727ebf0fc093824d3c",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-import2-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T06:12:35.193893+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-import2-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-import2-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-import2-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-import2-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-import2-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T06:12:35.193893+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "c4f328265c0ab6609bfe0be695675b08",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-import2-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-import2-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T06:12:35.193893+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-import2-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact guarded attempt receipt reports active_at_release=0 and no cleanup errors. Launch timestamp is the nonce-bound launch-claim boundary, not an inferred process creation time. No host census, profile deletion or unrelated cleanup. Qualification failures and SCRIPT ERRORs are separate from containment closure."
+      },
+      "receipt_metadata": {
+        "sha256": "aa070326cc2357ac867fbb38d8c133ec5a0d451e1e4049576b5d75e104e84292",
+        "pid": 19752,
+        "assigned_before_execution": true,
+        "exit_code": 0,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-import3-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "69cb0d6b382a008382c1886494e93dbb",
+        "key": "guarded-attempt:crt061-import3-20261119:manifest:3bcd8789a27231074a856b4f9b42061d1922bd97acb87a0c10fe2ed0b46c83f3",
+        "started_at": "2026-11-19T06:13:00.932265+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-import3-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-import3-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T06:13:09.284272+00:00",
+        "key": "guarded-attempt:crt061-import3-20261119:manifest:3bcd8789a27231074a856b4f9b42061d1922bd97acb87a0c10fe2ed0b46c83f3",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-import3-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T06:13:09.284272+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-import3-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-import3-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-import3-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-import3-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-import3-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T06:13:09.284272+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "69cb0d6b382a008382c1886494e93dbb",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-import3-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-import3-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T06:13:09.284272+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-import3-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact guarded attempt receipt reports active_at_release=0 and no cleanup errors. Launch timestamp is the nonce-bound launch-claim boundary, not an inferred process creation time. No host census, profile deletion or unrelated cleanup. Qualification failures and SCRIPT ERRORs are separate from containment closure."
+      },
+      "receipt_metadata": {
+        "sha256": "f6e5c8209cb82ea7e71436a40f8635c29813e31e19c39e31e7d56b6e5d5df742",
+        "pid": 42756,
+        "assigned_before_execution": true,
+        "exit_code": 0,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-import4-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "8ac6b306c6ff20e27d01982fcfc8382a",
+        "key": "guarded-attempt:crt061-import4-20261119:manifest:bbe6e1f6f33a1adbb9bcf99c96a1d23467d5cad584b5b89956ccd59d75c956cc",
+        "started_at": "2026-11-19T06:13:54.629285+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-import4-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-import4-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T06:14:12.252546+00:00",
+        "key": "guarded-attempt:crt061-import4-20261119:manifest:bbe6e1f6f33a1adbb9bcf99c96a1d23467d5cad584b5b89956ccd59d75c956cc",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-import4-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T06:14:12.252546+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-import4-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-import4-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-import4-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-import4-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-import4-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T06:14:12.252546+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "8ac6b306c6ff20e27d01982fcfc8382a",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-import4-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-import4-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T06:14:12.252546+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-import4-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact guarded attempt receipt reports active_at_release=0 and no cleanup errors. Launch timestamp is the nonce-bound launch-claim boundary, not an inferred process creation time. No host census, profile deletion or unrelated cleanup. Qualification failures and SCRIPT ERRORs are separate from containment closure."
+      },
+      "receipt_metadata": {
+        "sha256": "8f85e0e245c0d71a3183beb08396dfa074975753d99d49d261fdf1f41240f188",
+        "pid": 29996,
+        "assigned_before_execution": true,
+        "exit_code": 0,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-launchers1-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "cd27d9e3658c19137f44ed5799cee3ae",
+        "key": "guarded-attempt:crt061-launchers1-20261119:manifest:e4f70916a0253b13d8cc561b04dc71f6cab4524f3efe0277b9287da284d52cc4",
+        "started_at": "2026-11-19T08:59:20.628016+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-launchers1-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-launchers1-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T08:59:44.315072+00:00",
+        "key": "guarded-attempt:crt061-launchers1-20261119:manifest:e4f70916a0253b13d8cc561b04dc71f6cab4524f3efe0277b9287da284d52cc4",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-launchers1-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T08:59:44.315072+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-launchers1-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-launchers1-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-launchers1-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-launchers1-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-launchers1-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T08:59:44.315072+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "cd27d9e3658c19137f44ed5799cee3ae",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-launchers1-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-launchers1-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T08:59:44.315072+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-launchers1-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact nonce/hash-bound guarded attempt reports active_at_release0 and no cleanup errors. Closure is separate from gameplay/protocol pass; failed attempts retained. No host census, profile cleanup or unrelated process observation."
+      },
+      "receipt_metadata": {
+        "sha256": "23d4d4ad32841400273f5bfde14aac1a0de6c7d5c7b0f0697d17685b159033a5",
+        "pid": 42172,
+        "assigned_before_execution": true,
+        "exit_code": 0,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-liveness1-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "2198e837f644a1a1b57a0a9268b605f4",
+        "key": "guarded-attempt:crt061-liveness1-20261119:manifest:c6240b3f6d4053317e3e3e612f56641c5e246746973a22ba6520ed1038fba407",
+        "started_at": "2026-11-19T06:38:03.398271+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-liveness1-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-liveness1-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T06:38:10.500615+00:00",
+        "key": "guarded-attempt:crt061-liveness1-20261119:manifest:c6240b3f6d4053317e3e3e612f56641c5e246746973a22ba6520ed1038fba407",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-liveness1-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T06:38:10.500615+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-liveness1-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-liveness1-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-liveness1-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-liveness1-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-liveness1-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T06:38:10.500615+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "2198e837f644a1a1b57a0a9268b605f4",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-liveness1-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-liveness1-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T06:38:10.500615+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-liveness1-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact guarded attempt receipt reports active_at_release=0 and no cleanup errors. Launch timestamp is the nonce-bound launch-claim boundary, not an inferred process creation time. No host census, profile deletion or unrelated cleanup. Qualification failures and SCRIPT ERRORs are separate from containment closure."
+      },
+      "receipt_metadata": {
+        "sha256": "e0701011ee7aa57b2405cdbd7279d74309d678f20154a6bdb984be7f445db307",
+        "pid": 26528,
+        "assigned_before_execution": true,
+        "exit_code": 0,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-navigation1-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "3824d4834e2ada95dd58b5314402da13",
+        "key": "guarded-attempt:crt061-navigation1-20261119:manifest:8f0efa213df29b280ab8aeac755df5231b6ccae0192b43dafa3914267b6eaeba",
+        "started_at": "2026-11-19T06:27:32.516873+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation1-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation1-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T06:27:51.972095+00:00",
+        "key": "guarded-attempt:crt061-navigation1-20261119:manifest:8f0efa213df29b280ab8aeac755df5231b6ccae0192b43dafa3914267b6eaeba",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation1-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T06:27:51.972095+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation1-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation1-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation1-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation1-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation1-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T06:27:51.972095+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "3824d4834e2ada95dd58b5314402da13",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation1-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation1-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T06:27:51.972095+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation1-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact guarded attempt receipt reports active_at_release=0 and no cleanup errors. Launch timestamp is the nonce-bound launch-claim boundary, not an inferred process creation time. No host census, profile deletion or unrelated cleanup. Qualification failures and SCRIPT ERRORs are separate from containment closure."
+      },
+      "receipt_metadata": {
+        "sha256": "d60aa3fe651bb56cd1ab4835aa3061b58e85d155567fa58f73986e07850f6e5e",
+        "pid": 20572,
+        "assigned_before_execution": true,
+        "exit_code": 1,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-navigation2-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "7bab5b29872511c0b9f3f679263d4b2c",
+        "key": "guarded-attempt:crt061-navigation2-20261119:manifest:4018b633e8a71fdb94abeeb0c41897ccf9c776a5f268495b54c1bbe6c1adb2db",
+        "started_at": "2026-11-19T06:29:42.594228+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation2-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation2-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T06:30:01.719147+00:00",
+        "key": "guarded-attempt:crt061-navigation2-20261119:manifest:4018b633e8a71fdb94abeeb0c41897ccf9c776a5f268495b54c1bbe6c1adb2db",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation2-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T06:30:01.719147+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation2-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation2-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation2-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation2-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation2-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T06:30:01.719147+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "7bab5b29872511c0b9f3f679263d4b2c",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation2-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation2-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T06:30:01.719147+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation2-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact guarded attempt receipt reports active_at_release=0 and no cleanup errors. Launch timestamp is the nonce-bound launch-claim boundary, not an inferred process creation time. No host census, profile deletion or unrelated cleanup. Qualification failures and SCRIPT ERRORs are separate from containment closure."
+      },
+      "receipt_metadata": {
+        "sha256": "f0771b4a4798223334ff96353034867849bf01d7e46e632a050d299c77477f12",
+        "pid": 44760,
+        "assigned_before_execution": true,
+        "exit_code": 1,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-navigation3-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "4a61a76762f41b649fecdd4c46a875b3",
+        "key": "guarded-attempt:crt061-navigation3-20261119:manifest:2f95e062b0f2c9c9f6fd0baf6381efa357b0956f39e97e4eb7ad86949c88b56a",
+        "started_at": "2026-11-19T06:37:18.699642+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation3-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation3-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T06:37:38.476126+00:00",
+        "key": "guarded-attempt:crt061-navigation3-20261119:manifest:2f95e062b0f2c9c9f6fd0baf6381efa357b0956f39e97e4eb7ad86949c88b56a",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation3-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T06:37:38.476126+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation3-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation3-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation3-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation3-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation3-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T06:37:38.476126+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "4a61a76762f41b649fecdd4c46a875b3",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation3-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation3-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T06:37:38.476126+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation3-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact guarded attempt receipt reports active_at_release=0 and no cleanup errors. Launch timestamp is the nonce-bound launch-claim boundary, not an inferred process creation time. No host census, profile deletion or unrelated cleanup. Qualification failures and SCRIPT ERRORs are separate from containment closure."
+      },
+      "receipt_metadata": {
+        "sha256": "d72082a19944aa67782b4a54afb141fdb4f1e89dc506c1a6634020d49b0a5e4f",
+        "pid": 27212,
+        "assigned_before_execution": true,
+        "exit_code": 0,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-navigation4-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "0d020733cbc18859dd522bdf8c46d022",
+        "key": "guarded-attempt:crt061-navigation4-20261119:manifest:b9b6b81e3232a8ba7e2a87b45b171b07962f0d007bffae6c2be6680f896a5877",
+        "started_at": "2026-11-19T08:50:56.368932+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation4-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation4-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T08:51:19.416487+00:00",
+        "key": "guarded-attempt:crt061-navigation4-20261119:manifest:b9b6b81e3232a8ba7e2a87b45b171b07962f0d007bffae6c2be6680f896a5877",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation4-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T08:51:19.416487+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation4-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation4-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation4-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation4-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation4-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T08:51:19.416487+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "0d020733cbc18859dd522bdf8c46d022",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation4-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation4-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T08:51:19.416487+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation4-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact nonce/hash-bound guarded attempt reports active_at_release0 and no cleanup errors. Closure is separate from gameplay/protocol pass; failed attempts retained. No host census, profile cleanup or unrelated process observation."
+      },
+      "receipt_metadata": {
+        "sha256": "1e4d7846c552d8ba5a3cc1ee6115568f9efb10b81aeed44088919076ee81dac9",
+        "pid": 32620,
+        "assigned_before_execution": true,
+        "exit_code": 1,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-navigation5-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "0095cbc4e6a433232dd10e0d7d9c5e32",
+        "key": "guarded-attempt:crt061-navigation5-20261119:manifest:2f153eb567113810f2ec92d82923fbd34afff91be2bb045eb5288becaaeb4d4e",
+        "started_at": "2026-11-19T08:53:39.551875+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation5-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation5-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T08:54:03.130183+00:00",
+        "key": "guarded-attempt:crt061-navigation5-20261119:manifest:2f153eb567113810f2ec92d82923fbd34afff91be2bb045eb5288becaaeb4d4e",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation5-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T08:54:03.130183+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation5-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation5-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation5-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation5-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation5-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T08:54:03.130183+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "0095cbc4e6a433232dd10e0d7d9c5e32",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation5-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-navigation5-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T08:54:03.130183+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-navigation5-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact nonce/hash-bound guarded attempt reports active_at_release0 and no cleanup errors. Closure is separate from gameplay/protocol pass; failed attempts retained. No host census, profile cleanup or unrelated process observation."
+      },
+      "receipt_metadata": {
+        "sha256": "882cc5c225777a6376c29f10be6cefeecc7d3b5511dd9385071b4731e0c114c1",
+        "pid": 35712,
+        "assigned_before_execution": true,
+        "exit_code": 0,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-regression1-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "7b3146e284602a083b599a5cf1ab3276",
+        "key": "guarded-attempt:crt061-regression1-20261119:manifest:a9080a96ccb58806f37ba9041d10b3fa7364a426c974117aee02679fd8d093c7",
+        "started_at": "2026-11-19T06:14:27.587904+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression1-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression1-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T06:14:54.710325+00:00",
+        "key": "guarded-attempt:crt061-regression1-20261119:manifest:a9080a96ccb58806f37ba9041d10b3fa7364a426c974117aee02679fd8d093c7",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression1-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T06:14:54.710325+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression1-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression1-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression1-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression1-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression1-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T06:14:54.710325+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "7b3146e284602a083b599a5cf1ab3276",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression1-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression1-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T06:14:54.710325+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression1-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact guarded attempt receipt reports active_at_release=0 and no cleanup errors. Launch timestamp is the nonce-bound launch-claim boundary, not an inferred process creation time. No host census, profile deletion or unrelated cleanup. Qualification failures and SCRIPT ERRORs are separate from containment closure."
+      },
+      "receipt_metadata": {
+        "sha256": "7e4c73c543966e06b6b19411256d076debd1ebcef7968de967ba1eab93523e2d",
+        "pid": 37752,
+        "assigned_before_execution": true,
+        "exit_code": 1,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-regression2-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "acb5174eb9e952a9ce9af05d949c581b",
+        "key": "guarded-attempt:crt061-regression2-20261119:manifest:f6afba6fd4d9ad553cac47240c9ae0be2a7b87a0d2536b1440e2bf9512bc0779",
+        "started_at": "2026-11-19T06:17:54.098346+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression2-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression2-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T06:18:21.545498+00:00",
+        "key": "guarded-attempt:crt061-regression2-20261119:manifest:f6afba6fd4d9ad553cac47240c9ae0be2a7b87a0d2536b1440e2bf9512bc0779",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression2-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T06:18:21.545498+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression2-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression2-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression2-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression2-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression2-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T06:18:21.545498+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "acb5174eb9e952a9ce9af05d949c581b",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression2-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression2-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T06:18:21.545498+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression2-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact guarded attempt receipt reports active_at_release=0 and no cleanup errors. Launch timestamp is the nonce-bound launch-claim boundary, not an inferred process creation time. No host census, profile deletion or unrelated cleanup. Qualification failures and SCRIPT ERRORs are separate from containment closure."
+      },
+      "receipt_metadata": {
+        "sha256": "84feecb27f0a99662b3a604b54bfe0245c4dfa465e293d28b3f4a14a82728cae",
+        "pid": 22144,
+        "assigned_before_execution": true,
+        "exit_code": 1,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-regression3-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "fff5a553c723ec844716464931ee3f55",
+        "key": "guarded-attempt:crt061-regression3-20261119:manifest:e23c55804cd9b37db8e13a5e3424592bf6f8702c837d99fc10019ef70a9fcb4d",
+        "started_at": "2026-11-19T06:22:31.750269+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression3-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression3-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T06:22:34.399533+00:00",
+        "key": "guarded-attempt:crt061-regression3-20261119:manifest:e23c55804cd9b37db8e13a5e3424592bf6f8702c837d99fc10019ef70a9fcb4d",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression3-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T06:22:34.399533+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression3-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression3-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression3-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression3-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression3-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T06:22:34.399533+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "fff5a553c723ec844716464931ee3f55",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression3-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression3-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T06:22:34.399533+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression3-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact guarded attempt receipt reports active_at_release=0 and no cleanup errors. Launch timestamp is the nonce-bound launch-claim boundary, not an inferred process creation time. No host census, profile deletion or unrelated cleanup. Qualification failures and SCRIPT ERRORs are separate from containment closure."
+      },
+      "receipt_metadata": {
+        "sha256": "3eb968477a44e7113880a899b2e67541458b6cff77c37ebf0c69d35535039aff",
+        "pid": 30836,
+        "assigned_before_execution": true,
+        "exit_code": 1,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-regression4-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "2b582551eab644c58f2cb44201042b1a",
+        "key": "guarded-attempt:crt061-regression4-20261119:manifest:a87903b3be70f55e9301e353aca7827577546eaf60e949e4afc668f1a669626d",
+        "started_at": "2026-11-19T06:24:04.457572+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression4-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression4-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T06:24:32.157933+00:00",
+        "key": "guarded-attempt:crt061-regression4-20261119:manifest:a87903b3be70f55e9301e353aca7827577546eaf60e949e4afc668f1a669626d",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression4-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T06:24:32.157933+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression4-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression4-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression4-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression4-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression4-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T06:24:32.157933+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "2b582551eab644c58f2cb44201042b1a",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression4-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression4-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T06:24:32.157933+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression4-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact guarded attempt receipt reports active_at_release=0 and no cleanup errors. Launch timestamp is the nonce-bound launch-claim boundary, not an inferred process creation time. No host census, profile deletion or unrelated cleanup. Qualification failures and SCRIPT ERRORs are separate from containment closure."
+      },
+      "receipt_metadata": {
+        "sha256": "bfa640844ac04b912c965b12e53c96ec9e35dbdce2be8cb00217fe992aa7d549",
+        "pid": 28492,
+        "assigned_before_execution": true,
+        "exit_code": 1,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-regression5-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "5ad6872b3020919c2156ef103aefcaba",
+        "key": "guarded-attempt:crt061-regression5-20261119:manifest:a1709b3e851d5cbf8d80b6c0de231e30b4313220997f583ec7eab435c6dc202b",
+        "started_at": "2026-11-19T06:25:46.689454+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression5-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression5-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T06:26:13.599285+00:00",
+        "key": "guarded-attempt:crt061-regression5-20261119:manifest:a1709b3e851d5cbf8d80b6c0de231e30b4313220997f583ec7eab435c6dc202b",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression5-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T06:26:13.599285+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression5-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression5-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression5-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression5-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression5-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T06:26:13.599285+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "5ad6872b3020919c2156ef103aefcaba",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression5-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression5-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T06:26:13.599285+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression5-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact guarded attempt receipt reports active_at_release=0 and no cleanup errors. Launch timestamp is the nonce-bound launch-claim boundary, not an inferred process creation time. No host census, profile deletion or unrelated cleanup. Qualification failures and SCRIPT ERRORs are separate from containment closure."
+      },
+      "receipt_metadata": {
+        "sha256": "b033a387b58975f80d821467e44f32e570b14ae8874281ed2a381a7cb0fce5b0",
+        "pid": 3828,
+        "assigned_before_execution": true,
+        "exit_code": 0,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-regression6-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "8215f86658201f3b01d3cee18c1e4472",
+        "key": "guarded-attempt:crt061-regression6-20261119:manifest:4542158e1a92bccd532d3682975f7b734303562b2b0b1c2140eec8cf8e367a42",
+        "started_at": "2026-11-19T08:54:42.325890+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression6-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression6-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T08:55:08.277535+00:00",
+        "key": "guarded-attempt:crt061-regression6-20261119:manifest:4542158e1a92bccd532d3682975f7b734303562b2b0b1c2140eec8cf8e367a42",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression6-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T08:55:08.277535+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression6-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression6-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression6-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression6-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression6-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T08:55:08.277535+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "8215f86658201f3b01d3cee18c1e4472",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression6-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-regression6-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T08:55:08.277535+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-regression6-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact nonce/hash-bound guarded attempt reports active_at_release0 and no cleanup errors. Closure is separate from gameplay/protocol pass; failed attempts retained. No host census, profile cleanup or unrelated process observation."
+      },
+      "receipt_metadata": {
+        "sha256": "60eaa0102a7fc302ae130dcc5607dc88f20992233a1abd3c7aaf6a96bf9e8b4a",
+        "pid": 39612,
+        "assigned_before_execution": true,
+        "exit_code": 0,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-rooms1-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "c7fe016a55a4cb6d9f8ae99a2952bfc5",
+        "key": "guarded-attempt:crt061-rooms1-20261119:manifest:e9a23a9ebe6aebcf57e6fe5b4f384e791579f07b6f8e2e791cb19ecd0ca004dd",
+        "started_at": "2026-11-19T06:33:20.683165+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-rooms1-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-rooms1-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T06:33:39.009819+00:00",
+        "key": "guarded-attempt:crt061-rooms1-20261119:manifest:e9a23a9ebe6aebcf57e6fe5b4f384e791579f07b6f8e2e791cb19ecd0ca004dd",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-rooms1-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T06:33:39.009819+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-rooms1-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-rooms1-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-rooms1-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-rooms1-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-rooms1-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T06:33:39.009819+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "c7fe016a55a4cb6d9f8ae99a2952bfc5",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-rooms1-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-rooms1-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T06:33:39.009819+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-rooms1-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact guarded attempt receipt reports active_at_release=0 and no cleanup errors. Launch timestamp is the nonce-bound launch-claim boundary, not an inferred process creation time. No host census, profile deletion or unrelated cleanup. Qualification failures and SCRIPT ERRORs are separate from containment closure."
+      },
+      "receipt_metadata": {
+        "sha256": "7044389b35fb80da0a8fcfe08d38ac3877609e2e02075a7a395b27214b5b67c2",
+        "pid": 16580,
+        "assigned_before_execution": true,
+        "exit_code": 1,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-rooms2-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "c8b7a4a3ca47c8d99ee9598f98087605",
+        "key": "guarded-attempt:crt061-rooms2-20261119:manifest:95da9c27e805b5c0072129928d807363d1112d3c37c9fa79eb2e3a12aa027c57",
+        "started_at": "2026-11-19T06:40:21.128068+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-rooms2-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-rooms2-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T06:40:51.210133+00:00",
+        "key": "guarded-attempt:crt061-rooms2-20261119:manifest:95da9c27e805b5c0072129928d807363d1112d3c37c9fa79eb2e3a12aa027c57",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-rooms2-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T06:40:51.210133+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-rooms2-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-rooms2-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-rooms2-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-rooms2-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-rooms2-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T06:40:51.210133+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "c8b7a4a3ca47c8d99ee9598f98087605",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-rooms2-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-rooms2-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T06:40:51.210133+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-rooms2-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact guarded attempt receipt reports active_at_release=0 and no cleanup errors. Launch timestamp is the nonce-bound launch-claim boundary, not an inferred process creation time. No host census, profile deletion or unrelated cleanup. Qualification failures and SCRIPT ERRORs are separate from containment closure."
+      },
+      "receipt_metadata": {
+        "sha256": "3f9ce2882090c816aa4d5d9b1f438be7947144e53fa039a86a91ad9375d30aea",
+        "pid": 20192,
+        "assigned_before_execution": true,
+        "exit_code": 1,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-rooms3-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "0d8b07510e6f9d8cd5289f07a1698ead",
+        "key": "guarded-attempt:crt061-rooms3-20261119:manifest:21ce9ffb0aff194034752ccf0b11cc21cec533bb4e4411a16eb51ae5141d81c3",
+        "started_at": "2026-11-19T08:58:22.352878+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-rooms3-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-rooms3-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T08:58:46.141257+00:00",
+        "key": "guarded-attempt:crt061-rooms3-20261119:manifest:21ce9ffb0aff194034752ccf0b11cc21cec533bb4e4411a16eb51ae5141d81c3",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-rooms3-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T08:58:46.141257+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-rooms3-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-rooms3-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-rooms3-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-rooms3-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-rooms3-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T08:58:46.141257+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "0d8b07510e6f9d8cd5289f07a1698ead",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-rooms3-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-rooms3-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T08:58:46.141257+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-rooms3-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact nonce/hash-bound guarded attempt reports active_at_release0 and no cleanup errors. Closure is separate from gameplay/protocol pass; failed attempts retained. No host census, profile cleanup or unrelated process observation."
+      },
+      "receipt_metadata": {
+        "sha256": "1d57309436b41c5bbead6d8dc3efbcb00dcb21d4cdfc10bb77bf4d2fe52cea31",
+        "pid": 47604,
+        "assigned_before_execution": true,
+        "exit_code": 0,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-slot1-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "2abb2be8e017ffcc54f05b763753d321",
+        "key": "guarded-attempt:crt061-slot1-20261119:manifest:c3d897cae075f68e5926db9e5c1dcaff1206abb7a7ae5d20cf8eccd4e1939bb0",
+        "started_at": "2026-11-19T06:21:04.103333+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-slot1-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-slot1-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T06:21:18.080709+00:00",
+        "key": "guarded-attempt:crt061-slot1-20261119:manifest:c3d897cae075f68e5926db9e5c1dcaff1206abb7a7ae5d20cf8eccd4e1939bb0",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-slot1-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T06:21:18.080709+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-slot1-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-slot1-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-slot1-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-slot1-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-slot1-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T06:21:18.080709+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "2abb2be8e017ffcc54f05b763753d321",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-slot1-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-slot1-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T06:21:18.080709+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-slot1-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact guarded attempt receipt reports active_at_release=0 and no cleanup errors. Launch timestamp is the nonce-bound launch-claim boundary, not an inferred process creation time. No host census, profile deletion or unrelated cleanup. Qualification failures and SCRIPT ERRORs are separate from containment closure."
+      },
+      "receipt_metadata": {
+        "sha256": "2c320607963267ab3a108af0b7c38c6f6a7c1de4e5ba47c25f10169d56ad357d",
+        "pid": 32056,
+        "assigned_before_execution": true,
+        "exit_code": 0,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-slot2-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "32db2b8e45b99159720985392afcdab5",
+        "key": "guarded-attempt:crt061-slot2-20261119:manifest:92f958ec6c284d9a10f2844c56c8084884476109af0d39c2fab05d41b1dcfc17",
+        "started_at": "2026-11-19T09:00:37.712929+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-slot2-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-slot2-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T09:00:51.193808+00:00",
+        "key": "guarded-attempt:crt061-slot2-20261119:manifest:92f958ec6c284d9a10f2844c56c8084884476109af0d39c2fab05d41b1dcfc17",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-slot2-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T09:00:51.193808+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-slot2-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-slot2-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-slot2-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-slot2-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-slot2-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T09:00:51.193808+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "32db2b8e45b99159720985392afcdab5",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-slot2-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-slot2-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T09:00:51.193808+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-slot2-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact nonce/hash-bound guarded attempt reports active_at_release0 and no cleanup errors. Closure is separate from gameplay/protocol pass; failed attempts retained. No host census, profile cleanup or unrelated process observation."
+      },
+      "receipt_metadata": {
+        "sha256": "74359998584dad255889e7b71b34937bf1183a4cb6f3acdbfbada5ca976565fc",
+        "pid": 9728,
+        "assigned_before_execution": true,
+        "exit_code": 0,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-webbaseline1-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "a8aaeadd2edc9925406c63c0bfc41f75",
+        "key": "guarded-attempt:crt061-webbaseline1-20261119:manifest:fff732abdd30234a4dc50ef2cf9802bdc57c4a5906047f72a93ee073a2760a2d",
+        "started_at": "2026-11-19T09:39:23.262055+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webbaseline1-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-webbaseline1-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T09:42:58.252841+00:00",
+        "key": "guarded-attempt:crt061-webbaseline1-20261119:manifest:fff732abdd30234a4dc50ef2cf9802bdc57c4a5906047f72a93ee073a2760a2d",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webbaseline1-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T09:42:58.252841+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webbaseline1-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webbaseline1-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webbaseline1-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webbaseline1-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webbaseline1-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T09:42:58.252841+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "a8aaeadd2edc9925406c63c0bfc41f75",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-webbaseline1-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webbaseline1-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T09:42:58.252841+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webbaseline1-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact nonce/hash-bound guarded attempt reports active_at_release0 and no cleanup errors. Closure is separate from gameplay/protocol pass; failed attempts retained. No host census, profile cleanup or unrelated process observation."
+      },
+      "receipt_metadata": {
+        "sha256": "ffadb8eb31092a2b0551ac2fd72e0be50c86c19a717b623dea2cea3bb1c2d989",
+        "pid": 46868,
+        "assigned_before_execution": true,
+        "exit_code": 0,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-webcold1-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "c5e2aef928443076eb45031cc6c905a0",
+        "key": "guarded-attempt:crt061-webcold1-20261119:manifest:3c2ef2e2ca8a350136a87208a48ce3108531d523df8ec82c3f201b92df944e29",
+        "started_at": "2026-11-19T09:15:41.918442+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webcold1-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-webcold1-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T09:21:06.016330+00:00",
+        "key": "guarded-attempt:crt061-webcold1-20261119:manifest:3c2ef2e2ca8a350136a87208a48ce3108531d523df8ec82c3f201b92df944e29",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webcold1-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T09:21:06.016330+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webcold1-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webcold1-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webcold1-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webcold1-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webcold1-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T09:21:06.016330+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "c5e2aef928443076eb45031cc6c905a0",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-webcold1-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webcold1-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T09:21:06.016330+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webcold1-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact nonce/hash-bound guarded attempt reports active_at_release0 and no cleanup errors. Closure is separate from gameplay/protocol pass; failed attempts retained. No host census, profile cleanup or unrelated process observation."
+      },
+      "receipt_metadata": {
+        "sha256": "e528541077c8926f079d8bdc6b807b3c1bb2dc8fc21cf5abcdf306caf0a49b45",
+        "pid": 45812,
+        "assigned_before_execution": true,
+        "exit_code": 1,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-webcold2-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "f65bd84c0d2e49246d90a5b614d392cc",
+        "key": "guarded-attempt:crt061-webcold2-20261119:manifest:62090579c0a2dcd323880b3dd6030432423a65d4e496e048785be6a7bcbda5cb",
+        "started_at": "2026-11-19T10:01:01.259048+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webcold2-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-webcold2-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T10:03:41.491976+00:00",
+        "key": "guarded-attempt:crt061-webcold2-20261119:manifest:62090579c0a2dcd323880b3dd6030432423a65d4e496e048785be6a7bcbda5cb",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webcold2-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T10:03:41.491976+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webcold2-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webcold2-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webcold2-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webcold2-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webcold2-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T10:03:41.491976+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "f65bd84c0d2e49246d90a5b614d392cc",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-webcold2-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webcold2-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T10:03:41.491976+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webcold2-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact nonce/hash-bound guarded attempt reports active_at_release0 and no cleanup errors. Closure is separate from gameplay/protocol pass; failed attempts retained. No host census, profile cleanup or unrelated process observation."
+      },
+      "receipt_metadata": {
+        "sha256": "0c9f646e07ea96bcd59c1ea93ede75960d2df25d6aab268ad46f9452d11b3b43",
+        "pid": 48620,
+        "assigned_before_execution": true,
+        "exit_code": 0,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-webdesktop1-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "5109fc651a22ac6a2e87ccb4e7d27d84",
+        "key": "guarded-attempt:crt061-webdesktop1-20261119:manifest:50d35aabde8f71c1290df8b5b28c1f243b7254b1a4968f322a3e1b8c0b90b1dd",
+        "started_at": "2026-11-19T09:04:25.313687+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webdesktop1-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-webdesktop1-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T09:12:27.086897+00:00",
+        "key": "guarded-attempt:crt061-webdesktop1-20261119:manifest:50d35aabde8f71c1290df8b5b28c1f243b7254b1a4968f322a3e1b8c0b90b1dd",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webdesktop1-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T09:12:27.086897+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webdesktop1-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webdesktop1-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webdesktop1-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webdesktop1-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webdesktop1-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T09:12:27.086897+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "5109fc651a22ac6a2e87ccb4e7d27d84",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-webdesktop1-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webdesktop1-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T09:12:27.086897+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webdesktop1-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact nonce/hash-bound guarded attempt reports active_at_release0 and no cleanup errors. Closure is separate from gameplay/protocol pass; failed attempts retained. No host census, profile cleanup or unrelated process observation."
+      },
+      "receipt_metadata": {
+        "sha256": "a8eb225ac39b69b658276743e63e400ff6e4be81a0014b86b43bd15d0ceb2bd8",
+        "pid": 33676,
+        "assigned_before_execution": true,
+        "exit_code": 1,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-weblandscape1-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "ad6b8f86df9a077d1397b6789fca8358",
+        "key": "guarded-attempt:crt061-weblandscape1-20261119:manifest:d21d65b46f080e26295183c149ec8bc5b92d41468d59934cfa4cf63463f7aefb",
+        "started_at": "2026-11-19T09:23:41.973000+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-weblandscape1-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-weblandscape1-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T09:26:37.367682+00:00",
+        "key": "guarded-attempt:crt061-weblandscape1-20261119:manifest:d21d65b46f080e26295183c149ec8bc5b92d41468d59934cfa4cf63463f7aefb",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-weblandscape1-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T09:26:37.367682+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-weblandscape1-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-weblandscape1-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-weblandscape1-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-weblandscape1-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-weblandscape1-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T09:26:37.367682+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "ad6b8f86df9a077d1397b6789fca8358",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-weblandscape1-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-weblandscape1-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T09:26:37.367682+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-weblandscape1-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact nonce/hash-bound guarded attempt reports active_at_release0 and no cleanup errors. Closure is separate from gameplay/protocol pass; failed attempts retained. No host census, profile cleanup or unrelated process observation."
+      },
+      "receipt_metadata": {
+        "sha256": "4541f411318a0d61e2d1b6f61bb01e0b9c258b4cbbd4c4b3fb7afe2b34314a5d",
+        "pid": 31368,
+        "assigned_before_execution": true,
+        "exit_code": 1,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-weblandscape2-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "ad046385462a41d9fc8b701ef7248b83",
+        "key": "guarded-attempt:crt061-weblandscape2-20261119:manifest:9f02af41a1b729ea7d07a42cab0daa0beb1c7d9bb478500a63f22b7c8524ea0e",
+        "started_at": "2026-11-19T09:47:40.169859+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-weblandscape2-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-weblandscape2-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T09:48:52.174937+00:00",
+        "key": "guarded-attempt:crt061-weblandscape2-20261119:manifest:9f02af41a1b729ea7d07a42cab0daa0beb1c7d9bb478500a63f22b7c8524ea0e",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-weblandscape2-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T09:48:52.174937+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-weblandscape2-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-weblandscape2-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-weblandscape2-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-weblandscape2-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-weblandscape2-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T09:48:52.174937+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "ad046385462a41d9fc8b701ef7248b83",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-weblandscape2-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-weblandscape2-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T09:48:52.174937+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-weblandscape2-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact nonce/hash-bound guarded attempt reports active_at_release0 and no cleanup errors. Closure is separate from gameplay/protocol pass; failed attempts retained. No host census, profile cleanup or unrelated process observation."
+      },
+      "receipt_metadata": {
+        "sha256": "0dd3690b7ffeae5451b5132a3964eb15c9a556ed2c55d1e55a57ba3a4cb4d641",
+        "pid": 48204,
+        "assigned_before_execution": true,
+        "exit_code": 0,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-webpack1-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "a491afee191169b01ea3a0c841270a02",
+        "key": "guarded-attempt:crt061-webpack1-20261119:manifest:7c8150ff3a227f1a2df0b31d744ada65f5b05bb4a98e93443441f6672173ff5b",
+        "started_at": "2026-11-19T09:02:10.681207+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webpack1-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-webpack1-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T09:02:28.124797+00:00",
+        "key": "guarded-attempt:crt061-webpack1-20261119:manifest:7c8150ff3a227f1a2df0b31d744ada65f5b05bb4a98e93443441f6672173ff5b",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webpack1-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T09:02:28.124797+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webpack1-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webpack1-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webpack1-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webpack1-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webpack1-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T09:02:28.124797+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "a491afee191169b01ea3a0c841270a02",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-webpack1-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webpack1-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T09:02:28.124797+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webpack1-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact nonce/hash-bound guarded attempt reports active_at_release0 and no cleanup errors. Closure is separate from gameplay/protocol pass; failed attempts retained. No host census, profile cleanup or unrelated process observation."
+      },
+      "receipt_metadata": {
+        "sha256": "c6a0335b2b4944c6c5c17df13e84e0439de4429b5eacaa4622e6531d2b3c5a43",
+        "pid": 25560,
+        "assigned_before_execution": true,
+        "exit_code": 0,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-webportrait1-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "4670bfa020d90d07c7dd6d4c14ae1756",
+        "key": "guarded-attempt:crt061-webportrait1-20261119:manifest:2368779d1c7a0de3e5cb44008baed6c3d46f5d0088bac7ef06b6462468089a58",
+        "started_at": "2026-11-19T09:31:27.050354+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webportrait1-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-webportrait1-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T09:36:28.986253+00:00",
+        "key": "guarded-attempt:crt061-webportrait1-20261119:manifest:2368779d1c7a0de3e5cb44008baed6c3d46f5d0088bac7ef06b6462468089a58",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webportrait1-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T09:36:28.986253+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webportrait1-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webportrait1-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webportrait1-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webportrait1-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webportrait1-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T09:36:28.986253+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "4670bfa020d90d07c7dd6d4c14ae1756",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-webportrait1-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webportrait1-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T09:36:28.986253+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webportrait1-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact nonce/hash-bound guarded attempt reports active_at_release0 and no cleanup errors. Closure is separate from gameplay/protocol pass; failed attempts retained. No host census, profile cleanup or unrelated process observation."
+      },
+      "receipt_metadata": {
+        "sha256": "8599a1669654a5c3a77caf01cb2307d7ed9610e0b97b828a5af8659bdca383e9",
+        "pid": 46332,
+        "assigned_before_execution": true,
+        "exit_code": 1,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-webportrait2-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "5558455765dd631b105381b1e9357f39",
+        "key": "guarded-attempt:crt061-webportrait2-20261119:manifest:6509857adb2fe7a864a8fb139b02984fd1cc4e1517d98451905b05de0430a7be",
+        "started_at": "2026-11-19T09:54:40.218450+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webportrait2-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-webportrait2-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T09:55:46.198252+00:00",
+        "key": "guarded-attempt:crt061-webportrait2-20261119:manifest:6509857adb2fe7a864a8fb139b02984fd1cc4e1517d98451905b05de0430a7be",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webportrait2-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T09:55:46.198252+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webportrait2-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webportrait2-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webportrait2-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webportrait2-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webportrait2-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T09:55:46.198252+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "5558455765dd631b105381b1e9357f39",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-webportrait2-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webportrait2-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T09:55:46.198252+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webportrait2-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact nonce/hash-bound guarded attempt reports active_at_release0 and no cleanup errors. Closure is separate from gameplay/protocol pass; failed attempts retained. No host census, profile cleanup or unrelated process observation."
+      },
+      "receipt_metadata": {
+        "sha256": "e930a6ab5a7b42bff464e757525cc60002969302c8f376977afead1678f70192",
+        "pid": 43396,
+        "assigned_before_execution": true,
+        "exit_code": 0,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    },
+    {
+      "instance_id": "crt061-webtrace1-20261119:job.json",
+      "task_id": "BTH061-CRT-PRACTICE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-practice-console:/root",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "e25881dae08f6ceb4beb1fcb77529cfa",
+        "key": "guarded-attempt:crt061-webtrace1-20261119:manifest:7cd181fa80c5bd770be5e3aa3d63e1b4e38de40da66dc5580edece23f972ef36",
+        "started_at": "2026-11-19T09:43:32.119769+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webtrace1-20261119\\evidence\\job.json",
+          "E:\\CodexQA\\BTH\\runs\\crt061-webtrace1-20261119\\evidence\\launch-claim.json",
+          "tools/bth_qa_guarded_run.py"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T09:44:25.484995+00:00",
+        "key": "guarded-attempt:crt061-webtrace1-20261119:manifest:7cd181fa80c5bd770be5e3aa3d63e1b4e38de40da66dc5580edece23f972ef36",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webtrace1-20261119\\evidence\\job.json"
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T09:44:25.484995+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webtrace1-20261119\\evidence\\job.json"
+        ]
+      },
+      "protected": {
+        "saves": false,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webtrace1-20261119\\evidence\\job.json"
+          ],
+          "failure": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webtrace1-20261119\\evidence\\job.json"
+          ],
+          "timeout": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webtrace1-20261119\\evidence\\job.json"
+          ],
+          "interruption": [
+            "tools/bth_qa_guarded_run.py",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webtrace1-20261119\\evidence\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T09:44:25.484995+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "e25881dae08f6ceb4beb1fcb77529cfa",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\crt061-webtrace1-20261119\\evidence\\job.json",
+            "E:\\CodexQA\\BTH\\runs\\crt061-webtrace1-20261119\\evidence\\launch-claim.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T09:44:25.484995+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\crt061-webtrace1-20261119\\evidence\\job.json"
+        ],
+        "limit": "Exact nonce/hash-bound guarded attempt reports active_at_release0 and no cleanup errors. Closure is separate from gameplay/protocol pass; failed attempts retained. No host census, profile cleanup or unrelated process observation."
+      },
+      "receipt_metadata": {
+        "sha256": "8985001dfa4ab141738d0bccc9e2225f7551788188ed28cf3fd25013de9c8b1c",
+        "pid": 23908,
+        "assigned_before_execution": true,
+        "exit_code": 0,
+        "error": null,
+        "timed_out": false,
+        "active_at_release": 0,
+        "cleanup_errors": []
+      }
+    }
+  ],
+  "source_review": {
+    "reviewed_at": "2026-11-19T07:14:03.524658+00:00",
+    "exact_receipt_count": 19,
+    "all_receipts_hash_unchanged": true,
+    "owned_remaining_at_recorded_release": 0,
+    "scope": "Fresh read of the nineteen exact retained Job receipts only; no new runtime or global process census."
+  },
+  "receipt_counts": {
+    "receipt_files": 37,
+    "assigned_completed_jobs": 36,
+    "pre_job_rejected_receipts": 1,
+    "all_active_at_release_zero": true,
+    "cleanup_error_count": 0,
+    "source": "Root final closure confirmation and read-only census of all crt061-* job.json receipts. No global process census."
+  }
+}

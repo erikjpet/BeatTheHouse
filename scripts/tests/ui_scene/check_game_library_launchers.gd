@@ -5,6 +5,7 @@ extends SceneTree
 # advertised launcher can be reached and opens its exact production game.
 
 const MainScene := preload("res://scenes/main.tscn")
+const APPROVED_ROOT := "e:/codexqa/bth/"
 const EXPECTED_LAUNCHERS := [
 	{"id": "scratch_tickets", "label": "Scratch Tickets"},
 	{"id": "pull_tabs", "label": "Pull Tabs"},
@@ -29,6 +30,9 @@ func _init() -> void:
 
 
 func _run() -> void:
+	if not _guarded_rendered_environment():
+		_finish(false)
+		return
 	Engine.max_fps = 60
 	root.size = Vector2i(1280, 720)
 	app = MainScene.instantiate()
@@ -43,33 +47,43 @@ func _run() -> void:
 		return
 	var menu := app.get("game_test_menu") as Control
 	var buttons := _launch_buttons_by_id(menu)
+	var canonical_ids: Array = app.call("_implemented_game_ids")
+	if canonical_ids.size() != EXPECTED_LAUNCHERS.size():
+		_fail("The canonical Games registry no longer contains the eleven expected playable games.")
 	if buttons.size() != EXPECTED_LAUNCHERS.size():
 		_fail("Games page exposed %d launchers instead of %d: %s." % [buttons.size(), EXPECTED_LAUNCHERS.size(), JSON.stringify(buttons.keys())])
 	for expected_value in EXPECTED_LAUNCHERS:
 		var expected: Dictionary = expected_value
 		var game_id := str(expected.get("id", ""))
 		var label := str(expected.get("label", ""))
-		if not menu.is_visible_in_tree() and not await _open_games_by_pointer():
+		if not menu.is_visible_in_tree():
+			_fail("The retained CRT selector was unavailable before %s." % label)
 			break
 		buttons = _launch_buttons_by_id(menu)
 		var button := buttons.get(game_id) as Button
-		var record := {"game_id": game_id, "label": label, "clicked": false, "entered": false}
+		var record := {"game_id": game_id, "label": label, "clicked": false, "entered": false, "returned_to_crt": false}
 		launch_records.append(record)
+		var definition: Dictionary = library.game(game_id)
+		if not canonical_ids.has(game_id) or label != str(definition.get("display_name", "")):
+			_fail("Expected game %s disagrees with the canonical current Games registry." % game_id)
 		if button == null or button.text != label or button.disabled or not button.is_visible_in_tree():
 			_fail("Games page did not expose an enabled %s launcher for %s." % [label, game_id])
 			continue
+		if button.icon == null or str(button.get_meta("game_icon_asset_path", "")) != str(definition.get("asset_path", "")):
+			_fail("%s does not expose its canonical existing icon." % label)
 		await _scroll_control_into_view(button)
-		var scroll := _ancestor_scroll_container(button)
 		var button_rect := button.get_global_rect()
-		if scroll == null or not scroll.get_global_rect().grow(1.0).encloses(button_rect):
-			_fail("%s launcher could not be brought fully into its visible scroll area." % label)
+		if not _visible_clip(button).grow(1.0).encloses(button_rect):
+			_fail("%s launcher could not be brought fully into the visible CRT display." % label)
 			continue
-		await _move_pointer(button_rect.get_center())
-		var hovered := app.get_viewport().gui_get_hovered_control()
-		if hovered != button and (hovered == null or not button.is_ancestor_of(hovered)):
-			_fail("%s launcher was covered by %s at its center point." % [label, hovered.name if hovered != null else "nothing"])
+		# Alternate near the left and right visible tile edges. This exercises the
+		# actual curved-display hit region, rather than proving only its center.
+		var edge_fraction := minf(0.15, 8.0 / maxf(1.0, button_rect.size.x))
+		var point := _hit_point(button, Vector2(edge_fraction if launch_records.size() % 2 == 1 else 1.0 - edge_fraction, 0.5))
+		record["point"] = {"x": point.x, "y": point.y}
+		if not await _stable_pointer_target(button, point, label):
 			continue
-		await _click_pointer(button_rect.get_center())
+		await _click_pointer(point)
 		record["clicked"] = true
 		await _settle(2)
 		var current_game: GameModule = app.get("current_game")
@@ -77,8 +91,33 @@ func _run() -> void:
 		record["entered"] = entered
 		if not entered:
 			_fail("Clicking %s did not open %s; screen=%s current_game=%s." % [label, game_id, str(app.get("current_screen")), current_game.get_id() if current_game != null else ""])
-		app.call("return_to_main_menu")
-		await _settle(2)
+		if not entered:
+			break
+		var surface := app.get("game_surface_canvas") as Control
+		var leave_rect: Rect2 = surface.call("global_rect_for_surface_action", "surface_back", -1) if surface != null else Rect2()
+		if not leave_rect.has_area():
+			_fail("%s did not expose its normal rendered Leave control." % label)
+			break
+		await _move_pointer(leave_rect.get_center())
+		await _click_pointer(leave_rect.get_center())
+		# Quarter Falls keeps its normal chunked exit settlement. Wait for that
+		# production path instead of clearing the active module to change screens.
+		for _frame in range(600):
+			if menu.is_visible_in_tree() and app.get("current_game") == null:
+				break
+			await process_frame
+		record["returned_to_crt"] = menu == app.get("game_test_menu") and menu.is_visible_in_tree() and app.get("current_game") == null and str(app.get("current_screen")) == "CRT"
+		if not bool(record["returned_to_crt"]):
+			_fail("Leaving %s did not return to the same CRT selector." % label)
+			break
+	var exit_button := menu.get("exit_button") as Button
+	if exit_button == null or not await _stable_pointer_target(exit_button, _hit_point(exit_button), "Exit TV"):
+		_finish(cold_catalog_was_staged)
+		return
+	await _click_pointer(_hit_point(exit_button))
+	await _settle(2)
+	if str(app.get("current_screen")) != "START" or bool(app.call("_crt_practice_active")) or app.get("run_state") != null:
+		_fail("Exit CRT did not restore the title-screen origin.")
 	_finish(cold_catalog_was_staged)
 
 
@@ -98,10 +137,7 @@ func _open_games_by_pointer() -> bool:
 	if library_button == null or library_button.disabled or not library_button.is_visible_in_tree():
 		_fail("Main menu Games button was unavailable.")
 		return false
-	await _move_pointer(library_button.get_global_rect().get_center())
-	var hovered := app.get_viewport().gui_get_hovered_control()
-	if hovered != library_button and (hovered == null or not library_button.is_ancestor_of(hovered)):
-		_fail("Main menu Games button was covered at its center point.")
+	if not await _stable_pointer_target(library_button, library_button.get_global_rect().get_center(), "Main menu Games"):
 		return false
 	await _click_pointer(library_button.get_global_rect().get_center())
 	await _settle(2)
@@ -111,6 +147,57 @@ func _open_games_by_pointer() -> bool:
 		_fail("Pointer-clicking Games did not show the complete game catalog.")
 		return false
 	return true
+
+
+func _guarded_rendered_environment() -> bool:
+	if DisplayServer.get_name() == "headless":
+		_fail("Launcher pointer acceptance requires a rendered native display.")
+		return false
+	for key in ["BTH_QA_WORKSPACE", "BTH_QA_RUN_DIR", "BTH_QA_PROFILE_DIR", "BTH_SAVE_DIR", "BTH_USER_SETTINGS_PATH", "BTH_PROFILE_INVENTORY_PATH", "BTH_META_COLLECTION_PATH", "BTH_QA_EVIDENCE_DIR"]:
+		if not OS.get_environment(key).replace("\\", "/").simplify_path().to_lower().begins_with(APPROVED_ROOT):
+			_fail("Missing or non-approved disposable QA path: %s." % key)
+			return false
+	if not ProjectSettings.globalize_path("res://").replace("\\", "/").to_lower().begins_with(APPROVED_ROOT) or not OS.get_user_data_dir().replace("\\", "/").to_lower().begins_with(APPROVED_ROOT):
+		_fail("Launcher checkout and engine user data must stay on the admitted E: QA root.")
+		return false
+	return true
+
+
+func _visible_clip(control: Control) -> Rect2:
+	var clip := control.get_viewport().get_visible_rect()
+	var ancestor := control.get_parent()
+	while ancestor != null and ancestor != control.get_viewport():
+		if ancestor is Control and (ancestor as Control).clip_contents:
+			clip = clip.intersection((ancestor as Control).get_global_rect())
+		ancestor = ancestor.get_parent()
+	return clip
+
+
+func _stable_pointer_target(control: Control, point: Vector2, label: String) -> bool:
+	for _attempt in range(3):
+		await _settle_rendered(2)
+		var before := control.get_global_rect()
+		await _move_pointer(point)
+		var hovered := control.get_viewport().gui_get_hovered_control()
+		var local_point := _display_point(control, point)
+		if before.is_equal_approx(control.get_global_rect()) and before.has_point(local_point) and _visible_clip(control).has_point(local_point) and (hovered == control or hovered != null and control.is_ancestor_of(hovered)):
+			return true
+	_fail("%s never exposed its stable, uncovered visible hit target." % label)
+	return false
+
+
+func _hit_point(control: Control, normalized: Vector2 = Vector2(0.5, 0.5)) -> Vector2:
+	var menu := app.get("game_test_menu") as Control
+	if menu != null and menu.has_method("get_display_viewport") and control.get_viewport() == menu.call("get_display_viewport"):
+		return menu.call("display_hit_point", control, normalized)
+	return control.get_global_rect().position + control.get_global_rect().size * normalized
+
+
+func _display_point(control: Control, global_point: Vector2) -> Vector2:
+	var menu := app.get("game_test_menu") as Control
+	if menu != null and menu.has_method("get_display_viewport") and control.get_viewport() == menu.call("get_display_viewport"):
+		return menu.call("global_to_display", global_point)
+	return global_point
 
 
 func _launch_buttons_by_id(node: Node) -> Dictionary:
@@ -157,11 +244,11 @@ func _scroll_control_into_view(control: Control) -> void:
 		wheel.factor = 4.0
 		wheel.position = clip_rect.get_center()
 		wheel.global_position = wheel.position
-		app.get_viewport().push_input(wheel, true)
+		Input.parse_input_event(wheel)
 		await process_frame
 		wheel = wheel.duplicate()
 		wheel.pressed = false
-		app.get_viewport().push_input(wheel, true)
+		Input.parse_input_event(wheel)
 		await process_frame
 
 
@@ -169,25 +256,33 @@ func _move_pointer(position: Vector2) -> void:
 	var motion := InputEventMouseMotion.new()
 	motion.position = position
 	motion.global_position = position
-	app.get_viewport().push_input(motion, true)
-	await process_frame
+	motion.relative = position - root.get_mouse_position()
+	Input.parse_input_event(motion)
+	await _settle_rendered(2)
 
 
 func _click_pointer(position: Vector2) -> void:
 	var press := InputEventMouseButton.new()
 	press.button_index = MOUSE_BUTTON_LEFT
+	press.button_mask = MOUSE_BUTTON_MASK_LEFT
 	press.pressed = true
 	press.position = position
 	press.global_position = position
-	app.get_viewport().push_input(press, true)
+	Input.parse_input_event(press)
 	await process_frame
 	var release := InputEventMouseButton.new()
 	release.button_index = MOUSE_BUTTON_LEFT
 	release.pressed = false
 	release.position = position
 	release.global_position = position
-	app.get_viewport().push_input(release, true)
-	await process_frame
+	Input.parse_input_event(release)
+	await _settle_rendered(2)
+
+
+func _settle_rendered(frames: int) -> void:
+	for _frame in range(maxi(1, frames)):
+		await process_frame
+		await RenderingServer.frame_post_draw
 
 
 func _settle(frames: int) -> void:

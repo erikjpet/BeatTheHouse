@@ -1,0 +1,96 @@
+{
+  "schema": "bth.crt_source_identity/v1",
+  "observed_at": "2026-11-19T10:08:57.151578+00:00",
+  "head": "89403f389a5807e050a450cd27b1bd93b3a4a41e",
+  "feature_commit_recorded": false,
+  "pack_input_resources": {
+    "scripts/ui/crt_practice_menu.gd": {
+      "pack_input_sha256": "baa3b333470f84b7d8f4af15509f618007959de1e7bea512b7230b00917b130d",
+      "current_c_sha256": "baa3b333470f84b7d8f4af15509f618007959de1e7bea512b7230b00917b130d",
+      "matches": true
+    },
+    "scripts/ui/crt_practice_screen.gdshader": {
+      "pack_input_sha256": "1a3d435616f72ccdb742a02d650dfd705902bf9de9ffa250d0ecface5432232d",
+      "current_c_sha256": "1a3d435616f72ccdb742a02d650dfd705902bf9de9ffa250d0ecface5432232d",
+      "matches": true
+    },
+    "scripts/core/home_practice_console.gd": {
+      "pack_input_sha256": "aa759f5016ff498f7042dccd0fff60779cc349e067126855b2655774f1a9e32b",
+      "current_c_sha256": "aa759f5016ff498f7042dccd0fff60779cc349e067126855b2655774f1a9e32b",
+      "matches": true
+    },
+    "scripts/ui/foundation_main.gd": {
+      "pack_input_sha256": "4a39fa9588a823c74b83cb5e1ce2246583e29f88d9439503b8a9a8beda424cc2",
+      "current_c_sha256": "4a39fa9588a823c74b83cb5e1ce2246583e29f88d9439503b8a9a8beda424cc2",
+      "matches": true
+    }
+  },
+  "current_c_e_product_files": {
+    "scripts/core/environment_base_semantic_records.gd": {
+      "c_sha256": "6bd873f46ef0c71f30da3e81955a34de96386d5dc69b036ed3c2b59b4a84edc9",
+      "e_sha256": "6bd873f46ef0c71f30da3e81955a34de96386d5dc69b036ed3c2b59b4a84edc9",
+      "matches": true
+    },
+    "scripts/core/environment_instance.gd": {
+      "c_sha256": "2fdd76e241e48605b7c4ac93dbbfd1a266b207ac2ee8d53d50a57af6ce6fb10e",
+      "e_sha256": "2fdd76e241e48605b7c4ac93dbbfd1a266b207ac2ee8d53d50a57af6ce6fb10e",
+      "matches": true
+    },
+    "scripts/core/environment_object_manifest.gd": {
+      "c_sha256": "3631aa4ce248a8fdfc42702a09e2c41fcedbeacb67c9970b13f4f300d532d247",
+      "e_sha256": "3631aa4ce248a8fdfc42702a09e2c41fcedbeacb67c9970b13f4f300d532d247",
+      "matches": true
+    },
+    "scripts/core/environment_placement.gd": {
+      "c_sha256": "f9bf0e19748258b527365f9e6ac6da0b600134ee1df29f65c2e82ee97c646bca",
+      "e_sha256": "f9bf0e19748258b527365f9e6ac6da0b600134ee1df29f65c2e82ee97c646bca",
+      "matches": true
+    },
+    "scripts/core/environment_slot_binder.gd": {
+      "c_sha256": "c2a8ac80d2b5022f35b21f6d337f180377c961ca568e09b4f3e2421910f59e28",
+      "e_sha256": "c2a8ac80d2b5022f35b21f6d337f180377c961ca568e09b4f3e2421910f59e28",
+      "matches": true
+    },
+    "scripts/core/home_practice_console.gd": {
+      "c_sha256": "aa759f5016ff498f7042dccd0fff60779cc349e067126855b2655774f1a9e32b",
+      "e_sha256": "aa759f5016ff498f7042dccd0fff60779cc349e067126855b2655774f1a9e32b",
+      "matches": true
+    },
+    "scripts/ui/crt_practice_menu.gd": {
+      "c_sha256": "baa3b333470f84b7d8f4af15509f618007959de1e7bea512b7230b00917b130d",
+      "e_sha256": "baa3b333470f84b7d8f4af15509f618007959de1e7bea512b7230b00917b130d",
+      "matches": true
+    },
+    "scripts/ui/crt_practice_screen.gdshader": {
+      "c_sha256": "1a3d435616f72ccdb742a02d650dfd705902bf9de9ffa250d0ecface5432232d",
+      "e_sha256": "1a3d435616f72ccdb742a02d650dfd705902bf9de9ffa250d0ecface5432232d",
+      "matches": true
+    },
+    "scripts/ui/environment_interaction_controller.gd": {
+      "c_sha256": "ec13781adda2fa7cdd9a02d2d0d14460cfb30255f8487f471e3996946fb02d94",
+      "e_sha256": "ec13781adda2fa7cdd9a02d2d0d14460cfb30255f8487f471e3996946fb02d94",
+      "matches": true
+    },
+    "scripts/ui/environment_interaction_view_model.gd": {
+      "c_sha256": "b1a1714ee9b0fde8ce4054d643f035c6fe31b0e9d231e62b7a41e62d7548885b",
+      "e_sha256": "b1a1714ee9b0fde8ce4054d643f035c6fe31b0e9d231e62b7a41e62d7548885b",
+      "matches": true
+    },
+    "scripts/ui/foundation_main.gd": {
+      "c_sha256": "4a39fa9588a823c74b83cb5e1ce2246583e29f88d9439503b8a9a8beda424cc2",
+      "e_sha256": "4a39fa9588a823c74b83cb5e1ce2246583e29f88d9439503b8a9a8beda424cc2",
+      "matches": true
+    },
+    "scripts/ui/meta_session_controller.gd": {
+      "c_sha256": "4b6aac973f4ac04cd4ebb56cf9b88853074a96b7482ba3f33224c3355bf3b7b7",
+      "e_sha256": "4b6aac973f4ac04cd4ebb56cf9b88853074a96b7482ba3f33224c3355bf3b7b7",
+      "matches": true
+    },
+    "scripts/ui/pixel_scene_canvas.gd": {
+      "c_sha256": "4ff90ae5a849bca4f31dcce54139790f05ed2e23f8c626518f54288dbd07b835",
+      "e_sha256": "4ff90ae5a849bca4f31dcce54139790f05ed2e23f8c626518f54288dbd07b835",
+      "matches": true
+    }
+  },
+  "all13_product_files_c_e_match": true
+}

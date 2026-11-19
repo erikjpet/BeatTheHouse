@@ -1104,6 +1104,7 @@ static func _runtime_layout_reservation_id(object_id: String) -> bool:
 		"numbers:", "crew_presence:", "game_hook:", "dialogue:",
 		"item:", "cage_gift_item:", "shopkeeper:", "casino_fixture:",
 		"home_tenure:", "home_sleep:", "home_storage:", "home_container:",
+		"home_console:",
 		"environment_layer:",
 	]:
 		if object_id.begins_with(prefix):
@@ -2524,6 +2525,9 @@ static func home_interactable_objects(host: Variant) -> Array:
 	var objects: Array = []
 	if host.run_state == null or host.library == null or not host.run_state.is_current_home_environment():
 		return objects
+	if EnvironmentPlacementScript.HomePracticeConsoleScript.eligible(host.run_state.current_environment):
+		objects.append(host._make_interactable_object(EnvironmentPlacementScript.HomePracticeConsoleScript.interactable_record(
+			host._interaction_rect_for_object("home_console:tv", "home_console", 0))))
 	var tenure_status = host.run_state.home_tenure_status()
 	var tenure_action = host.run_state.home_tenure_action_status()
 	var tenure_available := bool(tenure_action.get("available", false))
