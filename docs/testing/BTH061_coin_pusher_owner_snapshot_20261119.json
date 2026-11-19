@@ -1,0 +1,13 @@
+{
+  "schema": "bth.owner_snapshot/v1",
+  "observed_at": "2026-11-19T08:08:19.217781+00:00",
+  "tasks": [
+    {
+      "task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "title": "Last-minute Coin Pusher changes",
+      "state": "active",
+      "observed_at": "2026-11-19T08:08:19.217781+00:00",
+      "source": "Actual delegated Coin Pusher task active, packaging qualified local code commit 06efa32f0f14aa684d1a5d3134dacf78fa695531. All owned engine Jobs closed with0 remaining. Main/NEXT integration blocked by Git ownership; no trust changes or push attempted. No owner/protected saves touched."
+    }
+  ]
+}

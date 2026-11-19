@@ -1,0 +1,3333 @@
+{
+  "schema": "bth.runtime_inventory/v1",
+  "observed_at": "2026-11-19T08:06:44.222853Z",
+  "scope": {
+    "description": "Own-task Coin Pusher 0.6.1 cp061-* nonce-bound guarded Job closure checkpoint, collected by direct file reads only. Includes successful and failed test Jobs separately; excludes unfinished receipts and preparation-only folders.",
+    "complete": false,
+    "evidence": [
+      "E:\\CodexQA\\BTH\\runs\\cp061-*\\evidence\\job.json",
+      "Actual storage tokens, launch-claim epochs and manifest SHA256 bindings verified for every included Job.",
+      "No host process, browser, listener, watcher or other task census; no cleanup action is authorized or performed.",
+      "Protect retained profiles, saves and evidence. Global runtime ownership remains outside this partial checkpoint."
+    ],
+    "omitted_unfinished_runs": [],
+    "excluded_preparation_runs": [
+      {
+        "run_id": "cp061-setup-20261119",
+        "reason": "No guarded runtime Job receipt; preparation evidence only."
+      }
+    ]
+  },
+  "instances": [
+    {
+      "instance_id": "cp061-adjacent1-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "89dc5bbb143254680232387c34c57370",
+        "key": "owned-job:cp061-adjacent1-20261119:pid:10184:manifest:d6b6621e1a1120832498bfe81f8f0bb3d644d208d093e66d1cf04cc5d16b99b3",
+        "started_at": "2026-11-19T07:35:21.314692Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-adjacent1-20261119\\evidence\\job.json; SHA256=473cb5cf25df57cf100bdafb0d71e0300a656b16de641c79ff39829c6b1ff909",
+          "E:\\CodexQA\\BTH\\runs\\cp061-adjacent1-20261119\\evidence\\storage-manifest.json; SHA256=d6b6621e1a1120832498bfe81f8f0bb3d644d208d093e66d1cf04cc5d16b99b3",
+          "E:\\CodexQA\\BTH\\runs\\cp061-adjacent1-20261119\\evidence\\launch-claim.json; SHA256=13b988cf7b378f474ea57c1596c3a9e0cfc0bceaa939daccf5d9c20a1a97e288"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T07:35:45.228427Z",
+        "key": "owned-job:cp061-adjacent1-20261119:pid:10184:manifest:d6b6621e1a1120832498bfe81f8f0bb3d644d208d093e66d1cf04cc5d16b99b3",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-adjacent1-20261119\\evidence\\job.json; SHA256=473cb5cf25df57cf100bdafb0d71e0300a656b16de641c79ff39829c6b1ff909",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T07:35:45.228427Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-adjacent1-20261119\\evidence\\job.json; SHA256=473cb5cf25df57cf100bdafb0d71e0300a656b16de641c79ff39829c6b1ff909",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-adjacent1-20261119\\evidence\\job.json; SHA256=473cb5cf25df57cf100bdafb0d71e0300a656b16de641c79ff39829c6b1ff909"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T07:35:45.228427Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "89dc5bbb143254680232387c34c57370",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-adjacent1-20261119\\evidence\\job.json; SHA256=473cb5cf25df57cf100bdafb0d71e0300a656b16de641c79ff39829c6b1ff909",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T07:35:45.228427Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-adjacent1-20261119\\evidence\\job.json; SHA256=473cb5cf25df57cf100bdafb0d71e0300a656b16de641c79ff39829c6b1ff909",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-adjacent1-20261119\\evidence\\job.json",
+        "sha256": "473cb5cf25df57cf100bdafb0d71e0300a656b16de641c79ff39829c6b1ff909",
+        "storage_manifest_sha256": "d6b6621e1a1120832498bfe81f8f0bb3d644d208d093e66d1cf04cc5d16b99b3",
+        "launch_claim_sha256": "13b988cf7b378f474ea57c1596c3a9e0cfc0bceaa939daccf5d9c20a1a97e288",
+        "pid": 10184,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 1100,
+        "timed_out": false,
+        "exit_code": 0,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T07:35:45.228427Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+          "-B",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119\\tools\\coin_pusher_061_qa_worker.py",
+          "--godot",
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--suite",
+          "adjacent",
+          "--phase-timeout",
+          "260"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-adjacent1-20261119\\evidence\\suite.json",
+        "sha256": "0f84d6077f618fd658f82cf6ff931714ab259bc8db268e7e7e5b1726d5cd3b07",
+        "suite": "adjacent",
+        "complete": true,
+        "phases": [
+          {
+            "phase": "continuous",
+            "exit_code": 0,
+            "closed": true
+          },
+          {
+            "phase": "compaction",
+            "exit_code": 0,
+            "closed": true
+          },
+          {
+            "phase": "paid",
+            "exit_code": 0,
+            "closed": true
+          },
+          {
+            "phase": "liveness",
+            "exit_code": 0,
+            "closed": true
+          }
+        ]
+      }
+    },
+    {
+      "instance_id": "cp061-audit1-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "da12e9bb8ea8ead0065d191e32510bf8",
+        "key": "owned-job:cp061-audit1-20261119:pid:38320:manifest:6b68ae322b88651b37e0f0899bfa67a15a5645bf2183a71e78d168b46e0cb957",
+        "started_at": "2026-11-19T07:53:18.916098Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-audit1-20261119\\evidence\\job.json; SHA256=13b9d4c914cf0516a30cd1914368727449303dc6a8983ece7d58709cfa5791fa",
+          "E:\\CodexQA\\BTH\\runs\\cp061-audit1-20261119\\evidence\\storage-manifest.json; SHA256=6b68ae322b88651b37e0f0899bfa67a15a5645bf2183a71e78d168b46e0cb957",
+          "E:\\CodexQA\\BTH\\runs\\cp061-audit1-20261119\\evidence\\launch-claim.json; SHA256=fcacd3dcd6bcce87257d596245de83319e8d61f62bdae14db4c6a10e11d73349"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T07:54:02.505636Z",
+        "key": "owned-job:cp061-audit1-20261119:pid:38320:manifest:6b68ae322b88651b37e0f0899bfa67a15a5645bf2183a71e78d168b46e0cb957",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-audit1-20261119\\evidence\\job.json; SHA256=13b9d4c914cf0516a30cd1914368727449303dc6a8983ece7d58709cfa5791fa",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T07:54:02.505636Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-audit1-20261119\\evidence\\job.json; SHA256=13b9d4c914cf0516a30cd1914368727449303dc6a8983ece7d58709cfa5791fa",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-audit1-20261119\\evidence\\job.json; SHA256=13b9d4c914cf0516a30cd1914368727449303dc6a8983ece7d58709cfa5791fa"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T07:54:02.505636Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "da12e9bb8ea8ead0065d191e32510bf8",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-audit1-20261119\\evidence\\job.json; SHA256=13b9d4c914cf0516a30cd1914368727449303dc6a8983ece7d58709cfa5791fa",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T07:54:02.505636Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-audit1-20261119\\evidence\\job.json; SHA256=13b9d4c914cf0516a30cd1914368727449303dc6a8983ece7d58709cfa5791fa",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-audit1-20261119\\evidence\\job.json",
+        "sha256": "13b9d4c914cf0516a30cd1914368727449303dc6a8983ece7d58709cfa5791fa",
+        "storage_manifest_sha256": "6b68ae322b88651b37e0f0899bfa67a15a5645bf2183a71e78d168b46e0cb957",
+        "launch_claim_sha256": "fcacd3dcd6bcce87257d596245de83319e8d61f62bdae14db4c6a10e11d73349",
+        "pid": 38320,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 700,
+        "timed_out": false,
+        "exit_code": 0,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T07:54:02.505636Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+          "-B",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119\\tools\\coin_pusher_061_qa_worker.py",
+          "--godot",
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--suite",
+          "audit",
+          "--phase-timeout",
+          "300"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-audit1-20261119\\evidence\\suite.json",
+        "sha256": "dd737ef37226ae876ffa3c4d7313b62d9612f8564ee51aa0c0cd718b09742621",
+        "suite": "audit",
+        "complete": true,
+        "phases": [
+          {
+            "phase": "producer",
+            "exit_code": 0,
+            "closed": true
+          },
+          {
+            "phase": "cold",
+            "exit_code": 0,
+            "closed": true
+          }
+        ]
+      }
+    },
+    {
+      "instance_id": "cp061-core1-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "645214fed64776a5371f3ef85328ba34",
+        "key": "owned-job:cp061-core1-20261119:pid:44472:manifest:87f5a91196f1c98945498084bc238deccf7fd5da53bc99b510e9c4ed91262b01",
+        "started_at": "2026-11-19T07:12:42.399892Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-core1-20261119\\evidence\\job.json; SHA256=d44e658e39bfd81aef41e57876f78643873dcf04f75c372b62fa8c24a321f6d5",
+          "E:\\CodexQA\\BTH\\runs\\cp061-core1-20261119\\evidence\\storage-manifest.json; SHA256=87f5a91196f1c98945498084bc238deccf7fd5da53bc99b510e9c4ed91262b01",
+          "E:\\CodexQA\\BTH\\runs\\cp061-core1-20261119\\evidence\\launch-claim.json; SHA256=685fddb786cf3ad8db54540a8eec95e96766c5c8cfc3224d6ea54374e73b5e96"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T07:12:55.874245Z",
+        "key": "owned-job:cp061-core1-20261119:pid:44472:manifest:87f5a91196f1c98945498084bc238deccf7fd5da53bc99b510e9c4ed91262b01",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-core1-20261119\\evidence\\job.json; SHA256=d44e658e39bfd81aef41e57876f78643873dcf04f75c372b62fa8c24a321f6d5",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T07:12:55.874245Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-core1-20261119\\evidence\\job.json; SHA256=d44e658e39bfd81aef41e57876f78643873dcf04f75c372b62fa8c24a321f6d5",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-core1-20261119\\evidence\\job.json; SHA256=d44e658e39bfd81aef41e57876f78643873dcf04f75c372b62fa8c24a321f6d5"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T07:12:55.874245Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "645214fed64776a5371f3ef85328ba34",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-core1-20261119\\evidence\\job.json; SHA256=d44e658e39bfd81aef41e57876f78643873dcf04f75c372b62fa8c24a321f6d5",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T07:12:55.874245Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-core1-20261119\\evidence\\job.json; SHA256=d44e658e39bfd81aef41e57876f78643873dcf04f75c372b62fa8c24a321f6d5",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-core1-20261119\\evidence\\job.json",
+        "sha256": "d44e658e39bfd81aef41e57876f78643873dcf04f75c372b62fa8c24a321f6d5",
+        "storage_manifest_sha256": "87f5a91196f1c98945498084bc238deccf7fd5da53bc99b510e9c4ed91262b01",
+        "launch_claim_sha256": "685fddb786cf3ad8db54540a8eec95e96766c5c8cfc3224d6ea54374e73b5e96",
+        "pid": 44472,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 900,
+        "timed_out": false,
+        "exit_code": 1,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T07:12:55.874245Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+          "-B",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119\\tools\\coin_pusher_061_qa_worker.py",
+          "--godot",
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--suite",
+          "core",
+          "--phase-timeout",
+          "260"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-core1-20261119\\evidence\\suite.json",
+        "sha256": "0be08e85ce0ce758f5aebbe60952e69180b94ae29c7d31fae76f6c01bb116d0a",
+        "suite": "core",
+        "complete": false,
+        "phases": [
+          {
+            "phase": "accounting",
+            "exit_code": 1,
+            "closed": true
+          }
+        ]
+      }
+    },
+    {
+      "instance_id": "cp061-core2-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "6202f37bcc431d8c35c1863838233040",
+        "key": "owned-job:cp061-core2-20261119:pid:13588:manifest:b1cc77de08d4b0af0d5cc374db489d2fa5ddac13517c4f443ea935f959396482",
+        "started_at": "2026-11-19T07:18:58.673104Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-core2-20261119\\evidence\\job.json; SHA256=0284ed077879dfcf6e0839c472377dfd727c476bb6c0d71714b90609ac9db94e",
+          "E:\\CodexQA\\BTH\\runs\\cp061-core2-20261119\\evidence\\storage-manifest.json; SHA256=b1cc77de08d4b0af0d5cc374db489d2fa5ddac13517c4f443ea935f959396482",
+          "E:\\CodexQA\\BTH\\runs\\cp061-core2-20261119\\evidence\\launch-claim.json; SHA256=fe63e0902daf757bc455fd92aa290079de1917e3412319c41089a55d3053e749"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T07:19:33.946451Z",
+        "key": "owned-job:cp061-core2-20261119:pid:13588:manifest:b1cc77de08d4b0af0d5cc374db489d2fa5ddac13517c4f443ea935f959396482",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-core2-20261119\\evidence\\job.json; SHA256=0284ed077879dfcf6e0839c472377dfd727c476bb6c0d71714b90609ac9db94e",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T07:19:33.946451Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-core2-20261119\\evidence\\job.json; SHA256=0284ed077879dfcf6e0839c472377dfd727c476bb6c0d71714b90609ac9db94e",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-core2-20261119\\evidence\\job.json; SHA256=0284ed077879dfcf6e0839c472377dfd727c476bb6c0d71714b90609ac9db94e"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T07:19:33.946451Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "6202f37bcc431d8c35c1863838233040",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-core2-20261119\\evidence\\job.json; SHA256=0284ed077879dfcf6e0839c472377dfd727c476bb6c0d71714b90609ac9db94e",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T07:19:33.946451Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-core2-20261119\\evidence\\job.json; SHA256=0284ed077879dfcf6e0839c472377dfd727c476bb6c0d71714b90609ac9db94e",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-core2-20261119\\evidence\\job.json",
+        "sha256": "0284ed077879dfcf6e0839c472377dfd727c476bb6c0d71714b90609ac9db94e",
+        "storage_manifest_sha256": "b1cc77de08d4b0af0d5cc374db489d2fa5ddac13517c4f443ea935f959396482",
+        "launch_claim_sha256": "fe63e0902daf757bc455fd92aa290079de1917e3412319c41089a55d3053e749",
+        "pid": 13588,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 900,
+        "timed_out": false,
+        "exit_code": 1,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T07:19:33.946451Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+          "-B",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119\\tools\\coin_pusher_061_qa_worker.py",
+          "--godot",
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--suite",
+          "core",
+          "--phase-timeout",
+          "260"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-core2-20261119\\evidence\\suite.json",
+        "sha256": "351f4b46097194f496b768025f4d11b64c2730fa54f04b2636f84cb2a7dffece",
+        "suite": "core",
+        "complete": false,
+        "phases": [
+          {
+            "phase": "accounting",
+            "exit_code": 0,
+            "closed": true
+          },
+          {
+            "phase": "rooms",
+            "exit_code": 1,
+            "closed": true
+          }
+        ]
+      }
+    },
+    {
+      "instance_id": "cp061-custody1-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "e0d448180f997e1fc0cb04666cf90661",
+        "key": "owned-job:cp061-custody1-20261119:pid:17892:manifest:5646f9cc442a1eea1a31dc071a7734569676eadc7eb57f3428eb4b653a1b501f",
+        "started_at": "2026-11-19T07:55:48.337611Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-custody1-20261119\\evidence\\job.json; SHA256=59b19a23a388b35efe3ed90ce2d248607fc72e7708f06ab31e651131d3f226b1",
+          "E:\\CodexQA\\BTH\\runs\\cp061-custody1-20261119\\evidence\\storage-manifest.json; SHA256=5646f9cc442a1eea1a31dc071a7734569676eadc7eb57f3428eb4b653a1b501f",
+          "E:\\CodexQA\\BTH\\runs\\cp061-custody1-20261119\\evidence\\launch-claim.json; SHA256=9c61e785f5d6797d2c9e302c1568fcc5bcccc3f1c34274378586060e5feda556"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T07:56:57.126328Z",
+        "key": "owned-job:cp061-custody1-20261119:pid:17892:manifest:5646f9cc442a1eea1a31dc071a7734569676eadc7eb57f3428eb4b653a1b501f",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-custody1-20261119\\evidence\\job.json; SHA256=59b19a23a388b35efe3ed90ce2d248607fc72e7708f06ab31e651131d3f226b1",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T07:56:57.126328Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-custody1-20261119\\evidence\\job.json; SHA256=59b19a23a388b35efe3ed90ce2d248607fc72e7708f06ab31e651131d3f226b1",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-custody1-20261119\\evidence\\job.json; SHA256=59b19a23a388b35efe3ed90ce2d248607fc72e7708f06ab31e651131d3f226b1"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T07:56:57.126328Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "e0d448180f997e1fc0cb04666cf90661",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-custody1-20261119\\evidence\\job.json; SHA256=59b19a23a388b35efe3ed90ce2d248607fc72e7708f06ab31e651131d3f226b1",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T07:56:57.126328Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-custody1-20261119\\evidence\\job.json; SHA256=59b19a23a388b35efe3ed90ce2d248607fc72e7708f06ab31e651131d3f226b1",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-custody1-20261119\\evidence\\job.json",
+        "sha256": "59b19a23a388b35efe3ed90ce2d248607fc72e7708f06ab31e651131d3f226b1",
+        "storage_manifest_sha256": "5646f9cc442a1eea1a31dc071a7734569676eadc7eb57f3428eb4b653a1b501f",
+        "launch_claim_sha256": "9c61e785f5d6797d2c9e302c1568fcc5bcccc3f1c34274378586060e5feda556",
+        "pid": 17892,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 700,
+        "timed_out": false,
+        "exit_code": 0,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T07:56:57.126328Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+          "-B",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119\\tools\\coin_pusher_061_qa_worker.py",
+          "--godot",
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--suite",
+          "custody",
+          "--phase-timeout",
+          "300"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-custody1-20261119\\evidence\\suite.json",
+        "sha256": "d29e2b0cf1433cd6210f9e58e1e9056ee2efccf398618bf236262ccc8097bd68",
+        "suite": "custody",
+        "complete": true,
+        "phases": [
+          {
+            "phase": "producer",
+            "exit_code": 0,
+            "closed": true
+          },
+          {
+            "phase": "cold",
+            "exit_code": 0,
+            "closed": true
+          }
+        ]
+      }
+    },
+    {
+      "instance_id": "cp061-elapsed1-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "8f96468a5f46263480adbf2d69c205d7",
+        "key": "owned-job:cp061-elapsed1-20261119:pid:46084:manifest:414b57c52f430e2a79f5ff010b7442395fec2922f86df1409705613652a8ba5e",
+        "started_at": "2026-11-19T07:54:15.412068Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-elapsed1-20261119\\evidence\\job.json; SHA256=9ca2302be9c7296a33f94a1ce433baf9a1369aae7e876920ed0385bfa999b2d4",
+          "E:\\CodexQA\\BTH\\runs\\cp061-elapsed1-20261119\\evidence\\storage-manifest.json; SHA256=414b57c52f430e2a79f5ff010b7442395fec2922f86df1409705613652a8ba5e",
+          "E:\\CodexQA\\BTH\\runs\\cp061-elapsed1-20261119\\evidence\\launch-claim.json; SHA256=a9dab1c4a0e2b8cfee63c88ec78fbba8bf90d18bd5947ed5da2f77877ecc1338"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T07:54:52.492158Z",
+        "key": "owned-job:cp061-elapsed1-20261119:pid:46084:manifest:414b57c52f430e2a79f5ff010b7442395fec2922f86df1409705613652a8ba5e",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-elapsed1-20261119\\evidence\\job.json; SHA256=9ca2302be9c7296a33f94a1ce433baf9a1369aae7e876920ed0385bfa999b2d4",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T07:54:52.492158Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-elapsed1-20261119\\evidence\\job.json; SHA256=9ca2302be9c7296a33f94a1ce433baf9a1369aae7e876920ed0385bfa999b2d4",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-elapsed1-20261119\\evidence\\job.json; SHA256=9ca2302be9c7296a33f94a1ce433baf9a1369aae7e876920ed0385bfa999b2d4"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T07:54:52.492158Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "8f96468a5f46263480adbf2d69c205d7",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-elapsed1-20261119\\evidence\\job.json; SHA256=9ca2302be9c7296a33f94a1ce433baf9a1369aae7e876920ed0385bfa999b2d4",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T07:54:52.492158Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-elapsed1-20261119\\evidence\\job.json; SHA256=9ca2302be9c7296a33f94a1ce433baf9a1369aae7e876920ed0385bfa999b2d4",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-elapsed1-20261119\\evidence\\job.json",
+        "sha256": "9ca2302be9c7296a33f94a1ce433baf9a1369aae7e876920ed0385bfa999b2d4",
+        "storage_manifest_sha256": "414b57c52f430e2a79f5ff010b7442395fec2922f86df1409705613652a8ba5e",
+        "launch_claim_sha256": "a9dab1c4a0e2b8cfee63c88ec78fbba8bf90d18bd5947ed5da2f77877ecc1338",
+        "pid": 46084,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 700,
+        "timed_out": false,
+        "exit_code": 0,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T07:54:52.492158Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+          "-B",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119\\tools\\coin_pusher_061_qa_worker.py",
+          "--godot",
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--suite",
+          "elapsed",
+          "--phase-timeout",
+          "300"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-elapsed1-20261119\\evidence\\suite.json",
+        "sha256": "7f5eb0a6620f8737cf4d695b603f0b2830a4bfc719717f1357e309002e5d00db",
+        "suite": "elapsed",
+        "complete": true,
+        "phases": [
+          {
+            "phase": "producer",
+            "exit_code": 0,
+            "closed": true
+          },
+          {
+            "phase": "cold",
+            "exit_code": 0,
+            "closed": true
+          }
+        ]
+      }
+    },
+    {
+      "instance_id": "cp061-historical1-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "449d781c1d77606d766dbb30ba756602",
+        "key": "owned-job:cp061-historical1-20261119:pid:42536:manifest:93d9e553e703df0d9188ed1eaf36f4d576fb64f41b513b6b8202332c7bfe79d1",
+        "started_at": "2026-11-19T07:47:30.690664Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-historical1-20261119\\evidence\\job.json; SHA256=b34be4e4de7e9f509fe09928a47a088e34df71a5feba6209ca003589d28c6379",
+          "E:\\CodexQA\\BTH\\runs\\cp061-historical1-20261119\\evidence\\storage-manifest.json; SHA256=93d9e553e703df0d9188ed1eaf36f4d576fb64f41b513b6b8202332c7bfe79d1",
+          "E:\\CodexQA\\BTH\\runs\\cp061-historical1-20261119\\evidence\\launch-claim.json; SHA256=e701462b22675880e898c3843c57bbba6367ccdd95c6112ba26c845f282a1b59"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T07:47:43.278494Z",
+        "key": "owned-job:cp061-historical1-20261119:pid:42536:manifest:93d9e553e703df0d9188ed1eaf36f4d576fb64f41b513b6b8202332c7bfe79d1",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-historical1-20261119\\evidence\\job.json; SHA256=b34be4e4de7e9f509fe09928a47a088e34df71a5feba6209ca003589d28c6379",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T07:47:43.278494Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-historical1-20261119\\evidence\\job.json; SHA256=b34be4e4de7e9f509fe09928a47a088e34df71a5feba6209ca003589d28c6379",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-historical1-20261119\\evidence\\job.json; SHA256=b34be4e4de7e9f509fe09928a47a088e34df71a5feba6209ca003589d28c6379"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T07:47:43.278494Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "449d781c1d77606d766dbb30ba756602",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-historical1-20261119\\evidence\\job.json; SHA256=b34be4e4de7e9f509fe09928a47a088e34df71a5feba6209ca003589d28c6379",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T07:47:43.278494Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-historical1-20261119\\evidence\\job.json; SHA256=b34be4e4de7e9f509fe09928a47a088e34df71a5feba6209ca003589d28c6379",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-historical1-20261119\\evidence\\job.json",
+        "sha256": "b34be4e4de7e9f509fe09928a47a088e34df71a5feba6209ca003589d28c6379",
+        "storage_manifest_sha256": "93d9e553e703df0d9188ed1eaf36f4d576fb64f41b513b6b8202332c7bfe79d1",
+        "launch_claim_sha256": "e701462b22675880e898c3843c57bbba6367ccdd95c6112ba26c845f282a1b59",
+        "pid": 42536,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 700,
+        "timed_out": false,
+        "exit_code": 1,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T07:47:43.278494Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+          "-B",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119\\tools\\coin_pusher_061_qa_worker.py",
+          "--godot",
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--suite",
+          "historical",
+          "--phase-timeout",
+          "300"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-historical1-20261119\\evidence\\suite.json",
+        "sha256": "d139d05d3e80f60a361a069a25f5928491ddeba5a70309c43d6ff8f3cb614793",
+        "suite": "historical",
+        "complete": false,
+        "phases": [
+          {
+            "phase": "producer",
+            "exit_code": 1,
+            "closed": true
+          }
+        ]
+      }
+    },
+    {
+      "instance_id": "cp061-historical2-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "99dd7c83d54c3364c582969218a5f13d",
+        "key": "owned-job:cp061-historical2-20261119:pid:34860:manifest:bc5fbcf90cb8e64401bad9756249baec21fdfaaba413b5063d15bcf542740117",
+        "started_at": "2026-11-19T07:51:15.482145Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-historical2-20261119\\evidence\\job.json; SHA256=07b9d90bdffa393732ab448883053b89251f333cfbf97a16a1a28a367e8b1f85",
+          "E:\\CodexQA\\BTH\\runs\\cp061-historical2-20261119\\evidence\\storage-manifest.json; SHA256=bc5fbcf90cb8e64401bad9756249baec21fdfaaba413b5063d15bcf542740117",
+          "E:\\CodexQA\\BTH\\runs\\cp061-historical2-20261119\\evidence\\launch-claim.json; SHA256=9fb37be4bb3625f83f62c3857cbfa0d5d5db6086ccbe2dfdfa1e1362c0bd58e2"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T07:51:52.355021Z",
+        "key": "owned-job:cp061-historical2-20261119:pid:34860:manifest:bc5fbcf90cb8e64401bad9756249baec21fdfaaba413b5063d15bcf542740117",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-historical2-20261119\\evidence\\job.json; SHA256=07b9d90bdffa393732ab448883053b89251f333cfbf97a16a1a28a367e8b1f85",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T07:51:52.355021Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-historical2-20261119\\evidence\\job.json; SHA256=07b9d90bdffa393732ab448883053b89251f333cfbf97a16a1a28a367e8b1f85",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-historical2-20261119\\evidence\\job.json; SHA256=07b9d90bdffa393732ab448883053b89251f333cfbf97a16a1a28a367e8b1f85"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T07:51:52.355021Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "99dd7c83d54c3364c582969218a5f13d",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-historical2-20261119\\evidence\\job.json; SHA256=07b9d90bdffa393732ab448883053b89251f333cfbf97a16a1a28a367e8b1f85",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T07:51:52.355021Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-historical2-20261119\\evidence\\job.json; SHA256=07b9d90bdffa393732ab448883053b89251f333cfbf97a16a1a28a367e8b1f85",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-historical2-20261119\\evidence\\job.json",
+        "sha256": "07b9d90bdffa393732ab448883053b89251f333cfbf97a16a1a28a367e8b1f85",
+        "storage_manifest_sha256": "bc5fbcf90cb8e64401bad9756249baec21fdfaaba413b5063d15bcf542740117",
+        "launch_claim_sha256": "9fb37be4bb3625f83f62c3857cbfa0d5d5db6086ccbe2dfdfa1e1362c0bd58e2",
+        "pid": 34860,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 700,
+        "timed_out": false,
+        "exit_code": 0,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T07:51:52.355021Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+          "-B",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119\\tools\\coin_pusher_061_qa_worker.py",
+          "--godot",
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--suite",
+          "historical",
+          "--phase-timeout",
+          "300"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-historical2-20261119\\evidence\\suite.json",
+        "sha256": "1d115c51789745e4dd43289eeb1ff57ecf95b61e087246d20f77daec3008c347",
+        "suite": "historical",
+        "complete": true,
+        "phases": [
+          {
+            "phase": "producer",
+            "exit_code": 0,
+            "closed": true
+          },
+          {
+            "phase": "cold",
+            "exit_code": 0,
+            "closed": true
+          }
+        ]
+      }
+    },
+    {
+      "instance_id": "cp061-import1-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "36014f38afaa1a0f00d1e71cd3ab99c2",
+        "key": "owned-job:cp061-import1-20261119:pid:31548:manifest:d8bfd1635d9fb8284f614867eeabc8a88396fc1bbf76b9f26e90390a13c44407",
+        "started_at": "2026-11-19T07:03:41.013299Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-import1-20261119\\evidence\\job.json; SHA256=520504bb55944e079ac61d5ba12ccca51da260ca6d24cb7c14832429d6c32780",
+          "E:\\CodexQA\\BTH\\runs\\cp061-import1-20261119\\evidence\\storage-manifest.json; SHA256=d8bfd1635d9fb8284f614867eeabc8a88396fc1bbf76b9f26e90390a13c44407",
+          "E:\\CodexQA\\BTH\\runs\\cp061-import1-20261119\\evidence\\launch-claim.json; SHA256=66b2e683d978120a3f25bae826d33042c72c0814b4066f601dea1b3650f89682"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T07:04:36.242144Z",
+        "key": "owned-job:cp061-import1-20261119:pid:31548:manifest:d8bfd1635d9fb8284f614867eeabc8a88396fc1bbf76b9f26e90390a13c44407",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-import1-20261119\\evidence\\job.json; SHA256=520504bb55944e079ac61d5ba12ccca51da260ca6d24cb7c14832429d6c32780",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T07:04:36.242144Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-import1-20261119\\evidence\\job.json; SHA256=520504bb55944e079ac61d5ba12ccca51da260ca6d24cb7c14832429d6c32780",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-import1-20261119\\evidence\\job.json; SHA256=520504bb55944e079ac61d5ba12ccca51da260ca6d24cb7c14832429d6c32780"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T07:04:36.242144Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "36014f38afaa1a0f00d1e71cd3ab99c2",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-import1-20261119\\evidence\\job.json; SHA256=520504bb55944e079ac61d5ba12ccca51da260ca6d24cb7c14832429d6c32780",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T07:04:36.242144Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-import1-20261119\\evidence\\job.json; SHA256=520504bb55944e079ac61d5ba12ccca51da260ca6d24cb7c14832429d6c32780",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-import1-20261119\\evidence\\job.json",
+        "sha256": "520504bb55944e079ac61d5ba12ccca51da260ca6d24cb7c14832429d6c32780",
+        "storage_manifest_sha256": "d8bfd1635d9fb8284f614867eeabc8a88396fc1bbf76b9f26e90390a13c44407",
+        "launch_claim_sha256": "66b2e683d978120a3f25bae826d33042c72c0814b4066f601dea1b3650f89682",
+        "pid": 31548,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 600,
+        "timed_out": false,
+        "exit_code": 0,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T07:04:36.242144Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--headless",
+          "--editor",
+          "--path",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119",
+          "--import",
+          "--quit",
+          "--log-file",
+          "E:\\CodexQA\\BTH\\runs\\cp061-import1-20261119\\evidence\\import.godot.log"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-import1-20261119\\evidence\\worker.log",
+        "note": "Direct guarded command; consult worker log. Guard exit is not a generic gameplay acceptance claim."
+      }
+    },
+    {
+      "instance_id": "cp061-import2-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "a88e21e2cb7ec275f117b83c15ef0f15",
+        "key": "owned-job:cp061-import2-20261119:pid:13504:manifest:34a0c80fe8bc424da82a0ee33191acda3f513686210c29f16021a7ea8241843b",
+        "started_at": "2026-11-19T07:12:02.378131Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-import2-20261119\\evidence\\job.json; SHA256=89369a3220c10144e5f416f5210b14c360732a6ba0b44bd719a14450803097d0",
+          "E:\\CodexQA\\BTH\\runs\\cp061-import2-20261119\\evidence\\storage-manifest.json; SHA256=34a0c80fe8bc424da82a0ee33191acda3f513686210c29f16021a7ea8241843b",
+          "E:\\CodexQA\\BTH\\runs\\cp061-import2-20261119\\evidence\\launch-claim.json; SHA256=410c3b8676a6e7c8f41788b080d9ef44275eb253d420ea27bed0f9d6c42f24f8"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T07:12:14.786640Z",
+        "key": "owned-job:cp061-import2-20261119:pid:13504:manifest:34a0c80fe8bc424da82a0ee33191acda3f513686210c29f16021a7ea8241843b",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-import2-20261119\\evidence\\job.json; SHA256=89369a3220c10144e5f416f5210b14c360732a6ba0b44bd719a14450803097d0",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T07:12:14.786640Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-import2-20261119\\evidence\\job.json; SHA256=89369a3220c10144e5f416f5210b14c360732a6ba0b44bd719a14450803097d0",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-import2-20261119\\evidence\\job.json; SHA256=89369a3220c10144e5f416f5210b14c360732a6ba0b44bd719a14450803097d0"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T07:12:14.786640Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "a88e21e2cb7ec275f117b83c15ef0f15",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-import2-20261119\\evidence\\job.json; SHA256=89369a3220c10144e5f416f5210b14c360732a6ba0b44bd719a14450803097d0",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T07:12:14.786640Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-import2-20261119\\evidence\\job.json; SHA256=89369a3220c10144e5f416f5210b14c360732a6ba0b44bd719a14450803097d0",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-import2-20261119\\evidence\\job.json",
+        "sha256": "89369a3220c10144e5f416f5210b14c360732a6ba0b44bd719a14450803097d0",
+        "storage_manifest_sha256": "34a0c80fe8bc424da82a0ee33191acda3f513686210c29f16021a7ea8241843b",
+        "launch_claim_sha256": "410c3b8676a6e7c8f41788b080d9ef44275eb253d420ea27bed0f9d6c42f24f8",
+        "pid": 13504,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 240,
+        "timed_out": false,
+        "exit_code": 0,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T07:12:14.786640Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--headless",
+          "--editor",
+          "--path",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119",
+          "--import",
+          "--quit",
+          "--log-file",
+          "E:\\CodexQA\\BTH\\runs\\cp061-import2-20261119\\evidence\\import.godot.log"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-import2-20261119\\evidence\\worker.log",
+        "note": "Direct guarded command; consult worker log. Guard exit is not a generic gameplay acceptance claim."
+      }
+    },
+    {
+      "instance_id": "cp061-legacy-diagnostic4-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "0620f8cc1e31e87d35d48e454f852142",
+        "key": "owned-job:cp061-legacy-diagnostic4-20261119:pid:47452:manifest:7f924bfac66e6fff7a0fd18bfbded264719cdb48485f3908519fa4c1d5f0c5db",
+        "started_at": "2026-11-19T07:38:56.280387Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-legacy-diagnostic4-20261119\\evidence\\job.json; SHA256=1625999a732c491a6c39b4779536caf5f71889389339fc6e90beca9a78ec60c2",
+          "E:\\CodexQA\\BTH\\runs\\cp061-legacy-diagnostic4-20261119\\evidence\\storage-manifest.json; SHA256=7f924bfac66e6fff7a0fd18bfbded264719cdb48485f3908519fa4c1d5f0c5db",
+          "E:\\CodexQA\\BTH\\runs\\cp061-legacy-diagnostic4-20261119\\evidence\\launch-claim.json; SHA256=38d8ce24455c5e6d1830d56db426b54620dfdddb7f28f70873bea7a4bc733412"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T07:39:15.921587Z",
+        "key": "owned-job:cp061-legacy-diagnostic4-20261119:pid:47452:manifest:7f924bfac66e6fff7a0fd18bfbded264719cdb48485f3908519fa4c1d5f0c5db",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-legacy-diagnostic4-20261119\\evidence\\job.json; SHA256=1625999a732c491a6c39b4779536caf5f71889389339fc6e90beca9a78ec60c2",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T07:39:15.921587Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-legacy-diagnostic4-20261119\\evidence\\job.json; SHA256=1625999a732c491a6c39b4779536caf5f71889389339fc6e90beca9a78ec60c2",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-legacy-diagnostic4-20261119\\evidence\\job.json; SHA256=1625999a732c491a6c39b4779536caf5f71889389339fc6e90beca9a78ec60c2"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T07:39:15.921587Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "0620f8cc1e31e87d35d48e454f852142",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-legacy-diagnostic4-20261119\\evidence\\job.json; SHA256=1625999a732c491a6c39b4779536caf5f71889389339fc6e90beca9a78ec60c2",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T07:39:15.921587Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-legacy-diagnostic4-20261119\\evidence\\job.json; SHA256=1625999a732c491a6c39b4779536caf5f71889389339fc6e90beca9a78ec60c2",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-legacy-diagnostic4-20261119\\evidence\\job.json",
+        "sha256": "1625999a732c491a6c39b4779536caf5f71889389339fc6e90beca9a78ec60c2",
+        "storage_manifest_sha256": "7f924bfac66e6fff7a0fd18bfbded264719cdb48485f3908519fa4c1d5f0c5db",
+        "launch_claim_sha256": "38d8ce24455c5e6d1830d56db426b54620dfdddb7f28f70873bea7a4bc733412",
+        "pid": 47452,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 350,
+        "timed_out": false,
+        "exit_code": 1,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T07:39:15.921587Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+          "-B",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119\\tools\\coin_pusher_061_qa_worker.py",
+          "--godot",
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--suite",
+          "legacy",
+          "--phase-timeout",
+          "300"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-legacy-diagnostic4-20261119\\evidence\\suite.json",
+        "sha256": "09001ee70c9d053a264980ba2fc61d23efd577cd1f9b13e48eec017bd80224a7",
+        "suite": "legacy",
+        "complete": false,
+        "phases": [
+          {
+            "phase": "legacy",
+            "exit_code": 1,
+            "closed": true
+          }
+        ]
+      }
+    },
+    {
+      "instance_id": "cp061-legacy-diagnostic5-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "0a8bbe4f15b0830ae541f02ea57f5674",
+        "key": "owned-job:cp061-legacy-diagnostic5-20261119:pid:46876:manifest:5f55de942c1d404ff1071d45b2bece184b3930cbf4ff7010e403b60aa0185b5c",
+        "started_at": "2026-11-19T07:46:16.107423Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-legacy-diagnostic5-20261119\\evidence\\job.json; SHA256=a9db6704d2de8e64ed3f8c4968a046cf5b6faaa0b333d24275682a4dc0903fc0",
+          "E:\\CodexQA\\BTH\\runs\\cp061-legacy-diagnostic5-20261119\\evidence\\storage-manifest.json; SHA256=5f55de942c1d404ff1071d45b2bece184b3930cbf4ff7010e403b60aa0185b5c",
+          "E:\\CodexQA\\BTH\\runs\\cp061-legacy-diagnostic5-20261119\\evidence\\launch-claim.json; SHA256=2636fb31a49e4ff949e4e772e2224e2c2dae66b5b45e4426e93570b275e23186"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T07:46:35.630419Z",
+        "key": "owned-job:cp061-legacy-diagnostic5-20261119:pid:46876:manifest:5f55de942c1d404ff1071d45b2bece184b3930cbf4ff7010e403b60aa0185b5c",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-legacy-diagnostic5-20261119\\evidence\\job.json; SHA256=a9db6704d2de8e64ed3f8c4968a046cf5b6faaa0b333d24275682a4dc0903fc0",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T07:46:35.630419Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-legacy-diagnostic5-20261119\\evidence\\job.json; SHA256=a9db6704d2de8e64ed3f8c4968a046cf5b6faaa0b333d24275682a4dc0903fc0",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-legacy-diagnostic5-20261119\\evidence\\job.json; SHA256=a9db6704d2de8e64ed3f8c4968a046cf5b6faaa0b333d24275682a4dc0903fc0"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T07:46:35.630419Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "0a8bbe4f15b0830ae541f02ea57f5674",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-legacy-diagnostic5-20261119\\evidence\\job.json; SHA256=a9db6704d2de8e64ed3f8c4968a046cf5b6faaa0b333d24275682a4dc0903fc0",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T07:46:35.630419Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-legacy-diagnostic5-20261119\\evidence\\job.json; SHA256=a9db6704d2de8e64ed3f8c4968a046cf5b6faaa0b333d24275682a4dc0903fc0",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-legacy-diagnostic5-20261119\\evidence\\job.json",
+        "sha256": "a9db6704d2de8e64ed3f8c4968a046cf5b6faaa0b333d24275682a4dc0903fc0",
+        "storage_manifest_sha256": "5f55de942c1d404ff1071d45b2bece184b3930cbf4ff7010e403b60aa0185b5c",
+        "launch_claim_sha256": "2636fb31a49e4ff949e4e772e2224e2c2dae66b5b45e4426e93570b275e23186",
+        "pid": 46876,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 350,
+        "timed_out": false,
+        "exit_code": 1,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T07:46:35.630419Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+          "-B",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119\\tools\\coin_pusher_061_qa_worker.py",
+          "--godot",
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--suite",
+          "legacy",
+          "--phase-timeout",
+          "300"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-legacy-diagnostic5-20261119\\evidence\\suite.json",
+        "sha256": "848b9a41527a8e7b5d2f6cc07aff76f572162e5beb08b54086dd62d19e3d3a42",
+        "suite": "legacy",
+        "complete": false,
+        "phases": [
+          {
+            "phase": "legacy",
+            "exit_code": 1,
+            "closed": true
+          }
+        ]
+      }
+    },
+    {
+      "instance_id": "cp061-legacy6-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "6063a3bb57d950721eea5a9ad7b7f2a5",
+        "key": "owned-job:cp061-legacy6-20261119:pid:34548:manifest:2e63670ecc25d9849cc2cc735efd24dfcc66b2adbbf8176c596432b5441f0199",
+        "started_at": "2026-11-19T07:52:17.023016Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-legacy6-20261119\\evidence\\job.json; SHA256=f46f341908c2125f6eb6a010141c3a98c115d0b754defd502c269e03f1172b9b",
+          "E:\\CodexQA\\BTH\\runs\\cp061-legacy6-20261119\\evidence\\storage-manifest.json; SHA256=2e63670ecc25d9849cc2cc735efd24dfcc66b2adbbf8176c596432b5441f0199",
+          "E:\\CodexQA\\BTH\\runs\\cp061-legacy6-20261119\\evidence\\launch-claim.json; SHA256=0228ac860f92bb664c37b3bcdc5ea2c52a9378e18f8e0bac947fd9cfd79297bf"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T07:52:36.911758Z",
+        "key": "owned-job:cp061-legacy6-20261119:pid:34548:manifest:2e63670ecc25d9849cc2cc735efd24dfcc66b2adbbf8176c596432b5441f0199",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-legacy6-20261119\\evidence\\job.json; SHA256=f46f341908c2125f6eb6a010141c3a98c115d0b754defd502c269e03f1172b9b",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T07:52:36.911758Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-legacy6-20261119\\evidence\\job.json; SHA256=f46f341908c2125f6eb6a010141c3a98c115d0b754defd502c269e03f1172b9b",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-legacy6-20261119\\evidence\\job.json; SHA256=f46f341908c2125f6eb6a010141c3a98c115d0b754defd502c269e03f1172b9b"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T07:52:36.911758Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "6063a3bb57d950721eea5a9ad7b7f2a5",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-legacy6-20261119\\evidence\\job.json; SHA256=f46f341908c2125f6eb6a010141c3a98c115d0b754defd502c269e03f1172b9b",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T07:52:36.911758Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-legacy6-20261119\\evidence\\job.json; SHA256=f46f341908c2125f6eb6a010141c3a98c115d0b754defd502c269e03f1172b9b",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-legacy6-20261119\\evidence\\job.json",
+        "sha256": "f46f341908c2125f6eb6a010141c3a98c115d0b754defd502c269e03f1172b9b",
+        "storage_manifest_sha256": "2e63670ecc25d9849cc2cc735efd24dfcc66b2adbbf8176c596432b5441f0199",
+        "launch_claim_sha256": "0228ac860f92bb664c37b3bcdc5ea2c52a9378e18f8e0bac947fd9cfd79297bf",
+        "pid": 34548,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 350,
+        "timed_out": false,
+        "exit_code": 1,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T07:52:36.911758Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+          "-B",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119\\tools\\coin_pusher_061_qa_worker.py",
+          "--godot",
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--suite",
+          "legacy",
+          "--phase-timeout",
+          "300"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-legacy6-20261119\\evidence\\suite.json",
+        "sha256": "42e1cec2d5877d514bca266ec2c0c1990ce40ffe98ec40cfe405b83b340fd215",
+        "suite": "legacy",
+        "complete": false,
+        "phases": [
+          {
+            "phase": "legacy",
+            "exit_code": 1,
+            "closed": true
+          }
+        ]
+      }
+    },
+    {
+      "instance_id": "cp061-legacy7-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "8f2ebcfe060d733a6e5ccc0ff1889374",
+        "key": "owned-job:cp061-legacy7-20261119:pid:42328:manifest:a11653caca3576409ff2439f7118dcbd7f96729a0ddb06e47d5d4cadd4ac511a",
+        "started_at": "2026-11-19T07:58:54.722632Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-legacy7-20261119\\evidence\\job.json; SHA256=3b73a08e7e8832401724bdbef400580ae8925178fa9ffcb794c6eb038be1a3f6",
+          "E:\\CodexQA\\BTH\\runs\\cp061-legacy7-20261119\\evidence\\storage-manifest.json; SHA256=a11653caca3576409ff2439f7118dcbd7f96729a0ddb06e47d5d4cadd4ac511a",
+          "E:\\CodexQA\\BTH\\runs\\cp061-legacy7-20261119\\evidence\\launch-claim.json; SHA256=0fd8d1df805cae02e5a388017ab9992f569b61e4599fd0e7e60628f68d6e9991"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T07:59:14.748384Z",
+        "key": "owned-job:cp061-legacy7-20261119:pid:42328:manifest:a11653caca3576409ff2439f7118dcbd7f96729a0ddb06e47d5d4cadd4ac511a",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-legacy7-20261119\\evidence\\job.json; SHA256=3b73a08e7e8832401724bdbef400580ae8925178fa9ffcb794c6eb038be1a3f6",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T07:59:14.748384Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-legacy7-20261119\\evidence\\job.json; SHA256=3b73a08e7e8832401724bdbef400580ae8925178fa9ffcb794c6eb038be1a3f6",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-legacy7-20261119\\evidence\\job.json; SHA256=3b73a08e7e8832401724bdbef400580ae8925178fa9ffcb794c6eb038be1a3f6"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T07:59:14.748384Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "8f2ebcfe060d733a6e5ccc0ff1889374",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-legacy7-20261119\\evidence\\job.json; SHA256=3b73a08e7e8832401724bdbef400580ae8925178fa9ffcb794c6eb038be1a3f6",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T07:59:14.748384Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-legacy7-20261119\\evidence\\job.json; SHA256=3b73a08e7e8832401724bdbef400580ae8925178fa9ffcb794c6eb038be1a3f6",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-legacy7-20261119\\evidence\\job.json",
+        "sha256": "3b73a08e7e8832401724bdbef400580ae8925178fa9ffcb794c6eb038be1a3f6",
+        "storage_manifest_sha256": "a11653caca3576409ff2439f7118dcbd7f96729a0ddb06e47d5d4cadd4ac511a",
+        "launch_claim_sha256": "0fd8d1df805cae02e5a388017ab9992f569b61e4599fd0e7e60628f68d6e9991",
+        "pid": 42328,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 350,
+        "timed_out": false,
+        "exit_code": 0,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T07:59:14.748384Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+          "-B",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119\\tools\\coin_pusher_061_qa_worker.py",
+          "--godot",
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--suite",
+          "legacy",
+          "--phase-timeout",
+          "300"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-legacy7-20261119\\evidence\\suite.json",
+        "sha256": "fe281ae506fb614b775bd8368950834ae1058a9733eb5b138c2119652a52ca31",
+        "suite": "legacy",
+        "complete": true,
+        "phases": [
+          {
+            "phase": "legacy",
+            "exit_code": 0,
+            "closed": true
+          }
+        ]
+      }
+    },
+    {
+      "instance_id": "cp061-manifest1-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "549ea8ae324b4266bacf5b256ee42444",
+        "key": "owned-job:cp061-manifest1-20261119:pid:17892:manifest:aefe786d26a306172cbc48c88fb2c3b92dbe7cdfb6cae7658a53f28be6143bf0",
+        "started_at": "2026-11-19T07:48:45.496207Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-manifest1-20261119\\evidence\\job.json; SHA256=d3a36532d66faecd11831e1ec3176b994aa4d5feeb6af322dc140f1f8310ebe0",
+          "E:\\CodexQA\\BTH\\runs\\cp061-manifest1-20261119\\evidence\\storage-manifest.json; SHA256=aefe786d26a306172cbc48c88fb2c3b92dbe7cdfb6cae7658a53f28be6143bf0",
+          "E:\\CodexQA\\BTH\\runs\\cp061-manifest1-20261119\\evidence\\launch-claim.json; SHA256=f1daebf11225561502584a86cdd0f39112871bb63c5b9c1974a951a0ebf71e00"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T07:48:55.456178Z",
+        "key": "owned-job:cp061-manifest1-20261119:pid:17892:manifest:aefe786d26a306172cbc48c88fb2c3b92dbe7cdfb6cae7658a53f28be6143bf0",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-manifest1-20261119\\evidence\\job.json; SHA256=d3a36532d66faecd11831e1ec3176b994aa4d5feeb6af322dc140f1f8310ebe0",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T07:48:55.456178Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-manifest1-20261119\\evidence\\job.json; SHA256=d3a36532d66faecd11831e1ec3176b994aa4d5feeb6af322dc140f1f8310ebe0",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-manifest1-20261119\\evidence\\job.json; SHA256=d3a36532d66faecd11831e1ec3176b994aa4d5feeb6af322dc140f1f8310ebe0"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T07:48:55.456178Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "549ea8ae324b4266bacf5b256ee42444",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-manifest1-20261119\\evidence\\job.json; SHA256=d3a36532d66faecd11831e1ec3176b994aa4d5feeb6af322dc140f1f8310ebe0",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T07:48:55.456178Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-manifest1-20261119\\evidence\\job.json; SHA256=d3a36532d66faecd11831e1ec3176b994aa4d5feeb6af322dc140f1f8310ebe0",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-manifest1-20261119\\evidence\\job.json",
+        "sha256": "d3a36532d66faecd11831e1ec3176b994aa4d5feeb6af322dc140f1f8310ebe0",
+        "storage_manifest_sha256": "aefe786d26a306172cbc48c88fb2c3b92dbe7cdfb6cae7658a53f28be6143bf0",
+        "launch_claim_sha256": "f1daebf11225561502584a86cdd0f39112871bb63c5b9c1974a951a0ebf71e00",
+        "pid": 17892,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 350,
+        "timed_out": false,
+        "exit_code": 0,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T07:48:55.456178Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+          "-B",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119\\tools\\coin_pusher_061_qa_worker.py",
+          "--godot",
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--suite",
+          "manifest",
+          "--phase-timeout",
+          "300"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-manifest1-20261119\\evidence\\suite.json",
+        "sha256": "8ebdb0c1bef7cc794cfeff6f47b82a33c53fb066c1a0458b84853499e13b5ec5",
+        "suite": "manifest",
+        "complete": true,
+        "phases": [
+          {
+            "phase": "manifest",
+            "exit_code": 0,
+            "closed": true
+          }
+        ]
+      }
+    },
+    {
+      "instance_id": "cp061-payout1-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "70ec20808dfabf3729d7d2b98f488ae2",
+        "key": "owned-job:cp061-payout1-20261119:pid:21732:manifest:d775f0f047b8742a00955acdc0e57aedbb29dd73c213d5ee857103be31e50bec",
+        "started_at": "2026-11-19T07:57:34.173042Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-payout1-20261119\\evidence\\job.json; SHA256=c463babb8962f6d894a86d5b344b6efd5de3af3946786fdcf010cc24c3e0016b",
+          "E:\\CodexQA\\BTH\\runs\\cp061-payout1-20261119\\evidence\\storage-manifest.json; SHA256=d775f0f047b8742a00955acdc0e57aedbb29dd73c213d5ee857103be31e50bec",
+          "E:\\CodexQA\\BTH\\runs\\cp061-payout1-20261119\\evidence\\launch-claim.json; SHA256=41ef21798448645fae34242cff2a401c7e695ee40212ca6957ddd20eaccb81c2"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T07:58:13.719991Z",
+        "key": "owned-job:cp061-payout1-20261119:pid:21732:manifest:d775f0f047b8742a00955acdc0e57aedbb29dd73c213d5ee857103be31e50bec",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-payout1-20261119\\evidence\\job.json; SHA256=c463babb8962f6d894a86d5b344b6efd5de3af3946786fdcf010cc24c3e0016b",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T07:58:13.719991Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-payout1-20261119\\evidence\\job.json; SHA256=c463babb8962f6d894a86d5b344b6efd5de3af3946786fdcf010cc24c3e0016b",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-payout1-20261119\\evidence\\job.json; SHA256=c463babb8962f6d894a86d5b344b6efd5de3af3946786fdcf010cc24c3e0016b"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T07:58:13.719991Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "70ec20808dfabf3729d7d2b98f488ae2",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-payout1-20261119\\evidence\\job.json; SHA256=c463babb8962f6d894a86d5b344b6efd5de3af3946786fdcf010cc24c3e0016b",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T07:58:13.719991Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-payout1-20261119\\evidence\\job.json; SHA256=c463babb8962f6d894a86d5b344b6efd5de3af3946786fdcf010cc24c3e0016b",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-payout1-20261119\\evidence\\job.json",
+        "sha256": "c463babb8962f6d894a86d5b344b6efd5de3af3946786fdcf010cc24c3e0016b",
+        "storage_manifest_sha256": "d775f0f047b8742a00955acdc0e57aedbb29dd73c213d5ee857103be31e50bec",
+        "launch_claim_sha256": "41ef21798448645fae34242cff2a401c7e695ee40212ca6957ddd20eaccb81c2",
+        "pid": 21732,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 1100,
+        "timed_out": false,
+        "exit_code": 1,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T07:58:13.719991Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+          "-B",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119\\tools\\coin_pusher_061_qa_worker.py",
+          "--godot",
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--suite",
+          "payout",
+          "--phase-timeout",
+          "500"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-payout1-20261119\\evidence\\suite.json",
+        "sha256": "c26a14ea409bfa9b6433f81b4fda98fa9eda35a8ce260c9e7e11a4b3fbf77d38",
+        "suite": "payout",
+        "complete": false,
+        "phases": [
+          {
+            "phase": "producer",
+            "exit_code": 1,
+            "closed": true
+          }
+        ]
+      }
+    },
+    {
+      "instance_id": "cp061-payout2-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "af8319c911db7df0001bf2f3c7a5514c",
+        "key": "owned-job:cp061-payout2-20261119:pid:21296:manifest:272f451ae6c46b9358537820d5718458ff9a3b581dd3455910ea716a75a137c2",
+        "started_at": "2026-11-19T08:01:22.965235Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-payout2-20261119\\evidence\\job.json; SHA256=8b6f2ef161d2c4745f9419fbee7ae4daa44df01292c4449bddcf8d9c19d7955d",
+          "E:\\CodexQA\\BTH\\runs\\cp061-payout2-20261119\\evidence\\storage-manifest.json; SHA256=272f451ae6c46b9358537820d5718458ff9a3b581dd3455910ea716a75a137c2",
+          "E:\\CodexQA\\BTH\\runs\\cp061-payout2-20261119\\evidence\\launch-claim.json; SHA256=d82fa049c529f904851af9021b57d41da44970a8f8021f40b9c1bf4f4babc02d"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T08:02:20.978586Z",
+        "key": "owned-job:cp061-payout2-20261119:pid:21296:manifest:272f451ae6c46b9358537820d5718458ff9a3b581dd3455910ea716a75a137c2",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-payout2-20261119\\evidence\\job.json; SHA256=8b6f2ef161d2c4745f9419fbee7ae4daa44df01292c4449bddcf8d9c19d7955d",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T08:02:20.978586Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-payout2-20261119\\evidence\\job.json; SHA256=8b6f2ef161d2c4745f9419fbee7ae4daa44df01292c4449bddcf8d9c19d7955d",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-payout2-20261119\\evidence\\job.json; SHA256=8b6f2ef161d2c4745f9419fbee7ae4daa44df01292c4449bddcf8d9c19d7955d"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T08:02:20.978586Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "af8319c911db7df0001bf2f3c7a5514c",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-payout2-20261119\\evidence\\job.json; SHA256=8b6f2ef161d2c4745f9419fbee7ae4daa44df01292c4449bddcf8d9c19d7955d",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T08:02:20.978586Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-payout2-20261119\\evidence\\job.json; SHA256=8b6f2ef161d2c4745f9419fbee7ae4daa44df01292c4449bddcf8d9c19d7955d",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-payout2-20261119\\evidence\\job.json",
+        "sha256": "8b6f2ef161d2c4745f9419fbee7ae4daa44df01292c4449bddcf8d9c19d7955d",
+        "storage_manifest_sha256": "272f451ae6c46b9358537820d5718458ff9a3b581dd3455910ea716a75a137c2",
+        "launch_claim_sha256": "d82fa049c529f904851af9021b57d41da44970a8f8021f40b9c1bf4f4babc02d",
+        "pid": 21296,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 1100,
+        "timed_out": false,
+        "exit_code": 0,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T08:02:20.978586Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+          "-B",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119\\tools\\coin_pusher_061_qa_worker.py",
+          "--godot",
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--suite",
+          "payout",
+          "--phase-timeout",
+          "500"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-payout2-20261119\\evidence\\suite.json",
+        "sha256": "8467ef4269680a1bb43ed4289481dd339d8c9eb2905c2c79d1836231df288942",
+        "suite": "payout",
+        "complete": true,
+        "phases": [
+          {
+            "phase": "producer",
+            "exit_code": 0,
+            "closed": true
+          },
+          {
+            "phase": "cold",
+            "exit_code": 0,
+            "closed": true
+          }
+        ]
+      }
+    },
+    {
+      "instance_id": "cp061-price1-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "eeb10c25287635d987c266a589b75727",
+        "key": "owned-job:cp061-price1-20261119:pid:26600:manifest:fc2f0d9ae094902034f8c759577f4b66d9a34fd87cd9990e991291ede6f1cc94",
+        "started_at": "2026-11-19T07:20:56.878016Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-price1-20261119\\evidence\\job.json; SHA256=fa7e84663b5df04fbf5cb2a6501bb5e43aae4fe1977bcd5f5fb186322727249e",
+          "E:\\CodexQA\\BTH\\runs\\cp061-price1-20261119\\evidence\\storage-manifest.json; SHA256=fc2f0d9ae094902034f8c759577f4b66d9a34fd87cd9990e991291ede6f1cc94",
+          "E:\\CodexQA\\BTH\\runs\\cp061-price1-20261119\\evidence\\launch-claim.json; SHA256=e205399c19743eed98ae3b27bfb0d4d6d9eb1bee43536f191675b5b2941bfe21"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T07:21:11.340689Z",
+        "key": "owned-job:cp061-price1-20261119:pid:26600:manifest:fc2f0d9ae094902034f8c759577f4b66d9a34fd87cd9990e991291ede6f1cc94",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-price1-20261119\\evidence\\job.json; SHA256=fa7e84663b5df04fbf5cb2a6501bb5e43aae4fe1977bcd5f5fb186322727249e",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T07:21:11.340689Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-price1-20261119\\evidence\\job.json; SHA256=fa7e84663b5df04fbf5cb2a6501bb5e43aae4fe1977bcd5f5fb186322727249e",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-price1-20261119\\evidence\\job.json; SHA256=fa7e84663b5df04fbf5cb2a6501bb5e43aae4fe1977bcd5f5fb186322727249e"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T07:21:11.340689Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "eeb10c25287635d987c266a589b75727",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-price1-20261119\\evidence\\job.json; SHA256=fa7e84663b5df04fbf5cb2a6501bb5e43aae4fe1977bcd5f5fb186322727249e",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T07:21:11.340689Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-price1-20261119\\evidence\\job.json; SHA256=fa7e84663b5df04fbf5cb2a6501bb5e43aae4fe1977bcd5f5fb186322727249e",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-price1-20261119\\evidence\\job.json",
+        "sha256": "fa7e84663b5df04fbf5cb2a6501bb5e43aae4fe1977bcd5f5fb186322727249e",
+        "storage_manifest_sha256": "fc2f0d9ae094902034f8c759577f4b66d9a34fd87cd9990e991291ede6f1cc94",
+        "launch_claim_sha256": "e205399c19743eed98ae3b27bfb0d4d6d9eb1bee43536f191675b5b2941bfe21",
+        "pid": 26600,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 700,
+        "timed_out": false,
+        "exit_code": 1,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T07:21:11.340689Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+          "-B",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119\\tools\\coin_pusher_061_qa_worker.py",
+          "--godot",
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--suite",
+          "price",
+          "--phase-timeout",
+          "300"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-price1-20261119\\evidence\\suite.json",
+        "sha256": "bf8606ab265fe85be209557ec549e8a48988a1386341ce5afd9653852d91834a",
+        "suite": "price",
+        "complete": false,
+        "phases": [
+          {
+            "phase": "producer",
+            "exit_code": 0,
+            "closed": true
+          },
+          {
+            "phase": "cold",
+            "exit_code": 1,
+            "closed": true
+          }
+        ]
+      }
+    },
+    {
+      "instance_id": "cp061-price2-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "3074ee7d152a0975e6f33783bc3d961f",
+        "key": "owned-job:cp061-price2-20261119:pid:30424:manifest:63e60f88062184e9305dda396f66665edc8b619bc8e68051d20b06135a15f538",
+        "started_at": "2026-11-19T07:28:31.034990Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-price2-20261119\\evidence\\job.json; SHA256=014da65dcd4cf6090837ac997541c7a06fcd2a168bd0695d6ac846df91fc5696",
+          "E:\\CodexQA\\BTH\\runs\\cp061-price2-20261119\\evidence\\storage-manifest.json; SHA256=63e60f88062184e9305dda396f66665edc8b619bc8e68051d20b06135a15f538",
+          "E:\\CodexQA\\BTH\\runs\\cp061-price2-20261119\\evidence\\launch-claim.json; SHA256=5b7d5c0115af194b202d8ca65ba7a09a41d8a6140447932d64f95584ead23e58"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T07:28:45.828357Z",
+        "key": "owned-job:cp061-price2-20261119:pid:30424:manifest:63e60f88062184e9305dda396f66665edc8b619bc8e68051d20b06135a15f538",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-price2-20261119\\evidence\\job.json; SHA256=014da65dcd4cf6090837ac997541c7a06fcd2a168bd0695d6ac846df91fc5696",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T07:28:45.828357Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-price2-20261119\\evidence\\job.json; SHA256=014da65dcd4cf6090837ac997541c7a06fcd2a168bd0695d6ac846df91fc5696",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-price2-20261119\\evidence\\job.json; SHA256=014da65dcd4cf6090837ac997541c7a06fcd2a168bd0695d6ac846df91fc5696"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T07:28:45.828357Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "3074ee7d152a0975e6f33783bc3d961f",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-price2-20261119\\evidence\\job.json; SHA256=014da65dcd4cf6090837ac997541c7a06fcd2a168bd0695d6ac846df91fc5696",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T07:28:45.828357Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-price2-20261119\\evidence\\job.json; SHA256=014da65dcd4cf6090837ac997541c7a06fcd2a168bd0695d6ac846df91fc5696",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-price2-20261119\\evidence\\job.json",
+        "sha256": "014da65dcd4cf6090837ac997541c7a06fcd2a168bd0695d6ac846df91fc5696",
+        "storage_manifest_sha256": "63e60f88062184e9305dda396f66665edc8b619bc8e68051d20b06135a15f538",
+        "launch_claim_sha256": "5b7d5c0115af194b202d8ca65ba7a09a41d8a6140447932d64f95584ead23e58",
+        "pid": 30424,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 700,
+        "timed_out": false,
+        "exit_code": 0,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T07:28:45.828357Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+          "-B",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119\\tools\\coin_pusher_061_qa_worker.py",
+          "--godot",
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--suite",
+          "price",
+          "--phase-timeout",
+          "300"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-price2-20261119\\evidence\\suite.json",
+        "sha256": "56b8bdfeac71d1bd924fd06692cc571334b9b2708e200aa43c9292ce733b1043",
+        "suite": "price",
+        "complete": true,
+        "phases": [
+          {
+            "phase": "producer",
+            "exit_code": 0,
+            "closed": true
+          },
+          {
+            "phase": "cold",
+            "exit_code": 0,
+            "closed": true
+          }
+        ]
+      }
+    },
+    {
+      "instance_id": "cp061-rendered-extra3-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "ac6530004255465f31d2e0844221b8dd",
+        "key": "owned-job:cp061-rendered-extra3-20261119:pid:48224:manifest:f79607b9475c4a832e36c43761e4175a9d2d72eadf1b4ec61cc804540a37a0b9",
+        "started_at": "2026-11-19T07:59:35.625220Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-rendered-extra3-20261119\\evidence\\job.json; SHA256=8bdb0fd99a6b0ee6d1a92fda6cc42aaced8014dbaee3c28051ac04875b3c01bf",
+          "E:\\CodexQA\\BTH\\runs\\cp061-rendered-extra3-20261119\\evidence\\storage-manifest.json; SHA256=f79607b9475c4a832e36c43761e4175a9d2d72eadf1b4ec61cc804540a37a0b9",
+          "E:\\CodexQA\\BTH\\runs\\cp061-rendered-extra3-20261119\\evidence\\launch-claim.json; SHA256=8f65f67dd6224873e355b2a5bd891f837b1a7cd263afa0105fdaca6edf5effb5"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T08:00:16.257170Z",
+        "key": "owned-job:cp061-rendered-extra3-20261119:pid:48224:manifest:f79607b9475c4a832e36c43761e4175a9d2d72eadf1b4ec61cc804540a37a0b9",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-rendered-extra3-20261119\\evidence\\job.json; SHA256=8bdb0fd99a6b0ee6d1a92fda6cc42aaced8014dbaee3c28051ac04875b3c01bf",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T08:00:16.257170Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-rendered-extra3-20261119\\evidence\\job.json; SHA256=8bdb0fd99a6b0ee6d1a92fda6cc42aaced8014dbaee3c28051ac04875b3c01bf",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-rendered-extra3-20261119\\evidence\\job.json; SHA256=8bdb0fd99a6b0ee6d1a92fda6cc42aaced8014dbaee3c28051ac04875b3c01bf"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T08:00:16.257170Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "ac6530004255465f31d2e0844221b8dd",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-rendered-extra3-20261119\\evidence\\job.json; SHA256=8bdb0fd99a6b0ee6d1a92fda6cc42aaced8014dbaee3c28051ac04875b3c01bf",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T08:00:16.257170Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-rendered-extra3-20261119\\evidence\\job.json; SHA256=8bdb0fd99a6b0ee6d1a92fda6cc42aaced8014dbaee3c28051ac04875b3c01bf",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-rendered-extra3-20261119\\evidence\\job.json",
+        "sha256": "8bdb0fd99a6b0ee6d1a92fda6cc42aaced8014dbaee3c28051ac04875b3c01bf",
+        "storage_manifest_sha256": "f79607b9475c4a832e36c43761e4175a9d2d72eadf1b4ec61cc804540a37a0b9",
+        "launch_claim_sha256": "8f65f67dd6224873e355b2a5bd891f837b1a7cd263afa0105fdaca6edf5effb5",
+        "pid": 48224,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 700,
+        "timed_out": false,
+        "exit_code": 1,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T08:00:16.257170Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+          "-B",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119\\tools\\coin_pusher_061_qa_worker.py",
+          "--godot",
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--suite",
+          "rendered-extra",
+          "--phase-timeout",
+          "300"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-rendered-extra3-20261119\\evidence\\suite.json",
+        "sha256": "571797f67e96f81de8b2e957baaf69138ffc44dd01e22283f756d48f936a50cc",
+        "suite": "rendered-extra",
+        "complete": false,
+        "phases": [
+          {
+            "phase": "practice",
+            "exit_code": 0,
+            "closed": true
+          },
+          {
+            "phase": "rooms",
+            "exit_code": 1,
+            "closed": true
+          }
+        ]
+      }
+    },
+    {
+      "instance_id": "cp061-rendered-rooms4-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "5b03c5d8f9b88fc6f37e10dc559b0d1c",
+        "key": "owned-job:cp061-rendered-rooms4-20261119:pid:47864:manifest:67e5483c0eaa8231dbf58f995f1f834d08f1c2e513ec8f8f53ffb0fe81e5df4a",
+        "started_at": "2026-11-19T08:03:24.788733Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-rendered-rooms4-20261119\\evidence\\job.json; SHA256=61497861caebd7610f77088f6c72a2d13ce2035596465056d60cea38063dbbfc",
+          "E:\\CodexQA\\BTH\\runs\\cp061-rendered-rooms4-20261119\\evidence\\storage-manifest.json; SHA256=67e5483c0eaa8231dbf58f995f1f834d08f1c2e513ec8f8f53ffb0fe81e5df4a",
+          "E:\\CodexQA\\BTH\\runs\\cp061-rendered-rooms4-20261119\\evidence\\launch-claim.json; SHA256=ab526fb3d252aeb7cfbd02d837b8d951a25b9cea830a9d218cf1b153d228da60"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T08:03:49.468905Z",
+        "key": "owned-job:cp061-rendered-rooms4-20261119:pid:47864:manifest:67e5483c0eaa8231dbf58f995f1f834d08f1c2e513ec8f8f53ffb0fe81e5df4a",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-rendered-rooms4-20261119\\evidence\\job.json; SHA256=61497861caebd7610f77088f6c72a2d13ce2035596465056d60cea38063dbbfc",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T08:03:49.468905Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-rendered-rooms4-20261119\\evidence\\job.json; SHA256=61497861caebd7610f77088f6c72a2d13ce2035596465056d60cea38063dbbfc",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-rendered-rooms4-20261119\\evidence\\job.json; SHA256=61497861caebd7610f77088f6c72a2d13ce2035596465056d60cea38063dbbfc"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T08:03:49.468905Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "5b03c5d8f9b88fc6f37e10dc559b0d1c",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-rendered-rooms4-20261119\\evidence\\job.json; SHA256=61497861caebd7610f77088f6c72a2d13ce2035596465056d60cea38063dbbfc",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T08:03:49.468905Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-rendered-rooms4-20261119\\evidence\\job.json; SHA256=61497861caebd7610f77088f6c72a2d13ce2035596465056d60cea38063dbbfc",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-rendered-rooms4-20261119\\evidence\\job.json",
+        "sha256": "61497861caebd7610f77088f6c72a2d13ce2035596465056d60cea38063dbbfc",
+        "storage_manifest_sha256": "67e5483c0eaa8231dbf58f995f1f834d08f1c2e513ec8f8f53ffb0fe81e5df4a",
+        "launch_claim_sha256": "ab526fb3d252aeb7cfbd02d837b8d951a25b9cea830a9d218cf1b153d228da60",
+        "pid": 47864,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 350,
+        "timed_out": false,
+        "exit_code": 0,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T08:03:49.468905Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+          "-B",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119\\tools\\coin_pusher_061_qa_worker.py",
+          "--godot",
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--suite",
+          "rendered-rooms",
+          "--phase-timeout",
+          "300"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-rendered-rooms4-20261119\\evidence\\suite.json",
+        "sha256": "3402a516986edd4d2c2dc97970a1d70234da4584715713be34cbf5e113dc6cb5",
+        "suite": "rendered-rooms",
+        "complete": true,
+        "phases": [
+          {
+            "phase": "rooms",
+            "exit_code": 0,
+            "closed": true
+          }
+        ]
+      }
+    },
+    {
+      "instance_id": "cp061-rendered1-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "3ab5f9b3145f9af7e0acfc5e31ef7121",
+        "key": "owned-job:cp061-rendered1-20261119:pid:47764:manifest:e4723023edb2f7ea1cd999fd7afc2e5221c712084ba55c8efa45725b84719a81",
+        "started_at": "2026-11-19T07:23:31.690959Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-rendered1-20261119\\evidence\\job.json; SHA256=ed5ab9df4b2b5dd7d7cb144766fbb7953d17bef423bb9fe7aa9ce6939f0d5b90",
+          "E:\\CodexQA\\BTH\\runs\\cp061-rendered1-20261119\\evidence\\storage-manifest.json; SHA256=e4723023edb2f7ea1cd999fd7afc2e5221c712084ba55c8efa45725b84719a81",
+          "E:\\CodexQA\\BTH\\runs\\cp061-rendered1-20261119\\evidence\\launch-claim.json; SHA256=d9c91b74dce8d5b45ab3ecbfb9fc97a0e09f5ad89ee183c1ee723b87af8cfae9"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T07:23:55.094057Z",
+        "key": "owned-job:cp061-rendered1-20261119:pid:47764:manifest:e4723023edb2f7ea1cd999fd7afc2e5221c712084ba55c8efa45725b84719a81",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-rendered1-20261119\\evidence\\job.json; SHA256=ed5ab9df4b2b5dd7d7cb144766fbb7953d17bef423bb9fe7aa9ce6939f0d5b90",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T07:23:55.094057Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-rendered1-20261119\\evidence\\job.json; SHA256=ed5ab9df4b2b5dd7d7cb144766fbb7953d17bef423bb9fe7aa9ce6939f0d5b90",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-rendered1-20261119\\evidence\\job.json; SHA256=ed5ab9df4b2b5dd7d7cb144766fbb7953d17bef423bb9fe7aa9ce6939f0d5b90"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T07:23:55.094057Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "3ab5f9b3145f9af7e0acfc5e31ef7121",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-rendered1-20261119\\evidence\\job.json; SHA256=ed5ab9df4b2b5dd7d7cb144766fbb7953d17bef423bb9fe7aa9ce6939f0d5b90",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T07:23:55.094057Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-rendered1-20261119\\evidence\\job.json; SHA256=ed5ab9df4b2b5dd7d7cb144766fbb7953d17bef423bb9fe7aa9ce6939f0d5b90",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-rendered1-20261119\\evidence\\job.json",
+        "sha256": "ed5ab9df4b2b5dd7d7cb144766fbb7953d17bef423bb9fe7aa9ce6939f0d5b90",
+        "storage_manifest_sha256": "e4723023edb2f7ea1cd999fd7afc2e5221c712084ba55c8efa45725b84719a81",
+        "launch_claim_sha256": "d9c91b74dce8d5b45ab3ecbfb9fc97a0e09f5ad89ee183c1ee723b87af8cfae9",
+        "pid": 47764,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 600,
+        "timed_out": false,
+        "exit_code": 1,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T07:23:55.094057Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+          "-B",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119\\tools\\coin_pusher_061_qa_worker.py",
+          "--godot",
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--suite",
+          "rendered",
+          "--phase-timeout",
+          "500"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-rendered1-20261119\\evidence\\suite.json",
+        "sha256": "c2ec27106e7c357b25fc00e8ea94214eeaa5330cb93f2cbf1ae53fa24303b37f",
+        "suite": "rendered",
+        "complete": false,
+        "phases": [
+          {
+            "phase": "rendered",
+            "exit_code": 1,
+            "closed": true
+          }
+        ]
+      }
+    },
+    {
+      "instance_id": "cp061-rendered2-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "331efe462643d572551bd404831a3fbe",
+        "key": "owned-job:cp061-rendered2-20261119:pid:44672:manifest:dccfef9ab8a5e0c7b51986de8fb93294a067322547c14309318854c9427205a6",
+        "started_at": "2026-11-19T07:44:41.564820Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-rendered2-20261119\\evidence\\job.json; SHA256=9a183f966b746549eb0e8f2f624d75834ffbaf58271ad87dfb3e3c1e98cf10b8",
+          "E:\\CodexQA\\BTH\\runs\\cp061-rendered2-20261119\\evidence\\storage-manifest.json; SHA256=dccfef9ab8a5e0c7b51986de8fb93294a067322547c14309318854c9427205a6",
+          "E:\\CodexQA\\BTH\\runs\\cp061-rendered2-20261119\\evidence\\launch-claim.json; SHA256=12f090e6d83efbc127d0f103250b6f7be9a3d167f171cee85f64eb6f5e3c26b9"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T07:45:05.542231Z",
+        "key": "owned-job:cp061-rendered2-20261119:pid:44672:manifest:dccfef9ab8a5e0c7b51986de8fb93294a067322547c14309318854c9427205a6",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-rendered2-20261119\\evidence\\job.json; SHA256=9a183f966b746549eb0e8f2f624d75834ffbaf58271ad87dfb3e3c1e98cf10b8",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T07:45:05.542231Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-rendered2-20261119\\evidence\\job.json; SHA256=9a183f966b746549eb0e8f2f624d75834ffbaf58271ad87dfb3e3c1e98cf10b8",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-rendered2-20261119\\evidence\\job.json; SHA256=9a183f966b746549eb0e8f2f624d75834ffbaf58271ad87dfb3e3c1e98cf10b8"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T07:45:05.542231Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "331efe462643d572551bd404831a3fbe",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-rendered2-20261119\\evidence\\job.json; SHA256=9a183f966b746549eb0e8f2f624d75834ffbaf58271ad87dfb3e3c1e98cf10b8",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T07:45:05.542231Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-rendered2-20261119\\evidence\\job.json; SHA256=9a183f966b746549eb0e8f2f624d75834ffbaf58271ad87dfb3e3c1e98cf10b8",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-rendered2-20261119\\evidence\\job.json",
+        "sha256": "9a183f966b746549eb0e8f2f624d75834ffbaf58271ad87dfb3e3c1e98cf10b8",
+        "storage_manifest_sha256": "dccfef9ab8a5e0c7b51986de8fb93294a067322547c14309318854c9427205a6",
+        "launch_claim_sha256": "12f090e6d83efbc127d0f103250b6f7be9a3d167f171cee85f64eb6f5e3c26b9",
+        "pid": 44672,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 600,
+        "timed_out": false,
+        "exit_code": 0,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T07:45:05.542231Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+          "-B",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119\\tools\\coin_pusher_061_qa_worker.py",
+          "--godot",
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--suite",
+          "rendered",
+          "--phase-timeout",
+          "500"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-rendered2-20261119\\evidence\\suite.json",
+        "sha256": "17bc457a4527995bc6108eaec9938bcc42045d0aee2fe3ee92edf293597164dd",
+        "suite": "rendered",
+        "complete": true,
+        "phases": [
+          {
+            "phase": "rendered",
+            "exit_code": 0,
+            "closed": true
+          }
+        ]
+      }
+    },
+    {
+      "instance_id": "cp061-rooms-diagnostic1-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "3e11a8489c59578fd2044e9c94c93e14",
+        "key": "owned-job:cp061-rooms-diagnostic1-20261119:pid:48048:manifest:a8b3e10ca2fa6db32eb189d5bac1f057b9eb99eaa654b4f4f72e15cddd2aea1b",
+        "started_at": "2026-11-19T07:27:04.342846Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-rooms-diagnostic1-20261119\\evidence\\job.json; SHA256=19742b788f15741ba155fb94c5b0ccc1e442280c35dc1d32a2d1b9438bf524e8",
+          "E:\\CodexQA\\BTH\\runs\\cp061-rooms-diagnostic1-20261119\\evidence\\storage-manifest.json; SHA256=a8b3e10ca2fa6db32eb189d5bac1f057b9eb99eaa654b4f4f72e15cddd2aea1b",
+          "E:\\CodexQA\\BTH\\runs\\cp061-rooms-diagnostic1-20261119\\evidence\\launch-claim.json; SHA256=c8693419934f42ac569ff4b12e185e9490304419ea79a64b0b9ea62bb0c10f98"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T07:27:26.422597Z",
+        "key": "owned-job:cp061-rooms-diagnostic1-20261119:pid:48048:manifest:a8b3e10ca2fa6db32eb189d5bac1f057b9eb99eaa654b4f4f72e15cddd2aea1b",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-rooms-diagnostic1-20261119\\evidence\\job.json; SHA256=19742b788f15741ba155fb94c5b0ccc1e442280c35dc1d32a2d1b9438bf524e8",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T07:27:26.422597Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-rooms-diagnostic1-20261119\\evidence\\job.json; SHA256=19742b788f15741ba155fb94c5b0ccc1e442280c35dc1d32a2d1b9438bf524e8",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-rooms-diagnostic1-20261119\\evidence\\job.json; SHA256=19742b788f15741ba155fb94c5b0ccc1e442280c35dc1d32a2d1b9438bf524e8"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T07:27:26.422597Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "3e11a8489c59578fd2044e9c94c93e14",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-rooms-diagnostic1-20261119\\evidence\\job.json; SHA256=19742b788f15741ba155fb94c5b0ccc1e442280c35dc1d32a2d1b9438bf524e8",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T07:27:26.422597Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-rooms-diagnostic1-20261119\\evidence\\job.json; SHA256=19742b788f15741ba155fb94c5b0ccc1e442280c35dc1d32a2d1b9438bf524e8",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-rooms-diagnostic1-20261119\\evidence\\job.json",
+        "sha256": "19742b788f15741ba155fb94c5b0ccc1e442280c35dc1d32a2d1b9438bf524e8",
+        "storage_manifest_sha256": "a8b3e10ca2fa6db32eb189d5bac1f057b9eb99eaa654b4f4f72e15cddd2aea1b",
+        "launch_claim_sha256": "c8693419934f42ac569ff4b12e185e9490304419ea79a64b0b9ea62bb0c10f98",
+        "pid": 48048,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 300,
+        "timed_out": false,
+        "exit_code": 1,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T07:27:26.422597Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+          "-B",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119\\tools\\coin_pusher_061_qa_worker.py",
+          "--godot",
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--suite",
+          "rooms",
+          "--phase-timeout",
+          "260"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-rooms-diagnostic1-20261119\\evidence\\suite.json",
+        "sha256": "a0c3ec91008827d99c0d5ae26d606ef33011efc4f08889acc4f1133419d9ac31",
+        "suite": "rooms",
+        "complete": false,
+        "phases": [
+          {
+            "phase": "rooms",
+            "exit_code": 1,
+            "closed": true
+          }
+        ]
+      }
+    },
+    {
+      "instance_id": "cp061-rooms-legacy3-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "4091b093d3e8cbe9397a94a306573e31",
+        "key": "owned-job:cp061-rooms-legacy3-20261119:pid:29792:manifest:176dad301cb62107ac1555dae39db6d00771ef0f513e0335d2eb7fffd921b74c",
+        "started_at": "2026-11-19T07:32:33.004634Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-rooms-legacy3-20261119\\evidence\\job.json; SHA256=c743a0592cb5c62a1b0b93d0dd2bd25c651f1a96d039e68fa2988b257822d8e5",
+          "E:\\CodexQA\\BTH\\runs\\cp061-rooms-legacy3-20261119\\evidence\\storage-manifest.json; SHA256=176dad301cb62107ac1555dae39db6d00771ef0f513e0335d2eb7fffd921b74c",
+          "E:\\CodexQA\\BTH\\runs\\cp061-rooms-legacy3-20261119\\evidence\\launch-claim.json; SHA256=c62894e67b31a6464608ee832b0a9bf2204cde11cbd1b7edaa3111a7869f9185"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T07:33:15.254842Z",
+        "key": "owned-job:cp061-rooms-legacy3-20261119:pid:29792:manifest:176dad301cb62107ac1555dae39db6d00771ef0f513e0335d2eb7fffd921b74c",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-rooms-legacy3-20261119\\evidence\\job.json; SHA256=c743a0592cb5c62a1b0b93d0dd2bd25c651f1a96d039e68fa2988b257822d8e5",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T07:33:15.254842Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-rooms-legacy3-20261119\\evidence\\job.json; SHA256=c743a0592cb5c62a1b0b93d0dd2bd25c651f1a96d039e68fa2988b257822d8e5",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-rooms-legacy3-20261119\\evidence\\job.json; SHA256=c743a0592cb5c62a1b0b93d0dd2bd25c651f1a96d039e68fa2988b257822d8e5"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T07:33:15.254842Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "4091b093d3e8cbe9397a94a306573e31",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-rooms-legacy3-20261119\\evidence\\job.json; SHA256=c743a0592cb5c62a1b0b93d0dd2bd25c651f1a96d039e68fa2988b257822d8e5",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T07:33:15.254842Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-rooms-legacy3-20261119\\evidence\\job.json; SHA256=c743a0592cb5c62a1b0b93d0dd2bd25c651f1a96d039e68fa2988b257822d8e5",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-rooms-legacy3-20261119\\evidence\\job.json",
+        "sha256": "c743a0592cb5c62a1b0b93d0dd2bd25c651f1a96d039e68fa2988b257822d8e5",
+        "storage_manifest_sha256": "176dad301cb62107ac1555dae39db6d00771ef0f513e0335d2eb7fffd921b74c",
+        "launch_claim_sha256": "c62894e67b31a6464608ee832b0a9bf2204cde11cbd1b7edaa3111a7869f9185",
+        "pid": 29792,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 700,
+        "timed_out": false,
+        "exit_code": 1,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T07:33:15.254842Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+          "-B",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119\\tools\\coin_pusher_061_qa_worker.py",
+          "--godot",
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--suite",
+          "rooms-legacy",
+          "--phase-timeout",
+          "300"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-rooms-legacy3-20261119\\evidence\\suite.json",
+        "sha256": "7c8e0b49f0be18b9da7b0da8c425fbce2badae0596f21766b5c0dbb864d9a725",
+        "suite": "rooms-legacy",
+        "complete": false,
+        "phases": [
+          {
+            "phase": "rooms",
+            "exit_code": 0,
+            "closed": true
+          },
+          {
+            "phase": "legacy",
+            "exit_code": 1,
+            "closed": true
+          }
+        ]
+      }
+    },
+    {
+      "instance_id": "cp061-static1-20261119-owned-job",
+      "task_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "owner_task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "2009dad0e9a8d26f558a06a66b3aa619",
+        "key": "owned-job:cp061-static1-20261119:pid:44684:manifest:19b98587b447f93aea1536bb76f3e1197ea8a15e919b2acf1845eff8405372fc",
+        "started_at": "2026-11-19T07:49:14.705583Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-static1-20261119\\evidence\\job.json; SHA256=ca2cc6340f9221b93139a190a4c4e7866d3bd84c5be90754a7b68b6398690008",
+          "E:\\CodexQA\\BTH\\runs\\cp061-static1-20261119\\evidence\\storage-manifest.json; SHA256=19b98587b447f93aea1536bb76f3e1197ea8a15e919b2acf1845eff8405372fc",
+          "E:\\CodexQA\\BTH\\runs\\cp061-static1-20261119\\evidence\\launch-claim.json; SHA256=e7193c05847cfeb753db85472c2cae660d6481acf8cf2fce41d0d47165d8201a"
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-19T07:49:20.608649Z",
+        "key": "owned-job:cp061-static1-20261119:pid:44684:manifest:19b98587b447f93aea1536bb76f3e1197ea8a15e919b2acf1845eff8405372fc",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-static1-20261119\\evidence\\job.json; SHA256=ca2cc6340f9221b93139a190a4c4e7866d3bd84c5be90754a7b68b6398690008",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-19T07:49:20.608649Z",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-static1-20261119\\evidence\\job.json; SHA256=ca2cc6340f9221b93139a190a4c4e7866d3bd84c5be90754a7b68b6398690008",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:106; finally drains owned Job, records active count, closes handles and kill-on-close Job.",
+            "E:\\CodexQA\\BTH\\runs\\cp061-static1-20261119\\evidence\\job.json; SHA256=ca2cc6340f9221b93139a190a4c4e7866d3bd84c5be90754a7b68b6398690008"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException handler enters the same finally drain/close path. Contract evidence; not a claim that all exception branches were exercised."
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:100; timeout terminates owned Job before the common finally drain/close path. Contract evidence; this recorded run did not time out."
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-19\\task\\coin-pusher-source\\tools\\bth_qa_guarded_run.py:104; BaseException and finally retain owned Job cleanup on interruption. Contract evidence; this recorded run was not interrupted."
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-19T07:49:20.608649Z",
+          "outcome": "verified_closed",
+          "identity_nonce": "2009dad0e9a8d26f558a06a66b3aa619",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\runs\\cp061-static1-20261119\\evidence\\job.json; SHA256=ca2cc6340f9221b93139a190a4c4e7866d3bd84c5be90754a7b68b6398690008",
+            "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-19T07:49:20.608649Z",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\runs\\cp061-static1-20261119\\evidence\\job.json; SHA256=ca2cc6340f9221b93139a190a4c4e7866d3bd84c5be90754a7b68b6398690008",
+          "Recorded owned Job active_at_release=0 and limits.active_processes=0; assigned_before_execution=true; timeout=false; error=null; cleanup_errors=[]; not a host process census."
+        ],
+        "limit": "Historical closure of this nonce-bound private owned Job only. Profiles, disposable saves and evidence remain preserved. No host process query or global absence claim."
+      },
+      "guard_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-static1-20261119\\evidence\\job.json",
+        "sha256": "ca2cc6340f9221b93139a190a4c4e7866d3bd84c5be90754a7b68b6398690008",
+        "storage_manifest_sha256": "19b98587b447f93aea1536bb76f3e1197ea8a15e919b2acf1845eff8405372fc",
+        "launch_claim_sha256": "e7193c05847cfeb753db85472c2cae660d6481acf8cf2fce41d0d47165d8201a",
+        "pid": 44684,
+        "assigned_before_execution": true,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "timeout_seconds": 120,
+        "timed_out": false,
+        "exit_code": 0,
+        "active_at_release": 0,
+        "finished_at": "2026-11-19T07:49:20.608649Z",
+        "error": null,
+        "cleanup_errors": [],
+        "command": [
+          "C:\\Users\\theep\\AppData\\Local\\Programs\\Python\\Python310\\python.exe",
+          "-B",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119\\tools\\environment_fixed_slot_static_check.py",
+          "E:\\CodexQA\\BTH\\workspaces\\coin-pusher-061-20261119",
+          "E:\\CodexQA\\BTH\\runs\\cp061-static1-20261119\\evidence\\fixed-slot-report.json"
+        ]
+      },
+      "test_scope_receipt": {
+        "path": "E:\\CodexQA\\BTH\\runs\\cp061-static1-20261119\\evidence\\worker.log",
+        "note": "Direct guarded command; consult worker log. Guard exit is not a generic gameplay acceptance claim."
+      }
+    }
+  ]
+}

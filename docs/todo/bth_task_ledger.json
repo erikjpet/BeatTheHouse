@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-16T12:55:50.388221+00:00",
+  "updated_at": "2026-11-19T08:08:19.217781+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -182,6 +182,165 @@
     "reconciled_main_commit": "e1e71f26d37040142c5f851b3bbd3d1f89d61355"
   },
   "objectives": [
+    {
+      "id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "name": "Shared Coin Pusher drop copy and Grand Casino cabinets",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "state": "open",
+      "status": "LOCALLY_QUALIFIED_INTEGRATION_BLOCKED",
+      "owner": {
+        "name": "Last-minute Coin Pusher changes",
+        "task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+        "assignment_state": "assigned"
+      },
+      "objective": {
+        "text": "Implement Erik Petersen's full requested 0.6.1 Jackpot Ridge button-copy change and exactly one seeded random Coin Pusher in each Grand Casino Main and High Limit, replacing Main Pull Tabs; retain $1 Main and actual $5 High Limit ordinary coin debits/credits, per-cabinet identity and all unrelated gameplay. Follow authorized scoped main/NEXT workflow after coordinator runtime assignment. Latest explicit scope supersedes the original Ridge-only copy restriction: apply Drop $N / Dropping $X to every Coin Pusher variant/theme/shared practice control, using actual remaining paid batch dollars; preserve drop/release/settlement.",
+        "source": "Trusted parent delegation 6afc9600-f7f0-8191-926d-d8ae551e500c on 2026-11-19; explicit source work now, sole E: runtime booked by separate CRT practice task, standing scoped tested-fix main/NEXT authorization. Follow-up delegation explicitly requests old Grand load/return compatibility and preservation of former fresh-Grand Pull Tabs test purposes before runtime; exact safe grandfather behavior may be retained with evidence. Latest parent delegation on2026-11-19 assigns exclusive E runtime/mainNEXT slot and relays Erik's explicit ALL Coin Pusher copy clarification.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "ridge-copy",
+            "description": "Every supported Coin Pusher type/theme/shared practice control uses idle Drop $N and active Dropping $X from configured cost and actual paid batch amount. Single/sustained/just-paid/idle paths have no stale Drop/Hold, Hold count or Paid control wording; interactions and settlement retained.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH061_coin_pusher_last_minute_20261119.md"
+            ]
+          },
+          {
+            "id": "grand-catalog",
+            "description": "Exactly one normally seeded random Coin Pusher in Grand Main replacing Pull Tabs and one in High Limit; stable room authority/dedupe/return/reload across seeds, other rooms/practice unchanged.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH061_coin_pusher_last_minute_20261119.md"
+            ]
+          },
+          {
+            "id": "denomination",
+            "description": "Grand Main ordinary coins cost/pay $1, High Limit cost/pay $5 through actual debit and normal-coin credit; bonus/jackpot/item semantics unchanged.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH061_coin_pusher_last_minute_20261119.md"
+            ]
+          },
+          {
+            "id": "platform-rendered",
+            "description": "Focused and adjacent native/web equivalence and rendered Jackpot Ridge/Grand machines where feasible, using assigned E: guarded disposable QA state.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "main-next",
+            "description": "Scoped reviewed integration to main and exact existing NEXT served identity/assets/startup and changed-behavior evidence; no stable/tag/TEST publication.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "old-layout-custody",
+            "description": "Normal synthetic old Grand load/return preserves valid physical/scenario authority, legitimate outstanding Pull Tab custody/payouts and cabinet state; explicit historical fixtures preserve existing chip/cash/Audit/card/bag/save coverage. Any safe grandfathered user-visible offerings are stated exactly.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH061_coin_pusher_last_minute_20261119.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": true,
+          "complete": false,
+          "areas": [
+            {
+              "name": "Every supported Coin Pusher type/theme/shared practice control uses idle Drop $N and active Dropping $X from configured cost and actual paid batch amount. Single/sustained/just-paid/idle paths have no stale Drop/Hold, Hold count or Paid control wording; interactions and settlement retained.",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/BTH061_coin_pusher_last_minute_20261119.md"
+              ]
+            },
+            {
+              "name": "Exactly one normally seeded random Coin Pusher in Grand Main replacing Pull Tabs and one in High Limit; stable room authority/dedupe/return/reload across seeds, other rooms/practice unchanged.",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/BTH061_coin_pusher_last_minute_20261119.md"
+              ]
+            },
+            {
+              "name": "Grand Main ordinary coins cost/pay $1, High Limit cost/pay $5 through actual debit and normal-coin credit; bonus/jackpot/item semantics unchanged.",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/BTH061_coin_pusher_last_minute_20261119.md"
+              ]
+            },
+            {
+              "name": "Focused and adjacent native/web equivalence and rendered Jackpot Ridge/Grand machines where feasible, using assigned E: guarded disposable QA state.",
+              "state": "remaining",
+              "evidence": []
+            },
+            {
+              "name": "Scoped reviewed integration to main and exact existing NEXT served identity/assets/startup and changed-behavior evidence; no stable/tag/TEST publication.",
+              "state": "remaining",
+              "evidence": []
+            },
+            {
+              "name": "Pre-change Grand physical/scenario authority and historical Pull Tabs fixture coverage",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/BTH061_coin_pusher_last_minute_20261119.md"
+              ]
+            }
+          ]
+        }
+      },
+      "implementation_batches": [
+        "BTH061-COIN-PUSHER-LAST-MINUTE-001-COPY",
+        "BTH061-COIN-PUSHER-LAST-MINUTE-001-GRAND",
+        "BTH061-COIN-PUSHER-LAST-MINUTE-001-COMPAT"
+      ],
+      "commits": [
+        {
+          "sha": "06efa32f0f14aa684d1a5d3134dacf78fa695531",
+          "evidence": [
+            "docs/testing/BTH061_coin_pusher_last_minute_20261119.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": "",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/testing/BTH061_coin_pusher_last_minute_20261119.md",
+          "kind": "guarded_runtime_checkpoint",
+          "summary": "Local tested code commit 06efa32f0f14aa684d1a5d3134dacf78fa695531. Guarded disposable E qualification passes: accounting96, rooms1341, price225+35, legacy48, historical53+23, Audit57+25, elapsed62+25, custody135+76, natural outstanding payout47+27, adjacent continuous/compaction/paid/liveness, manifest and fixed-slot. Rendered2 321 checks cover all types/Grand controls; corrected Practice53 and generated room renders109 pass with actual PNG inspection. Failed diagnostics retained separately. All22 code/test/tool working files match final E workspace byte-for-byte. No served Web or main/NEXT delivery claim."
+        }
+      ],
+      "next_action": "Transfer the tested local commit and evidence to the coordinator for authorized main integration. Keep the denied fetch stopped and leave LAND to diagnose the stopped watcher. Then verify exact served NEXT identity/assets and feasible Web behavior; main/NEXT acceptance remains open. Have the user run or explicitly authorize final manual ledger reconciliation; its automatic-review rejection remains stopped.",
+      "blocker": {
+        "state": "active",
+        "kind": "git_ownership_and_manual_check_authorization",
+        "description": "Escalated git fetch --no-tags github main in the isolated C source checkout was refused as dubious ownership: checkout owner CodexSandboxOffline, integration account theep. Fetch stopped; no trust/settings change or alternate retry. Push not attempted. Main remains89403f389. Independent LAND task handles the stopped NEXT watcher; this task must not restart or promote it. Automatic approval review separately rejected the final read-only ledger CLI because AGENTS.md reserves manual reconciliation to the user. No process started, no cp061-ledger-final1 run directory exists, and no retry was attempted. The user must run or explicitly authorize that manual check.",
+        "requires_user_input": true,
+        "observed_at": "2026-11-19T08:08:19.217781+00:00",
+        "evidence": [
+          "docs/testing/BTH061_coin_pusher_last_minute_20261119.md",
+          "Parent delegation explicitly permits transfer of the tested patch to the coordinator."
+        ]
+      },
+      "updated_at": "2026-11-19T08:08:19.217781+00:00",
+      "planned_app_changes": [
+        "Shared Coin Pusher drop-button copy across every supported type/theme",
+        "Grand Main/High Limit seeded Coin Pusher catalog and coin denomination"
+      ]
+    },
     {
       "id": "BTH-NEXT-QA-CREW-ROOM-HOST-001",
       "name": "Preserve cabinet room after accepting Crew package",
@@ -39589,6 +39748,163 @@
     }
   ],
   "batches": [
+    {
+      "id": "BTH061-COIN-PUSHER-LAST-MINUTE-001-COMPAT",
+      "name": "Preserve old Grand layout authority and historical Pull Tabs coverage",
+      "aliases": [],
+      "group": "current",
+      "parent_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "state": "open",
+      "commits": [
+        {
+          "sha": "06efa32f0f14aa684d1a5d3134dacf78fa695531",
+          "evidence": [
+            "docs/testing/BTH061_coin_pusher_last_minute_20261119.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": "",
+        "evidence": []
+      },
+      "scope": [
+        "Normal synthetic old Grand load/return preserves valid physical/scenario authority, legitimate outstanding Pull Tab custody/payouts and cabinet state; explicit historical fixtures preserve existing chip/cash/Audit/card/bag/save coverage. Any safe grandfathered user-visible offerings are stated exactly."
+      ],
+      "acceptance_scope": "Explicit 2026-11-19 parent compatibility follow-up; synthetic old and fresh profiles only. No production catalog migration, protected save work, runtime or publication without assigned window.",
+      "status": "LOCALLY_QUALIFIED_INTEGRATION_BLOCKED",
+      "owner": {
+        "name": "Last-minute Coin Pusher changes",
+        "task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+        "assignment_state": "assigned"
+      },
+      "evidence": [
+        {
+          "reference": "docs/testing/BTH061_coin_pusher_last_minute_20261119.md",
+          "kind": "guarded_runtime_checkpoint",
+          "summary": "Local tested code commit 06efa32f0f14aa684d1a5d3134dacf78fa695531. Guarded disposable E qualification passes: accounting96, rooms1341, price225+35, legacy48, historical53+23, Audit57+25, elapsed62+25, custody135+76, natural outstanding payout47+27, adjacent continuous/compaction/paid/liveness, manifest and fixed-slot. Rendered2 321 checks cover all types/Grand controls; corrected Practice53 and generated room renders109 pass with actual PNG inspection. Failed diagnostics retained separately. All22 code/test/tool working files match final E workspace byte-for-byte. No served Web or main/NEXT delivery claim."
+        }
+      ],
+      "next_action": "Transfer the tested local commit and evidence to the coordinator for authorized main integration. Keep the denied fetch stopped and leave LAND to diagnose the stopped watcher. Then verify exact served NEXT identity/assets and feasible Web behavior; main/NEXT acceptance remains open. Have the user run or explicitly authorize final manual ledger reconciliation; its automatic-review rejection remains stopped.",
+      "blocker": {
+        "state": "active",
+        "kind": "git_ownership_and_manual_check_authorization",
+        "description": "Escalated git fetch --no-tags github main in the isolated C source checkout was refused as dubious ownership: checkout owner CodexSandboxOffline, integration account theep. Fetch stopped; no trust/settings change or alternate retry. Push not attempted. Main remains89403f389. Independent LAND task handles the stopped NEXT watcher; this task must not restart or promote it. Automatic approval review separately rejected the final read-only ledger CLI because AGENTS.md reserves manual reconciliation to the user. No process started, no cp061-ledger-final1 run directory exists, and no retry was attempted. The user must run or explicitly authorize that manual check.",
+        "requires_user_input": true,
+        "observed_at": "2026-11-19T08:08:19.217781+00:00",
+        "evidence": [
+          "docs/testing/BTH061_coin_pusher_last_minute_20261119.md",
+          "Parent delegation explicitly permits transfer of the tested patch to the coordinator."
+        ]
+      },
+      "updated_at": "2026-11-19T08:08:19.217781+00:00"
+    },
+    {
+      "id": "BTH061-COIN-PUSHER-LAST-MINUTE-001-COPY",
+      "name": "Shared live drop-button copy across all Coin Pushers",
+      "aliases": [],
+      "group": "current",
+      "parent_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "state": "open",
+      "commits": [
+        {
+          "sha": "06efa32f0f14aa684d1a5d3134dacf78fa695531",
+          "evidence": [
+            "docs/testing/BTH061_coin_pusher_last_minute_20261119.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": "",
+        "evidence": []
+      },
+      "scope": [
+        "Latest explicit user scope: every Coin Pusher variant/theme/shared practice control, configured idle cost and actual active paid batch amount; preserve behavior and unrelated UI."
+      ],
+      "acceptance_scope": "Bounded source implementation and focused qualification under full parent objective; no parent closure from a partial batch.",
+      "status": "LOCALLY_QUALIFIED_INTEGRATION_BLOCKED",
+      "owner": {
+        "name": "Last-minute Coin Pusher changes",
+        "task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+        "assignment_state": "assigned"
+      },
+      "evidence": [
+        {
+          "reference": "docs/testing/BTH061_coin_pusher_last_minute_20261119.md",
+          "kind": "guarded_runtime_checkpoint",
+          "summary": "Local tested code commit 06efa32f0f14aa684d1a5d3134dacf78fa695531. Guarded disposable E qualification passes: accounting96, rooms1341, price225+35, legacy48, historical53+23, Audit57+25, elapsed62+25, custody135+76, natural outstanding payout47+27, adjacent continuous/compaction/paid/liveness, manifest and fixed-slot. Rendered2 321 checks cover all types/Grand controls; corrected Practice53 and generated room renders109 pass with actual PNG inspection. Failed diagnostics retained separately. All22 code/test/tool working files match final E workspace byte-for-byte. No served Web or main/NEXT delivery claim."
+        }
+      ],
+      "next_action": "Transfer the tested local commit and evidence to the coordinator for authorized main integration. Keep the denied fetch stopped and leave LAND to diagnose the stopped watcher. Then verify exact served NEXT identity/assets and feasible Web behavior; main/NEXT acceptance remains open. Have the user run or explicitly authorize final manual ledger reconciliation; its automatic-review rejection remains stopped.",
+      "blocker": {
+        "state": "active",
+        "kind": "git_ownership_and_manual_check_authorization",
+        "description": "Escalated git fetch --no-tags github main in the isolated C source checkout was refused as dubious ownership: checkout owner CodexSandboxOffline, integration account theep. Fetch stopped; no trust/settings change or alternate retry. Push not attempted. Main remains89403f389. Independent LAND task handles the stopped NEXT watcher; this task must not restart or promote it. Automatic approval review separately rejected the final read-only ledger CLI because AGENTS.md reserves manual reconciliation to the user. No process started, no cp061-ledger-final1 run directory exists, and no retry was attempted. The user must run or explicitly authorize that manual check.",
+        "requires_user_input": true,
+        "observed_at": "2026-11-19T08:08:19.217781+00:00",
+        "evidence": [
+          "docs/testing/BTH061_coin_pusher_last_minute_20261119.md",
+          "Parent delegation explicitly permits transfer of the tested patch to the coordinator."
+        ]
+      },
+      "updated_at": "2026-11-19T08:08:19.217781+00:00"
+    },
+    {
+      "id": "BTH061-COIN-PUSHER-LAST-MINUTE-001-GRAND",
+      "name": "Grand Casino seeded Coin Pushers and denomination",
+      "aliases": [],
+      "group": "current",
+      "parent_id": "BTH061-COIN-PUSHER-LAST-MINUTE-001",
+      "state": "open",
+      "commits": [
+        {
+          "sha": "06efa32f0f14aa684d1a5d3134dacf78fa695531",
+          "evidence": [
+            "docs/testing/BTH061_coin_pusher_last_minute_20261119.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": "",
+        "evidence": []
+      },
+      "scope": [
+        "Exactly one normally seeded random Coin Pusher in Grand Main replacing Pull Tabs and one in High Limit; stable room authority/dedupe/return/reload across seeds, other rooms/practice unchanged.",
+        "Grand Main ordinary coins cost/pay $1, High Limit cost/pay $5 through actual debit and normal-coin credit; bonus/jackpot/item semantics unchanged."
+      ],
+      "acceptance_scope": "Bounded source implementation and focused qualification under full parent objective; no parent closure from a partial batch.",
+      "status": "LOCALLY_QUALIFIED_INTEGRATION_BLOCKED",
+      "owner": {
+        "name": "Last-minute Coin Pusher changes",
+        "task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c/delegated-coin-pusher-20261119",
+        "assignment_state": "assigned"
+      },
+      "evidence": [
+        {
+          "reference": "docs/testing/BTH061_coin_pusher_last_minute_20261119.md",
+          "kind": "guarded_runtime_checkpoint",
+          "summary": "Local tested code commit 06efa32f0f14aa684d1a5d3134dacf78fa695531. Guarded disposable E qualification passes: accounting96, rooms1341, price225+35, legacy48, historical53+23, Audit57+25, elapsed62+25, custody135+76, natural outstanding payout47+27, adjacent continuous/compaction/paid/liveness, manifest and fixed-slot. Rendered2 321 checks cover all types/Grand controls; corrected Practice53 and generated room renders109 pass with actual PNG inspection. Failed diagnostics retained separately. All22 code/test/tool working files match final E workspace byte-for-byte. No served Web or main/NEXT delivery claim."
+        }
+      ],
+      "next_action": "Transfer the tested local commit and evidence to the coordinator for authorized main integration. Keep the denied fetch stopped and leave LAND to diagnose the stopped watcher. Then verify exact served NEXT identity/assets and feasible Web behavior; main/NEXT acceptance remains open. Have the user run or explicitly authorize final manual ledger reconciliation; its automatic-review rejection remains stopped.",
+      "blocker": {
+        "state": "active",
+        "kind": "git_ownership_and_manual_check_authorization",
+        "description": "Escalated git fetch --no-tags github main in the isolated C source checkout was refused as dubious ownership: checkout owner CodexSandboxOffline, integration account theep. Fetch stopped; no trust/settings change or alternate retry. Push not attempted. Main remains89403f389. Independent LAND task handles the stopped NEXT watcher; this task must not restart or promote it. Automatic approval review separately rejected the final read-only ledger CLI because AGENTS.md reserves manual reconciliation to the user. No process started, no cp061-ledger-final1 run directory exists, and no retry was attempted. The user must run or explicitly authorize that manual check.",
+        "requires_user_input": true,
+        "observed_at": "2026-11-19T08:08:19.217781+00:00",
+        "evidence": [
+          "docs/testing/BTH061_coin_pusher_last_minute_20261119.md",
+          "Parent delegation explicitly permits transfer of the tested patch to the coordinator."
+        ]
+      },
+      "updated_at": "2026-11-19T08:08:19.217781+00:00"
+    },
     {
       "id": "CREW-STASH-RETURN-ROUTE-HIDDEN-20261116",
       "name": "Keep the recovery road to a stashed Crew package visible",
