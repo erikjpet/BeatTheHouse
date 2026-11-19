@@ -8607,6 +8607,8 @@ func _blackjack_result_message(hand_results: Array, side_results: Array, main_de
 		message += " (%s)" % "; ".join(side_details).left(96)
 	if bool(cheat.get("strategy_confronted", false)):
 		message += ". Dealer challenges the off-book line."
+	elif bool(cheat.get("caught", false)) and int(cheat.get("ordinary_strategy_count", 0)) > 0 and not bool(cheat.get("used_peek", false)) and not bool(cheat.get("used_count", false)) and not bool(cheat.get("advantage_play", false)):
+		message += ". Your play draws scrutiny; heat rises."
 	elif bool(cheat.get("caught", false)):
 		message += ". Caught cheating; heat spikes."
 	elif int(cheat.get("suspicion_delta", 0)) > 0:
