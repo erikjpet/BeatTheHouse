@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-19T20:19:41.895539+00:00",
+  "updated_at": "2026-11-19T23:13:34.811781+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -9175,7 +9175,7 @@
         }
       },
       "state": "open",
-      "status": "OPEN_RENDERED_6_GAME_PASSES_4_NARROWER_CREW_NOT_REACHED",
+      "status": "Open - native narrow checkpoints; seven-case acceptance incomplete",
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -9319,9 +9319,32 @@
           "kind": "bounded_native_terms_recruitment_stake",
           "reference": "docs/testing/NEXT_Crew_terms_and_stake_QA_20261116.md",
           "summary": "Continued normal terms, recruits and stake branches; original enabled no-audit Lock assertion retained (3/4), independent safe-rejection repro9/9. Dynamic choice_views overrides authored disabled. Repay UI omits $20 debit. Alternate actual Hold/Dump/Dock ending and cold terminal8/8 retain one Clean Sweep payout1150, cash1327/chips14. Browser/WASM open."
+        },
+        {
+          "kind": "land03_native_unfunded_boundaries",
+          "reference": "docs/testing/LAND-03_save_continue_2026-11-19.md",
+          "summary": "51dcc3e: genuine normal-clock pointer play; VP held-hand cold Continue94 to one Draw92; Bar Dice Reveal warm Load/Lift and cold Continue165 to one Call143/carry110. LAND03-QA-001 retains first-writer950s timeout, corrected by second fresh normal-Exit workflow. LAND03-QA-002 retains first Roulette inbox JSON publication failure before PLAY; no reader/pass/product-crash inference, retry qualification outside this two-case checkpoint. Internal Save success and validated primary, no literal rendered Saved text. ObjectDB exit warnings retained without inferring a product leak. Full paid-state/Web/remaining-case scope stays Open."
+        },
+        {
+          "kind": "land03_native_already_settled_roulette",
+          "reference": "docs/testing/LAND-03_save_continue_2026-11-19.md",
+          "summary": "51dcc3e fresh HouseD normal route: actual CONFIRM charged27 and durably settled black26 before Save. Distinct cold Continue restored41cash/N1/RNG2040219732, one paid request. Later normal autonomous sit-out raised N2/RNG1385686050 with wager_cost0/delta0; generic journal stake27 retained. Three narrow qualifications, full seven-case paid-state/Web acceptance Open. v3 full saved-source and raw-live-domain typed observations retain explicit coverage limits."
+        },
+        {
+          "kind": "observed_pre_cold_baccarat_recovery",
+          "reference": "docs/testing/LAND-03_save_continue_2026-11-19.md#bth061-land03-baccarat-recovery-001",
+          "summary": "First fresh HouseD ordinary route/funding produced one paid Player110 chip loss, handbaccarat_1_482740, cash33/chips15/N1/RNG1283598514. Writer77 ACKSave/pending-empty at22:31:08; extra unfunded :2 FIRST observed writer78 at22:31:44 in both live/durable state, before Main Menu79 or cold. Cold/warm Continue retained SEALED ACTION Retry/Cancel with intentional working Player110 bets and zero additional funding. Normal Cancel12/ACKSave14 cleared pending with unchanged accounts/hand. Source review identifies missing fresh-Deal funding precheck and delivery publication before late funding rejection; existing pure preflight proposed, not implemented/tested. No duplicate-money/crash or fourth qualification claim."
+        },
+        {
+          "kind": "baccarat_local_funding_fix_checks",
+          "reference": "docs/testing/LAND-03_save_continue_2026-11-19.md",
+          "summary": "Exact uncommitted Baccarat hashf181618/testde86a07/patch186b6f9. Focused V3 passed with non-vacuous funding/retry/nonunit and synthetic active/due guards. Owned E77+explicit closed-run companions: normal rendered Deal inputs produced no new pending request, actual Save and distinct cold Continue preserved33cash/15chips/N1/RNG1283598514. Native timer7 inactive, no native auto-due or literal funding-message claim. Normal Clear later cleared working bets; source does not. Finding/full-case/Web and delivery remain Open."
         }
       ],
-      "implementation_batches": [],
+      "implementation_batches": [
+        "BTH061-LAND03-NATIVE-001",
+        "BTH061-LAND03-BACCARAT-RECOVERY-001"
+      ],
       "next_action": "Retain unresolved paid-state matrix rows; six explicit rendered/floor-save cases passed. Do not substitute prior native checks or a visually unfinished but financially settled save for an unresolved paid file.",
       "blocker": {
         "state": "none",
@@ -9332,7 +9355,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-16T02:39:48.629157+00:00",
+      "updated_at": "2026-11-19T23:13:34.811781+00:00",
       "candidate_qualification_20261111": {
         "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
         "proof": "docs/testing/AUD061-17_release_coverage_2026-11-11.md",
@@ -47389,7 +47412,7 @@
       "parent_ids": [],
       "group": "current",
       "state": "open",
-      "status": "Open - native cases passed; full post-fare rollback unverified",
+      "status": "Open - native cases passed; full travel rollback unverified",
       "owner": {
         "assignment_state": "assigned",
         "name": "LAND PM delegated worker",
@@ -47460,13 +47483,18 @@
           "reference": "E:\\CodexQA\\BTH\\runs\\land02-grand-external-c598-20261119-02\\evidence\\external-reentry-receipt.json",
           "kind": "genuine_external_return_in_declared_progressed_fixture",
           "summary": "Source-declared STANDARD-TRAVEL-apartment-0: actual enabled Grand→Punchline→Grand public confirmations,15checks0failures. Return remembered9/carried3/route+8 givesHeat17, no second recognition. Original uninstrumented startup nonzero retained; corrected Main-ready/progress adapter passed with assertions unchanged. Not earnedGold or post-fare rollback."
+        },
+        {
+          "kind": "acceptance_wording_correction",
+          "reference": "docs/testing/LAND-02_checkpoint_2026-11-19.md",
+          "summary": "Plan209 requires full-travel pre-Heat restoration after genuine mutation/rejection, not a fare-debit/refund witness. Historical post-fare shorthand corrected; raw196/33/15 and injected-host evidence unchanged; genuine normal rejection and full acceptance remain Open."
         }
       ],
-      "next_action": "Preserve current196, separate-process rendered cold33 and genuine external15 evidence. Establish an ordinary accepted offer that genuinely rejects after fare mutation; no injected rejection or failure hook can supply this missing acceptance.",
+      "next_action": "Preserve196/33/15 and the retained injected full-host regression. Capture an ordinary accepted route whose genuine production rejection follows travel Heat/clock mutation, then prove pre-travel Heat/local levels/history/source/RNG/clock/money/claims restored with no new save/receipt. A fare debit/refund is not required. No injection or failure hook substitutes for normal-play acceptance.",
       "blocker": {
         "state": "active",
-        "kind": "unestablished_post_fare_fixture",
-        "description": "No legitimate normal offer/seed/state is established whose destination passes prechecks then fails after settlement. Earlier expiry/affordability failures and retained injected pre-fare rejection do not qualify. No owner-save dependency.",
+        "kind": "unestablished_normal_travel_rejection_fixture",
+        "description": "A genuine accepted normal route with production rejection after travel Heat/clock mutation is not established. Earlier expiry/affordability prechecks are insufficient; retained full-host injected rejection has narrower structural scope. Fare debit/refund is not required. No owner-save dependency.",
         "requires_user_input": false,
         "observed_at": "2026-11-19T20:19:41.894511+00:00",
         "evidence": [
@@ -47475,13 +47503,13 @@
       },
       "implementation_batches": [],
       "planned_app_changes": [],
-      "updated_at": "2026-11-19T20:19:41.894511+00:00",
+      "updated_at": "2026-11-19T22:45:33.376061+00:00",
       "landing_061": {
         "proposed_bucket": "LAND-02",
         "state": "actual_routing_recorded",
         "receipt": "docs/testing/LAND-01_ledger_reconciliation_2026-11-19.md",
         "actual_bucket": "LAND-02",
-        "remaining_gate": "Preserve current196, separate-process rendered cold33 and genuine external15 evidence. Establish an ordinary accepted offer that genuinely rejects after fare mutation; no injected rejection or failure hook can supply this missing acceptance.",
+        "remaining_gate": "Preserve196/33/15 and the retained injected full-host regression. Capture an ordinary accepted route whose genuine production rejection follows travel Heat/clock mutation, then prove pre-travel Heat/local levels/history/source/RNG/clock/money/claims restored with no new save/receipt. A fare debit/refund is not required. No injection or failure hook substitutes for normal-play acceptance.",
         "recorded_at": "2026-11-19T19:59:49.681445+00:00",
         "acceptance_unchanged": true,
         "work_authorization_unchanged": true
@@ -53528,6 +53556,129 @@
         "evidence": []
       },
       "updated_at": "2026-11-16T03:26:26.876305+00:00"
+    },
+    {
+      "id": "BTH061-LAND03-NATIVE-001",
+      "name": "LAND-03 seven native Save close Continue cases",
+      "group": "current",
+      "parent_id": "BTH061-006",
+      "state": "open",
+      "scope": [
+        "Baccarat paid unresolved boundary; Roulette confirmed unspun; Video Poker holds before Draw; Bar Dice Reveal warm/cold; Crew Poker flop or later; expired actual Jazz handoff; offered showdown Meta choice.",
+        "Normal rendered pointer input, genuine clocks, acknowledged Save, distinct nonoverlapping cold process, authoritative decoded accounting, original scope retained.",
+        "Current Baccarat/Roulette Save drains and VP/BarDice unfunded phases remain narrower, not literal paid-unresolved passes."
+      ],
+      "acceptance_scope": "All seven original LAND-03 criteria; meaningful reachable native boundaries recorded separately from unmet criteria; no synthetic state, modified saves or direct Save/load/start calls as controls.",
+      "status": "Open - three narrow qualifications; Baccarat local checks recorded",
+      "owner": {
+        "name": "LAND PM delegated worker",
+        "task_ref": "6afea01c-6770-8191-8f6b-fcb329004023",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": "",
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "land03_native_unfunded_boundaries",
+          "reference": "docs/testing/LAND-03_save_continue_2026-11-19.md",
+          "summary": "51dcc3e: genuine normal-clock pointer play; VP held-hand cold Continue94 to one Draw92; Bar Dice Reveal warm Load/Lift and cold Continue165 to one Call143/carry110. LAND03-QA-001 retains first-writer950s timeout, corrected by second fresh normal-Exit workflow. LAND03-QA-002 retains first Roulette inbox JSON publication failure before PLAY; no reader/pass/product-crash inference, retry qualification outside this two-case checkpoint. Internal Save success and validated primary, no literal rendered Saved text. ObjectDB exit warnings retained without inferring a product leak. Full paid-state/Web/remaining-case scope stays Open."
+        },
+        {
+          "kind": "land03_native_already_settled_roulette",
+          "reference": "docs/testing/LAND-03_save_continue_2026-11-19.md",
+          "summary": "51dcc3e fresh HouseD normal route: actual CONFIRM charged27 and durably settled black26 before Save. Distinct cold Continue restored41cash/N1/RNG2040219732, one paid request. Later normal autonomous sit-out raised N2/RNG1385686050 with wager_cost0/delta0; generic journal stake27 retained. Three narrow qualifications, full seven-case paid-state/Web acceptance Open. v3 full saved-source and raw-live-domain typed observations retain explicit coverage limits."
+        },
+        {
+          "kind": "observed_pre_cold_baccarat_recovery",
+          "reference": "docs/testing/LAND-03_save_continue_2026-11-19.md#bth061-land03-baccarat-recovery-001",
+          "summary": "First fresh HouseD ordinary route/funding produced one paid Player110 chip loss, handbaccarat_1_482740, cash33/chips15/N1/RNG1283598514. Writer77 ACKSave/pending-empty at22:31:08; extra unfunded :2 FIRST observed writer78 at22:31:44 in both live/durable state, before Main Menu79 or cold. Cold/warm Continue retained SEALED ACTION Retry/Cancel with intentional working Player110 bets and zero additional funding. Normal Cancel12/ACKSave14 cleared pending with unchanged accounts/hand. Source review identifies missing fresh-Deal funding precheck and delivery publication before late funding rejection; existing pure preflight proposed, not implemented/tested. No duplicate-money/crash or fourth qualification claim."
+        },
+        {
+          "kind": "baccarat_local_funding_fix_checks",
+          "reference": "docs/testing/LAND-03_save_continue_2026-11-19.md",
+          "summary": "Exact uncommitted Baccarat hashf181618/testde86a07/patch186b6f9. Focused V3 passed with non-vacuous funding/retry/nonunit and synthetic active/due guards. Owned E77+explicit closed-run companions: normal rendered Deal inputs produced no new pending request, actual Save and distinct cold Continue preserved33cash/15chips/N1/RNG1283598514. Native timer7 inactive, no native auto-due or literal funding-message claim. Normal Clear later cleared working bets; source does not. Finding/full-case/Web and delivery remain Open."
+        }
+      ],
+      "next_action": "Retain the three narrow native qualifications and the separately scoped Baccarat local fix checks. Commit/verify the exact fix on main/NEXT, preserve unverified native auto-due/full-case/Web boundaries, and continue Crew later street, responsive resolved Jazz miss and offered showdown Meta choice through normal controls within the original limits. No LAND-03W until its full native/NEXT prerequisites.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "Sole guarded slot explicitly handed over after CRT zero-owned release.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-19T21:21:21.317565+00:00",
+        "evidence": [
+          "Sentinel_52eb802df4dc81919684e5aed17b0b13"
+        ]
+      },
+      "landing_061": {
+        "actual_bucket": "LAND-03",
+        "state": "actual_routing_recorded",
+        "acceptance_unchanged": true
+      },
+      "updated_at": "2026-11-19T23:13:34.811781+00:00"
+    },
+    {
+      "id": "BTH061-LAND03-BACCARAT-RECOVERY-001",
+      "name": "Unfundable Baccarat Deal leaves sealed recovery",
+      "finding_alias": "LAND03-BACCARAT-RECOVERY-001",
+      "group": "current",
+      "parent_id": "BTH061-006",
+      "state": "open",
+      "scope": [
+        "Prevent an unfundable NEW Baccarat Deal from publishing a sealed delivery, using the existing pure funding preview at actual rates.",
+        "Retain one paid110-chip settlement and responsive normal Cancel recovery without assuming duplicate money, a product crash or cold-load causation.",
+        "Preserve deliberate working bets, normal20s auto-deal, all host guards and existing delivery recovery; focused regression and required native/Web rechecks, with no economy, odds, payout or settlement-semantic change."
+      ],
+      "acceptance_scope": "Focused ordinary/source-boundary reproduction, narrowly tested funding preflight before NEW delivery publication, associated commit/delivery and required native/Web rechecks. Existing recovery and working-bet behavior must remain intact. Original BTH061-006 and LAND-03 paid-unresolved/Web scope remains Open and unchanged.",
+      "status": "Open - funding preflight source/native qualified; main/NEXT and full native/Web acceptance pending",
+      "owner": {
+        "name": "LAND PM delegated worker",
+        "task_ref": "6afea01c-6770-8191-8f6b-fcb329004023",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": "",
+        "evidence": [],
+        "scope": "Exact local product/test patch and scoped checks recorded; no associated commit, main/NEXT delivery or full-case/Web qualification yet."
+      },
+      "evidence": [
+        {
+          "kind": "observed_pre_cold_baccarat_recovery",
+          "reference": "docs/testing/LAND-03_save_continue_2026-11-19.md#bth061-land03-baccarat-recovery-001",
+          "summary": "First fresh HouseD ordinary route/funding produced one paid Player110 chip loss, handbaccarat_1_482740, cash33/chips15/N1/RNG1283598514. Writer77 ACKSave/pending-empty at22:31:08; extra unfunded :2 FIRST observed writer78 at22:31:44 in both live/durable state, before Main Menu79 or cold. Cold/warm Continue retained SEALED ACTION Retry/Cancel with intentional working Player110 bets and zero additional funding. Normal Cancel12/ACKSave14 cleared pending with unchanged accounts/hand. Source review identifies missing fresh-Deal funding precheck and delivery publication before late funding rejection; existing pure preflight proposed, not implemented/tested. No duplicate-money/crash or fourth qualification claim."
+        },
+        {
+          "kind": "baccarat_local_funding_fix_checks",
+          "reference": "docs/testing/LAND-03_save_continue_2026-11-19.md",
+          "summary": "Exact uncommitted Baccarat hashf181618/testde86a07/patch186b6f9. Focused V3 passed with non-vacuous funding/retry/nonunit and synthetic active/due guards. Owned E77+explicit closed-run companions: normal rendered Deal inputs produced no new pending request, actual Save and distinct cold Continue preserved33cash/15chips/N1/RNG1283598514. Native timer7 inactive, no native auto-due or literal funding-message claim. Normal Clear later cleared working bets; source does not. Finding/full-case/Web and delivery remain Open."
+        }
+      ],
+      "next_action": "Commit the exact reviewed product/test and proof, then verify main/NEXT and relevant behavior. Preserve the native automatic-due coverage gap, retained existing recovery, working bets and economy. Complete required full-case/native/Web acceptance before closure; local checks are not deployment.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "Active scoped implementation/test work after source-contract review; normal Cancel recovered this disposable run. No owner-save or operator dependency.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-19T22:35:22.538073+00:00",
+        "evidence": [
+          "docs/testing/LAND-03_save_continue_2026-11-19.md"
+        ]
+      },
+      "landing_061": {
+        "actual_bucket": "LAND-03",
+        "state": "actual_routing_recorded",
+        "acceptance_unchanged": true
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-19T23:13:34.811781+00:00"
     }
   ]
 }

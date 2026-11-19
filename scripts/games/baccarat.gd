@@ -674,6 +674,10 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 				session["baccarat_sit_out"] = true
 			elif total < int(table.get("table_minimum", 20)):
 				return _message_command(session, "Baccarat table minimum is %s." % PlayerTextScript.format_currency_amount(GameModule.presentation_currency_for_game(run_state, get_id(), environment), int(table.get("table_minimum", 20))))
+			if run_state != null and total > 0:
+				var funding := run_state.preview_grand_casino_wager_funding(get_id(), total, environment)
+				if not bool(funding.get("ok", false)):
+					return _message_command(session, str(funding["message"]))
 			return GameModule.surface_command({
 				"handled": true,
 				"ui_state": session,

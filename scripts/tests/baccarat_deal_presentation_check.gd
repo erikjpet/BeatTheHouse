@@ -34,9 +34,10 @@ func _run() -> void:
 	]
 	for fixture in cases:
 		await _check_hand(game, canvas, fixture)
+	_check_fresh_deal_funding(game, canvas)
 	canvas.free()
 	if failures.is_empty():
-		print("BACCARAT_DEAL_PRESENTATION PASS natural=true both_draw=true player_only=true banker_only=true clocks=true replay=true save_load=true repeated_deal=true auto_min_controls=true auto_paid=true auto_sitout=true")
+		print("BACCARAT_DEAL_PRESENTATION PASS natural=true both_draw=true player_only=true banker_only=true clocks=true replay=true save_load=true repeated_deal=true auto_min_controls=true auto_paid=true auto_sitout=true fresh_funding_guard=true pending_retry=true nonunit_exchange=true")
 	else:
 		for failure in failures: push_error(failure)
 	quit(0 if failures.is_empty() else 1)
@@ -205,6 +206,97 @@ func _check_hand(game, canvas, fixture: Dictionary) -> void:
 			guard_ledger = host._sealed_action_host_ledger(run, false, false)
 			_check(bool(sitout_auto.get("direct_resolve", false)) and bool(sitout_result.get("blackjack_host_committed", false)) and bool(sitout_result.get("baccarat_sat_out", false)) and int(sitout_result.get("baccarat_total_wager", -1)) == 0 and run.grand_casino_total_money() == sitout_before and (guard_ledger.get("pending_delivery", {}) as Dictionary).is_empty(), "valid automatic sit-out hand keeps zero stake and no pending delivery")
 	host.free()
+
+
+# Synthetic regression for BTH061-LAND03-BACCARAT-RECOVERY-001, not normal UI proof.
+# The first fixture mirrors the observed working110 loss to cash33/chips15.
+func _check_fresh_deal_funding(game, canvas) -> void:
+	for fixture in [
+		{"name": "working110", "cash": 33, "chips": 125, "bet": 110, "minimum": 110, "rate": 1},
+		{"name": "exchange3", "cash": 75, "chips": 95, "bet": 80, "minimum": 20, "rate": 3},
+	]:
+		var run := RunState.new()
+		run.start_new("BACCARAT-FRESH-FUNDING-%s" % fixture.name)
+		run.bankroll = int(fixture.cash)
+		run.grand_casino_chips = int(fixture.chips)
+		run.simulation_msec = 1000000
+		var environment := {"id": "baccarat_fresh_funding", "archetype_id": "grand_casino_high_limit", "kind": "boss", "game_ids": ["baccarat"], "economic_profile": {"stake_floor": int(fixture.minimum), "stake_ceiling": 200}, "security_profile": {"strictness": "high"}, "local_narrative_flags": {"casino_chip_cash_rate": int(fixture.rate)}}
+		var table: Dictionary = game.generate_environment_state(run, environment, run.create_rng("table"))
+		# Mandatory natural Banker9 beats Player1; the paid hand creates the shortfall.
+		var shoe: Array = []
+		for rank in [10, 4, 1, 5]:
+			shoe.append({"rank": rank, "suit": shoe.size() % 4, "deck": 0})
+		while shoe.size() < 80:
+			shoe.append({"rank": 2, "suit": shoe.size() % 4, "deck": 0})
+		table["shoe"] = shoe
+		table["shoe_remaining"] = shoe.size()
+		table["cut_card_remaining"] = 4
+		table["reshuffle_pending"] = false
+		environment["game_states"] = {"baccarat": table}
+		run.current_environment = environment
+		var binding := RunState.action_authority_table_binding("baccarat", environment)
+		var ledger := Authority.default_ledger(binding, run.action_authority_checkpoint_fingerprint())
+		table[Authority.LEDGER_KEY] = Authority.stage_session(ledger, {"selected_chip": 10, "selected_stake": 10, "baccarat_bets": {"player": int(fixture.bet)}})
+		game._update_environment_table(run.current_environment, table)
+		game.enter(run, run.current_environment)
+		var host := Host.new()
+		host.current_game = game
+		host.game_module_cache = {"baccarat": game}
+		host.run_state = run
+		host.selected_stake = 10
+		host.game_surface_canvas = canvas
+		host.current_game_state_key = "baccarat"
+		game.set_transient_state_key_context("baccarat")
+		host._set_active_game_binding("baccarat")
+		var initial := _funding_guard_observation(run)
+		var funded_preview := run.preview_grand_casino_wager_funding("baccarat", int(fixture.bet), run.current_environment)
+		_check(bool(funded_preview.get("ok", false)) and int(funded_preview.get("existing_chips_used", 0)) == int(fixture.bet) and int(funded_preview.get("cash_used", -1)) == 0 and Runtime.canonical_json(_funding_guard_observation(run)) == Runtime.canonical_json(initial), "%s funded preview is pure and uses existing chips" % fixture.name)
+		var staged: Dictionary = host._sealed_action_host_surface_intent("baccarat_deal", 0, false, run.simulation_msec)
+		var issued: Dictionary = staged.get("_sealed_action_host_delivery", {})
+		_check(bool(staged.get("resolve", false)) and not issued.is_empty() and Runtime.canonical_json(_funding_guard_observation(run)) == Runtime.canonical_json(initial), "%s fresh affordable deal publishes delivery without funding or resolution" % fixture.name)
+		# Exercise the real pending-retry branch before first delivery is resolved.
+		var retry: Dictionary = host._sealed_action_host_surface_intent("table_game_retry_pending", 0, false, run.simulation_msec)
+		var retry_delivery: Dictionary = retry.get("_sealed_action_host_delivery", {})
+		_check(bool(retry.get("direct_resolve", false)) and not issued.is_empty() and str(retry_delivery.get("request_key", "")) == str(issued.get("request_key", "")), "%s legitimate pending retry retains its exact request" % fixture.name)
+		var paid: Dictionary = host._sealed_action_host_resolve_intent("deal_baccarat", int(retry_delivery.get("stake", 0)), retry_delivery)
+		table = game._table_state_preview(run, run.current_environment)
+		if not bool(paid.get("blackjack_host_committed", false)):
+			print("BACCARAT_FRESH_FUNDING_REJECTION " + JSON.stringify({"fixture": str(fixture.name), "error_code": str(paid.get("error_code", "")), "message": str(paid.get("message", "")), "diagnostic_detail": str(paid.get("diagnostic_detail", "")), "request_key": str(paid.get("request_key", ""))}))
+		_check(bool(paid.get("blackjack_host_committed", false)) and int(paid.get("blackjack_host_wager_cost", -1)) == int(fixture.bet) and int(table.get("hands_played", 0)) == 1 and str(table.get("last_result", {}).get("winner", "")) == "banker" and run.bankroll == int(fixture.cash) and run.grand_casino_chips == 15, "%s funded pending retry settles its one losing hand" % fixture.name)
+		var completed: Dictionary = host._sealed_action_host_ledger(run, false, false)
+		_check((completed.get("pending_delivery", {}) as Dictionary).is_empty() and (completed.get("request_cache", {}) as Dictionary).size() == 1 and (completed.get("journal", []) as Array).size() == 1 and int((completed.get("session", {}) as Dictionary).get("baccarat_bets", {}).get("player", 0)) == int(fixture.bet), "%s completed hand keeps working bets and one committed receipt" % fixture.name)
+		run.simulation_msec = int(table.get("last_result", {}).get("resolved_at_msec", 0)) + 6000
+		var rejected_before := _funding_guard_observation(run)
+		var unfunded_preview := run.preview_grand_casino_wager_funding("baccarat", int(fixture.bet), run.current_environment)
+		_check(not bool(unfunded_preview.get("ok", true)) and Runtime.canonical_json(_funding_guard_observation(run)) == Runtime.canonical_json(rejected_before), "%s insufficient funding preview is pure" % fixture.name)
+		if int(fixture.rate) > 1:
+			_check(run.bankroll + run.grand_casino_chips >= int(fixture.bet), "exchange3 refusal cannot be replaced by nominal cash-plus-chips check")
+		var refused: Dictionary = host._sealed_action_host_surface_intent("baccarat_deal", 0, false, run.simulation_msec)
+		_check(bool(refused.get("handled", false)) and str(refused.get("message", "")) == str(unfunded_preview["message"]), "%s manual refusal is the exact funding preflight response" % fixture.name)
+		_check(not bool(refused.get("resolve", false)) and not bool(refused.get("direct_resolve", false)) and not refused.has("_sealed_action_host_delivery"), "%s unaffordable manual draft is refused before delivery" % fixture.name)
+		host._sealed_action_host_auto_intent(run.simulation_msec)
+		var armed_timer := GameModule.table_round_timer_status_peek(game._table_state_preview(run, run.current_environment), run.simulation_msec, "Next hand", GameModule.TABLE_ROUND_START_DELAY_MSEC, false)
+		_check(bool(armed_timer.get("active", false)) and not bool(armed_timer.get("due", true)), "%s first auto probe really starts a not-yet-due timer" % fixture.name)
+		run.simulation_msec += GameModule.TABLE_ROUND_START_DELAY_MSEC + 1
+		var due_timer := GameModule.table_round_timer_status_peek(game._table_state_preview(run, run.current_environment), run.simulation_msec, "Next hand", GameModule.TABLE_ROUND_START_DELAY_MSEC, false)
+		_check(bool(due_timer.get("active", false)) and bool(due_timer.get("due", false)), "%s second auto probe reaches the existing due timer" % fixture.name)
+		var refused_auto: Dictionary = host._sealed_action_host_auto_intent(run.simulation_msec)
+		var after: Dictionary = host._sealed_action_host_ledger(run, false, false)
+		_check(bool(refused_auto.get("handled", false)) and str(refused_auto.get("message", "")) == str(unfunded_preview["message"]), "%s timed refusal is the exact funding preflight response" % fixture.name)
+		_check(not bool(refused_auto.get("resolve", false)) and not bool(refused_auto.get("direct_resolve", false)) and not refused_auto.has("_sealed_action_host_delivery") and (after.get("pending_delivery", {}) as Dictionary).is_empty(), "%s unaffordable timed draft is refused before delivery" % fixture.name)
+		_check(int(after.get("boundary_ordinal", -1)) == int(completed.get("boundary_ordinal", -2)) and int(after.get("next_request_ordinal", -1)) == int(completed.get("next_request_ordinal", -2)) and Runtime.canonical_json(after.get("request_cache", {})) == Runtime.canonical_json(completed.get("request_cache", {})) and Runtime.canonical_json(after.get("journal", [])) == Runtime.canonical_json(completed.get("journal", [])), "%s refusal creates no request or committed receipt" % fixture.name)
+		_check(Runtime.canonical_json(_funding_guard_observation(run)) == Runtime.canonical_json(rejected_before), "%s refusal preserves funds RNG inventory shoe hand history and money story" % fixture.name)
+		_check(int((after.get("session", {}) as Dictionary).get("baccarat_bets", {}).get("player", 0)) == int(fixture.bet), "%s unaffordable working bets stay editable and are not cleared" % fixture.name)
+		var cleared: Dictionary = host._sealed_action_host_surface_intent("baccarat_clear", 0, false, run.simulation_msec)
+		var cleared_ledger: Dictionary = host._sealed_action_host_ledger(run, false, false)
+		_check(bool(cleared.get("handled", false)) and ((cleared_ledger.get("session", {}) as Dictionary).get("baccarat_bets", {}) as Dictionary).is_empty() and (cleared_ledger.get("pending_delivery", {}) as Dictionary).is_empty(), "%s normal Clear remains usable after funding refusal" % fixture.name)
+		host.free()
+
+
+func _funding_guard_observation(run: RunState) -> Dictionary:
+	# Timer/session presentation may advance; these economic/game-result fields may not.
+	var table: Dictionary = run.current_environment.get("game_states", {}).get("baccarat", {})
+	return {"cash": run.bankroll, "chips": run.grand_casino_chips, "rng_seed": run.rng_seed, "rng_state": run.rng_state, "inventory": run.inventory.duplicate(true), "story": run.story_log.duplicate(true), "story_archive_count": run.story_log_archive_count, "money_archive": run.story_money_archive.duplicate(true), "hands_played": table.get("hands_played", 0), "shoe": (table.get("shoe", []) as Array).duplicate(true), "last_hand": (table.get("last_hand", {}) as Dictionary).duplicate(true), "last_result": (table.get("last_result", {}) as Dictionary).duplicate(true), "hand_history": (table.get("hand_history", []) as Array).duplicate(true)}
 
 
 func _check(ok: bool, message: String) -> void:
