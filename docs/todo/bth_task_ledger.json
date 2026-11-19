@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-19T18:03:04.283098+00:00",
+  "updated_at": "2026-11-19T18:05:35.930551+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -295,7 +295,17 @@
           "summary": "Native69 semantic/input/owner/mixer checks; actual native56 output checks with 42s captured mixer PCM; CRT634 and separate-process coldContinue23+16 pass. Private Web4 passed genuine first-gesture unlock, actual mixed output recording, accepted launch/touch Leave/ExitTV, separate settings gains and Master0. Captures are app-output evidence, not physical speaker hearing. All owned Jobs closed0. Earlier failed harness runs and no-store history retained; Tutorial live Save/cold Continue remains separate and open."
         }
       ],
-      "commits": [],
+      "commits": [
+        {
+          "sha": "de30067dfd0be9727c81eefb613394f7151f2254",
+          "evidence": [
+            {
+              "kind": "qualification_report",
+              "reference": "docs/testing/CRT_audio_20261119.md"
+            }
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -311,7 +321,7 @@
         "observed_at": "2026-11-19T18:03:04.283098+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-19T18:03:04.283098+00:00"
+      "updated_at": "2026-11-19T18:05:35.930551+00:00"
     },
     {
       "id": "BTH061-CRT-PRACTICE-001",
