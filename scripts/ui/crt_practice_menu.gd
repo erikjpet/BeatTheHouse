@@ -146,6 +146,7 @@ var _last_pointer := Vector2.ZERO
 var _await_pointer_release := false
 var _display_mouse_inside := false
 var _restoring_selection := false
+var _forwarding_real_mouse_motion := false
 
 
 func configure(host: Variant) -> void:
@@ -441,6 +442,9 @@ func _process(_delta: float) -> void:
 	_shader_material.set_shader_parameter("jitter", _jitter)
 	_shader_material.set_shader_parameter("ripple_phase", _ripple_phase)
 	_shader_material.set_shader_parameter("ripple_strength", _ripple_strength)
+	# Luminance-only motion does not change the shared visual/input warp.
+	_shader_material.set_shader_parameter("scan_phase", 0.0 if _reduce_motion else fmod(seconds * 0.8, TAU))
+	_shader_material.set_shader_parameter("roll_phase", 0.0 if _reduce_motion else fmod(seconds * 0.12, 1.0))
 	if _await_pointer_release and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 		_await_pointer_release = false
 
@@ -530,7 +534,15 @@ func _on_display_gui_input(event: InputEvent) -> void:
 			forwarded_motion.relative = forwarded.position - _local_to_display(position - original_motion.relative)
 		_last_pointer = forwarded.position
 		_notify_display_mouse_entered()
+		_forwarding_real_mouse_motion = event is InputEventMouseMotion and _inside_glass(position / _display.size)
 		_display_viewport.push_input(forwarded, true)
+		# mouse_entered alone misses motion within a tile after keyboard navigation.
+		# Query the actual GUI hit owner, so popup/seed/setup occlusion stays native.
+		if _forwarding_real_mouse_motion and _inside_glass(position / _display.size):
+			var hovered := _display_viewport.gui_get_hovered_control()
+			if hovered is GameTile:
+				_on_game_hovered(str(hovered.get_meta("game_test_id", "")))
+		_forwarding_real_mouse_motion = false
 	_display.accept_event()
 
 
@@ -677,13 +689,14 @@ func _remember_selection(game_id: String, user_initiated: bool = true) -> void:
 
 
 func _on_game_hovered(game_id: String) -> void:
-	if not is_visible_in_tree() or _restoring_selection or _await_pointer_release \
+	if not _forwarding_real_mouse_motion or not is_visible_in_tree() or _restoring_selection or _await_pointer_release \
 			or (_generation_panel != null and _generation_panel.visible):
 		return
 	var button: Button = _game_buttons.get(game_id)
 	if button != null and not button.disabled and button.focus_mode != Control.FOCUS_NONE:
-		# Hover and keyboard/controller navigation share one focused selection.
-		# focus_entered owns the change, including the one semantic move signal.
+		# Update explicitly even if this tile already owns focus. The idempotent
+		# selection guard keeps the ensuing focus_entered signal silent.
+		_remember_selection(game_id)
 		button.grab_focus()
 
 

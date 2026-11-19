@@ -53679,6 +53679,48 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-19T23:13:34.811781+00:00"
+    },
+    {
+      "id": "BTH061-CRT-MOUSE-SCAN-001",
+      "name": "Rolling CRT scanlines and mouse-only selection flow",
+      "aliases": [],
+      "group": "current",
+      "parent_id": "BTH061-CRT-PRACTICE-001",
+      "state": "open",
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": "",
+        "evidence": []
+      },
+      "scope": [
+        "Erik requests moving TV scanlines, mouse hover selection/highlight, and a fully mouse-playable Home TV, seed, practice Leave and Exit TV flow. Preserve keyboard/controller/touch, approved music/cues and silent focus restoration."
+      ],
+      "acceptance_scope": "Focused actual native/Web real mouse entry, hover, seed/Setup, launch, Leave, rehover and Exit; actual two-height scan-band photometry over9seconds and Reduce Motion. No broad rerun.",
+      "status": "NATIVE_WEB_QUALIFIED_MAIN_NEXT_PENDING",
+      "owner": {
+        "name": "CRT mouse and scanline focused delivery",
+        "task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-mouse-scan:/root",
+        "assignment_state": "assigned"
+      },
+      "evidence": [
+        {
+          "kind": "qualification",
+          "reference": "docs/testing/CRT_mouse_scanline_20261119.md",
+          "summary": "Unchanged exact two product hashes reuse native66; fresh actual Web mouse-only Home/TV, hover, seed/Setup, Scratch launch, mouse Leave, rehover and Exit passed on0b60c9e6. Native actual two-height roll and Reduce Motion retained. Prior interrupted Web remains incomplete."
+        }
+      ],
+      "next_action": "Commit and push the exact qualified scope through existing main-to-NEXT watcher; verify exact served identity and short startup/Games smoke.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-19T23:58:44.379147+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-19T23:58:44.379147+00:00"
     }
   ]
 }
