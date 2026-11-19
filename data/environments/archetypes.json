@@ -3735,14 +3735,14 @@
     "game_pool": [
       "slot",
       "video_poker",
-      "pull_tabs",
+      "coin_pusher",
       "blackjack",
       "craps"
     ],
     "required_game_ids": [
       "slot",
       "video_poker",
-      "pull_tabs",
+      "coin_pusher",
       "blackjack",
       "craps"
     ],
@@ -4000,6 +4000,10 @@
         [
           450,
           260
+        ],
+        [
+          744,
+          118
         ]
       ],
       "event_spots": [
@@ -4089,17 +4093,19 @@
       "blackjack",
       "baccarat",
       "roulette",
-      "craps"
+      "craps",
+      "coin_pusher"
     ],
     "required_game_ids": [
       "blackjack",
       "baccarat",
       "roulette",
-      "craps"
+      "craps",
+      "coin_pusher"
     ],
     "game_count": [
-      4,
-      4
+      5,
+      5
     ],
     "item_pool": [],
     "item_count": [
@@ -4130,6 +4136,8 @@
     "local_narrative_flags": {
       "boss_floor": true,
       "grand_casino_room": "high_limit",
+      "coin_pusher_drop_cost": 5,
+      "coin_pusher_coin_value": 5,
       "casino_room_travel_minutes": 5,
       "casino_chip_cash_rate": 1,
       "casino_room_targets": [

@@ -467,12 +467,10 @@ func _check_lottery_counter_hosts(library: ContentLibrary) -> void:
 		"bar": "staff:bar_bartender",
 		"gas_station_casino": "character:nell",
 		"jazz_club": "shopkeeper:merchant",
-		"grand_casino": "casino_fixture:host_desk",
 	}
 	var expected_pull_tab_slots := {
 		"gas_station_casino": "fixed.random_game_2",
 		"jazz_club": "fixed.pulltab_game",
-		"grand_casino": "fixed.game_machine_5",
 	}
 	var counter_service_actions := [
 		"dialogue:pull_tab_clerk",
@@ -548,7 +546,7 @@ func _check_lottery_counter_hosts(library: ContentLibrary) -> void:
 				_check(not physical_game_slots.has(game_slot_id), label, "%s shares occupied slot %s" % [game_object_id, game_slot_id])
 				physical_game_slots[game_slot_id] = true
 			_check(physical_game_slots.size() == 3, label, "must expose all three selected machines")
-		if archetype_id in ["bar", "gas_station_casino", "grand_casino"]:
+		if archetype_id in ["bar", "gas_station_casino"]:
 			var unstocked := _generated_environment(library, archetype_id)
 			var unstocked_game_ids := _array(unstocked.get("game_ids", []))
 			unstocked_game_ids.erase("pull_tabs")

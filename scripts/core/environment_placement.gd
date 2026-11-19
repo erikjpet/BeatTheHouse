@@ -8,6 +8,7 @@ const SURFACE_MAP_PATH := "res://data/environments/placement_surfaces.json"
 const SCENARIO_LAYOUT_PATH := "res://data/environments/scenario_slot_layouts.json"
 const DeveloperPlacementStoreScript := preload("res://scripts/core/developer_placement_store.gd")
 const PracticeEnvironmentPlacementScript := preload("res://scripts/core/practice_environment_placement.gd")
+const GrandCoinPusherLayoutCompatibilityScript := preload("res://scripts/core/grand_coin_pusher_layout_compatibility.gd")
 const SLOT_SCHEMA_VERSION := 2
 const SLOT_FAMILIES := ["fixed", "event", "scenario", "exit"]
 const SLOT_COLLECTIONS := {
@@ -173,10 +174,12 @@ static func surface_map(environment: Dictionary) -> Dictionary:
 	if authority_revision != _runtime_surface_revision:
 		_runtime_surface_maps.clear()
 		_runtime_surface_revision = authority_revision
-	var cache_key := "%s|%s" % [DeveloperPlacementStoreScript.layout_id(environment), PracticeEnvironmentPlacementScript.profile_id(environment)]
+	var legacy_profile := GrandCoinPusherLayoutCompatibilityScript.profile_id(environment)
+	var cache_key := "%s|%s|%s" % [DeveloperPlacementStoreScript.layout_id(environment), PracticeEnvironmentPlacementScript.profile_id(environment), legacy_profile]
 	if _runtime_surface_maps.has(cache_key):
 		return _dict(_runtime_surface_maps.get(cache_key, {}))
-	var result := _with_runtime_slot_geometry(environment, PracticeEnvironmentPlacementScript.surface_map(environment, _shipping_surface_map(environment)))
+	var authored := GrandCoinPusherLayoutCompatibilityScript.surface_map(_shipping_surface_map(environment), legacy_profile)
+	var result := _with_runtime_slot_geometry(environment, PracticeEnvironmentPlacementScript.surface_map(environment, authored))
 	_runtime_surface_maps[cache_key] = result
 	return result
 

@@ -1,7 +1,16 @@
 extends SceneTree
 
-const MainScene := preload("res://scenes/main.tscn")
+# Explicit pre-change Grand content fixture pinned to 89403f389. This preserves
+# chip-funded Pull Tabs save coverage; it does not describe fresh Grand content.
+
+const Main := preload("res://scripts/ui/foundation_main.gd")
 const Fixture := preload("res://scripts/tests/pull_tab_grand_fixture.gd")
+
+# The production run/load path builds its UI synchronously. Suppress only the
+# optional background UI coroutine so no fixture callback outlives this host.
+class FixtureHost extends Main:
+	func _prewarm_run_ui_after_web_start() -> void:
+		pass
 const SLOT := "foundation_ui_autosave"
 const FLOOR_SLOT := "pull_tab_grand_floor"
 const SEED := "BTH061-PULLTABS-GRAND-INDEPENDENT-1"
@@ -56,6 +65,7 @@ func _snapshot(run: RunState) -> Dictionary:
 		"tickets_sold": machine.get("tickets_sold", 0), "deals": machine.get("deals", []),
 		"inventory": run.inventory, "card_float_bits": card_bits,
 		"pending_bags": run.pending_bags, "challenge_modifiers": run.challenge_modifiers(),
+		"historical_room_authority": Fixture.authority_receipt(run),
 	}
 	if OS.get_cmdline_user_args().has("--audit"):
 		snapshot["scenario_id"] = run.current_environment.get("scenario_id", "")
@@ -83,7 +93,12 @@ func _check_navigation_state(actual: Dictionary, saved: Dictionary, label: Strin
 	var saved_protected := saved.duplicate(true)
 	actual_protected.erase("clock_minutes")
 	saved_protected.erase("clock_minutes")
+	# Scenario authority can legitimately progress on Enter/Leave. Exact full
+	# authority remains in disk/load receipts; navigation preserves the old map.
+	actual_protected.erase("historical_room_authority")
+	saved_protected.erase("historical_room_authority")
 	_check(actual_protected == saved_protected, label + " changed protected state")
+	_check(actual.get("historical_room_authority", {}).get("slot_map_digest", "") == saved.get("historical_room_authority", {}).get("slot_map_digest", ""), label + " changed the historical room map")
 	if saved.has("clock_minutes"):
 		_check(actual.has("clock_minutes") and int(actual["clock_minutes"]) >= int(saved["clock_minutes"]), label + " moved the game clock backward")
 
@@ -105,6 +120,8 @@ func _advance_elapsed_clock(run: RunState, label: String) -> bool:
 	var after_protected := after.duplicate(true)
 	before_protected.erase("clock_minutes")
 	after_protected.erase("clock_minutes")
+	before_protected.erase("historical_room_authority")
+	after_protected.erase("historical_room_authority")
 	var ok := _check(bool(advance_result.get("ok", false)), label + " production elapsed clock advance failed: " + JSON.stringify(advance_result))
 	ok = _check(run.game_clock_minutes == previous_minutes + 45, label + " did not advance exactly 45 minutes") and ok
 	ok = _check(after_protected == before_protected, label + " elapsed clock advance changed protected nonclock state") and ok
@@ -164,8 +181,10 @@ func _verify_synthetic_pending_menu_guards(app: Control) -> void:
 
 func _run() -> void:
 	_progress("run_start")
-	var app: Control = MainScene.instantiate()
+	var app: Control = FixtureHost.new()
+	app.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	app.set("continuous_environment_clock_enabled", false)
+	app.set("script_prewarm_stopping", true)
 	app.set("autosave_slot_id", SLOT)
 	root.add_child(app)
 	_progress("host_added")
@@ -173,6 +192,13 @@ func _run() -> void:
 		await process_frame
 	_progress("host_initial_frames_complete")
 	app.get("user_settings").coach_tips_enabled = false
+	# Warm generation and cold Continue both explicitly select the pinned old
+	# content input. This does not assert a Pull Tabs machine in fresh Grand.
+	var historical := Fixture.prepare_historical_content(app)
+	fixture_facts = historical.get("facts", {})
+	if not _check(bool(historical.get("ok", false)), "explicit historical Grand content setup: " + JSON.stringify(historical.get("errors", []))):
+		await _finish(app)
+		return
 	if OS.get_cmdline_user_args().has("--cold"):
 		var expected_value: Variant = JSON.parse_string(FileAccess.get_file_as_string(_expected_path()))
 		if not _check(typeof(expected_value) == TYPE_DICTIONARY and not (expected_value as Dictionary).is_empty(), "cold check requires retained warm receipt"):
@@ -312,8 +338,10 @@ func _run() -> void:
 
 func _finish(app: Control) -> void:
 	_progress("finish_before_worker_drain")
+	app.call("_drain_script_prewarm_requests_for_shutdown")
 	app.get("save_service").wait_for_async_save()
 	_progress("finish_after_worker_drain")
+	_check(Fixture.restore_current_content(app), "historical fixture restores its host's fresh current Grand catalog")
 	app.queue_free()
 	for _frame in range(8):
 		await process_frame

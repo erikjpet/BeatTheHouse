@@ -414,6 +414,10 @@ static func restore_snapshot(snapshot: Dictionary, machine_definition: Dictionar
 	var rng := RngStream.new()
 	rng.configure(1)
 	var simulation := CoinPusherSolverScript.create_machine(rng, machine_definition, 0)
+	# Compact coins share this cabinet's denomination; the position blob does
+	# not store a per-body value. Legacy ordinary cabinets still default to $1.
+	var coins: Dictionary = machine_definition.get("coins", {}) if typeof(machine_definition.get("coins", {})) == TYPE_DICTIONARY else {}
+	var coin_value := maxi(1, int(coins.get("value", 1)))
 	simulation["phase_fp"] = int(snapshot.get("phase_fp", 0))
 	simulation["stroke_cycle_serial"] = int(snapshot.get("stroke_cycle_serial", 0))
 	var period := maxi(1, int((machine_definition.get("stroke", {}) as Dictionary).get("period_ticks", 240)))
@@ -444,7 +448,7 @@ static func restore_snapshot(snapshot: Dictionary, machine_definition: Dictionar
 			var packed := _read_u32(raw, cursor)
 			cursor += 4
 			var flags := (packed >> 29) & 7
-			var metadata := {"value": 1}
+			var metadata := {"value": coin_value}
 			if (flags & 4) != 0:
 				metadata["opening"] = true
 			if typeof(sidecar.get(str(body_id), {})) == TYPE_DICTIONARY and not (sidecar.get(str(body_id), {}) as Dictionary).is_empty():
@@ -466,7 +470,7 @@ static func restore_snapshot(snapshot: Dictionary, machine_definition: Dictionar
 			cursor += 2
 			var flags := int(raw[cursor])
 			cursor += 1
-			bodies.append(_restored_body("body_%05d" % body_id, "coin", x, y, z, {}, machine_definition, "platform" if (flags & 1) != 0 else "deck", (flags & 2) != 0))
+			bodies.append(_restored_body("body_%05d" % body_id, "coin", x, y, z, {"value": coin_value}, machine_definition, "platform" if (flags & 1) != 0 else "deck", (flags & 2) != 0))
 	for body_value in snapshot.get("extra_bodies", []):
 		if typeof(body_value) == TYPE_DICTIONARY:
 			bodies.append(_restore_extra(body_value as Dictionary, machine_definition))

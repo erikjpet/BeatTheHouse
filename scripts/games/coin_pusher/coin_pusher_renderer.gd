@@ -854,7 +854,7 @@ func _hardware_cache_signature(state: Dictionary, hover_action: String, enabled_
 	# Presentation serial is deliberately absent. It advances with the moving
 	# coin bed, while this retained layer contains only cabinet controls and
 	# readouts. Every state value consumed by _draw_hardware is represented here.
-	return "%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%s|%d|%s|%s|%d|%d|%d" % [
+	return "%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%s|%d|%s|%s|%d|%d|%d|%d" % [
 		str(state.get("coin_pusher_static_content_key", "")),
 		int(state.get("coin_pusher_carriage_x", 0)),
 		int(state.get("coin_pusher_selected_hole", 0)),
@@ -872,6 +872,7 @@ func _hardware_cache_signature(state: Dictionary, hover_action: String, enabled_
 		int(state.get("coin_pusher_drop_cost", 1)),
 		int(state.get("coin_pusher_drop_payable_count", 0)),
 		int(state.get("coin_pusher_drop_payable_total", 0)),
+		int(state.get("coin_pusher_drop_queue_total", 0)),
 	]
 
 
@@ -1340,9 +1341,10 @@ func _drop_control_label(state: Dictionary) -> String:
 	if charging > 0:
 		var count := maxi(0, int(state.get("coin_pusher_drop_payable_count", charging)))
 		var total := maxi(0, int(state.get("coin_pusher_drop_payable_total", count * cost)))
-		return "HOLD %d $%d" % [count, total] if count > 0 else "NEED $%d" % cost
+		return "DROPPING $%d" % total if count > 0 else "NEED $%d" % cost
 	var queued := maxi(0, int(state.get("coin_pusher_drop_queue_count", 0)))
-	return "PAID %d; DROP $%d" % [queued, cost] if queued > 0 else "DROP/HOLD $%d" % cost
+	var queued_total := maxi(0, int(state.get("coin_pusher_drop_queue_total", 0)))
+	return "DROPPING $%d" % queued_total if queued > 0 else "DROP $%d" % cost
 
 
 func _draw_hardware(surface, state: Dictionary, colors: Dictionary) -> void:

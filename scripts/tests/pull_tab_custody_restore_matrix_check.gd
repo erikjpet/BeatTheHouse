@@ -3,12 +3,20 @@ extends SceneTree
 # BTH061-PULLTABS-SAVE-001: independent unopened-ticket custody boundaries.
 # Original campaign/profile/save data are never read. Each case buys one newly
 # generated naturally priced $2 ticket; no ticket result is selected or altered.
-const MainScene := preload("res://scenes/main.tscn")
+# Grand content is explicitly historical and pinned to 89403f389; fresh Grand
+# now has a Coin Pusher and is tested separately.
+const Main := preload("res://scripts/ui/foundation_main.gd")
 const Fixture := preload("res://scripts/tests/pull_tab_grand_fixture.gd")
 const Provenance := preload("res://scripts/tests/save_generation_provenance.gd")
 const Codec := preload("res://scripts/core/run_save_codec.gd")
 const CASES := ["tray_reload", "floor_reload", "stale_location", "readonly_views"]
 const PLAYER_FIELDS := ["tray_stack", "ticket_stack", "winner_pile", "loser_pile", "loser_archive_count"]
+
+# Keep every production control/save handler; omit only optional background UI
+# prewarm, whose awaited callback must not survive this short-lived fixture.
+class FixtureHost extends Main:
+	func _prewarm_run_ui_after_web_start() -> void:
+		pass
 var failures: Array[String] = []
 var skipped: Array = []
 var checks := 0
@@ -68,12 +76,16 @@ func _snapshot(run: RunState) -> Dictionary:
 		"inventory": run.inventory, "card_float_bits": card_bits, "pending_bags": run.pending_bags,
 		"challenge_modifiers": run.challenge_modifiers(),
 		"clock_minutes": run.game_clock_minutes, "scenario_id": run.current_environment.get("scenario_id", ""),
+		"historical_room_authority": Fixture.authority_receipt(run),
 	}))
 
 
 func _protected(snapshot: Dictionary, keep_pile: bool = true) -> Dictionary:
 	var result := snapshot.duplicate(true)
 	result.erase("clock_minutes")
+	# Action/navigation can advance scenario authority. Full authority is compared
+	# exactly at every disk/load boundary instead of being frozen across actions.
+	result.erase("historical_room_authority")
 	if not keep_pile:
 		result.erase("pile")
 	return result
@@ -173,6 +185,7 @@ func _reenter_and_repeat(app: Control, expected: Dictionary, ticket_id: String, 
 	_verify_custody(run, ticket_id, label)
 	var entered := _snapshot(run)
 	_check(_protected(entered) == _protected(expected) and int(entered["clock_minutes"]) >= int(expected["clock_minutes"]), label + " re-entry changed protected state or reversed clock")
+	_check(entered.get("historical_room_authority", {}).get("slot_map_digest", "") == expected.get("historical_room_authority", {}).get("slot_map_digest", ""), label + " re-entry changed the historical room map")
 	app.call("_on_game_surface_action", "pull_tab_collect_tray", 0, false)
 	_check(_snapshot(run) == entered, label + " empty repeat Collect changed state")
 
@@ -276,12 +289,27 @@ func _run_case(app: Control, case_id: String) -> Dictionary:
 
 func _run() -> void:
 	_progress("start")
-	var app: Control = MainScene.instantiate()
+	var app: Control = FixtureHost.new()
+	app.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	app.set("continuous_environment_clock_enabled", false)
+	app.set("script_prewarm_stopping", true)
 	root.add_child(app)
 	for _frame in range(4):
 		await process_frame
 	app.get("user_settings").coach_tips_enabled = false
+	# Both producer and cold verifier explicitly use the declared historical
+	# Grand catalog. New Grand rooms are covered by the current pusher contract.
+	var historical := Fixture.prepare_historical_content(app)
+	facts["historical_content"] = historical.get("facts", {})
+	if not _check(bool(historical.get("ok", false)), "explicit historical Grand content setup: " + JSON.stringify(historical.get("errors", []))):
+		app.call("_drain_script_prewarm_requests_for_shutdown")
+		app.get("save_service").wait_for_async_save()
+		_check(Fixture.restore_current_content(app), "failed historical setup restores current catalog")
+		app.queue_free()
+		await process_frame
+		completed = true
+		quit(1)
+		return
 	if OS.get_cmdline_user_args().has("--cold"):
 		var receipt: Variant = JSON.parse_string(FileAccess.get_file_as_string(_receipt_path()))
 		if _check(typeof(receipt) == TYPE_DICTIONARY and typeof(receipt.get("cases")) == TYPE_ARRAY, "cold phase requires warm fixture receipt"):
@@ -308,7 +336,9 @@ func _run() -> void:
 		if _check(file != null, "warm custody matrix receipt could not be written"):
 			file.store_string(JSON.stringify({"cases": rows, "skipped": skipped}))
 			file.close()
+	app.call("_drain_script_prewarm_requests_for_shutdown")
 	app.get("save_service").wait_for_async_save()
+	_check(Fixture.restore_current_content(app), "historical fixture restores its host's fresh current Grand catalog")
 	app.queue_free()
 	for _frame in range(8):
 		await process_frame

@@ -25370,7 +25370,7 @@
         "game:slot": "wall_mounted",
         "game:slot:2": "wall_mounted",
         "game:slot:3": "wall_mounted",
-        "game:pull_tabs": "wall_mounted",
+        "game:coin_pusher": "wall_mounted",
         "game:video_poker": "wall_mounted",
         "grand_casino_audit_night_lead_auditor": "standing_person",
         "grand_casino_audit_night_open_exit_marker": "wall_mounted",
@@ -26362,9 +26362,9 @@
             118.0
           ],
           "footprint_class": "wall_mounted",
-          "physical_role": "Pull Tabs machine",
+          "physical_role": "Coin Pusher machine",
           "occupant_ids": [
-            "game:pull_tabs"
+            "game:coin_pusher"
           ],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -27552,7 +27552,7 @@
         "staff:grand_casino_host": "fixed.staff_host",
         "event:scenario_audit_roster": "fixed.event_audit_roster",
         "service:house_drink": "fixed.service_house_drink",
-        "game:pull_tabs": "fixed.game_machine_5"
+        "game:coin_pusher": "fixed.game_machine_5"
       },
       "event_object_slot_ids": {
         "event:chain06_cass_first_contact": "event.behind_counter_person_1",
@@ -27604,7 +27604,7 @@
         "service:house_drink": "fixed",
         "staff:grand_casino_host": "fixed",
         "event:heist_live_table": "scenario",
-        "game:pull_tabs": "fixed",
+        "game:coin_pusher": "fixed",
         "game_hook:pull_tabs:ticket_redeemer": "fixed",
         "dialogue:pull_tab_clerk": "fixed",
         "travel:grand_casino_back_room": "exit",
@@ -27809,6 +27809,7 @@
       "class_overrides": {
         "event:recruitment_bishop": "standing_person",
         "game:baccarat": "surface_item",
+        "game:coin_pusher": "wall_mounted",
         "game:blackjack": "surface_item",
         "game:craps": "surface_item",
         "game:roulette": "surface_item",
@@ -27817,6 +27818,24 @@
       "scenario_overflow_ids": [],
       "scenario_art_keys": {},
       "fixed_slots": [
+        {
+          "id": "fixed.game_coin_pusher",
+          "kind": "fixed",
+          "pos": [744.0, 118.0],
+          "footprint_class": "wall_mounted",
+          "physical_role": "Coin Pusher machine",
+          "occupant_ids": ["game:coin_pusher"],
+          "runtime_reserve": false,
+          "reserve_reason": "",
+          "hit_rect": [722.0, 94.0, 44.0, 48.0],
+          "label_anchor": [744.0, 154.0],
+          "facing": "none",
+          "priority": 50,
+          "zone_id": "room",
+          "support_id": "wall",
+          "walk_lane_ids": [],
+          "occupancy_required": false
+        },
         {
           "id": "fixed.game_table_1",
           "kind": "fixed",
@@ -28343,7 +28362,9 @@
           "occupancy_required": false
         }
       ],
-      "fixed_object_slot_ids": {},
+      "fixed_object_slot_ids": {
+        "game:coin_pusher": "fixed.game_coin_pusher"
+      },
       "event_object_slot_ids": {},
       "scenario_object_slot_ids": {},
       "exit_object_slot_ids": {
@@ -28355,7 +28376,8 @@
         "game_spots:0": "fixed.game_table_1",
         "game_spots:1": "fixed.game_table_2",
         "game_spots:2": "fixed.game_table_3",
-        "game_spots:3": "fixed.game_table_4"
+        "game_spots:3": "fixed.game_table_4",
+        "game_spots:4": "fixed.game_coin_pusher"
       },
       "event_category_slot_ids": {
         "event_spots:1": "event.standing_person_1"
@@ -28367,6 +28389,7 @@
         "travel_spots:0": "exit.safe_left"
       },
       "object_family_ids": {
+        "game:coin_pusher": "fixed",
         "event:heist_live_table": "scenario",
         "travel:grand_casino": "exit",
         "travel:grand_casino_cage": "exit",

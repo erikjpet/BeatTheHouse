@@ -226,10 +226,10 @@ func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
 		"game_id": get_id(),
 		"legal_actions": legal_actions(run_state, environment),
 		"cheat_actions": cheat_actions(run_state, environment),
-		"stake_floor": _drop_cost(),
-		"stake_ceiling": maxi(_drop_cost(), capacity),
-		"base_stake_ceiling": maxi(_drop_cost(), capacity),
-		"economy_stake_ceiling": maxi(_drop_cost(), capacity),
+		"stake_floor": _drop_cost(environment),
+		"stake_ceiling": maxi(_drop_cost(environment), capacity),
+		"base_stake_ceiling": maxi(_drop_cost(environment), capacity),
+		"economy_stake_ceiling": maxi(_drop_cost(environment), capacity),
 		"economy_state": run_state.economy() if run_state != null else {},
 		"economy_pressure_applied": false,
 	}
@@ -246,10 +246,10 @@ func wager_cost_for_context(action_id: String, _stake: int, run_state: RunState,
 		if typeof(bindings_value) == TYPE_DICTIONARY:
 			var drop_binding_value: Variant = (bindings_value as Dictionary).get("coin_pusher_drop", null)
 			if typeof(drop_binding_value) == TYPE_DICTIONARY:
-				return _drop_cost() if bool((drop_binding_value as Dictionary).get("enabled", false)) else 0
+				return _drop_cost(environment) if bool((drop_binding_value as Dictionary).get("enabled", false)) else 0
 		if _drop_refused(_read_machine_state(run_state, environment)):
 			return 0
-	return _drop_cost() if action_id == DROP_ACTION else 0
+	return _drop_cost(environment) if action_id == DROP_ACTION else 0
 
 
 func generate_environment_state(run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
@@ -418,14 +418,14 @@ func surface_action_command(surface_action: String, _index: int, _confirm_reques
 	match surface_action:
 		"coin_pusher_drop":
 			if _drop_refused(machine):
-				return GameModule.surface_command({"handled": true, "message": "The coin slot refuses the quarter; nothing was charged."}, true)
+				return GameModule.surface_command({"handled": true, "message": "The coin slot refuses the %s; nothing was charged." % _drop_coin_label(environment)}, true)
 			if debug_action_timing:
 				_last_action_timing_usec["command_dispatch"] = Time.get_ticks_usec() - debug_action_stage_started_usec
 				_last_action_timing_usec["command_total"] = Time.get_ticks_usec() - debug_action_started_usec
-			return GameModule.surface_command({"handled": true, "direct_resolve": true, "action_id": DROP_ACTION, "action_kind": "legal", "set_stake": _drop_cost(), "skip_stake_validation": true, "preserve_surface_ui_state": true}, true)
+			return GameModule.surface_command({"handled": true, "direct_resolve": true, "action_id": DROP_ACTION, "action_kind": "legal", "set_stake": _drop_cost(environment), "skip_stake_validation": true, "preserve_surface_ui_state": true}, true)
 		CARRIAGE_LEFT_ACTION, CARRIAGE_RIGHT_ACTION:
 			var simulation := _simulation(machine)
-			var rail: Dictionary = (_machine_definition(str(machine.get("variation_id", _variation_id()))).get("apparatus", {}) as Dictionary).get("rail", {})
+			var rail: Dictionary = (_definition_for_machine(machine).get("apparatus", {}) as Dictionary).get("rail", {})
 			var speed := int(rail.get("speed_per_tick", 900))
 			var direction := -1 if surface_action == CARRIAGE_LEFT_ACTION else 1
 			var requested := int(simulation.get("carriage_x", 50000)) + direction * speed
@@ -510,13 +510,13 @@ func surface_pointer_command(surface_action: String, _index: int, phase: String,
 		if phase == "end":
 			var end_held_ticks := maxi(0, int(charge_simulation.get("tick", 0)) - int(next_state.get("coin_pusher_drop_charge_started_tick", charge_simulation.get("tick", 0))))
 			var requested := clampi(maxi(1, end_held_ticks / 6), 1, 60)
-			var affordable := run_state.wager_capacity_for_game(get_id(), environment) / maxi(1, _drop_cost()) if run_state != null else requested
+			var affordable := run_state.wager_capacity_for_game(get_id(), environment) / maxi(1, _drop_cost(environment)) if run_state != null else requested
 			var count := mini(requested, maxi(0, affordable))
 			next_state.erase("coin_pusher_drop_charge_started_tick")
 			next_state["coin_pusher_drop_charge_count"] = 0
 			if count <= 0:
-				return GameModule.surface_command({"handled": true, "ui_state": next_state, "preserve_surface_ui_state": true, "message": "The slot needs another quarter.", "surface_state_patch": {"coin_pusher_drop_charge_count": 0}.merged(_drop_price_view(run_state, environment, 0))}, true)
-			return GameModule.surface_command({"handled": true, "ui_state": next_state, "direct_resolve": true, "action_id": DROP_ACTION, "action_kind": "legal", "set_stake": count * _drop_cost(), "skip_stake_validation": true, "preserve_surface_ui_state": true, "surface_state_patch": {"coin_pusher_drop_charge_count": 0}.merged(_drop_price_view(run_state, environment, 0))}, true)
+				return GameModule.surface_command({"handled": true, "ui_state": next_state, "preserve_surface_ui_state": true, "message": "The slot needs another %s." % _drop_coin_label(environment), "surface_state_patch": {"coin_pusher_drop_charge_count": 0}.merged(_drop_price_view(run_state, environment, 0))}, true)
+			return GameModule.surface_command({"handled": true, "ui_state": next_state, "direct_resolve": true, "action_id": DROP_ACTION, "action_kind": "legal", "set_stake": count * _drop_cost(environment), "skip_stake_validation": true, "preserve_surface_ui_state": true, "surface_state_patch": {"coin_pusher_drop_charge_count": 0}.merged(_drop_price_view(run_state, environment, 0))}, true)
 		return GameModule.surface_command({"handled": true, "ui_state": next_state, "preserve_surface_ui_state": true}, true)
 	if phase == "begin":
 		next_state["coin_pusher_rail_drag_active"] = true
@@ -540,13 +540,13 @@ func surface_pointer_command(surface_action: String, _index: int, phase: String,
 
 
 func _apparatus_type(machine: Dictionary) -> String:
-	var definition := _machine_definition(str(machine.get("variation_id", _variation_id())))
+	var definition := _definition_for_machine(machine)
 	var apparatus: Dictionary = definition.get("apparatus", {}) if typeof(definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
 	return str(apparatus.get("type", "rail_slot"))
 
 
 func _selected_nozzle_id(machine: Dictionary, simulation: Dictionary) -> String:
-	var definition := _machine_definition(str(machine.get("variation_id", _variation_id())))
+	var definition := _definition_for_machine(machine)
 	var apparatus: Dictionary = definition.get("apparatus", {}) if typeof(definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
 	var nozzles: Array = apparatus.get("nozzles", []) if typeof(apparatus.get("nozzles", [])) == TYPE_ARRAY else []
 	if str(apparatus.get("type", "rail_slot")) == "hole_set":
@@ -562,7 +562,7 @@ func _selected_nozzle_id(machine: Dictionary, simulation: Dictionary) -> String:
 func _native_surface_actions(machine: Dictionary) -> Array:
 	var result: Array = ["coin_pusher_drop", DROP_CHARGE_ACTION]
 	if _apparatus_type(machine) == "hole_set":
-		var apparatus: Dictionary = _machine_definition(str(machine.get("variation_id", _variation_id()))).get("apparatus", {})
+		var apparatus: Dictionary = _definition_for_machine(machine).get("apparatus", {})
 		var holes: Array = apparatus.get("holes", []) if typeof(apparatus.get("holes", [])) == TYPE_ARRAY else []
 		for index in range(holes.size()):
 			result.append("%s%d" % [HOLE_ACTION_PREFIX, index])
@@ -584,7 +584,7 @@ func _native_surface_actions(machine: Dictionary) -> Array:
 func _apparatus_action_bindings(machine: Dictionary, simulation: Dictionary) -> Dictionary:
 	var bindings := {}
 	if _apparatus_type(machine) == "hole_set":
-		var apparatus: Dictionary = _machine_definition(str(machine.get("variation_id", _variation_id()))).get("apparatus", {})
+		var apparatus: Dictionary = _definition_for_machine(machine).get("apparatus", {})
 		var holes: Array = apparatus.get("holes", []) if typeof(apparatus.get("holes", [])) == TYPE_ARRAY else []
 		var selected := clampi(int(simulation.get("selected_hole", 0)), 0, maxi(0, holes.size() - 1))
 		var jammed := _jammed_holes(machine, simulation)
@@ -617,7 +617,7 @@ func _apparatus_action_bindings(machine: Dictionary, simulation: Dictionary) -> 
 
 
 func _rail_x_from_board_position(machine: Dictionary, board_position: Vector2) -> int:
-	var definition := _machine_definition(str(machine.get("variation_id", _variation_id())))
+	var definition := _definition_for_machine(machine)
 	var apparatus: Dictionary = definition.get("apparatus", {}) if typeof(definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
 	var geometry: Dictionary = definition.get("geometry", {}) if typeof(definition.get("geometry", {})) == TYPE_DICTIONARY else {}
 	var rail: Dictionary = apparatus.get("rail", {}) if typeof(apparatus.get("rail", {})) == TYPE_DICTIONARY else {}
@@ -713,7 +713,7 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		return _empty_pusher_result(action_id, environment, "Red light. This cabinet stays dead tonight; the rest of the room is open.")
 	if action_id == DROP_ACTION:
 		if _drop_refused(machine):
-			var refused_result := _empty_pusher_result(action_id, environment, "The coin slot refuses the quarter; nothing was charged.")
+			var refused_result := _empty_pusher_result(action_id, environment, "The coin slot refuses the %s; nothing was charged." % _drop_coin_label(environment))
 			refused_result["surface_action_view_patch"] = _surface_action_view_patch(machine, run_state, environment, _ui_state)
 			refused_result["preserve_surface_ui_state"] = true
 			return refused_result
@@ -734,9 +734,9 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		machine["cold_quarters_armed"] = false
 		machine["cold_quarters_density_armed"] = 0
 		var provenance := _drop_provenance(machine)
-		var requested_count := maxi(1, _stake / maxi(1, _drop_cost()))
+		var requested_count := maxi(1, _stake / maxi(1, _drop_cost(environment)))
 		var nozzle_id := _selected_nozzle_id(machine, simulation)
-		var queued_count := CoinPusherLiveSessionScript.enqueue_drops(machine, {"nozzle_id": nozzle_id, "density": density, "provenance": provenance, "chain_depth": 0, "bonus_origin": false}, requested_count)
+		var queued_count := CoinPusherLiveSessionScript.enqueue_drops(machine, {"nozzle_id": nozzle_id, "density": density, "provenance": provenance, "chain_depth": 0, "bonus_origin": false, "unit_cost": _drop_cost(environment)}, requested_count)
 		if queued_count > 0:
 			machine["paid_drop_pending"] = true
 			var settlement_session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
@@ -744,10 +744,10 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		if debug_action_timing:
 			_last_action_timing_usec["resolve_enqueue_drops"] = Time.get_ticks_usec() - debug_resolve_stage_started_usec
 			debug_resolve_stage_started_usec = Time.get_ticks_usec()
-		var total_cost := queued_count * _drop_cost()
+		var total_cost := queued_count * _drop_cost(environment)
 		machine["action_count"] = int(machine.get("action_count", 0)) + queued_count
 		machine["total_cost"] = int(machine.get("total_cost", 0)) + total_cost
-		machine["last_message"] = "%d quarter%s queued through %s. The nozzle can move while they feed." % [queued_count, "" if queued_count == 1 else "s", nozzle_id]
+		machine["last_message"] = "%d %s%s queued through %s. The nozzle can move while they feed." % [queued_count, _drop_coin_label(environment), "" if queued_count == 1 else "s", nozzle_id]
 		_write_live_durable(run_state, environment, machine, false, DROP_DURABLE_KEYS)
 		if debug_action_timing:
 			_last_action_timing_usec["resolve_write_durable"] = Time.get_ticks_usec() - debug_resolve_stage_started_usec
@@ -856,6 +856,8 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 		"coin_pusher_tray_value": _ledger_value(tray),
 		"coin_pusher_liveness_ticks": int(presentation_session.get("liveness_ticks", 0)),
 		"coin_pusher_last_step_metrics": presentation_session.get("last_step_metrics", {}),
+		"coin_pusher_drop_queue_count": _queued_drop_count(machine),
+		"coin_pusher_drop_queue_total": _queued_drop_total(machine),
 	}
 	if publish_presentation and int(advanced.get("ticks", 0)) > 0:
 		CoinPusherLiveSessionScript.mark_presentation_published(machine, now_msec)
@@ -880,7 +882,7 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	if settled_empty_drop_count > 0:
 		patch["coin_pusher_settlement_outcome"] = "no_payout"
 		patch["coin_pusher_settled_drop_count"] = settled_empty_drop_count
-		patch["outcome_message"] = "%d quarter%s settle. Nothing reaches the tray." % [settled_empty_drop_count, "" if settled_empty_drop_count == 1 else "s"]
+		patch["outcome_message"] = "%d %s%s settle. Nothing reaches the tray." % [settled_empty_drop_count, _drop_coin_label(environment), "" if settled_empty_drop_count == 1 else "s"]
 	return patch
 
 
@@ -1024,13 +1026,13 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 		local_rng = RngStream.new()
 		local_rng.configure(JsonCoerceScript._overflow_stable_hash("%s:%s:%s" % [get_id(), str(run_state.seed_text if run_state != null else "fallback"), str(environment.get("id", "node"))]))
 	var variation_rng := RngStream.new()
-	variation_rng.configure(JsonCoerceScript._overflow_stable_hash("coin_pusher_variation:%s:%s" % [str(run_state.seed_text if run_state != null else "fallback"), _environment_node_id(run_state, environment)]))
+	variation_rng.configure(JsonCoerceScript._overflow_stable_hash("coin_pusher_variation:%s:%s" % [str(run_state.seed_text if run_state != null else "fallback"), _cabinet_node_id(run_state, environment)]))
 	var variation_id := _seeded_variation_id(environment, variation_rng)
 	var variation_config := _variation_config(variation_id)
 	if _generation_timing_enabled:
 		_last_generation_timing_usec["setup"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
-	var simulation := CoinPusherSolverScript.create_machine(local_rng.fork("fixed_point_pile"), _machine_definition(variation_id), _opening_coin_count(variation_id))
+	var simulation := CoinPusherSolverScript.create_machine(local_rng.fork("fixed_point_pile"), _machine_definition(variation_id, _coin_value(environment)), _opening_coin_count(variation_id))
 	if _generation_timing_enabled:
 		_last_generation_timing_usec["solver_create"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
@@ -1045,7 +1047,7 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 	var security_tolerance := _security_tolerance_delta(environment, run_state)
 	var item_tolerance := JackpotRidgeScript.tolerance_band_bonus(run_state, variation_config) if variation_id == "jackpot_ridge" else 0
 	var tolerance := maxi(1, base_tolerance + security_tolerance + variation_tolerance + item_tolerance)
-	var node_id := _environment_node_id(run_state, environment)
+	var node_id := _cabinet_node_id(run_state, environment)
 	var variation_state: Dictionary = {}
 	if variation_id == "jackpot_ridge":
 		variation_state = JackpotRidgeScript.initial_state(variation_config, local_rng.fork("jackpot_ridge"), _lane_count(), _cell_count())
@@ -1090,6 +1092,9 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 	if _generation_timing_enabled:
 		_last_generation_timing_usec["machine_state"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
+	if _coin_value(environment) != _coin_value() or _drop_cost(environment) != _drop_cost():
+		machine["coin_value"] = _coin_value(environment)
+		machine["drop_cost"] = _drop_cost(environment)
 	_assign_feature_items(machine, run_state, environment)
 	_sync_physical_features(machine)
 	if _generation_timing_enabled:
@@ -1257,15 +1262,19 @@ func _physical_features_reconciled(machine: Dictionary) -> bool:
 
 func _normalize_machine_state(source: Dictionary, run_state: RunState = null, environment: Dictionary = {}) -> Dictionary:
 	var machine := source.duplicate(true)
+	if not machine.has("coin_value") and _coin_value(environment) != _coin_value():
+		machine["coin_value"] = _coin_value(environment)
+	if not machine.has("drop_cost") and _drop_cost(environment) != _drop_cost():
+		machine["drop_cost"] = _drop_cost(environment)
 	var has_live := typeof(machine.get("simulation", {})) == TYPE_DICTIONARY and str((machine.get("simulation", {}) as Dictionary).get("schema", "")) == CoinPusherSolverScript.SCHEMA
 	var has_settled := typeof(machine.get("settled_state", {})) == TYPE_DICTIONARY and str((machine.get("settled_state", {}) as Dictionary).get("schema", "")) == CoinPusherLiveSessionScript.SNAPSHOT_SCHEMA
 	var migrated_v2 := not has_live and not has_settled
 	var legacy_tray_value := maxi(0, int(machine.get("tray_value", 0)))
 	var migration_rng := RngStream.new()
-	migration_rng.configure(JsonCoerceScript._overflow_stable_hash("coin_pusher_physical_migration:%s:%s" % [_environment_node_id(run_state, environment), str(run_state.seed_text if run_state != null else "fallback")]))
+	migration_rng.configure(JsonCoerceScript._overflow_stable_hash("coin_pusher_physical_migration:%s:%s" % [_cabinet_node_id(run_state, environment), str(run_state.seed_text if run_state != null else "fallback")]))
 	if migrated_v2:
 		var migrated_variation_id := str(machine.get("variation_id", _variation_id()))
-		machine["simulation"] = CoinPusherSolverScript.create_machine(migration_rng, _machine_definition(migrated_variation_id), mini(_opening_coin_count(migrated_variation_id), 250))
+		machine["simulation"] = CoinPusherSolverScript.create_machine(migration_rng, _machine_definition(migrated_variation_id, int(machine.get("coin_value", _coin_value(environment)))), mini(_opening_coin_count(migrated_variation_id), 250))
 		var migrated_ledger: Array = []
 		for _coin in range(legacy_tray_value):
 			migrated_ledger.append({"kind": "coin", "value": 1, "item_id": "", "provenance": {"migration": "v2"}})
@@ -1283,8 +1292,8 @@ func _normalize_machine_state(source: Dictionary, run_state: RunState = null, en
 		machine["variation_state"] = {}
 	if (machine.get("variation_state", {}) as Dictionary).is_empty() and variation_id != "quarter_falls":
 		var rng := RngStream.new()
-		rng.configure(JsonCoerceScript._overflow_stable_hash("migrate:%s:%s" % [variation_id, _environment_node_id(run_state, environment)]))
-		machine["variation_state"] = JackpotRidgeScript.initial_state(_variation_config(variation_id), rng, _lane_count(), _cell_count()) if variation_id == "jackpot_ridge" else VaultDropScript.initial_state(_variation_config(variation_id), rng, _lane_count(), _cell_count(), _environment_node_id(run_state, environment))
+		rng.configure(JsonCoerceScript._overflow_stable_hash("migrate:%s:%s" % [variation_id, _cabinet_node_id(run_state, environment)]))
+		machine["variation_state"] = JackpotRidgeScript.initial_state(_variation_config(variation_id), rng, _lane_count(), _cell_count()) if variation_id == "jackpot_ridge" else VaultDropScript.initial_state(_variation_config(variation_id), rng, _lane_count(), _cell_count(), _cabinet_node_id(run_state, environment))
 	for key in ["tray_value", "total_cost", "total_payout", "action_count", "tell_rung", "suspicion_floor"]:
 		machine[key] = maxi(0, int(machine.get(key, 0)))
 	machine["tell_decay_remaining_ticks"] = maxi(0, int(machine.get("tell_decay_remaining_ticks", 0)))
@@ -1382,7 +1391,7 @@ func _feature_hardware_descriptor_for_session(machine: Dictionary, vault_views: 
 
 
 func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null, environment: Dictionary = {}, ui_state: Dictionary = {}) -> Dictionary:
-	var definition := _machine_definition(str(machine.get("variation_id", _variation_id())))
+	var definition := _definition_for_machine(machine)
 	var simulation := _simulation(machine) if _has_v3_simulation(machine) else CoinPusherLiveSessionScript.restore_snapshot(machine.get("settled_state", {}), definition)
 	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
 	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
@@ -1462,6 +1471,7 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		"coin_pusher_motor_started": bool(machine.get("motor_started", false)),
 		"coin_pusher_selected_nozzle_id": str(machine.get("selected_nozzle_id", _selected_nozzle_id(machine, simulation))),
 		"coin_pusher_drop_queue_count": _queued_drop_count(machine),
+		"coin_pusher_drop_queue_total": _queued_drop_total(machine),
 		"coin_pusher_drop_charge_count": int(ui_state.get("coin_pusher_drop_charge_count", 0)),
 		"coin_pusher_tray_count": tray.size(),
 		"coin_pusher_tray_value": _ledger_value(tray),
@@ -1555,6 +1565,7 @@ func _v3_realtime_presentation_patch(machine: Dictionary, current_surface_state:
 		selected_nozzle_id = _selected_nozzle_id(machine, simulation)
 	_append_realtime_change(patch, current_surface_state, "coin_pusher_selected_nozzle_id", selected_nozzle_id)
 	_append_realtime_change(patch, current_surface_state, "coin_pusher_drop_queue_count", _queued_drop_count(machine))
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_drop_queue_total", _queued_drop_total(machine))
 	_append_realtime_change(patch, current_surface_state, "coin_pusher_tray_count", tray.size())
 	_append_realtime_change(patch, current_surface_state, "coin_pusher_tray_value", _ledger_value(tray))
 	_append_realtime_change(patch, current_surface_state, "coin_pusher_input_trace_count", CoinPusherLiveSessionScript.total_input_count(machine))
@@ -1646,6 +1657,24 @@ func _queued_drop_count(machine: Dictionary) -> int:
 	return total
 
 
+func _queued_drop_total(machine: Dictionary) -> int:
+	var total := 0
+	var queue_value: Variant = machine.get("drop_queue")
+	if typeof(queue_value) != TYPE_ARRAY:
+		return total
+	# Paid batches retain their insertion price as they feed. Older queued rows
+	# use this cabinet's configured cost; free feature/target coins never add cost.
+	var legacy_cost := maxi(1, int(machine.get("drop_cost", _drop_cost())))
+	for item_value in queue_value as Array:
+		if typeof(item_value) != TYPE_DICTIONARY:
+			continue
+		var item := item_value as Dictionary
+		if bool(item.get("bonus_origin", false)):
+			continue
+		total += maxi(0, int(item.get("remaining", 0))) * maxi(0, int(item.get("unit_cost", legacy_cost)))
+	return total
+
+
 func _machine_goal_state(machine: Dictionary, simulation: Dictionary) -> Dictionary:
 	var variation_id := str(machine.get("variation_id", "quarter_falls"))
 	var variation_state := _variation_state(machine)
@@ -1689,8 +1718,8 @@ func _machine_goal_state(machine: Dictionary, simulation: Dictionary) -> Diction
 func _coin_pusher_action_bindings(machine: Dictionary, simulation: Dictionary, tray: Array, run_state: RunState = null, environment: Dictionary = {}) -> Dictionary:
 	var drop_refused := _drop_refused(machine)
 	var result := {
-		"coin_pusher_drop": {"label": "DROP $%d" % _drop_cost(), "enabled": not drop_refused},
-		DROP_CHARGE_ACTION: {"label": "HOLD TO DROP ($%d EACH)" % _drop_cost(), "enabled": not drop_refused},
+		"coin_pusher_drop": {"label": "DROP $%d" % _drop_cost(environment), "enabled": not drop_refused},
+		DROP_CHARGE_ACTION: {"label": "DROP $%d" % _drop_cost(environment), "enabled": not drop_refused},
 		SKILL_STOP_ACTION: {"label": "RELEASE" if bool(simulation.get("skill_stop_engaged", false)) else "SKILL STOP", "enabled": true, "lit": bool(simulation.get("skill_stop_engaged", false))},
 		COLLECT_ACTION: {"label": "COLLECT", "enabled": not tray.is_empty()},
 		"coin_pusher_nudge": {"action": "surface_cheat", "index": 0, "label": "NUDGE", "enabled": true},
@@ -1726,6 +1755,8 @@ func _surface_action_view_patch(machine: Dictionary, run_state: RunState, enviro
 		"coin_pusher_goal": _machine_goal_state(machine, simulation),
 		"coin_pusher_tray_count": tray.size(),
 		"coin_pusher_tray_value": _ledger_value(tray),
+		"coin_pusher_drop_queue_count": _queued_drop_count(machine),
+		"coin_pusher_drop_queue_total": _queued_drop_total(machine),
 		"coin_pusher_input_trace_count": CoinPusherLiveSessionScript.total_input_count(machine),
 		"native_selected_surface_actions": _native_surface_actions(machine),
 		"surface_action_bindings": _coin_pusher_action_bindings(machine, simulation, tray, run_state, environment),
@@ -1756,6 +1787,7 @@ func _drop_surface_action_view_patch(machine: Dictionary, run_state: RunState, e
 		# their pointer-command patch. Clear the old quote and show the paid queue.
 		"coin_pusher_drop_charge_count": 0,
 		"coin_pusher_drop_queue_count": _queued_drop_count(machine),
+		"coin_pusher_drop_queue_total": _queued_drop_total(machine),
 		"coin_pusher_input_trace_count": CoinPusherLiveSessionScript.total_input_count(machine),
 	}
 	patch.merge(_drop_price_view(run_state, environment, 0), true)
@@ -1794,7 +1826,7 @@ func _surface_action_catalog_key(machine: Dictionary, run_state: RunState, envir
 func _drop_price_view(run_state: RunState, environment: Dictionary, held_count: int = 0) -> Dictionary:
 	# Quote the same per-gesture limit and cash affordability as Hold release.
 	# This is presentation only; the queue already contains paid drops.
-	var cost := _drop_cost()
+	var cost := _drop_cost(environment)
 	var requested := clampi(held_count, 0, 60)
 	var affordable := requested
 	if requested > 0 and run_state != null:
@@ -1802,6 +1834,7 @@ func _drop_price_view(run_state: RunState, environment: Dictionary, held_count: 
 	var count := mini(requested, affordable)
 	return {
 		"coin_pusher_drop_cost": cost,
+		"coin_pusher_coin_value": _coin_value(environment),
 		"coin_pusher_drop_payable_count": count,
 		"coin_pusher_drop_payable_total": count * cost,
 	}
@@ -1810,9 +1843,9 @@ func _drop_price_view(run_state: RunState, environment: Dictionary, held_count: 
 func _surface_action_stake_view(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var capacity := run_state.wager_capacity_for_game(get_id(), environment) if run_state != null else 0
 	return {
-		"stake_floor": _drop_cost(),
-		"stake_ceiling": maxi(_drop_cost(), capacity),
-		"base_stake_ceiling": maxi(_drop_cost(), capacity),
+		"stake_floor": _drop_cost(environment),
+		"stake_ceiling": maxi(_drop_cost(environment), capacity),
+		"base_stake_ceiling": maxi(_drop_cost(environment), capacity),
 		"economy_state": run_state.economy() if run_state != null else {},
 		"economy_pressure_applied": false,
 	}
@@ -1830,8 +1863,8 @@ func _ensure_live_machine(run_state: RunState, environment: Dictionary) -> Dicti
 	var settled: Dictionary = machine.get("settled_state", {}) if typeof(machine.get("settled_state", {})) == TYPE_DICTIONARY else {}
 	if _has_v3_simulation(machine) and str(settled.get("schema", "")) != CoinPusherLiveSessionScript.SNAPSHOT_SCHEMA:
 		machine["settled_state"] = CoinPusherLiveSessionScript.make_snapshot(_simulation(machine), machine)
-	var seed := JsonCoerceScript._overflow_stable_hash("pusher_live:%s:%s" % [str(run_state.seed_text if run_state != null else "fallback"), _environment_node_id(run_state, environment)])
-	CoinPusherLiveSessionScript.begin(machine, _machine_definition(str(machine.get("variation_id", _variation_id()))), seed, true)
+	var seed := JsonCoerceScript._overflow_stable_hash("pusher_live:%s:%s" % [str(run_state.seed_text if run_state != null else "fallback"), _cabinet_node_id(run_state, environment)])
+	CoinPusherLiveSessionScript.begin(machine, _definition_for_machine(machine), seed, true)
 	_assign_feature_items(machine, run_state, environment)
 	_sync_physical_features(machine)
 	_sync_variation_motor(machine)
@@ -1842,7 +1875,7 @@ func _ensure_live_machine(run_state: RunState, environment: Dictionary) -> Dicti
 
 
 func _live_key(run_state: RunState, environment: Dictionary) -> String:
-	return "%s:%s" % [_environment_node_id(run_state, environment), transient_state_key_context()]
+	return "%s:%s" % [_cabinet_node_id(run_state, environment), transient_state_key_context()]
 
 
 func _write_live_durable(run_state: RunState, environment: Dictionary, live_machine: Dictionary, update_snapshot: bool, changed_keys: Array = []) -> void:
@@ -1895,7 +1928,7 @@ func _write_live_durable(run_state: RunState, environment: Dictionary, live_mach
 func _drop_refused(machine: Dictionary) -> bool:
 	if str(machine.get("variation_id", "")) == "jackpot_ridge":
 		CoinPusherLiveSessionScript.sync_native_body_state(machine)
-	var definition := _machine_definition(str(machine.get("variation_id", _variation_id())))
+	var definition := _definition_for_machine(machine)
 	var simulation := _simulation(machine) if _has_v3_simulation(machine) else CoinPusherLiveSessionScript.restore_snapshot(machine.get("settled_state", {}), definition)
 	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
 	var packed: PackedInt64Array = session.get("presentation_current_packed", PackedInt64Array()) if typeof(session.get("presentation_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array()
@@ -1910,7 +1943,7 @@ func _drop_refused(machine: Dictionary) -> bool:
 func _jammed_holes(machine: Dictionary, simulation: Dictionary) -> Array:
 	if str(machine.get("variation_id", "")) != "jackpot_ridge":
 		return []
-	return JackpotRidgeScript.jammed_holes(_variation_state(machine), CoinPusherSolverScript.body_views(simulation), _machine_definition("jackpot_ridge"))
+	return JackpotRidgeScript.jammed_holes(_variation_state(machine), CoinPusherSolverScript.body_views(simulation), _definition_for_machine(machine))
 
 
 func _drop_provenance(machine: Dictionary) -> Dictionary:
@@ -2119,7 +2152,7 @@ func _consume_physics_events(run_state: RunState, machine: Dictionary, events: A
 			elif str(reward.get("kind", "")) == "drop_multiplier":
 				var metadata: Dictionary = event.get("metadata", {}) if typeof(event.get("metadata", {})) == TYPE_DICTIONARY else {}
 				var provenance: Dictionary = metadata.get("provenance", {}) if typeof(metadata.get("provenance", {})) == TYPE_DICTIONARY else {}
-				var definition := _machine_definition(variation_id)
+				var definition := _definition_for_machine(machine)
 				var apparatus: Dictionary = definition.get("apparatus", {}) if typeof(definition.get("apparatus", {})) == TYPE_DICTIONARY else {}
 				var depth := maxi(0, int(provenance.get("chain_depth", 0)))
 				var depth_cap := maxi(1, int(apparatus.get("chain_depth_cap", 3)))
@@ -2139,15 +2172,15 @@ func _consume_physics_events(run_state: RunState, machine: Dictionary, events: A
 			gutter_count += 1
 		if kind == "coin":
 			if outcome == "tray":
-				payout += _coin_value()
+				payout += maxi(1, int(machine.get("coin_value", _coin_value())))
 				if variation_id == "jackpot_ridge":
 					var ridge_state := _variation_state(machine)
 					_write_ridge_tray_multiplier(_simulation(machine), str(event.get("body_id", "")), JackpotRidgeScript.payout_multiplier(ridge_state))
-					var period := int((_machine_definition(variation_id).get("stroke", {}) as Dictionary).get("period_ticks", 240))
+					var period := int((_definition_for_machine(machine).get("stroke", {}) as Dictionary).get("period_ticks", 240))
 					JackpotRidgeScript.finish_drop(ridge_state, int(event.get("stroke_cycle", 0)), int(event.get("phase_fp", 0)), period)
 			elif outcome == "gutter" and not shim_recovered and _shim_available(run_state, machine):
 				machine["shim_uses_remaining"] = maxi(0, int(machine.get("shim_uses_remaining", 0)) - 1)
-				var definition := _machine_definition(variation_id)
+				var definition := _definition_for_machine(machine)
 				var width := int((definition.get("geometry", {}) as Dictionary).get("width", CoinPusherSolverScript.WIDTH))
 				var return_input := {
 					"kind": "gutter_return",
@@ -2367,7 +2400,7 @@ func _append_motion_audio_events(machine: Dictionary, result: Array) -> void:
 		var use_packed := not current_packed.is_empty() and current_packed.size() == previous_packed.size() and current_packed.size() % 9 == 0
 		if not use_packed and (previous.size() != current.size() or current.is_empty()):
 			return
-		var definition := _machine_definition(str(machine.get("variation_id", _variation_id())))
+		var definition := _definition_for_machine(machine)
 		var geometry: Dictionary = definition.get("geometry", {}) if typeof(definition.get("geometry", {})) == TYPE_DICTIONARY else {}
 		var coins: Dictionary = definition.get("coins", {}) if typeof(definition.get("coins", {})) == TYPE_DICTIONARY else {}
 		var plate_limit := int(geometry.get("back_plate_y", CoinPusherSolverScript.BACK_PLATE_Y)) - int(coins.get("radius", CoinPusherSolverScript.COIN_RADIUS))
@@ -2446,7 +2479,7 @@ func _assign_feature_items(machine: Dictionary, run_state: RunState, environment
 		# a loaded machine assigns the same feature items.
 		seed = maxi(1, JsonCoerceScript._overflow_stable_hash("pusher_items:%s:%s:%s" % [
 			str(run_state.seed_text if run_state != null else "fallback"),
-			_environment_node_id(run_state, environment),
+			_cabinet_node_id(run_state, environment),
 			str(machine.get("variation_id", "quarter_falls")),
 		]) & 0x1FFFFFFFFFFFFF)
 		machine["feature_item_seed"] = seed
@@ -2536,7 +2569,7 @@ func _sync_physical_features(machine: Dictionary) -> void:
 		var feature_id := str(feature.get("id", ""))
 		if feature_id.is_empty() or bool(existing.get(feature_id, false)):
 			continue
-		var machine_definition := _machine_definition(variation_id)
+		var machine_definition := _definition_for_machine(machine)
 		var geometry: Dictionary = machine_definition.get("geometry", {}) if typeof(machine_definition.get("geometry", {})) == TYPE_DICTIONARY else {}
 		var sub_game: Dictionary = machine_definition.get("sub_game", {}) if typeof(machine_definition.get("sub_game", {})) == TYPE_DICTIONARY else {}
 		var coin_data: Dictionary = machine_definition.get("coins", {}) if typeof(machine_definition.get("coins", {})) == TYPE_DICTIONARY else {}
@@ -2868,6 +2901,14 @@ func _resolve_vault_action(action_id: String, run_state: RunState, environment: 
 	return result
 
 
+func _cabinet_node_id(run_state: RunState, environment: Dictionary) -> String:
+	# Grand rooms share one travel node but own separate cabinets and saved piles.
+	var archetype_id := str(environment.get("archetype_id", ""))
+	if archetype_id in ["grand_casino", "grand_casino_high_limit"]:
+		return archetype_id
+	return _environment_node_id(run_state, environment)
+
+
 func _environment_node_id(run_state: RunState, environment: Dictionary) -> String:
 	var node_id := str(environment.get("world_node_id", environment.get("id", ""))).strip_edges()
 	if node_id.is_empty() and run_state != null:
@@ -2902,7 +2943,7 @@ func _register_pile_rumor(run_state: RunState, environment: Dictionary, machine:
 		node_id = run_state.current_world_node_id()
 	if node_id.is_empty():
 		return
-	var simulation := _simulation(machine) if _has_v3_simulation(machine) else CoinPusherLiveSessionScript.restore_snapshot(machine.get("settled_state", {}), _machine_definition(str(machine.get("variation_id", _variation_id()))))
+	var simulation := _simulation(machine) if _has_v3_simulation(machine) else CoinPusherLiveSessionScript.restore_snapshot(machine.get("settled_state", {}), _definition_for_machine(machine))
 	var hangers := CoinPusherSolverScript.edge_hanger_count(simulation)
 	var pile_count := CoinPusherSolverScript.coin_count(simulation)
 	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
@@ -3025,9 +3066,9 @@ func _tuning() -> Dictionary:
 	return value if typeof(value) == TYPE_DICTIONARY else {}
 
 
-func _machine_definition(variation_id: String = "") -> Dictionary:
+func _machine_definition(variation_id: String = "", coin_value: int = 0) -> Dictionary:
 	var selected := variation_id.strip_edges()
-	var cache_key := selected if not selected.is_empty() else "__base__"
+	var cache_key := "%s:%d" % [selected if not selected.is_empty() else "__base__", coin_value]
 	if _machine_definition_cache.has(cache_key):
 		return _machine_definition_cache[cache_key]
 	var value: Variant = definition.get("coin_pusher_machine", {})
@@ -3037,6 +3078,7 @@ func _machine_definition(variation_id: String = "") -> Dictionary:
 	var machines: Dictionary = base.get("machines", {}) if typeof(base.get("machines", {})) == TYPE_DICTIONARY else {}
 	base.erase("machines")
 	if selected.is_empty() or selected == str(base.get("machine_id", "quarter_falls")):
+		_apply_coin_denomination(base, coin_value)
 		_machine_definition_cache[cache_key] = base
 		return base
 	var override: Dictionary = machines.get(selected, {}) if typeof(machines.get(selected, {})) == TYPE_DICTIONARY else {}
@@ -3047,8 +3089,21 @@ func _machine_definition(variation_id: String = "") -> Dictionary:
 		sub_game.merge(override.get("sub_game", {}), true)
 	base["sub_game"] = sub_game
 	base["cabinet"] = _resolved_cabinet(selected)
+	_apply_coin_denomination(base, coin_value)
 	_machine_definition_cache[cache_key] = base
 	return base
+
+
+func _apply_coin_denomination(machine_definition: Dictionary, coin_value: int) -> void:
+	if coin_value <= 0:
+		return
+	var coins: Dictionary = machine_definition.get("coins", {}) if typeof(machine_definition.get("coins", {})) == TYPE_DICTIONARY else {}
+	coins["value"] = coin_value
+	machine_definition["coins"] = coins
+
+
+func _definition_for_machine(machine: Dictionary) -> Dictionary:
+	return _machine_definition(str(machine.get("variation_id", _variation_id())), int(machine.get("coin_value", _coin_value())))
 
 
 func _resolved_cabinet(variation_id: String) -> Dictionary:
@@ -3147,12 +3202,34 @@ func _opening_coin_count(variation_id: String = "") -> int:
 	return clampi(int(counts.get(selected_id, _int_tuning("opening_coin_count", 150))), 24, _coin_cap())
 
 
-func _drop_cost() -> int:
-	return maxi(1, _int_tuning("drop_cost", 1))
+func _drop_cost(environment: Dictionary = {}) -> int:
+	return _cabinet_price(environment, "drop_cost", _int_tuning("drop_cost", 1))
 
 
-func _coin_value() -> int:
-	return maxi(1, _int_tuning("coin_value", 1))
+func _coin_value(environment: Dictionary = {}) -> int:
+	return _cabinet_price(environment, "coin_value", _int_tuning("coin_value", 1))
+
+
+func _drop_coin_label(environment: Dictionary) -> String:
+	var cost := _drop_cost(environment)
+	return "$%d coin" % cost if cost > 1 else "quarter"
+
+
+func _cabinet_price(environment: Dictionary, key: String, fallback: int) -> int:
+	# A cached module can render several cabinets. Never mutate its shared tuning.
+	var states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var machine: Dictionary = states.get(get_id(), {}) if typeof(states.get(get_id(), {})) == TYPE_DICTIONARY else {}
+	if machine.has(key):
+		return maxi(1, int(machine[key]))
+	# A denomination belongs to its room/cabinet, independently of an active
+	# scenario. Scenario-only fields are omitted for ordinary no-scenario rooms.
+	var flags: Dictionary = environment.get("local_narrative_flags", {}) if typeof(environment.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
+	var policy_key := "coin_pusher_%s" % key
+	if flags.has(policy_key):
+		return maxi(1, int(flags[policy_key]))
+	var modifiers: Dictionary = environment.get("scenario_game_modifiers", {}) if typeof(environment.get("scenario_game_modifiers", {})) == TYPE_DICTIONARY else {}
+	var pusher: Dictionary = modifiers.get("coin_pusher", {}) if typeof(modifiers.get("coin_pusher", {})) == TYPE_DICTIONARY else {}
+	return maxi(1, int(pusher.get(key, fallback)))
 
 
 func _prize_initial_cell_max() -> int:

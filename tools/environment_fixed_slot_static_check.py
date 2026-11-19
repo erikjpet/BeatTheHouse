@@ -2592,9 +2592,16 @@ def main_v2(
             "game_spots:5": "fixed.game_table_left",
             "game_spots:6": "fixed.game_table_right",
         },
-        "grand_casino: seven game categories must include the physical Pull Tabs machine",
+        "grand_casino: seven game categories must include the physical Coin Pusher machine",
     )
     expected_game_categories = {
+        "grand_casino_high_limit": {
+            "game_spots:0": "fixed.game_table_1",
+            "game_spots:1": "fixed.game_table_2",
+            "game_spots:2": "fixed.game_table_3",
+            "game_spots:3": "fixed.game_table_4",
+            "game_spots:4": "fixed.game_coin_pusher",
+        },
         "bar": {
             "game_spots:0": "fixed.random_game_1",
             "game_spots:1": "fixed.random_game_2",
@@ -2629,12 +2636,24 @@ def main_v2(
     expected_pull_tab_slots = {
         "gas_station_casino": "fixed.random_game_2",
         "jazz_club": "fixed.pulltab_game",
-        "grand_casino": "fixed.game_machine_5",
     }
     for map_id, slot_id in expected_pull_tab_slots.items():
         check.require(
             maps_by_id.get(map_id, {}).get("fixed_object_slot_ids", {}).get("game:pull_tabs") == slot_id,
             f"{map_id}: physical Pull Tabs must use {slot_id}",
+        )
+    for map_id, slot_id in {
+        "grand_casino": "fixed.game_machine_5",
+        "grand_casino_high_limit": "fixed.game_coin_pusher",
+    }.items():
+        map_data = maps_by_id.get(map_id, {})
+        archetype = archetypes.get(map_id, {})
+        check.require(
+            map_data.get("fixed_object_slot_ids", {}).get("game:coin_pusher") == slot_id
+            and "game:pull_tabs" not in map_data.get("fixed_object_slot_ids", {})
+            and values(archetype.get("game_pool")).count("coin_pusher") == 1
+            and values(archetype.get("required_game_ids")).count("coin_pusher") == 1,
+            f"{map_id}: one normally generated Coin Pusher must use {slot_id}",
         )
     expected_game_spots = {
         "bar": [[136, 202], [322, 202], [812, 202]],

@@ -7,6 +7,7 @@ const Game := preload("res://scripts/games/coin_pusher.gd")
 const Solver := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const Canvas := preload("res://scripts/ui/game_surface_canvas.gd")
 const Runtime := preload("res://scripts/core/scenario_sequence_runtime.gd")
+const FreshStorage := preload("res://scripts/tests/fixtures/qa_fresh_storage_admission.gd")
 const PRICE_KEYS := ["coin_pusher_drop_cost", "coin_pusher_drop_payable_count", "coin_pusher_drop_payable_total"]
 const LABEL_RECT := Rect2(538, 391, 76, 9)
 
@@ -35,6 +36,7 @@ var private_root := ""
 var library: ContentLibrary
 var references: Array = []
 var completed := false
+var storage_admitted := false
 
 
 func _initialize() -> void: call_deferred("_run")
@@ -91,7 +93,7 @@ func _baseline() -> void:
 	var renderer: Variant = game._coin_pusher_renderer()
 	var captured := await _capture(renderer, view)
 	_check(int(view.get("coin_pusher_drop_cost", -1)) == 1 and int(view.get("coin_pusher_drop_payable_count", -1)) == 0 and int(view.get("coin_pusher_drop_payable_total", -1)) == 0, "ordinary current full view publishes canonical idle unit price and zero held total")
-	_check(str(captured.get("label", "")) == "DROP/HOLD $1", "actual hardware draw identifies the one-dollar price before purchase")
+	_check(str(captured.get("label", "")) == "DROP $1", "actual hardware draw identifies the one-dollar price before purchase")
 	_check(str(view.get("surface_action_bindings", {}).get("coin_pusher_drop", {}).get("label", "")).contains("$1"), "ordinary drop binding label identifies its price")
 	_check(_fingerprint(run) == before, "full price view and actual hardware label draw are read-only")
 	facts.baseline = {"cash": run.bankroll, "fields": _prices(view), "drawn_label": captured, "solver_native": Solver.native_backend_available_for_test()}
@@ -138,7 +140,7 @@ func _projection_cases(variation: String) -> void:
 		if authored in [1, 3]: _save(run, game, "pusher_price_%s_%d" % [variation, cost], authored)
 		facts.pricing.append({"variation": variation, "authored_cost": authored, "canonical_cost": cost, "cash": run.bankroll, "full": _prices(full)})
 	game.definition["coin_pusher_tuning"]["drop_cost"] = 3
-	for spec in [{"cash": 200, "held": 0, "label": "DROP/HOLD $3"}, {"cash": 200, "held": 3, "label": "HOLD 3 $9"}, {"cash": 200, "held": 60, "label": "HOLD 60 $180"}, {"cash": 10, "held": 60, "label": "HOLD 3 $9"}, {"cash": 2, "held": 3, "label": "NEED $3"}]:
+	for spec in [{"cash": 200, "held": 0, "label": "DROP $3"}, {"cash": 200, "held": 3, "label": "DROPPING $9"}, {"cash": 200, "held": 60, "label": "DROPPING $180"}, {"cash": 10, "held": 60, "label": "DROPPING $9"}, {"cash": 2, "held": 3, "label": "NEED $3"}]:
 		run.bankroll = int(spec.cash)
 		var full := game.surface_state(run, run.current_environment, {"coin_pusher_drop_charge_count": int(spec.held)})
 		await _assert_label(renderer, full, str(spec.label), variation)
@@ -148,6 +150,9 @@ func _projection_cases(variation: String) -> void:
 		var changed := cached.duplicate(false)
 		changed[key] = int(cached.get(key, 0)) + 1
 		_check(str(renderer._hardware_cache_signature(changed, "", 0)) != signature, variation + " hardware cache invalidates on " + key)
+	var changed_queue := cached.duplicate(false)
+	changed_queue["coin_pusher_drop_queue_total"] = int(cached.get("coin_pusher_drop_queue_total", 0)) + 1
+	_check(str(renderer._hardware_cache_signature(changed_queue, "", 0)) != signature, variation + " hardware cache invalidates on remaining paid queue total")
 
 
 func _assert_label(renderer: Variant, view: Dictionary, expected: String, label: String) -> void:
@@ -195,7 +200,7 @@ func _paid_controls() -> void:
 	var paid_queue := int(game._queued_drop_count(live))
 	_check(int(held_view.get("coin_pusher_drop_charge_count", -1)) == 0 and int(held_view.get("coin_pusher_drop_queue_count", -1)) == paid_queue, "merged paid result patch immediately clears held gesture and publishes exact paid queue")
 	_assert_prices(held_view, 3, 0, "merged paid Hold result quote")
-	_check(str(renderer._drop_control_label(held_view)) == "PAID %d; DROP $3" % paid_queue, "direct-resolution merged view immediately labels paid queue rather than NEED")
+	_check(int(held_view.get("coin_pusher_drop_queue_total", -1)) == paid_queue * 3 and str(renderer._drop_control_label(held_view)) == "DROPPING $%d" % (paid_queue * 3), "direct-resolution merged view immediately labels the actual remaining paid batch")
 	facts["paid_hold_merged_view"] = {"raw_charge": held_view.get("coin_pusher_drop_charge_count", -1), "queue": paid_queue, "price": _prices(held_view), "label": renderer._drop_control_label(held_view)}
 	var before_cancel := _fingerprint(run)
 	var cancel_start := game.surface_pointer_command(Game.DROP_CHARGE_ACTION, 0, "begin", Vector2(576, 374), {}, run, run.current_environment)
@@ -216,8 +221,8 @@ func _paid_controls() -> void:
 	var paid: RunState = paid_fixture.run
 	_apply_drop(paid_game, paid, 15, 5, "five-drop paid reservation")
 	var paid_view := paid_game.surface_state(paid, paid.current_environment, {})
-	await _assert_label(paid_game._coin_pusher_renderer(), paid_view, "PAID 5; DROP $3", "already-paid queue")
-	_check(paid.bankroll == 39 and int(paid_view.get("coin_pusher_drop_queue_count", 0)) == 5, "paid queue count stays separate from next unit price")
+	await _assert_label(paid_game._coin_pusher_renderer(), paid_view, "DROPPING $15", "already-paid Ridge queue")
+	_check(paid.bankroll == 39 and int(paid_view.get("coin_pusher_drop_queue_count", 0)) == 5 and int(paid_view.get("coin_pusher_drop_queue_total", -1)) == 15, "five paid three-dollar drops retain their actual fifteen-dollar batch value")
 
 
 func _generic_patch_guards(game: CoinPusherGame, run: RunState, renderer: Variant, held_view: Dictionary) -> void:
@@ -228,7 +233,7 @@ func _generic_patch_guards(game: CoinPusherGame, run: RunState, renderer: Varian
 	for key in PRICE_KEYS: _check(not generic.has(key), "generic action patch without gesture context omits " + key)
 	var retained := held_view.duplicate(false)
 	retained.merge(generic, true)
-	_check(int(retained.get("coin_pusher_drop_charge_count", -1)) == int(held_view.get("coin_pusher_drop_charge_count", -2)) and _prices(retained) == _prices(held_view) and str(renderer._drop_control_label(retained)) == "HOLD 3 $9", "merging context-free generic patch preserves coherent existing Hold quote")
+	_check(int(retained.get("coin_pusher_drop_charge_count", -1)) == int(held_view.get("coin_pusher_drop_charge_count", -2)) and _prices(retained) == _prices(held_view) and str(renderer._drop_control_label(retained)) == "DROPPING $9", "merging context-free generic patch preserves coherent existing held quote")
 	var explicit_clear: Dictionary = game._surface_action_view_patch(machine, run, run.current_environment, {"coin_pusher_drop_charge_count": 0})
 	var cleared := held_view.duplicate(false)
 	cleared.merge(explicit_clear, true)
@@ -274,7 +279,9 @@ func _save(run: RunState, game: CoinPusherGame, slot: String, authored_cost: int
 	_check(_persistent(_protected(loaded)) == _persistent(before), "official load preserves full durable machine wallets history RNG and clocks: " + slot)
 	var quoted: Dictionary = game.call("_drop_price_view", loaded, loaded.current_environment, 3)
 	_assert_prices(quoted, maxi(1, authored_cost), 3, "official loaded pre-payment Hold quote")
-	references.append({"slot": slot, "authored_cost": authored_cost, "protected_json": JSON.stringify(_protected(loaded)), "price": quoted})
+	# Freeze the same three-key price contract that _cold compares. Coin face
+	# value is a separate new scalar, not an extra key in that original contract.
+	references.append({"slot": slot, "authored_cost": authored_cost, "protected_json": JSON.stringify(_protected(loaded)), "price": _prices(quoted), "coin_value": quoted.get("coin_pusher_coin_value", null)})
 
 
 func _cold() -> void:
@@ -294,8 +301,9 @@ func _cold() -> void:
 		# floats. Normalize numeric transport on both complete price dictionaries;
 		# missing keys, different values and extra fields remain unequal.
 		_check(_persistent(_prices(view)) == _persistent(reference.price), "cold pre-payment view keeps identical authored unit count and total: " + str(reference.slot))
+		_check(view.has("coin_pusher_coin_value") and reference.has("coin_value") and view.get("coin_pusher_coin_value") == reference.get("coin_value"), "cold pre-payment view separately retains exact ordinary coin face value: " + str(reference.slot))
 		_check(_fingerprint(loaded) == before, "cold quote never inserts pays resumes or changes machine: " + str(reference.slot))
-		facts.cold.append({"slot": reference.slot, "cash": loaded.bankroll, "price": _prices(view), "paid_inputs": 0})
+		facts.cold.append({"slot": reference.slot, "cash": loaded.bankroll, "price": _prices(view), "reference_price": reference.price, "price_fingerprint": _persistent(_prices(view)), "reference_price_fingerprint": _persistent(reference.price), "coin_value": view.get("coin_pusher_coin_value"), "reference_coin_value": reference.get("coin_value"), "paid_inputs": 0})
 
 
 func _persistent(value: Variant) -> String: return Runtime.content_fingerprint(JSON.parse_string(JSON.stringify(value)))
@@ -312,12 +320,13 @@ func _reference_path() -> String: return private_root.path_join("coin-pusher-dro
 
 
 func _private_roots() -> bool:
-	private_root = OS.get_environment("BTH_WORLD_REENTRY_ROOT").replace("\\", "/").simplify_path()
-	if not _check(private_root.is_absolute_path() and "native-private-" in private_root, "explicit disposable native root required"): return false
-	for key in ["APPDATA", "BTH_DISTRIBUTION_DATA_ROOT", "BTH_SAVE_DIR", "BTH_PROFILE_INVENTORY_PATH", "BTH_META_COLLECTION_PATH", "BTH_USER_SETTINGS_PATH"]:
-		var path := OS.get_environment(key).replace("\\", "/").simplify_path().to_lower()
-		if not _check(path == private_root.to_lower() or path.begins_with(private_root.to_lower() + "/"), "private containment for " + key): return false
-	return _check(OS.get_environment("BTH_CAPTURED_FIXTURE").is_empty() and OS.get_environment("BTH_WEB_STORAGE_PROFILE").is_empty(), "no original player save or browser profile is accepted")
+	var admission := FreshStorage.validate()
+	storage_admitted = _check(bool(admission.get("ok", false)), "exact prepared fresh QA storage admission: " + JSON.stringify(admission.get("errors", [])))
+	if not storage_admitted: return false
+	private_root = str(admission.get("private_root", ""))
+	# The guard admits this future private path; create the reference parent only
+	# after every receipt/environment mapping has been checked.
+	return _check(DirAccess.make_dir_recursive_absolute(private_root) == OK, "admitted private reference directory is available")
 
 
 func _check(ok: bool, message: String) -> bool:
@@ -330,7 +339,7 @@ func _finish() -> void:
 	_check(completed, "requested producer or cold stage reaches final assertion")
 	var report := {"id": "BTH-COINPUSHER-DROP-PRICE-001", "checks": checks, "failures": failures, "facts": facts, "source_sha256": {"game": FileAccess.get_sha256("res://scripts/games/coin_pusher.gd"), "renderer": FileAccess.get_sha256("res://scripts/games/coin_pusher/coin_pusher_renderer.gd"), "test": FileAccess.get_sha256("res://scripts/tests/coin_pusher_drop_price_check.gd")}, "fidelity": "Disposable synthetic module/native-solver fixtures. Hardware label observed from actual renderer draw callback and real Canvas font fitting; no original R07 profile, screenshot/pixel or Web acceptance claim."}
 	var output := OS.get_environment("BTH_TARGET_OUTPUT")
-	if not output.is_empty():
+	if storage_admitted and not output.is_empty():
 		var file := FileAccess.open(output, FileAccess.WRITE)
 		if file != null: file.store_string(JSON.stringify(report, "\t")); file.close()
 	print("COIN_PUSHER_DROP_PRICE_RESULT " + JSON.stringify(report))
