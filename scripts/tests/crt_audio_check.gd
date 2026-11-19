@@ -8,6 +8,11 @@ const Music := preload("res://scripts/ui/procedural_music_player.gd")
 const Sfx := preload("res://scripts/ui/sfx_player.gd")
 const Settings := preload("res://scripts/core/user_settings.gd")
 const CrtMenu := preload("res://scripts/ui/crt_practice_menu.gd")
+const CRT_MASTER_PATH := "res://assets/audio/music_features/crt_title_v3/master.wav"
+const CRT_MASTER_SHA256 := "2412bb82073f500b68cd9a1f95988da970af141282f1dbe15cb077c67ff30028"
+const CRT_MASTER_RATE := 44100
+const CRT_MASTER_FRAMES := 1512000
+const CRT_MASTER_SECONDS := 1512000.0 / 44100.0
 
 class MusicSpy extends Music:
 	var environment: Dictionary = {}
@@ -242,13 +247,66 @@ func _check_theme_theory() -> void:
 	var player := Music.new()
 	var environment: Dictionary = player.crt_practice_theme_environment()
 	var profile: Dictionary = player._music_profile_from_environment(environment, 0)
-	var context: Dictionary = player._ambient_generation_context(profile)
-	_check(is_equal_approx(float(context.get("bpm", 0)), 96.0) and int(context.get("phrase_count", 0)) == 4, "console theme uses its declared tempo and four musical phrases")
-	_check(is_equal_approx(float(context.get("duration", 0)), 40.0) and int(context.get("total_steps", 0)) == 128, "actual procedural composition context forms a 40-second complete loop")
+	var master := _master_wav_header()
+	_check(FileAccess.get_sha256(CRT_MASTER_PATH) == CRT_MASTER_SHA256, "console title uses the exact approved fixed v3 master")
+	_check(int(master.get("sample_rate", 0)) == CRT_MASTER_RATE and int(master.get("channels", 0)) == 2 and int(master.get("bits", 0)) == 16 and int(master.get("format", 0)) == 1, "approved v3 master is 44.1kHz stereo PCM16")
+	_check(int(master.get("frames", 0)) == CRT_MASTER_FRAMES and is_equal_approx(float(master.get("seconds", 0)), CRT_MASTER_SECONDS), "approved v3 master contains the complete 1512000-frame loop")
+	_check(is_equal_approx(float(profile.get("bpm", 0)), 112.0) and is_equal_approx(16.0 * 4.0 * 60.0 / float(profile.get("bpm", 1)), CRT_MASTER_SECONDS), "fixed v3 title profile matches the approved 112BPM sixteen-bar loop")
+	_check_fixed_master_entries(player, profile)
 	var title_profile: Dictionary = player._music_profile_from_environment(player.main_menu_theme_environment(), 0)
 	_check(player.composition_fingerprint(profile) != player.composition_fingerprint(title_profile), "console composition is distinct from the main title theme")
-	facts.append({"case": "composition", "duration_seconds": context.get("duration"), "bpm": context.get("bpm"), "phrases": context.get("phrase_count"), "audible_playback": false})
+	facts.append({"case": "fixed_v3_master", "path": CRT_MASTER_PATH, "sha256": FileAccess.get_sha256(CRT_MASTER_PATH), "header": master, "bpm": profile.get("bpm"), "bars": 16, "audible_playback": false})
 	player.free()
+
+
+func _check_fixed_master_entries(player: ProceduralMusicPlayer, profile: Dictionary) -> void:
+	var entry: Dictionary = player._authored_track_entry("crt_title_v3")
+	_check(player._authored_music_path("crt_title_v3", "master.wav") == CRT_MASTER_PATH and player._authored_playback_sample_rate(entry) == CRT_MASTER_RATE and player._authored_playback_loop_frames(entry) == CRT_MASTER_FRAMES, "fixed master delivery path/rate/frame contract is shared by both platform entry paths")
+	var native: Dictionary = player._authored_stem_set_from_profile(profile, {})
+	var web: Dictionary = player._web_authored_stem_set(profile, native)
+	_check(player._is_crt_title_master_profile(profile) and player._stem_set_contract_valid(native), "CRT routes to its validated fixed authored master instead of procedural generation")
+	var native_stems: Dictionary = native.get("stems", {})
+	var web_stems: Dictionary = web.get("stems", {})
+	_check(native_stems.size() == 1 and native_stems.has("pad") and web_stems.size() == 1 and web_stems.has("pad"), "Native and Web entry own exactly one fixed master voice")
+	var native_master := native_stems.get("pad") as AudioStreamWAV
+	var web_master := web_stems.get("pad") as AudioStreamWAV
+	_check(native_master != null and web_master != null and native_master.data == web_master.data and native_master.data.size() == CRT_MASTER_FRAMES * 4, "Native and Web entry use identical complete approved PCM without downsampling or re-encoding")
+	for contract in [native, web]:
+		_check(str(contract.get("source", "")) == "authored" and int(contract.get("loop_frames", 0)) == CRT_MASTER_FRAMES and int(contract.get("sample_rate", 0)) == CRT_MASTER_RATE and int(contract.get("bars", 0)) == 16, "fixed master entry retains authored source and exact full-loop timing")
+	for stream in [native_master, web_master]:
+		_check(stream != null and stream.mix_rate == CRT_MASTER_RATE and stream.stereo and stream.format == AudioStreamWAV.FORMAT_16_BITS and stream.loop_mode == AudioStreamWAV.LOOP_FORWARD and stream.loop_begin == 0 and stream.loop_end == CRT_MASTER_FRAMES, "each platform entry loops the complete exact stereo PCM master")
+	_check(bool(web.get("web_bridge_authored", false)) and bool(web.get("web_bridge_bed", false)), "Web entry explicitly uses the existing authored PCM bridge")
+	_check(player._load_authored_audio_stream(CRT_MASTER_PATH, CRT_MASTER_FRAMES - 1, true) == null and player._load_authored_audio_stream(CRT_MASTER_PATH, CRT_MASTER_FRAMES, false) == null, "invalid loop metadata fails closed instead of silently selecting a partial or nonlooping master")
+
+
+func _master_wav_header() -> Dictionary:
+	var file := FileAccess.open(CRT_MASTER_PATH, FileAccess.READ)
+	if file == null:
+		return {"error": "approved master is unavailable"}
+	file.big_endian = false
+	if file.get_buffer(4).get_string_from_ascii() != "RIFF":
+		return {"error": "not RIFF"}
+	file.get_32()
+	if file.get_buffer(4).get_string_from_ascii() != "WAVE":
+		return {"error": "not WAVE"}
+	var result := {}
+	while file.get_position() + 8 <= file.get_length():
+		var chunk := file.get_buffer(4).get_string_from_ascii()
+		var length := file.get_32()
+		var start := file.get_position()
+		if chunk == "fmt " and length >= 16:
+			result["format"] = file.get_16()
+			result["channels"] = file.get_16()
+			result["sample_rate"] = file.get_32()
+			file.get_32()
+			result["block_align"] = file.get_16()
+			result["bits"] = file.get_16()
+		elif chunk == "data":
+			result["frames"] = length / maxi(1, int(result.get("block_align", 1)))
+			result["seconds"] = float(result["frames"]) / maxf(1, float(result.get("sample_rate", 1)))
+		file.seek(start + length + length % 2)
+	file.close()
+	return result
 
 
 func _check_synthesis_and_buses() -> void:

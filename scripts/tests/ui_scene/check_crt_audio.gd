@@ -10,8 +10,12 @@ const APPROVED_ROOT := "e:/codexqa/bth/"
 const CAPTURE_SECONDS := 42
 const MAX_MIX_RATE := 48000
 const CHUNK_FRAMES := 4096
-const MUSIC_ARCHETYPE := "crt_practice_console"
 const MUSIC_READY_TIMEOUT_MSEC := 60000
+const CRT_MASTER_PATH := "res://assets/audio/music_features/crt_title_v3/master.wav"
+const CRT_MASTER_SHA256 := "2412bb82073f500b68cd9a1f95988da970af141282f1dbe15cb077c67ff30028"
+const CRT_MASTER_RATE := 44100
+const CRT_MASTER_FRAMES := 1512000
+const CRT_MASTER_SECONDS := 1512000.0 / 44100.0
 
 var app: Control
 var menu: Control
@@ -34,6 +38,9 @@ var owners: Array[Dictionary] = []
 var inputs: Array[Dictionary] = []
 var selection_events := 0
 var metadata := {}
+var stream_receipts: Dictionary = {}
+var approved_master_pcm_sha256 := ""
+var fixed_master_cache_key := ""
 
 
 func _init() -> void:
@@ -70,9 +77,17 @@ func _run() -> void:
 		"capture_point": "Master AudioEffectCapture, before Master volume/mute; stereo PCM16 WAV",
 		"meter_point": "AudioServer Master bus peak, after Master volume/mute",
 		"claim_limit": "Game-owned bus capture and engine output meter only; no OS loopback or physical speaker claim.",
+		"reference_master": {"path": CRT_MASTER_PATH, "sha256": CRT_MASTER_SHA256, "sample_rate": CRT_MASTER_RATE, "channels": 2, "bits": 16, "frames": CRT_MASTER_FRAMES, "seconds": CRT_MASTER_SECONDS, "bpm": 112, "bars": 16},
+		"loop_seam_verification": "Pending offline reference/capture alignment; live wrap observations alone do not establish waveform continuity.",
 	}
-	_check(AudioServer.get_driver_name().to_lower() != "dummy", "Native acceptance uses a real audio driver, not Dummy.")
-	_check(master_bus >= 0 and mix_rate > 0 and mix_rate <= MAX_MIX_RATE, "Master exists and sample rate is bounded at 48 kHz.")
+	_check(AudioServer.get_driver_name().to_lower() == "wasapi", "Native v3 acceptance uses the actual WASAPI driver.")
+	_check(master_bus >= 0 and mix_rate == MAX_MIX_RATE, "Master capture uses the declared 48kHz native output mix rate.")
+	_check(FileAccess.get_sha256(CRT_MASTER_PATH) == CRT_MASTER_SHA256, "The source master exactly matches the approved v3 SHA256.")
+	var master_reference := AudioStreamWAV.load_from_file(CRT_MASTER_PATH)
+	_check(master_reference != null and master_reference.mix_rate == CRT_MASTER_RATE and master_reference.stereo and master_reference.format == AudioStreamWAV.FORMAT_16_BITS and master_reference.data.size() == CRT_MASTER_FRAMES * 4, "The source master has the approved complete stereo PCM16 frame contract.")
+	if master_reference != null:
+		approved_master_pcm_sha256 = _sha256_bytes(master_reference.data)
+		metadata["reference_master"]["pcm_sha256"] = approved_master_pcm_sha256
 	_check(AudioServer.get_speaker_mode() == AudioServer.SPEAKER_MODE_STEREO, "This capture explicitly requires stereo output.")
 	_check(is_equal_approx(float(settings.get("master_volume")), 1.0), "Fresh default Master setting is unity.")
 	_check(float(settings.get("music_volume")) > 0.0, "Fresh default Music setting is audible.")
@@ -217,6 +232,7 @@ func _owner(label: String, readiness_msec: int = -1) -> void:
 		"native_stem_playing_count": playing_count, "native_stems": native_stems,
 		"legacy_ambient_playing": ambient != null and ambient.playing,
 		"feature_cache_key": str(player.get("_current_feature_cache_key")),
+		"playback": _playhead_snapshot(),
 	})
 
 
@@ -224,15 +240,33 @@ func _wait_for_crt_music(label: String) -> bool:
 	var readiness_started := Time.get_ticks_msec()
 	var deadline := readiness_started + MUSIC_READY_TIMEOUT_MSEC
 	while Time.get_ticks_msec() < deadline:
-		var stems: Dictionary = player.get("_current_stem_set")
-		if bool(app.get("crt_music_owner_active")) and str(player.get("_current_cache_key")).contains(MUSIC_ARCHETYPE) and not bool(player.get("_current_stream_is_primer")) and not stems.is_empty() and str(player.get("_pending_cache_key")).is_empty():
+		if bool(app.get("crt_music_owner_active")) and _fixed_master_ready() and not bool(player.get("_current_stream_is_primer")) and str(player.get("_pending_cache_key")).is_empty():
+			var current_key := str(player.get("_current_cache_key"))
+			if fixed_master_cache_key.is_empty():
+				fixed_master_cache_key = current_key
+			_check(current_key == fixed_master_cache_key, "%s retains the same fixed master identity." % label)
 			_owner(label, Time.get_ticks_msec() - readiness_started)
-			_check(true, "%s owns ready full CRT Music stems." % label)
+			_check(true, "%s owns one ready complete approved v3 master with no old primer." % label)
 			return true
 		await process_frame
 	_owner("%s timed out" % label, Time.get_ticks_msec() - readiness_started)
-	_check(false, "%s never obtained full CRT Music stems within 60 seconds." % label)
+	_check(false, "%s never obtained the complete approved fixed v3 master within 60 seconds." % label)
 	return false
+
+
+func _fixed_master_ready() -> bool:
+	var approved := 0
+	var unrelated := 0
+	for voice_value in (player.get("_stem_players") as Dictionary).values():
+		var voice := voice_value as AudioStreamPlayer
+		if voice == null or not voice.playing or voice.stream == null:
+			continue
+		var receipt := _stream_receipt(voice.stream)
+		if bool(receipt.get("matches_approved_master_pcm", false)) and int(receipt.get("loop_mode", 0)) == AudioStreamWAV.LOOP_FORWARD and int(receipt.get("loop_begin", -1)) == 0 and int(receipt.get("loop_end", 0)) == CRT_MASTER_FRAMES:
+			approved += 1
+		else:
+			unrelated += 1
+	return approved == 1 and unrelated == 0
 
 
 func _collect(label: String, seconds: float, write_wav: bool = false, movement: bool = false) -> Dictionary:
@@ -242,13 +276,22 @@ func _collect(label: String, seconds: float, write_wav: bool = false, movement: 
 	var peak := 0.0
 	var peak_db := -200.0
 	var discarded_before := capture.get_discarded_frames()
+	var capture_start := _playhead_snapshot()
 	capture.clear_buffer()
+	var buffer_cleared_usec := Time.get_ticks_usec()
+	var loop_wraps: Array[Dictionary] = []
+	var last_master_position := _master_playback_position()
 	var deadline := Time.get_ticks_msec() + int(seconds * 1000.0) + 5000
 	var next_input := Time.get_ticks_msec() + 80
 	var movement_index := 0
 	var held_key: Key = KEY_NONE
 	while total < target_frames and Time.get_ticks_msec() < deadline:
 		await process_frame
+		if write_wav:
+			var current_master_position := _master_playback_position()
+			if current_master_position >= 0 and last_master_position >= 0 and current_master_position + 0.1 < last_master_position:
+				loop_wraps.append({"capture_frames_read": total, "capture_seconds_read": float(total) / mix_rate, "tick_usec": Time.get_ticks_usec(), "source_position_before": last_master_position, "source_position_after": current_master_position})
+			last_master_position = current_master_position
 		if held_key != KEY_NONE:
 			_key_event(held_key, false)
 			held_key = KEY_NONE
@@ -288,11 +331,55 @@ func _collect(label: String, seconds: float, write_wav: bool = false, movement: 
 		"raw_pre_master_peak": peak, "max_master_peak_db": peak_db, "discarded_frames": discarded,
 		"selection_events": selection_events, "actual_keyboard_presses": movement_index,
 		"mix": _bus_state(), "wav": wav_path if write_wav else "",
+		"capture_start_playheads": capture_start, "buffer_cleared_usec": buffer_cleared_usec,
+		"capture_end_playheads": _playhead_snapshot(), "source_loop_wraps": loop_wraps,
 	}
 	phases.append(result)
 	_check(total == target_frames, "%s receives every bounded target audio frame." % label)
 	_check(discarded == 0, "%s loses no AudioEffectCapture frames." % label)
+	if write_wav:
+		_check(not loop_wraps.is_empty(), "The 42-second capture observes an actual approved-master playback wrap.")
 	return result
+
+
+func _stream_receipt(stream: AudioStream) -> Dictionary:
+	if stream == null:
+		return {"missing": true}
+	var key := stream.get_instance_id()
+	if stream_receipts.has(key):
+		return stream_receipts[key]
+	var result := {"class": stream.get_class(), "resource_path": stream.resource_path, "seconds": stream.get_length()}
+	if stream is AudioStreamWAV:
+		var pcm := stream as AudioStreamWAV
+		result.merge({"mix_rate": pcm.mix_rate, "stereo": pcm.stereo, "format": pcm.format, "pcm_bytes": pcm.data.size(), "pcm_sha256": _sha256_bytes(pcm.data), "loop_mode": pcm.loop_mode, "loop_begin": pcm.loop_begin, "loop_end": pcm.loop_end})
+		result["matches_approved_master_pcm"] = str(result["pcm_sha256"]) == approved_master_pcm_sha256 and pcm.mix_rate == CRT_MASTER_RATE and pcm.stereo and pcm.format == AudioStreamWAV.FORMAT_16_BITS and pcm.data.size() == CRT_MASTER_FRAMES * 4
+	stream_receipts[key] = result
+	return result
+
+
+func _playhead_snapshot() -> Dictionary:
+	var stems: Array[Dictionary] = []
+	for role in (player.get("_stem_players") as Dictionary):
+		var voice := (player.get("_stem_players") as Dictionary)[role] as AudioStreamPlayer
+		if voice == null:
+			continue
+		stems.append({"role": str(role), "playing": voice.playing, "playback_seconds": voice.get_playback_position(), "pitch_scale": voice.pitch_scale, "volume_db": voice.volume_db, "bus": str(voice.bus), "stream": _stream_receipt(voice.stream)})
+	return {"tick_usec": Time.get_ticks_usec(), "director_seconds": player.call("_director_playback_position"), "mix_rate": mix_rate, "time_since_last_mix": AudioServer.get_time_since_last_mix(), "time_to_next_mix": AudioServer.get_time_to_next_mix(), "output_latency_seconds": AudioServer.get_output_latency(), "native_stems": stems, "stem_stage": str(player.get("_current_stem_stage")), "primer": bool(player.get("_current_stream_is_primer"))}
+
+
+func _master_playback_position() -> float:
+	for voice_value in (player.get("_stem_players") as Dictionary).values():
+		var voice := voice_value as AudioStreamPlayer
+		if voice != null and voice.playing and bool(_stream_receipt(voice.stream).get("matches_approved_master_pcm", false)):
+			return voice.get_playback_position()
+	return -1.0
+
+
+func _sha256_bytes(bytes: PackedByteArray) -> String:
+	var hashing := HashingContext.new()
+	hashing.start(HashingContext.HASH_SHA256)
+	hashing.update(bytes)
+	return hashing.finish().hex_encode()
 
 
 func _write_wav_header(frames: int) -> void:
@@ -328,7 +415,7 @@ func _practice_return_and_exit() -> void:
 		await process_frame
 	_check(app.get("current_game") != null and str(app.get("current_screen")) == "GAME", "Normal mouse launch enters production practice gameplay.")
 	_check(not bool(app.get("crt_music_owner_active")), "Practice launch releases CRT Music ownership.")
-	_check(not str(player.get("_current_cache_key")).contains(MUSIC_ARCHETYPE) and not str(player.get("_pending_cache_key")).contains(MUSIC_ARCHETYPE), "Practice launch cancels both current and pending CRT Music.")
+	_check(str(player.get("_current_cache_key")) != fixed_master_cache_key and str(player.get("_pending_cache_key")) != fixed_master_cache_key and _master_playback_position() < 0, "Practice launch cancels the exact current/pending fixed CRT master and its native voice.")
 	_owner("practice launch")
 	if app.get("current_game") == null:
 		return
@@ -354,7 +441,7 @@ func _practice_return_and_exit() -> void:
 	await _frames(6)
 	_check(str(app.get("current_screen")) == "START" and app.get("run_state") == null and not bool(app.call("_crt_practice_active")), "Actual Exit TV returns to the originating title without a run.")
 	_check(not bool(app.get("crt_music_owner_active")), "Exit TV releases CRT Music ownership.")
-	_check(not str(player.get("_current_cache_key")).contains(MUSIC_ARCHETYPE) and not str(player.get("_pending_cache_key")).contains(MUSIC_ARCHETYPE), "Title has neither current nor pending CRT Music.")
+	_check(str(player.get("_current_cache_key")) != fixed_master_cache_key and str(player.get("_pending_cache_key")) != fixed_master_cache_key and _master_playback_position() < 0, "Title has neither the exact current/pending fixed CRT master nor its native voice.")
 	_owner("title after Exit TV")
 	_check(not bool(app.call("_has_foundation_save")), "Practice audio acceptance leaves the ordinary Continue slot empty.")
 

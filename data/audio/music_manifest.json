@@ -1,5 +1,19 @@
 [
   {
+    "id": "crt_title_v3",
+    "display_name": "Beat the House CRT Title",
+    "bpm": 112,
+    "bars": 16,
+    "beats_per_bar": 4,
+    "sample_rate": 44100,
+    "bit_depth": 16,
+    "channels": 2,
+    "loop_begin": 0,
+    "loop_frames": 1512000,
+    "palette_id": "crt_title_v3",
+    "stems": {"pad": "master.wav"}
+  },
+  {
     "id": "corner_store_sparse_fixture",
     "display_name": "Corner Store Sparse Fixture",
     "bpm": 120,

@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-19T18:05:35.930551+00:00",
+  "updated_at": "2026-11-19T19:16:19.990446+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -192,7 +192,7 @@
       ],
       "group": "current",
       "state": "open",
-      "status": "NATIVE_AND_PRIVATE_WEB_AUDIO_QUALIFIED_NEXT_PENDING",
+      "status": "ACTUAL_NATIVE_WEB_LOOP_VERIFIED_NEXT_SHOWCASE_PENDING",
       "owner": {
         "assignment_state": "assigned",
         "name": "CRT audio follow-up lane",
@@ -277,7 +277,9 @@
           }
         ]
       },
-      "implementation_batches": [],
+      "implementation_batches": [
+        "BTH061-CRT-AUDIO-001-BATCH-002"
+      ],
       "planned_app_changes": [
         "Use ProceduralMusicPlayer CRT profile and existing Music/stem Web delivery; never generic WAV play_stream for music.",
         "Add semantic game-selection and accepted-launch SFX through current authorized surface-audio path.",
@@ -293,6 +295,16 @@
           "kind": "focused_native_and_private_web_audio_qualification",
           "reference": "docs/testing/CRT_audio_20261119.md",
           "summary": "Native69 semantic/input/owner/mixer checks; actual native56 output checks with 42s captured mixer PCM; CRT634 and separate-process coldContinue23+16 pass. Private Web4 passed genuine first-gesture unlock, actual mixed output recording, accepted launch/touch Leave/ExitTV, separate settings gains and Master0. Captures are app-output evidence, not physical speaker hearing. All owned Jobs closed0. Earlier failed harness runs and no-store history retained; Tutorial live Save/cold Continue remains separate and open."
+        },
+        {
+          "kind": "user_revised_composition_and_showcase_request",
+          "reference": "Sentinel_d45ddd817db081919d42e25cdd9be61f",
+          "summary": "Prior744 backing shipped but Erik rejected its composition.84BPMpreview superseded. Use112BPM A/A-prime/B/A master2412bb82073f500b68cd9a1f95988da970af141282f1dbe15cb077c67ff30028 exactly. Preserve accepted move/select/settings/ownership/unlock. Darryl released sole slot after LAND01zero18:39:24Z; LAND milestone dfcf663 remains local and excluded."
+        },
+        {
+          "kind": "actual_native_and_web_loop_waveform_qualification",
+          "reference": "docs/testing/CRT_title_v3_20261119.md",
+          "summary": "Approved master2412bb82 exactrender. Native81focused/61actualoutput passed;42actualsecWASAPI recording+actualwaveformloop pass (repeatcorr.996992,wraptimingstep0,no unexpectedclickenergy). WebGPU37actualsec/1776000frames,0quantumgaps/missing/nonfinite; actualwaveformloop pass (repeatcorr.999998,wraptimingstep-20.833us,no unexpectedclickenergy). OriginalSwiftShadercaptureadmissionstoppedbeforecapture under480s; retained. SeparateD3D11Nvidiarealtime readiness supportednormalcorrectedcapture withsamecaps/security. Main/NEXT/newshowcasepending. LANDunpublished dfcf excluded; acceptedSFX/titlevenues/settings unchanged."
         }
       ],
       "commits": [
@@ -312,7 +324,7 @@
         "commit": "",
         "evidence": []
       },
-      "next_action": "Commit the scoped original audio feature, qualify exact changed import inputs through the existing watcher, no-force push main, then verify exact served NEXT identity/assets and fresh live Games audio. User-operated ledger reconciliation and separate Tutorial Save issue remain outside this change.",
+      "next_action": "No-force push qualifiedv3 and exact cold-import request through existing NEXT watcher; verify servedidentity/basicchangedbehavior only, then capturecontinuousrealHome-TV-game-CRT-Home A/V. Erik narrowedtesting in Sentinel_15956f21f5bc8191b2ad51d1d6217d69; reusecurrentactual-loop evidence, no broaderregressions/repeatedloopcaptures.",
       "blocker": {
         "state": "none",
         "kind": "",
@@ -321,7 +333,7 @@
         "observed_at": "2026-11-19T18:03:04.283098+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-19T18:05:35.930551+00:00"
+      "updated_at": "2026-11-19T19:16:19.990446+00:00"
     },
     {
       "id": "BTH061-CRT-PRACTICE-001",
@@ -40223,6 +40235,48 @@
     }
   ],
   "batches": [
+    {
+      "id": "BTH061-CRT-AUDIO-001-BATCH-002",
+      "name": "Replace CRT backing with exact title remix v3 and capture real Home showcase",
+      "aliases": [],
+      "group": "current",
+      "parent_id": "BTH061-CRT-AUDIO-001",
+      "state": "open",
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": "",
+        "evidence": []
+      },
+      "scope": [
+        "Exact approved112BPM title melody/bridge/form/master with native and Web fidelity and real clean loop wrap. Accepted cues/mix/unlock/owner and title/venue tracks unchanged. Continuous real Home-TV-practice-CRT-Home A/V after landing."
+      ],
+      "acceptance_scope": "Actual native and Web captured output across loop boundary must pass beforepush; source seam/metadata alone is not sufficient. No gap/click/double onset/restart fade/overlap/timing break.",
+      "status": "ACTUAL_NATIVE_WEB_LOOP_VERIFIED_NEXT_SHOWCASE_PENDING",
+      "owner": {
+        "name": "CRT v3 audio lane",
+        "task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-audio:/root",
+        "assignment_state": "assigned"
+      },
+      "evidence": [
+        {
+          "kind": "actual_native_and_web_loop_waveform_qualification",
+          "reference": "docs/testing/CRT_title_v3_20261119.md",
+          "summary": "Approved master2412bb82 exactrender. Native81focused/61actualoutput passed;42actualsecWASAPI recording+actualwaveformloop pass (repeatcorr.996992,wraptimingstep0,no unexpectedclickenergy). WebGPU37actualsec/1776000frames,0quantumgaps/missing/nonfinite; actualwaveformloop pass (repeatcorr.999998,wraptimingstep-20.833us,no unexpectedclickenergy). OriginalSwiftShadercaptureadmissionstoppedbeforecapture under480s; retained. SeparateD3D11Nvidiarealtime readiness supportednormalcorrectedcapture withsamecaps/security. Main/NEXT/newshowcasepending. LANDunpublished dfcf excluded; acceptedSFX/titlevenues/settings unchanged."
+        }
+      ],
+      "next_action": "No-force push qualifiedv3 and exact cold-import request through existing NEXT watcher; verify servedidentity/basicchangedbehavior only, then capturecontinuousrealHome-TV-game-CRT-Home A/V. Erik narrowedtesting in Sentinel_15956f21f5bc8191b2ad51d1d6217d69; reusecurrentactual-loop evidence, no broaderregressions/repeatedloopcaptures.",
+      "blocker": {
+        "state": "none",
+        "kind": "",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-19T18:43:58.831766+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-19T19:16:19.990446+00:00"
+    },
     {
       "id": "BTH061-COIN-PUSHER-LAST-MINUTE-001-COMPAT",
       "name": "Preserve old Grand layout authority and historical Pull Tabs coverage",

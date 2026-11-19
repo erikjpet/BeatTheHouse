@@ -114,6 +114,11 @@ const MUSIC_AUTHORED_MANIFEST_PATH := "res://data/audio/music_manifest.json"
 const MUSIC_AUTHORED_ROOT := "res://assets/audio/music"
 const MUSIC_AUTHORED_WEB_ROOT := "res://assets/audio/music_web"
 const MUSIC_PROCEDURAL_WEB_ROOT := "res://assets/audio/music_web/procedural"
+const CRT_TITLE_TRACK_ID := "crt_title_v3"
+const CRT_TITLE_MASTER_PATH := "res://assets/audio/music_features/crt_title_v3/master.wav"
+const CRT_TITLE_MASTER_SHA256 := "2412bb82073f500b68cd9a1f95988da970af141282f1dbe15cb077c67ff30028"
+const CRT_TITLE_SAMPLE_RATE := 44100
+const CRT_TITLE_LOOP_FRAMES := 1512000
 const MUSIC_FEATURE_DELIVERY_ROOT := "res://assets/audio/music_features"
 const SFX_DELIVERY_ROOT := "res://assets/audio/sfx_web"
 const NATIVE_SFX_DELIVERY_ROOT := "res://assets/audio/sfx_native"
@@ -614,26 +619,53 @@ func crt_practice_theme_environment() -> Dictionary:
 	return {
 		"id": "crt_practice_console",
 		"archetype_id": "crt_practice_console",
-		"mood": "relaxed console lounge",
+		"mood": "console title theme",
 		"music_profile": {
-			"theme": "CRT chip lounge",
-			"texture": "static",
-			"texture_rate": 0.41,
-			"palette_id": "crt_chip_lounge",
-			"generated_signature": "crt_practice_chip_lounge_v1",
-			"bpm": 96.0,
+			"theme": "CRT title theme",
+			"texture": "none",
+			"palette_id": CRT_TITLE_TRACK_ID,
+			"authored_track_id": CRT_TITLE_TRACK_ID,
+			"generated_signature": CRT_TITLE_MASTER_SHA256,
+			"bpm": 112.0,
 			"mode": "dorian",
 			"root_midi": 45,
-			# Full safety keeps the existing tempo policy at exactly 96 BPM.
+			# Only the approved fixed master plays; no generated accompaniment.
 			"safety": 1.0,
 			"ambience": 0.66,
 			"volume": 0.24,
 			"arrangement_phrases": 4,
-			"swing_amount": 0.08,
-			"progression": [0, 3, 1, 4],
-			"motif": [0, EMPTY_NOTE, 2, 4, EMPTY_NOTE, 1, 4, EMPTY_NOTE, 5, 4, 2, EMPTY_NOTE, 1, EMPTY_NOTE, 0, EMPTY_NOTE],
+			"swing_amount": 0.0,
+			"adaptive_tempo": {"enabled": false},
 		},
 	}
+
+
+func _is_crt_title_master_profile(profile: Dictionary) -> bool:
+	return str(profile.get("archetype_id", "")) == "crt_practice_console" and str(profile.get("authored_track_id", "")) == CRT_TITLE_TRACK_ID
+
+
+# Both platforms consume the same validated PCM master through the ordinary
+# authored Music players/bridge. Missing delivery fails closed, never to a primer.
+func _play_crt_title_master(profile: Dictionary, cache_key: String) -> void:
+	_remember_profile(cache_key, profile)
+	if cache_key == _current_cache_key and _music_is_playing() and not _current_stream_is_primer:
+		if WebAudioBridgeScript.available() and _current_web_music_bed_cache_key != cache_key:
+			_play_web_music_bed_for_cache(cache_key, _director_playback_position(), _current_stem_set)
+		return
+	var stem_set := _authored_stem_set_from_profile(profile, {})
+	if not _stem_set_contract_valid(stem_set):
+		stop()
+		push_error("The approved CRT title master is unavailable; procedural fallback is disabled.")
+		return
+	_configure_adaptive_tempo(profile, stem_set)
+	_configure_music_choreography(profile, stem_set)
+	if WebAudioBridgeScript.available():
+		stem_set = _web_authored_stem_set(profile, stem_set)
+		_prepare_web_bridge_payloads(stem_set)
+		_store_pcm_cache_entry("web", cache_key, stem_set)
+	_store_pcm_cache_entry("full", cache_key, stem_set)
+	# Explicit zero prevents inheriting the prior room/primer's playback phase.
+	_play_full_stem_set(cache_key, stem_set, 0.0)
 
 
 # Starts or updates the generated theme and live FX from one run-state snapshot.
@@ -647,6 +679,9 @@ func play_for_environment_state(environment: Dictionary, heat_level: int, music_
 	var profile := _music_profile_from_environment(environment, heat_level)
 	_set_live_mix_profile(profile)
 	var cache_key := _ambient_cache_key(profile)
+	if _is_crt_title_master_profile(profile):
+		_play_crt_title_master(profile, cache_key)
+		return
 	if WebAudioBridgeScript.available():
 		# Authored WAV masters use a deterministic desktop decoder. Opening and
 		# downmixing them on the browser's main thread can block navigation, so
@@ -823,7 +858,10 @@ func stop() -> void:
 func preview_stream_for_environment(environment: Dictionary, heat_level: int):
 	if environment.is_empty():
 		return null
-	return _ambient_music_stream(_music_profile_from_environment(environment, heat_level))
+	var profile := _music_profile_from_environment(environment, heat_level)
+	if _is_crt_title_master_profile(profile):
+		return _load_authored_audio_stream(CRT_TITLE_MASTER_PATH, CRT_TITLE_LOOP_FRAMES)
+	return _ambient_music_stream(profile)
 
 
 # Exposes the generated composition plan for validation without building PCM.
@@ -2201,6 +2239,11 @@ func _apply_music_mix_vector(vector: Dictionary, _force: bool) -> void:
 
 
 func _music_role_volume_db_map(vector: Dictionary) -> Dictionary:
+	if bool(_current_live_mix_profile.get("crt_fixed_master", false)):
+		var fixed_roles := {}
+		for role in MUSIC_STEM_PLAYBACK_ROLES:
+			fixed_roles[str(role)] = 0.0 if str(role) == "pad" else MUSIC_MIN_VOLUME_DB
+		return fixed_roles
 	var duck := clampf(float(_feature_mix_live.get("venue_duck", 0.0)), 0.0, 0.82)
 	var ambience := clampf(float(_current_live_mix_profile.get("ambience", 0.7)), 0.0, 1.0)
 	var volume_scale := clampf(float(_current_live_mix_profile.get("volume", 0.26)) / 0.26, 0.0, 2.0)
@@ -2233,6 +2276,8 @@ func _set_live_mix_profile(profile: Dictionary) -> void:
 		"ambience": clampf(float(profile.get("ambience", 0.7)), 0.0, 1.0),
 		"volume": maxf(0.0, float(profile.get("volume", 0.26))),
 	}
+	if _is_crt_title_master_profile(profile):
+		_current_live_mix_profile["crt_fixed_master"] = true
 	if not _stem_players.is_empty():
 		_apply_music_mix_vector(_music_mix_live if not _music_mix_live.is_empty() else _neutral_music_mix_vector(), true)
 
@@ -2856,6 +2901,8 @@ static func _normalize_music_fx_input(music_state: Dictionary) -> Dictionary:
 
 
 static func _music_fx_vector_from_input(input: Dictionary) -> Dictionary:
+	if str(input.get("archetype_id", "")) == "crt_practice_console":
+		return _neutral_music_fx_vector()
 	var heat := clampf(float(input.get("heat", 0.0)), 0.0, 100.0)
 	var alcohol_tier := clampi(int(input.get("alcohol_tier", 0)), 0, 3)
 	var drunk_level := clampi(int(input.get("drunk_level", 0)), 0, 100)
@@ -5532,16 +5579,22 @@ func _authored_one_shots(track_id: String, entries: Dictionary) -> Dictionary:
 
 
 func _authored_music_path(track_id: String, filename: String) -> String:
+	if track_id == CRT_TITLE_TRACK_ID and filename == "master.wav":
+		return CRT_TITLE_MASTER_PATH
 	var root := MUSIC_AUTHORED_WEB_ROOT if OS.has_feature("web") else MUSIC_AUTHORED_ROOT
 	var playback_filename := "%s.bthadpcm.gz" % filename.get_basename() if OS.has_feature("web") else filename
 	return "%s/%s/%s" % [root, track_id, playback_filename]
 
 
 func _authored_playback_sample_rate(entry: Dictionary) -> int:
+	if str(entry.get("id", "")) == CRT_TITLE_TRACK_ID:
+		return CRT_TITLE_SAMPLE_RATE
 	return WEB_AUDIO_MUSIC_BED_SAMPLE_RATE if OS.has_feature("web") else int(entry.get("sample_rate", SAMPLE_RATE))
 
 
 func _authored_playback_loop_frames(entry: Dictionary) -> int:
+	if str(entry.get("id", "")) == CRT_TITLE_TRACK_ID:
+		return CRT_TITLE_LOOP_FRAMES
 	var source_frames := int(entry.get("loop_frames", 0))
 	if not OS.has_feature("web"):
 		return source_frames
@@ -5550,6 +5603,13 @@ func _authored_playback_loop_frames(entry: Dictionary) -> int:
 
 
 func _load_authored_audio_stream(path: String, loop_frames: int, loop_enabled: bool = true):
+	if path == CRT_TITLE_MASTER_PATH:
+		if not loop_enabled or loop_frames != CRT_TITLE_LOOP_FRAMES or FileAccess.get_sha256(path) != CRT_TITLE_MASTER_SHA256:
+			return null
+		var master := _load_authored_wav_stream(path, loop_frames, true) as AudioStreamWAV
+		if master == null or master.format != AudioStreamWAV.FORMAT_16_BITS or master.mix_rate != CRT_TITLE_SAMPLE_RATE or not master.stereo or master.data.size() != CRT_TITLE_LOOP_FRAMES * 4:
+			return null
+		return master
 	var lowered := path.to_lower()
 	if lowered.ends_with(".bthadpcm.gz"):
 		return _load_web_adpcm_stream(path, loop_frames, loop_enabled)
