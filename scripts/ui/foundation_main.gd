@@ -540,6 +540,7 @@ var career_stats_screen: CareerStatsScreen
 var inventory_status_label: Label
 var inventory_items_list: VBoxContainer
 var game_test_menu: VBoxContainer
+var crt_music_owner_active := false
 var game_library_button: Button
 var game_test_status_label: Label
 var game_test_seed_input: LineEdit
@@ -11551,6 +11552,8 @@ func _build_game_test_menu(_parent: Node) -> void:
 	add_child(crt_practice_overlay)
 	var console_menu := CrtPracticeMenuScript.new()
 	console_menu.configure(self)
+	console_menu.user_selection_changed.connect(_on_crt_user_selection_changed)
+	console_menu.launch_accepted.connect(_on_crt_launch_accepted)
 	game_test_menu = console_menu
 	game_test_menu.visible = false
 	crt_practice_overlay.add_child(game_test_menu)
@@ -13467,6 +13470,10 @@ func _set_current_screen(screen_id: String) -> void:
 
 
 func _update_procedural_music() -> void:
+	if _crt_menu_audio_active():
+		_play_crt_menu_music()
+		return
+	_release_crt_menu_music()
 	if current_screen == SCREEN_START:
 		_play_main_menu_music()
 		return
@@ -13480,9 +13487,66 @@ func _update_procedural_music() -> void:
 
 
 func _play_main_menu_music() -> void:
+	if _crt_menu_audio_active():
+		_play_crt_menu_music()
+		return
+	_release_crt_menu_music()
 	_ensure_procedural_music_initialized()
 	if procedural_music_player != null:
 		procedural_music_player.play_main_menu_theme()
+
+
+# Music ownership follows the visible presentation, not the parked RunState.
+# The practice context stays active during gameplay, when the game owns music.
+func _crt_menu_audio_active() -> bool:
+	return _crt_practice_active() and current_screen == SCREEN_CRT
+
+
+func _play_crt_menu_music() -> void:
+	_ensure_procedural_music_initialized()
+	if procedural_music_player == null:
+		return
+	if not crt_music_owner_active:
+		procedural_music_player.stop()
+		crt_music_owner_active = true
+	procedural_music_player.play_crt_practice_theme()
+
+
+func _release_crt_menu_music() -> void:
+	if not crt_music_owner_active:
+		return
+	crt_music_owner_active = false
+	if procedural_music_player != null:
+		# Also cancels pending old-generation work and all native/Web Music stems.
+		procedural_music_player.stop()
+
+
+func _crt_origin_music_state() -> Dictionary:
+	if procedural_music_player == null:
+		return {}
+	return {
+		"tempo": procedural_music_player.adaptive_tempo_save_state(),
+		"choreography": procedural_music_player.music_choreography_save_state(),
+		"arrangement": run_state.music_arrangement_state.duplicate(true) if run_state != null else {},
+	}
+
+
+func _restore_crt_origin_music_state(state: Dictionary) -> void:
+	if procedural_music_player == null or state.is_empty():
+		return
+	procedural_music_player.sync_adaptive_tempo_state(JsonCoerceScript._copy_dict(state.get("tempo", {})))
+	procedural_music_player.sync_music_choreography_state(JsonCoerceScript._copy_dict(state.get("choreography", {})))
+	procedural_music_player.sync_authored_arrangement_state(JsonCoerceScript._copy_dict(state.get("arrangement", {})))
+
+
+func _on_crt_user_selection_changed(game_id: String) -> void:
+	if _crt_menu_audio_active() and _implemented_game_ids().has(game_id):
+		_play_environment_audio_cue("crt_move", -1.0, "crt_practice_console")
+
+
+func _on_crt_launch_accepted(game_id: String) -> void:
+	if _crt_practice_active() and dev_game_test_mode and current_game != null and current_game.get_id() == game_id:
+		_play_environment_audio_cue("crt_select", -1.0, "crt_practice_console")
 
 
 func _is_web_audio_unlock_gesture(event: InputEvent) -> bool:
@@ -13512,7 +13576,10 @@ func _run_web_audio_unlock_refresh() -> void:
 	if not OS.has_feature("web"):
 		web_audio_unlock_refresh_scheduled = false
 		return
-	if procedural_music_player != null and current_screen == SCREEN_START:
+	if procedural_music_player != null and _crt_menu_audio_active():
+		_play_crt_menu_music()
+		procedural_music_player.refresh_after_web_audio_unlock(procedural_music_player.crt_practice_theme_environment(), 0, {})
+	elif procedural_music_player != null and current_screen == SCREEN_START:
 		procedural_music_player.refresh_after_web_audio_unlock(procedural_music_player.main_menu_theme_environment(), 0, {})
 	elif procedural_music_player != null and run_state != null:
 		procedural_music_player.refresh_after_web_audio_unlock(run_state.current_environment, run_state.suspicion_level(), music_fx_state_snapshot())
@@ -15533,6 +15600,8 @@ func _play_environment_audio_cue(cue_id: String, volume_db: float = -1.0, profil
 	if normalized_cue.is_empty():
 		return
 	_ensure_environment_sfx_player()
+	if environment_sfx_player == null:
+		return
 	if normalized_cue.begins_with("bonus_start") and environment_sfx_player.has_method("play_slot_event"):
 		environment_sfx_player.call("play_slot_event", normalized_cue, volume_db, 1.0)
 	elif environment_sfx_player.has_method("play_surface_cue"):
@@ -15552,11 +15621,16 @@ func _play_environment_audio_cue(cue_id: String, volume_db: float = -1.0, profil
 func _ensure_environment_sfx_player() -> void:
 	if environment_sfx_player != null:
 		return
+	# CRT can navigate before staged run UI has published its SFX dependency.
+	if SfxPlayerScript == null:
+		SfxPlayerScript = _consume_run_ui_script_prewarm_result(str(RUN_UI_SCRIPT_PATHS["SfxPlayerScript"])) as Script
+	if SfxPlayerScript == null:
+		return
 	environment_sfx_player = SfxPlayerScript.new()
 	if environment_sfx_player.has_method("bind_surface_audio_authority"):
 		environment_sfx_player.call("bind_surface_audio_authority", _environment_audio_authority)
 	if environment_sfx_player.has_method("set_prewarm_events"):
-		environment_sfx_player.call("set_prewarm_events", ["phone_call", "phone_out_of_service", "heat_gain"])
+		environment_sfx_player.call("set_prewarm_events", ["phone_call", "phone_out_of_service", "heat_gain", "crt_move", "crt_select"])
 	if environment_sfx_player.has_signal("audio_status_changed"):
 		environment_sfx_player.audio_status_changed.connect(_on_surface_audio_status_changed)
 	add_child(environment_sfx_player)
@@ -21389,6 +21463,7 @@ func open_game_test_menu() -> void:
 		retained_tween.pause()
 	crt_practice_origin = {
 		"lifecycle": origin_lifecycle,
+		"music": _crt_origin_music_state(),
 		"attention_tween": retained_tween,
 		"resume_attention": resume_attention,
 		"environment_key_input": environment_canvas.is_processing_unhandled_key_input() if environment_canvas != null else true,
@@ -21440,6 +21515,7 @@ func _return_to_crt_selector() -> void:
 	crt_practice_overlay.move_to_front()
 	game_test_menu.visible = true
 	game_test_menu.call("focus_selected_game")
+	_play_crt_menu_music()
 	if game_test_status_label != null:
 		game_test_status_label.text = "%d games · Practice only · Leave returns here" % _implemented_game_ids().size()
 
@@ -21453,6 +21529,7 @@ func close_game_test_menu() -> void:
 		back_to_environment()
 		return
 	var origin := crt_practice_origin
+	_release_crt_menu_music()
 	_reset_game_surface_runtime_state()
 	if run_ui_built:
 		_clear_input_guard_modal_state()
@@ -21462,6 +21539,7 @@ func close_game_test_menu() -> void:
 	generator = origin.get("generator") as RunGenerator
 	environment_runtime_scheduler = origin.get("runtime_scheduler")
 	_restore_foundation_lifecycle_snapshot(origin.get("lifecycle", {}))
+	_restore_crt_origin_music_state(JsonCoerceScript._copy_dict(origin.get("music", {})))
 	environment_clock_fractional_minutes = float(origin.get("clock_fraction", 0.0))
 	# Keep absolute autonomous deadlines in the parked room's original epoch.
 	environment_clock_epoch_offset_msec += int(origin.get("simulation_msec", 0)) - _environment_simulation_time_msec()
@@ -21521,6 +21599,7 @@ func start_game_test_session(game_id: String) -> Dictionary:
 
 
 func _start_game_test_session_with_lifecycle_snapshot(game_id: String, game: GameModule, rollback: Dictionary) -> Dictionary:
+	_release_crt_menu_music()
 	run_state = RunState.new()
 	run_state.start_new(_game_test_seed(game_id))
 	run_state.challenge_config["exclude_profile_stats"] = true

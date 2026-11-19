@@ -32,6 +32,10 @@ const ONE_SHOT_PLAYER_COUNT := 10
 const WEB_SURFACE_LOOP_ID := "sfx:surface_loop"
 const WEB_LOOP_RETRY_LIMIT := 2
 const WEB_FAILURE_WARNING_THRESHOLD := 3
+const CRT_PREWARM_EVENTS := ["crt_move", "crt_select"]
+# WEB_DELIVERY_EVENT_IDS lists the on-disk .bthsfx bank. These tiny
+# original cues instead deliver cached, pre-encoded shared procedural PCM.
+const WEB_PROCEDURAL_DELIVERY_EVENT_IDS := CRT_PREWARM_EVENTS
 const BLACKJACK_PREWARM_EVENTS := [
 	"blackjack_card",
 	"blackjack_chip",
@@ -59,6 +63,8 @@ const ROULETTE_PREWARM_EVENTS := [
 	"roulette_payout",
 ]
 const ENVIRONMENT_PREWARM_EVENTS := [
+	"crt_move",
+	"crt_select",
 	"phone_call",
 	"phone_out_of_service",
 	"drink_consumed",
@@ -91,6 +97,8 @@ const WEB_CRITICAL_PREWARM_EVENTS := [
 	"roulette_chip_place",
 	"roulette_rotor_launch",
 	"roulette_ball_loop",
+	"crt_move",
+	"crt_select",
 ]
 const WEB_DELIVERY_EVENT_IDS := [
 	"button", "button_pinball", "button_buffalo", "button_digital",
@@ -1339,6 +1347,8 @@ func audio_fidelity_contract_snapshot() -> Dictionary:
 		"shared_synthesis": true,
 		"web_delivery_event_count": WEB_DELIVERY_EVENT_IDS.size(),
 		"web_delivery_uses_preencoded_pcm": true,
+		"web_procedural_delivery_event_count": WEB_PROCEDURAL_DELIVERY_EVENT_IDS.size(),
+		"web_procedural_delivery_uses_preencoded_pcm": true,
 		"web_incremental_prewarm": true,
 		"web_native_audio_fallback": false,
 		"native_slot_delivery_event_count": NATIVE_SLOT_DELIVERY_EVENTS.size(),
@@ -1899,9 +1909,15 @@ func _process_prewarm_chunk() -> void:
 			var delivery_stream := _web_delivery_event_stream(delivery_event_id)
 			if delivery_stream != null:
 				_stream_cache[delivery_event_id] = delivery_stream
+			elif WEB_PROCEDURAL_DELIVERY_EVENT_IDS.has(delivery_event_id):
+				# The console's tiny original cues use shared synthesis rather than
+				# an asset pack. Retain the existing Web sample/frame budget.
+				_begin_prewarm_event(delivery_event_id)
+				break
 			return
-		set_process(false)
-		return
+		if _prewarm_active_event_id.is_empty():
+			set_process(false)
+			return
 	if _prewarm_active_event_id.is_empty():
 		while not _prewarm_queue.is_empty():
 			var event_id := str(_prewarm_queue.pop_front())
@@ -1935,12 +1951,15 @@ func _process_prewarm_chunk() -> void:
 			break
 	if _prewarm_active_frame_cursor < _prewarm_active_frame_count:
 		return
-	_stream_cache[_prewarm_active_event_id] = _audio_stream_from_pcm(
+	var completed_stream := _audio_stream_from_pcm(
 		_prewarm_active_event_id,
 		_prewarm_active_sample_rate,
 		_prewarm_active_frame_count,
 		_prewarm_active_data
 	)
+	if web_prewarm and WEB_PROCEDURAL_DELIVERY_EVENT_IDS.has(_prewarm_active_event_id):
+		WebAudioBridgeScript.prepare_pcm_stream_for_bridge(completed_stream)
+	_stream_cache[_prewarm_active_event_id] = completed_stream
 	_clear_prewarm_event()
 
 
@@ -1995,6 +2014,8 @@ func _event_stream(event_id: String) -> AudioStreamWAV:
 			_stream_cache[normalized] = delivery_stream
 			return delivery_stream
 	var synthesized := _synthesized_event_stream(normalized)
+	if OS.has_feature("web") and WEB_PROCEDURAL_DELIVERY_EVENT_IDS.has(normalized):
+		WebAudioBridgeScript.prepare_pcm_stream_for_bridge(synthesized)
 	_stream_cache[normalized] = synthesized
 	return synthesized
 
@@ -2216,6 +2237,8 @@ func _normalized_event_id_uncached(event_id: String) -> String:
 			"jackpot": "jackpot_buffalo",
 			"loss": "lose",
 		})
+	if CRT_PREWARM_EVENTS.has(family_event):
+		return family_event
 	if family_event == "drink_consumed" or family_event in ["phone_call", "phone_out_of_service"] or family_event == "heat_gain":
 		return family_event
 	if family_event == "alarm_chirp":
@@ -2293,6 +2316,10 @@ func _normalized_family_event(event_id: String, mapping: Dictionary) -> String:
 
 func _event_seconds(event_id: String) -> float:
 	match event_id:
+		"crt_move":
+			return 0.095
+		"crt_select":
+			return 0.380
 		"button", "button_pinball", "button_buffalo", "button_digital":
 			return 0.09
 		"drink_consumed":
@@ -2427,6 +2454,10 @@ func _event_seconds(event_id: String) -> float:
 
 func _event_sample(event_id: String, t: float, frame: int, seconds: float) -> float:
 	match event_id:
+		"crt_move":
+			return _sample_crt_move(t, seconds)
+		"crt_select":
+			return _sample_crt_select(t, seconds)
 		"button", "button_pinball":
 			return _sample_button(t, frame, seconds)
 		"button_buffalo":
@@ -2607,6 +2638,33 @@ func _event_sample(event_id: String, t: float, frame: int, seconds: float) -> fl
 			return _sample_roulette_payout(t, frame, seconds)
 		_:
 			return 0.0
+
+
+func _sample_crt_move(t: float, seconds: float) -> float:
+	# A short original A5 -> E6 cursor pulse. Each note has its own rounded
+	# envelope; the four-millisecond gap keeps rapid movement articulate.
+	return _crt_console_note(t, 880.0, 0.039, 0.20, 9.0) \
+		+ _crt_console_note(t - 0.043, 1318.510228, seconds - 0.043, 0.18, 9.0)
+
+
+func _sample_crt_select(t: float, seconds: float) -> float:
+	# A5 / C6 / E6 acknowledges an accepted launch in the console's own A-minor
+	# color. This is a one-shot SFX, independent of the music director and RNG.
+	return _crt_console_note(t, 880.0, 0.085, 0.20, 4.5) \
+		+ _crt_console_note(t - 0.090, 1046.502261, 0.085, 0.19, 4.5) \
+		+ _crt_console_note(t - 0.180, 1318.510228, seconds - 0.180, 0.18, 4.5)
+
+
+func _crt_console_note(local: float, frequency: float, seconds: float, strength: float, decay: float) -> float:
+	if local < 0.0 or local >= seconds or seconds <= 0.0:
+		return 0.0
+	# A softened pulse with finite odd harmonics stays below Nyquist at 22 kHz.
+	# Unlike a hard square wave, this retains console character without a sharp
+	# click or an aliased edge; no random stream or mutable synthesis state.
+	var phase := TAU * frequency * local
+	var pulse := (sin(phase) + sin(phase * 3.0) * 0.20 + sin(phase * 5.0) * 0.06) / 1.26
+	var envelope := _decay_env(local, seconds, 0.002, minf(0.055, seconds * 0.40))
+	return pulse * envelope * exp(-local * decay) * strength
 
 
 func _sample_button(t: float, frame: int, seconds: float) -> float:

@@ -604,6 +604,38 @@ func main_menu_theme_environment() -> Dictionary:
 	}
 
 
+# Presentation-only console composition. Keep its identity independent of the
+# title tour and every run's RNG, Heat, bankroll, and arrangement save state.
+func play_crt_practice_theme() -> void:
+	play_for_environment_state(crt_practice_theme_environment(), 0, {})
+
+
+func crt_practice_theme_environment() -> Dictionary:
+	return {
+		"id": "crt_practice_console",
+		"archetype_id": "crt_practice_console",
+		"mood": "relaxed console lounge",
+		"music_profile": {
+			"theme": "CRT chip lounge",
+			"texture": "static",
+			"texture_rate": 0.41,
+			"palette_id": "crt_chip_lounge",
+			"generated_signature": "crt_practice_chip_lounge_v1",
+			"bpm": 96.0,
+			"mode": "dorian",
+			"root_midi": 45,
+			# Full safety keeps the existing tempo policy at exactly 96 BPM.
+			"safety": 1.0,
+			"ambience": 0.66,
+			"volume": 0.24,
+			"arrangement_phrases": 4,
+			"swing_amount": 0.08,
+			"progression": [0, 3, 1, 4],
+			"motif": [0, EMPTY_NOTE, 2, 4, EMPTY_NOTE, 1, 4, EMPTY_NOTE, 5, 4, 2, EMPTY_NOTE, 1, EMPTY_NOTE, 0, EMPTY_NOTE],
+		},
+	}
+
+
 # Starts or updates the generated theme and live FX from one run-state snapshot.
 func play_for_environment_state(environment: Dictionary, heat_level: int, music_state: Dictionary) -> void:
 	var snapshot := _music_fx_state_from_environment(environment, heat_level, music_state)
@@ -6137,6 +6169,8 @@ func _safety_from_security(security: Dictionary) -> float:
 
 func _theme_texture(theme: String) -> String:
 	var lowered := theme.to_lower()
+	if lowered == "crt chip lounge":
+		return "crt_chip_lounge"
 	if lowered.find("menu tour") != -1:
 		return "menu_tour"
 	if lowered.find("wet") != -1 or lowered.find("alley") != -1:
@@ -6194,6 +6228,16 @@ func _theme_swing_amount(theme: String) -> float:
 
 func _theme_instrument_palette(theme: String) -> Dictionary:
 	match _theme_texture(theme):
+		"crt_chip_lounge":
+			return {
+				"id": "crt_chip_lounge",
+				"pad_warmth": 1.10,
+				"pad_phaser": 0.04,
+				"lead_detune": 0.08,
+				"hat_softness": 0.60,
+				"bass_weight": 0.98,
+				"vibraphone": 0.32,
+			}
 		"menu_tour":
 			return {
 				"id": "menu_tour_ensemble",

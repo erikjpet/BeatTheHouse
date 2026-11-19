@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-19T15:49:31.202894+00:00",
+  "updated_at": "2026-11-19T18:03:04.283098+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -182,6 +182,137 @@
     "reconciled_main_commit": "e1e71f26d37040142c5f851b3bbd3d1f89d61355"
   },
   "objectives": [
+    {
+      "id": "BTH061-CRT-AUDIO-001",
+      "name": "Add original CRT console music and move/select audio",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [
+        "BTH061-CRT-PRACTICE-001"
+      ],
+      "group": "current",
+      "state": "open",
+      "status": "NATIVE_AND_PRIVATE_WEB_AUDIO_QUALIFIED_NEXT_PENDING",
+      "owner": {
+        "assignment_state": "assigned",
+        "name": "CRT audio follow-up lane",
+        "task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-audio:/root",
+        "source_root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-18\\task\\crt-audio-candidate"
+      },
+      "objective": {
+        "text": "Add nostalgic original console-era CRT menu music and distinct navigation/selection cues, using existing project Music/SFX paths and preserving settings, genuine Web unlock, transitions and gameplay/save isolation.",
+        "source": "Erik voice request Sentinel_62a039b7d59481918e4d051b9fcb80ec; parent authorized audio implementation/sole runtime after Tutorial837e0517; approvals Sentinel_951dee9c9ef48191a62f93bd34824b66 and Sentinel_b8c5f143684c8191bb739a8a30448034.",
+        "acceptance": [
+          {
+            "id": "original-chip-music",
+            "description": "Original relaxed16-bit chip-lounge Music bed based on Beat the House own theme colors; target96BPM16bars40seconds, no external Nintendo audio.",
+            "required": true,
+            "state": "passed",
+            "evidence": [
+              {
+                "kind": "qualification_report",
+                "reference": "docs/testing/CRT_audio_20261119.md"
+              }
+            ]
+          },
+          {
+            "id": "semantic-input-cues",
+            "description": "Distinct move and accepted-select SFX across keyboard/controller/mouse/touch; one move per changed game ID, no duplicate focus/pointer, initial or restored focus sounds, no confirmation for failed launch.",
+            "required": true,
+            "state": "passed",
+            "evidence": [
+              {
+                "kind": "qualification_report",
+                "reference": "docs/testing/CRT_audio_20261119.md"
+              }
+            ]
+          },
+          {
+            "id": "independent-mix-and-unlock",
+            "description": "Honor Master, Music and SFX sliders and hard mute independently, including genuine first Web gesture and deferred unlock retries.",
+            "required": true,
+            "state": "passed",
+            "evidence": [
+              {
+                "kind": "qualification_report",
+                "reference": "docs/testing/CRT_audio_20261119.md"
+              }
+            ]
+          },
+          {
+            "id": "single-music-owner-and-return",
+            "description": "Exactly one music owner across title/room/meta→CRT→practice→CRT→origin, no stale generation/duplicate loops or title/venue refresh stealing CRT.",
+            "required": true,
+            "state": "passed",
+            "evidence": [
+              {
+                "kind": "qualification_report",
+                "reference": "docs/testing/CRT_audio_20261119.md"
+              }
+            ]
+          },
+          {
+            "id": "existing-state-contracts",
+            "description": "Preserve existing CRT seed/setup/Leave/save/RNG/profile/meta boundaries; no save-code changes or claim that Tutorial live Save/cold Continue passed.",
+            "required": true,
+            "state": "passed",
+            "evidence": [
+              {
+                "kind": "qualification_report",
+                "reference": "docs/testing/CRT_audio_20261119.md"
+              }
+            ]
+          },
+          {
+            "id": "native-web-playback-and-audibility",
+            "description": "Qualify native and Web playback/control behavior and independently state actual audible-output/capture evidence; normal reviewed main/NEXT exact identity/assets/live smoke.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              {
+                "kind": "qualification_report",
+                "reference": "docs/testing/CRT_audio_20261119.md"
+              }
+            ]
+          }
+        ]
+      },
+      "implementation_batches": [],
+      "planned_app_changes": [
+        "Use ProceduralMusicPlayer CRT profile and existing Music/stem Web delivery; never generic WAV play_stream for music.",
+        "Add semantic game-selection and accepted-launch SFX through current authorized surface-audio path.",
+        "Prioritize SCREEN_CRT in normal music routing and deferred Web unlock, stop stale music work at ownership transitions."
+      ],
+      "evidence": [
+        {
+          "kind": "source_preflight_and_asset_transfer_limit",
+          "reference": "b9e935c0f16fba81ed14c6a8d5666d5c60ff7056; libfile_fde3_f-91c0002b5c9c8191bdec557869679c6b_b2e6deecb030819197ad6510125a1c29",
+          "summary": "Existing title84BPM Dorianroot45/menu_tour colors inspected. Library helper failed Windows os.setxattr before finalZIP installation; expectedbundleSHA7aeb070d6a9f80c090bf7344c7d72e2fd3f20fef08cb1fcde7a8d8fa8b71b443 not verified. No workaround; parent approved original procedural arrangement instead. Fresh verified main/NEXT837e0517 selected; no new audio runtime yet."
+        },
+        {
+          "kind": "focused_native_and_private_web_audio_qualification",
+          "reference": "docs/testing/CRT_audio_20261119.md",
+          "summary": "Native69 semantic/input/owner/mixer checks; actual native56 output checks with 42s captured mixer PCM; CRT634 and separate-process coldContinue23+16 pass. Private Web4 passed genuine first-gesture unlock, actual mixed output recording, accepted launch/touch Leave/ExitTV, separate settings gains and Master0. Captures are app-output evidence, not physical speaker hearing. All owned Jobs closed0. Earlier failed harness runs and no-store history retained; Tutorial live Save/cold Continue remains separate and open."
+        }
+      ],
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": "",
+        "evidence": []
+      },
+      "next_action": "Commit the scoped original audio feature, qualify exact changed import inputs through the existing watcher, no-force push main, then verify exact served NEXT identity/assets and fresh live Games audio. User-operated ledger reconciliation and separate Tutorial Save issue remain outside this change.",
+      "blocker": {
+        "state": "none",
+        "kind": "",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-19T18:03:04.283098+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-19T18:03:04.283098+00:00"
+    },
     {
       "id": "BTH061-CRT-PRACTICE-001",
       "name": "Add the home television CRT practice console",
@@ -39966,7 +40097,9 @@
       "aliases": [],
       "group": "current",
       "state": "open",
-      "commits": ["7cc63ab100acc18f3e93e643a5ddddb4e8170258"],
+      "commits": [
+        "7cc63ab100acc18f3e93e643a5ddddb4e8170258"
+      ],
       "deployment": {
         "required": true,
         "state": "pending",

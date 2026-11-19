@@ -1,6 +1,9 @@
 class_name CrtPracticeMenu
 extends VBoxContainer
 
+signal user_selection_changed(game_id: String)
+signal launch_accepted(game_id: String)
+
 # Presentation only. FoundationMain owns generation and suspended save state.
 # The complete 4:3 image and its input use the same barrel/analog transform.
 const DISPLAY_SIZE := Vector2(768, 576)
@@ -142,6 +145,7 @@ var _touch_index := -1
 var _last_pointer := Vector2.ZERO
 var _await_pointer_release := false
 var _display_mouse_inside := false
+var _restoring_selection := false
 
 
 func configure(host: Variant) -> void:
@@ -194,7 +198,7 @@ func configure(host: Variant) -> void:
 	visibility_changed.connect(_on_visibility_changed)
 	_wire_game_navigation()
 	if not _game_order.is_empty():
-		_remember_selection(_game_order[0])
+		_remember_selection(_game_order[0], false)
 	_layout_television.call_deferred()
 
 
@@ -245,6 +249,7 @@ func _build_game_select() -> void:
 			button.add_theme_color_override(state, Color(1, 1, 1, 0))
 		button.pressed.connect(_launch_game.bind(game_id))
 		button.focus_entered.connect(_remember_selection.bind(game_id))
+		button.mouse_entered.connect(_on_game_hovered.bind(game_id))
 		grid.add_child(button)
 		var icon := TextureRect.new()
 		icon.name = "ExistingGameIcon"
@@ -659,26 +664,50 @@ func consume_back() -> bool:
 	return false
 
 
-func _remember_selection(game_id: String) -> void:
+func _remember_selection(game_id: String, user_initiated: bool = true) -> void:
+	if not _game_buttons.has(game_id) or selected_game_id == game_id:
+		return
 	selected_game_id = game_id
 	for id_value in _game_buttons:
 		var button: GameTile = _game_buttons[id_value]
 		button.selected = str(id_value) == game_id
 		button.queue_redraw()
+	if user_initiated and not _restoring_selection and is_visible_in_tree():
+		user_selection_changed.emit(game_id)
+
+
+func _on_game_hovered(game_id: String) -> void:
+	if not is_visible_in_tree() or _restoring_selection or _await_pointer_release \
+			or (_generation_panel != null and _generation_panel.visible):
+		return
+	var button: Button = _game_buttons.get(game_id)
+	if button != null and not button.disabled and button.focus_mode != Control.FOCUS_NONE:
+		# Hover and keyboard/controller navigation share one focused selection.
+		# focus_entered owns the change, including the one semantic move signal.
+		button.grab_focus()
 
 
 func _launch_game(game_id: String) -> void:
+	var button: Button = _game_buttons.get(game_id)
+	if button == null or button.disabled:
+		return
 	_remember_selection(game_id)
-	_host.start_game_test_session(game_id)
+	var result: Variant = _host.start_game_test_session(game_id)
+	if typeof(result) == TYPE_DICTIONARY and typeof(result.get("ok", false)) == TYPE_BOOL \
+			and result.get("ok", false):
+		launch_accepted.emit(game_id)
 
 
 func focus_selected_game() -> void:
+	_restoring_selection = true
 	_close_generation(false)
 	var button: Button = _game_buttons.get(selected_game_id)
 	if button == null and not _game_order.is_empty():
 		button = _game_buttons.get(_game_order[0])
 	if button != null:
+		_remember_selection(str(button.get_meta("game_test_id", "")), false)
 		button.grab_focus()
+	_restoring_selection = false
 
 
 func _wire_game_navigation() -> void:

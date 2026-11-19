@@ -1,5 +1,19 @@
 [
   {
+    "id": "crt_practice_console",
+    "profile": {
+      "bus": "SFX", "max_voices": 2, "steal_policy": "oldest_same_surface_then_oldest_global",
+      "hidden_state_policy": "public_fact_or_transition_op_only", "selection_seed_salt": "crt_practice_console",
+      "variation_pitch_steps": [0.0, 0.0], "variation_volume_db_steps": [-1.0, -0.5],
+      "event_classes": {
+        "crt_move": "crt_move", "crt_select": "crt_select"
+      },
+      "visual_counterparts": {
+        "crt_move": "crt.selected_game_highlight", "crt_select": "crt.accepted_game_launch"
+      }
+    }
+  },
+  {
     "id": "coin_pusher",
     "profile": {
       "bus": "SFX",
