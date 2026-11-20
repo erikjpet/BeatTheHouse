@@ -323,7 +323,7 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 	var help_record := {
 		"id": CLERK_DIALOGUE_HOOK_ID,
 		"object_id": "dialogue:%s" % CLERK_DIALOGUE_ID,
-		"label": "%s — Pull-Tab Help" % label,
+		"label": "%s - Pull-Tab Help" % label,
 		"short_description": "The counter staff answers quick questions about the Pull Tabs for sale.",
 		"enabled": true,
 		"action_summary": "Ask about Pull Tabs.",

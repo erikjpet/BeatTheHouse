@@ -1,16 +1,16 @@
-Status: SUPERSEDED — do not claim. The V3 machine rework
+Status: SUPERSEDED - do not claim. The V3 machine rework
 (docs/plans/coin_pusher_v3_machine_rework_plan.md, owner round-6 design session
 2026-08-17) replaces this work. See the pusherv3_* rows on the board.
 Board row: `pusher06_0` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** -
+- **Completion/implementation commits:** -
+- **Verification:** -
+- **Deviations:** -
 
-# Agent Prompt — pusher06_0: Coin Physics Lab (GO/NO-GO gate)
+# Agent Prompt - pusher06_0: Coin Physics Lab (GO/NO-GO gate)
 
 Copy everything below this line into the agent.
 
@@ -20,7 +20,7 @@ You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript
 casino roguelike (Web/itch.io + Windows, 1280×720, `mobile` /
 `gl_compatibility` renderer, all game surfaces GDScript-drawn 2D).
 Binding design contract:
-`docs/plans/0.6_coin_pusher_simulation_plan.md` — read sections 2 and
+`docs/plans/0.6_coin_pusher_simulation_plan.md` - read sections 2 and
 6 before writing code.
 
 ## What this task is
@@ -46,7 +46,7 @@ and do not touch the existing `coin_pusher` implementation at all.
    `pusher06_0` to `IN_PROGRESS` with agent + date, append a Work Log
    line, commit the claim. If the row is not `TODO`, stop.
 2. Log findings tagged `[pusher06_0]` in the Discovery & Decision Log
-   as you measure — the numbers are the deliverable.
+   as you measure - the numbers are the deliverable.
 3. If blocked: row → `BLOCKED` + reason, log, stop.
 4. On completion: row → `DONE` with the **GO or NO-GO verdict and its
    headline numbers** in Notes; fill Execution Record; move this file
@@ -74,7 +74,7 @@ A fixed-timestep, seeded, **fixed-point or integer** 2.5D solver:
   to rest."
 
 **No floats anywhere in state that affects outcomes.** No Godot
-built-in physics bodies — you are proving an owned solver precisely
+built-in physics bodies - you are proving an owned solver precisely
 because the engine's is not cross-platform deterministic.
 
 ### 2. Instrument it
@@ -93,19 +93,19 @@ The harness must report, not merely run:
 
 Run each headless where possible and captured visually once:
 
-1. **Cold pile** — 200 coins settled, machine idle. Idle cost must be
+1. **Cold pile** - 200 coins settled, machine idle. Idle cost must be
    ~free.
-2. **Sweep under load** — full pusher cycle against a settled
+2. **Sweep under load** - full pusher cycle against a settled
    200-coin pile.
-3. **Drop cascade** — coin dropped onto a leaning stack; measure the
+3. **Drop cascade** - coin dropped onto a leaning stack; measure the
    disturbance and the settle time.
-4. **Level fall** — coins pushed off the upper shelf landing on the
+4. **Level fall** - coins pushed off the upper shelf landing on the
    lower field among existing coins.
-5. **Nudge** — a lateral impulse to the whole cabinet with a full
+5. **Nudge** - a lateral impulse to the whole cabinet with a full
    pile awake (worst realistic case).
-6. **Adversarial** — deliberately stack toward instability and force
+6. **Adversarial** - deliberately stack toward instability and force
    a large topple.
-7. **Long run** — 2,000+ simulated drops; watch for drift,
+7. **Long run** - 2,000+ simulated drops; watch for drift,
    accumulated penetration, and pathology counts.
 
 ### 4. Prove determinism
@@ -115,7 +115,7 @@ Run each headless where possible and captured visually once:
   two runs in-process.
 - Same, across a **fresh process**.
 - Same, on the **Web export** vs Windows. This is the load-bearing
-  determinism claim for this project — if it fails, say so plainly.
+  determinism claim for this project - if it fails, say so plainly.
 
 ## GO / NO-GO criteria
 
@@ -140,7 +140,7 @@ Report the verdict against these explicitly, number by number:
 
 **Partial GO** (report as such, with the number): all criteria met
 but only at a lower coin cap. State the highest cap that holds. Per
-the plan, lowering the cap is the correct trade — re-abstracting the
+the plan, lowering the cap is the correct trade - re-abstracting the
 pile is not.
 
 **NO-GO:** any determinism failure that cannot be fixed within the

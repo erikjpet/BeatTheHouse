@@ -1,6 +1,6 @@
 # integ06_1 final-candidate execution ledger
 
-Status: **PREPARED — execute only after the shared Godot gate is released**
+Status: **PREPARED - execute only after the shared Godot gate is released**
 
 This ledger orders the remaining integration qualification so every result is
 bound to one candidate tree and retained with its source identity. A zero exit

@@ -1,4 +1,4 @@
-# CLOSE-04 — one displayed release version
+# CLOSE-04 - one displayed release version
 
 Registered before implementation. Owner decision C1 keeps the displayed number
 0.6.0 and forbids builder re-pinning or version edits in project.godot,
@@ -103,7 +103,7 @@ Raw files remain outside the repository. The external index lists every file/pat
 | E:\CodexQA\BTH\runs\cl061-checkpoint-commit\evidence\raw-evidence-index.json | f4484a9dcd145e4cdfe8fd626d9b039a5c3f70a447ed3d3f73e1cdec9c709998 |
 | E:\CodexQA\BTH\runs\cl061-checkpoint-reconcile\evidence\reconciliation.json | e1c22860660ef8777052b722cba068437ec081d8e6046d75361390129559629a |
 
-## Exact NEXT footer — completed
+## Exact NEXT footer - completed
 
 On served a6ce512640cbd98019a6b9a4c5b5081278ba78bb, tree
 8846b3457d48daafd2ae37279bade6cd42f3d38e,10 identity/asset checks pass.

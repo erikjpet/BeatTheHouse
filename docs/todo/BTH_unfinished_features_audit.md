@@ -1,4 +1,4 @@
-# Beat the House — unfinished and unimplemented player-facing work
+# Beat the House - unfinished and unimplemented player-facing work
 
 Audit date: 2026-11-11
 Audited source: `main` at `06e5492116b2f4aac78ffbc3d41ed15be64833a9`
@@ -14,7 +14,7 @@ first audit's work is finished. It changes nothing in the repository.
 
 ## 0. How to use this document
 
-### Owner decisions (2026-11-12) — these override the text below
+### Owner decisions (2026-11-12) - these override the text below
 
 | Item | Decision |
 | --- | --- |
@@ -32,13 +32,13 @@ first audit's work is finished. It changes nothing in the repository.
 
 ### What was searched
 
-- `docs/todo/` and `docs/todo/deferred_0_6_1/` — every prompt, board and queue.
-- `docs/plans/0.6.1_backlog.md` — the project's own list of everything
+- `docs/todo/` and `docs/todo/deferred_0_6_1/` - every prompt, board and queue.
+- `docs/plans/0.6.1_backlog.md` - the project's own list of everything
   deliberately deferred from 0.6.0. This is the spine of this audit.
 - `docs/current_game_state.md`, `README.md`, `docs/plans/act_two_seam.md`,
   `docs/plans/0.6_post_playtest_program.md`, the rw06 release-week queue and
   the 0.6 board.
-- `docs/item-audit/` — the 153-item behavior audit of 2026-10-27.
+- `docs/item-audit/` - the 153-item behavior audit of 2026-10-27.
 - The 0.6.1 ledger's paused item and scenario entries.
 - The code and data, to check each planned item against what is actually
   there: `scripts/core`, `scripts/games`, `scripts/ui`, `data/`.
@@ -51,7 +51,7 @@ Each item below carries one of these labels. Read them literally.
 | --- | --- |
 | **Verified in code** | I read the code or data at the audited commit and it shows the gap. |
 | **From the plan, not verified** | The project's own documents say it is unfinished. I did not confirm it in code or in play. |
-| **Stale — appears done** | A plan still lists it as open, but the code or a later document shows it was finished. Close the entry. |
+| **Stale - appears done** | A plan still lists it as open, but the code or a later document shows it was finished. Close the entry. |
 | **Needs play to confirm** | Only visible by running the game. |
 
 **Nothing was run.** Godot could not be executed in the audit environment.
@@ -83,21 +83,21 @@ deliver through the existing NEXT pipeline.
 
 | ID | What the player notices | Status | Type | Ready for a worker? |
 | --- | --- | --- | --- | --- |
-| FEAT-01 | Eleven items promise an effect that does nothing | Verified in code (3 of 5 causes) | Code + text | **Parked** — 0.6.2, after the item reassessment |
-| FEAT-02 | Only one of the two Crew heists can be played; the Crew arc is shortened | Verified in code | Content enablement | **In this queue** — investigation and report only |
-| FEAT-03 | Daily Challenge repeats every year and its result goes nowhere | Verified in code | Code | **In this queue** — seed fix only |
-| FEAT-04 | The home collection cannot be sorted or filtered | Verified in code | Code | **Closed** — not wanted |
-| FEAT-05 | Scenario characters teleport between positions instead of walking | From the plan, not verified | Scenario presentation | No — paused, and needs a design pass |
-| FEAT-06 | Some rooms share art; two scenario props have no visual | From the plan, not verified | Art | No — needs art |
-| FEAT-07 | The Count heist takes longer than intended | From the plan, not verified | Pacing | **In this queue** — measured with FEAT-02 |
-| FEAT-08 | Text added in 0.6 never had its voice and copy pass | From the plan | Text only | **Owner, by hand** — 0.6.2 |
-| FEAT-09 | Three known scenario defects are parked | From the ledger | Scenario | **In this queue** — the two concrete defects |
+| FEAT-01 | Eleven items promise an effect that does nothing | Verified in code (3 of 5 causes) | Code + text | **Parked** - 0.6.2, after the item reassessment |
+| FEAT-02 | Only one of the two Crew heists can be played; the Crew arc is shortened | Verified in code | Content enablement | **In this queue** - investigation and report only |
+| FEAT-03 | Daily Challenge repeats every year and its result goes nowhere | Verified in code | Code | **In this queue** - seed fix only |
+| FEAT-04 | The home collection cannot be sorted or filtered | Verified in code | Code | **Closed** - not wanted |
+| FEAT-05 | Scenario characters teleport between positions instead of walking | From the plan, not verified | Scenario presentation | No - paused, and needs a design pass |
+| FEAT-06 | Some rooms share art; two scenario props have no visual | From the plan, not verified | Art | No - needs art |
+| FEAT-07 | The Count heist takes longer than intended | From the plan, not verified | Pacing | **In this queue** - measured with FEAT-02 |
+| FEAT-08 | Text added in 0.6 never had its voice and copy pass | From the plan | Text only | **Owner, by hand** - 0.6.2 |
+| FEAT-09 | Three known scenario defects are parked | From the ledger | Scenario | **In this queue** - the two concrete defects |
 | FEAT-10 | Three older bugs were held and never rechecked | From the plan | Needs play | Recheck task |
 | FEAT-11 | Two item packs must be switched on by the player | Verified in data | Data + check | **In this queue** |
 | QOL-06…10 | Controls page, rebet, faster tables, save slots, localisation | Verified in code (first audit) | Code | **Not wanted now** |
-| — | Section 6: owner, platform and human-only items | — | — | Not worker tasks |
-| — | Section 7: deferred qualification campaigns | — | Test runs | Procedure exists |
-| — | Section 8: stale plan entries to close | Stale — appears done | Docs | **Yes** |
+| - | Section 6: owner, platform and human-only items | - | - | Not worker tasks |
+| - | Section 7: deferred qualification campaigns | - | Test runs | Procedure exists |
+| - | Section 8: stale plan entries to close | Stale - appears done | Docs | **Yes** |
 
 ---
 
@@ -115,7 +115,7 @@ recommends (FEAT-02).
 These are the highest-value items: the work is mostly done and the player is
 already being shown something that does not happen.
 
-## FEAT-01 — Eleven items promise an effect that does nothing
+## FEAT-01 - Eleven items promise an effect that does nothing
 
 > **Owner decision 2026-11-12:** **parked.** No item effect is to be changed until all item effects have been reassessed. This whole section, including Lucky Penny and Ledger Pencil, moves to the 0.6.2 queue (section 9). It stays here as the starting evidence for that reassessment. Do not implement any part of it.
 
@@ -130,7 +130,7 @@ effect/path discrepancy or unused setting"; ledger `BTH-15`, `BTH-17`.
 They buy, earn or equip an item for a stated benefit and that benefit never
 applies. There is no error; the number just does not move.
 
-### Part A — Slot odds that Slots ignore (2 items)
+### Part A - Slot odds that Slots ignore (2 items)
 
 | Item | Data | What happens |
 | --- | --- | --- |
@@ -152,7 +152,7 @@ math decision.
 the player sees about Slots. If the card never mentions Slots, this part is
 data hygiene only and can be done silently.
 
-### Part B — Souvenirs granted by a scene do not apply their luck (2 items)
+### Part B - Souvenirs granted by a scene do not apply their luck (2 items)
 
 | Item | Advertised | What happens |
 | --- | --- | --- |
@@ -170,11 +170,11 @@ without it.
 scenario sequences and `scripts/core/run_action_service.gd` for their ids)
 and make it apply the item's acquisition effect exactly once, the same way a
 purchase does. "Exactly once" must hold across save, reload, travel and
-revisit — the project has been burned by double-firing rewards. Then check
+revisit - the project has been burned by double-firing rewards. Then check
 whether **every** scenario-granted souvenir has the same gap; the audit lists
 13 scenario-reward items and only traced these two.
 
-### Part C — Collection items equipped from home do not apply baseline luck (4 items)
+### Part C - Collection items equipped from home do not apply baseline luck (4 items)
 
 | Item | Unconnected field |
 | --- | --- |
@@ -211,7 +211,7 @@ makes them stronger than players have experienced. It is still a bug fix
 (the item says it does this), but tell the owner the potency ranges
 (1–3, 1–3, 3–7, 5–10) before shipping.
 
-### Part D — Collection Cooler's Cufflinks do not shield a failed peek (1 item)
+### Part D - Collection Cooler's Cufflinks do not shield a failed peek (1 item)
 
 **Evidence.** Blackjack checks one hard-coded id:
 
@@ -231,7 +231,7 @@ does) or should not (then remove the claim from its text). Do not guess; the
 ordinary item is consumed into `broken_cufflinks` and a persistent collection
 item being destroyed is a design question.
 
-### Part E — Two items flagged for full rework, one unused setting
+### Part E - Two items flagged for full rework, one unused setting
 
 - **Lucky Penny (`lucky_penny`, ledger `BTH-15`)** and **Ledger Pencil
   (ledger `BTH-17`, `LEDGER022`)**: the owner flagged both for a full effect
@@ -251,7 +251,7 @@ changes.
 
 ---
 
-## FEAT-02 — Only one of the two Crew heists can be played
+## FEAT-02 - Only one of the two Crew heists can be played
 
 > **Owner decision 2026-11-12:** **investigate and report.** Do step 1, and FEAT-07's measurement, and deliver one report on the current state and the remaining work. Steps 3 and 4 are not authorized. Nothing that exposes The Whale Game is pushed.
 
@@ -323,7 +323,7 @@ and the hidden-state checks still pass.
 
 ---
 
-## FEAT-03 — Daily Challenge repeats every year and its result goes nowhere
+## FEAT-03 - Daily Challenge repeats every year and its result goes nowhere
 
 **Status:** Verified in code.
 
@@ -381,7 +381,7 @@ unused `submit_*` functions stay as they are.
 
 ---
 
-## FEAT-04 — The home collection cannot be sorted or filtered
+## FEAT-04 - The home collection cannot be sorted or filtered
 
 > **Owner decision 2026-11-12:** **closed, not wanted.** The design goal is that players hold only a few items, so the collection should not need browsing tools. Do not build this.
 
@@ -429,7 +429,7 @@ bytes are identical before and after; focus traversal and Escape still work.
 
 ## 3. Planned content and presentation that was not built
 
-## FEAT-05 — Scenario characters teleport instead of walking
+## FEAT-05 - Scenario characters teleport instead of walking
 
 **Status:** From the plan, not verified. **Blocked by:** scenario pause; needs
 design. **Source:** `docs/plans/0.6.1_backlog.md`, "Animate scenario
@@ -447,7 +447,7 @@ through the room without crossing other occupants or the player's access
 lane, and never block an exit. It needs its own plan and the scenario pause
 lifted. Listed so it is not lost; do not start it from this document.
 
-## FEAT-06 — Shared room art and two props with no visual
+## FEAT-06 - Shared room art and two props with no visual
 
 **Status:** From the plan, not verified. **Blocked by:** art.
 **Source:** `docs/plans/0.6.1_backlog.md`, "Rooms and placement".
@@ -461,7 +461,7 @@ A worker cannot produce these. They need backgrounds and props from an
 artist, then a placement pass. Check them in play first; later placement work
 may have changed how they look.
 
-## FEAT-07 — The Count heist takes longer than intended
+## FEAT-07 - The Count heist takes longer than intended
 
 **Status:** From the plan, not verified.
 **Source:** `docs/plans/0.6.1_backlog.md`; rw06 final queue T4.
@@ -476,7 +476,7 @@ First step is measurement: replay the route, record where the actions go, and
 propose specific cuts to the owner. Do it together with FEAT-02, since
 restoring the trust arc pulls the other way.
 
-## FEAT-08 — The 0.6 text never had its voice and copy pass
+## FEAT-08 - The 0.6 text never had its voice and copy pass
 
 > **Owner decision 2026-11-12:** **the owner will do this by hand.** Not a worker task. Listed in the 0.6.2 queue.
 
@@ -484,7 +484,7 @@ restoring the trust arc pulls the other way.
 **Source:** `docs/todo/deferred_0_6_1/voice06_1_voice_pass_prompt.md`
 (status PARKED).
 
-Everything written for 0.6 — 55 scenarios, Crew, heist, new characters — has
+Everything written for 0.6 - 55 scenarios, Crew, heist, new characters - has
 not been through the register and brevity pass that 0.5's text got. The
 player-visible symptoms are uneven tone and over-long lines. QOL-03 in the
 first audit (internal wording shown to players) is the same class.
@@ -497,7 +497,7 @@ protocol refers to the old 0.6 board, so register the work in the current
 ledger instead; and it should run after FEAT-01 and FEAT-02 settle their
 text.
 
-## FEAT-09 — Three known scenario defects are parked
+## FEAT-09 - Three known scenario defects are parked
 
 > **Owner decision 2026-11-12:** **fix the two concrete defects** (`BTH-SCENARIO-WEDDING-001`, `BTH-SCENARIO-ARRIVAL-002`). `BTH-11` stays open with no work; it is a 0.6.2 item.
 
@@ -507,13 +507,13 @@ text.
 | --- | --- |
 | `BTH-SCENARIO-WEDDING-001` | Delta Queen Wedding Charter: a delayed initial arrival selects failure |
 | `BTH-SCENARIO-ARRIVAL-002` | Punchline Bringer Show: layer-arrival ordering |
-| `BTH-11` | "Scenario polish" — scope needs restating before anyone starts |
+| `BTH-11` | "Scenario polish" - scope needs restating before anyone starts |
 
 The first two are concrete player-facing defects with existing evidence in
 the ledger. They resume from their recorded next actions when the pause is
 lifted; this document adds nothing to their diagnosis.
 
-## FEAT-10 — Three older bugs were held and never rechecked
+## FEAT-10 - Three older bugs were held and never rechecked
 
 **Status:** From the plan; needs play.
 **Source:** `docs/plans/agent_playtest/agent_playtest_report_2026-09-12.md`
@@ -530,7 +530,7 @@ The slot system has since been replaced and the owner accepted the placements
 on 2026-10-18, so they may already be gone. The task is a recheck in play at
 1280×720, then either close with evidence or open a fresh, reproduced item.
 
-## FEAT-11 — Two item packs must be switched on by the player
+## FEAT-11 - Two item packs must be switched on by the player
 
 **Status:** Verified in data. **Owner decision 2026-11-12: fix.** A player
 must not need to enable anything to receive these items.
@@ -590,7 +590,7 @@ awards its souvenir, and Mags' bench offers its gear. Shop stock is unchanged.
 
 ---
 
-## QOL-06 to QOL-10 — carried over from the first audit
+## QOL-06 to QOL-10 - carried over from the first audit
 
 > **Owner decision 2026-11-12:** **none wanted now.** Leave them recorded; do not plan or build any.
 
@@ -612,14 +612,14 @@ repository mentions it.
 
 ## 5. Order for the worker (after the owner's decisions)
 
-1. **Section 8** — close the stale plan entries, and close FEAT-04 as not
+1. **Section 8** - close the stale plan entries, and close FEAT-04 as not
    wanted.
-2. **FEAT-03** — daily seed fix.
-3. **FEAT-11** — both item packs on by default.
-4. **FEAT-10** — recheck BUG-10, BUG-34 and BUG-37 in play.
-5. **FEAT-09** — the two scenario defects.
-6. **FEAT-02 and FEAT-07** — one investigation, one report, nothing shipped.
-7. **Section 9** — record the 0.6.2 queue in the ledger so it is not lost.
+2. **FEAT-03** - daily seed fix.
+3. **FEAT-11** - both item packs on by default.
+4. **FEAT-10** - recheck BUG-10, BUG-34 and BUG-37 in play.
+5. **FEAT-09** - the two scenario defects.
+6. **FEAT-02 and FEAT-07** - one investigation, one report, nothing shipped.
+7. **Section 9** - record the 0.6.2 queue in the ledger so it is not lost.
 
 Not for the worker in this queue: FEAT-01, FEAT-04, FEAT-05, FEAT-06, FEAT-08,
 `BTH-11`, QOL-06 to QOL-10, and everything in sections 6 and 7.
@@ -670,7 +670,7 @@ after finished work.
 
 | Plan entry | Where it is listed | What shows it is finished |
 | --- | --- | --- |
-| env06_9 "visual consequences and object identity (127 failures across 53/55 scenarios)" | `docs/plans/0.6.1_backlog.md` | The prompt's own header: "DONE — absorbed and completed by `fix06_28` on 2026-09-07" (`docs/todone/env06_9_…_prompt.md`) |
+| env06_9 "visual consequences and object identity (127 failures across 53/55 scenarios)" | `docs/plans/0.6.1_backlog.md` | The prompt's own header: "DONE - absorbed and completed by `fix06_28` on 2026-09-07" (`docs/todone/env06_9_…_prompt.md`) |
 | Room-density restorations: Bar, Back Alley, Gas Station, Underground, Kitty Cat, Jazz Club, Beach, Delta Queen, Motel aftermath; "later-work and aftermath props in More room actions" | `docs/plans/0.6.1_backlog.md`, "Rooms and placement" | Slot schema v2 (rw06 task T10, DONE) reports 722 slots with zero overflow; every `scenario_overflow_ids` list in `data/environments/placement_surfaces.json` is empty; no "More room actions" text remains in `scripts/ui`; the owner accepted placements on 2026-10-18. **Confirm in play before closing**, room by room. |
 | Crossword Corner "held from new sale" | `docs/item-audit/…csv`; `docs/plans/game06_5_option_c_owner_decision.md` | `crossword_corner` is in `ACTIVE_TICKET_TYPE_IDS` (`scripts/games/scratch_tickets.gd:64`); the decision document is marked superseded |
 | Web audio memory leak (T8); Coin Pusher slow and UI leaking into other rooms (T9) | `docs/todo/rw06_final_queue.md` | Both rows are DONE in that same table |
@@ -697,7 +697,7 @@ no work authorized. None is started from this document.
 
 ---
 
-## Appendix — What I could not determine
+## Appendix - What I could not determine
 
 - Whether any of the **From the plan, not verified** items still look the way
   the plan describes. The plans are six to ten weeks old and placement,

@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-17
 - **Completion/implementation commits:** `7ecd469d`
-- **Verification:** PASS — tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_visual_qa.ps1; tools/foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_visual_qa.ps1; tools/foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — Onboarding Slice 3: Tutorial Finale — Easy Grand Casino + the First Card
+# Agent Prompt - Onboarding Slice 3: Tutorial Finale - Easy Grand Casino + the First Card
 
 Copy everything below this line into the agent.
 
@@ -26,21 +26,21 @@ mint from gc05_8). Re-verify actual code; code reality wins.
   objective data for this run only: tiny net-winnings target, 1-2
   settled games minimum, generous clean-heat ceiling, and
   tutorial-tier progression (the card ladder compresses so the review
-  is reachable in one short visit — implement as config overrides on
+  is reachable in one short visit - implement as config overrides on
   the tier thresholds, never global changes).
 - Tutorial play stays on the MAIN FLOOR only (high-limit door reads
-  locked with teaching copy; back room untouched — Rourke may be
+  locked with teaching copy; back room untouched - Rourke may be
   VISIBLE for flavor but no showdown can trigger in the tutorial:
   gate the heat-route triggers under the tutorial config and prove it
   with a test).
 
 ### 2. The guided finale (beats 6-7)
 
-6. **Casino beat**: coach-guided — buy in, notice CHIPS vs cash, play
+6. **Casino beat**: coach-guided - buy in, notice CHIPS vs cash, play
    1-2 short games, win the small target (seed-auditioned like slice
    2; extend the audition to the full arc), then guided to the Cage.
-7. **Linda + the card**: a tutorial variant of Linda's review scene —
-   warmer, explanatory ("what the card means") — issuing the win.
+7. **Linda + the card**: a tutorial variant of Linda's review scene -
+   warmer, explanatory ("what the card means") - issuing the win.
    The card MINTS through the real gc05_8 machinery (tutorial runs
    mint a card marked as the starter card in its instance data). The
    run report screen shows the win + the card; the final coach beat
@@ -80,7 +80,7 @@ mint from gc05_8). Re-verify actual code; code reality wins.
    normal start, tutorial_completed set.
 5. The starter card behaves as a real card afterward: carried into a
    normal run and lost → destroyed (gc05_8 fragility regression).
-6. Manual: complete the whole tutorial as a new player would; time it —
+6. Manual: complete the whole tutorial as a new player would; time it -
    the plan's bar is ~15 minutes guided; report the measured time.
 
 ## Gates

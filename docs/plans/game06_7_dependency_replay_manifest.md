@@ -1,6 +1,6 @@
 # game06_7 dependency replay manifest
 
-Status: **SUPERSEDED HISTORICAL PRESTAGE — see final closeout**
+Status: **SUPERSEDED HISTORICAL PRESTAGE - see final closeout**
 Manifest base: `25f16c4efb723db2a0308eec5719b59b497413b7`
 Prepared branch: `codex/game06_7-dependency-replay-manifest`
 

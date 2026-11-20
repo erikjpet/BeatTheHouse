@@ -1,6 +1,6 @@
-Status: FINALIZE — handoff prompt for the agent holding `codex/cross-remediation`
+Status: FINALIZE - handoff prompt for the agent holding `codex/cross-remediation`
 
-# Finalize Prompt — fix06_4 contract red, then hand off
+# Finalize Prompt - fix06_4 contract red, then hand off
 
 Copy everything below this line into the agent that owns
 `codex/cross-remediation`.
@@ -18,7 +18,7 @@ manager agent is taking over the whole 0.6 landing effort after you.
 ## 1. Stop the native rebuild
 
 You are running `tools/build_native_solver.ps1 -Platform Windows -Target
-template_debug` and compiling godot-cpp from scratch — 596 object files were
+template_debug` and compiling godot-cpp from scratch - 596 object files were
 written between 09:35:31 and 09:38:48 today, and your worktree shows hours of
 this churn. The hypothesis behind it, recorded in your ledger as "contract
 native fallback", is not supported by the evidence.
@@ -50,7 +50,7 @@ implements `surface_add_hit`, `surface_add_invisible_hit` and
 `surface_add_exact_hit`, but never received the hover variant. Any contract run
 that draws the blackjack count challenge errors there.
 
-Verify this yourself before acting on it — reproduce the error, confirm the
+Verify this yourself before acting on it - reproduce the error, confirm the
 missing method, and confirm the call site. Do not take this prompt's word for it.
 
 ## 3. Land the fix
@@ -76,7 +76,7 @@ missing method, and confirm the call site. Do not take this prompt's word for it
 - Re-run the contract suite on the exact head. Report the real duration against
   the 230.391s immutable baseline. If it now passes, the native hypothesis is
   closed; say so explicitly in your handoff. If it still times out with the
-  script error gone, you have a second, genuine finding — measure it, do not
+  script error gone, you have a second, genuine finding - measure it, do not
   guess at it, and do not resume the native rebuild without evidence naming it.
 
 ## 4. Clean up your own branch
@@ -84,7 +84,7 @@ missing method, and confirm the call site. Do not take this prompt's word for it
 Your branch carries 47 commits including two reverted attempts
 (`Revert "fix(fix06_4): focus blackjack acceptance runner"` and
 `Revert "fix(fix06_4): complete focused runner inheritance"`) and a reverted
-`pusherv3_10` dependency merge. Do not rewrite that history — the reverts are
+`pusherv3_10` dependency merge. Do not rewrite that history - the reverts are
 evidence.
 
 Do make the final state honest: no debug code, no leftover scaffolding, no
@@ -104,7 +104,7 @@ Produce a written handoff containing:
 5. an explicit statement closing or keeping the native-fallback hypothesis, with
    the measurement that settles it;
 6. every uncommitted artifact you are leaving behind and where it lives;
-7. known risks or assumptions — "None" must be explicit, not omitted.
+7. known risks or assumptions - "None" must be explicit, not omitted.
 
 Then stop. Do not merge to any integration branch, do not edit
 `docs/todo/README_0_6_board.md`, do not start another row, and do not delete

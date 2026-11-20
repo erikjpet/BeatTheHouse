@@ -1,16 +1,16 @@
-Status: SUPERSEDED — do not claim. The V3 machine rework
+Status: SUPERSEDED - do not claim. The V3 machine rework
 (docs/plans/coin_pusher_v3_machine_rework_plan.md, owner round-6 design session
 2026-08-17) replaces this work. See the pusherv3_* rows on the board.
 Board row: `pusher06_4` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** -
+- **Completion/implementation commits:** -
+- **Verification:** -
+- **Deviations:** -
 
-# Agent Prompt — pusher06_4: Venue Integration & Persistence at Scale
+# Agent Prompt - pusher06_4: Venue Integration & Persistence at Scale
 
 Copy everything below this line into the agent.
 
@@ -29,7 +29,7 @@ proves the persistence story holds at real run scale.
 
 The bar: a player should be able to leave a loaded machine, travel
 across town, survive a police sweep, come back hours later, and find
-*their pile* exactly as they left it — and the town should have been
+*their pile* exactly as they left it - and the town should have been
 talking about it while they were gone.
 
 ## Board protocol
@@ -47,7 +47,7 @@ talking about it while they were gone.
 ## Dependencies
 
 `pusher06_1`, `pusher06_2`, `pusher06_3` DONE. Wave A/B town systems
-(scenarios, town state, rumors, police sweep) are on `main` — verify
+(scenarios, town state, rumors, police sweep) are on `main` - verify
 their landed APIs by code.
 
 ## Task
@@ -63,7 +63,7 @@ their landed APIs by code.
   a locked-down cabinet after an alarm looks locked down; a fat Vault
   Drop meter is visible; a machine someone else is using is occupied.
 - Attendant/staff presence reacts to the tell ladder and to a tripped
-  alarm using existing NPC/ambient systems — no bespoke actor
+  alarm using existing NPC/ambient systems - no bespoke actor
   framework.
 
 ### 2. Persistence at run scale
@@ -76,7 +76,7 @@ their landed APIs by code.
   multiple venues each holding hundreds of coins must not bloat run
   saves unacceptably. Measure the per-machine snapshot size, report
   it, and if it is too large, quantize harder or cap stored coins
-  with a deterministic, documented reconstruction rule — never store
+  with a deterministic, documented reconstruction rule - never store
   a lie about the pile the player built.
 - Scenario reset flags ("someone else played it") replace a pile
   deterministically; the Vault Drop's meter persists independently of
@@ -85,7 +85,7 @@ their landed APIs by code.
 ### 3. Living-town integration
 
 - **Rumors**: pusher-pile state and fat Vault meters are registered
-  rumor facts, truth-sourced (the town may only say true things —
+  rumor facts, truth-sourced (the town may only say true things -
   the rumor system's existing discipline).
 - **Police sweep**: the swept-window loosens alarm tolerance one
   band, as the shipped design specifies; a sweep arriving while a
@@ -121,7 +121,7 @@ their landed APIs by code.
 - Budgets unchanged, including with a machine visible in a populated
   room: frame p95 ≤ 16.0 ms, surface draw p95 ≤ 5.0 ms, idle within
   budget with its liveness counter.
-- Save-size regression is a gate, not a footnote — report the
+- Save-size regression is a gate, not a footnote - report the
   numbers.
 - Style: tabs, typed GDScript, sparse comments; `.tmp/` reports;
   suite timeout = max(300s, baseline×1.5).

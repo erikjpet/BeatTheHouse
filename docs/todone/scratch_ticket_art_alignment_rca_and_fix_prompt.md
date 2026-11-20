@@ -1,4 +1,4 @@
-# Scratch Ticket Art Alignment — Root Cause Analysis + Fix Prompt
+# Scratch Ticket Art Alignment - Root Cause Analysis + Fix Prompt
 
 **Status:** COMPLETE (2026-09-02). All seven ticket families are aligned and
 active. The owner selected a denser Crossword redesign: seven connected words,
@@ -13,7 +13,7 @@ offline on **all seven** ticket types.
 
 ---
 
-## Part 1 — Root Cause Analysis
+## Part 1 - Root Cause Analysis
 
 ### 1.0 How a ticket is drawn
 
@@ -31,7 +31,7 @@ FoilRendererScript.draw(surface, ticket, render_rect, state)   # scratch coating
   `surface.draw_texture_rect(background, ticket_rect, false)`. The circles and
   boxes the player sees are **pixels baked into that PNG**.
 - **Layers 2 and 3** position themselves from `ScratchTicketRegionModel.build()`
-  — a table of **hand-typed normalized rects** in
+  - a table of **hand-typed normalized rects** in
   `scripts/games/scratch_ticket_region_model.gd:11-69`.
 - `render_rect` comes from `_ticket_rect_for_size()`
   (`scratch_tickets.gd:2299-2306`), one of four fixed pixel sizes.
@@ -39,7 +39,7 @@ FoilRendererScript.draw(surface, ticket, render_rect, state)   # scratch coating
 So the printed geometry lives in a PNG and the interactive geometry lives in
 GDScript literals, and **nothing connects them**.
 
-### 1.1 RC-1 (primary) — there is no source of truth linking art to rects
+### 1.1 RC-1 (primary) - there is no source of truth linking art to rects
 
 The shipped backgrounds `*_background_pro.png` were committed in `b7a3a2bb`
 ("Rebuild scratch tickets as a professional three-layer experience") as 2.4–3.3 MB
@@ -56,7 +56,7 @@ That contract is dead three ways over:
 
 1. It writes `{id}_background_v2.png`; the game loads `{id}_background_pro.png`
    (`scratch_ticket_background_renderer.gd:5-11`). The tool's output is unused.
-2. `ScratchTickets._ticket_art_regions` no longer exists — it was deleted in the
+2. `ScratchTickets._ticket_art_regions` no longer exists - it was deleted in the
    same rebuild that added the `_pro` art.
 3. Its rect table and the GDScript rect table **disagree with each other**, and
    both disagree with the shipped art. Lucky 7s "YOUR" column pitch:
@@ -70,7 +70,7 @@ That contract is dead three ways over:
 `LAYOUT_VERSION := 8` (`scratch_ticket_region_model.gd:4`) is the tell: eight
 rounds of eyeball-tuning constants against a picture nobody measured.
 
-### 1.2 RC-2 — uniform-pitch formulas against non-uniform painted art
+### 1.2 RC-2 - uniform-pitch formulas against non-uniform painted art
 
 Every region is generated as `origin + index * pitch`. The `_pro` art was not
 laid out by a machine, so its printed wells are **not** evenly spaced. Measured
@@ -80,13 +80,13 @@ column pitch of the 12 Bonus Bingo caller circles:
 0.0554  0.0563  0.0557  0.0560  0.0560  0.0567  0.0563  0.0608  0.0567  0.0560  0.0522
 ```
 
-The code uses a single `0.058`. **No single pitch value can fit this** — the art
+The code uses a single `0.058`. **No single pitch value can fit this** - the art
 itself is irregular (note the 0.0608 and 0.0522 outliers). Any fix that keeps a
 formula will still be wrong at some wells. Same story on Lucky 7s (0.2103 then
-0.2237) and Tic Tac Gold (printed cell widths 0.1462 / 0.1519 / 0.1548 — the
+0.2237) and Tic Tac Gold (printed cell widths 0.1462 / 0.1519 / 0.1548 - the
 three columns are not even the same size).
 
-### 1.3 RC-3 — the art is anisotropically stretched into the ticket rect
+### 1.3 RC-3 - the art is anisotropically stretched into the ticket rect
 
 `draw_texture_rect` does not preserve aspect ratio, and three ticket types are
 drawn into a rect whose aspect does not match their art:
@@ -110,11 +110,11 @@ translate a rect. It does three other damaging things:
   `minf(rect.size.x, rect.size.y)`; after a 1.41× x-stretch the short side is
   always vertical, so the icon collapses to the well's *height* and under-fills
   its *width*. Lucky 7s: a 33.6 px square icon inside a 48.7 px-wide printed
-  oval — **69 % coverage**, which reads as "the number isn't in the circle".
+  oval - **69 % coverage**, which reads as "the number isn't in the circle".
 - **(c)** It makes eyeball-tuning unreliable, which is how the rects drifted in
   the first place.
 
-### 1.4 RC-4 — icons are drawn as offset squares, not as the region
+### 1.4 RC-4 - icons are drawn as offset squares, not as the region
 
 `scratch_ticket_icon_renderer.gd:169-175`:
 
@@ -140,7 +140,7 @@ The drawn ball is **31 % larger than the print** and eclipses it; where the rect
 has also drifted, the printed ring survives as a crescent on one side. That
 crescent is exactly what is visible on the caller row in the screenshot.
 
-### 1.5 RC-5 — text is centred in sub-rects, not on the well
+### 1.5 RC-5 - text is centred in sub-rects, not on the well
 
 `_paint_lucky_number` (`scratch_ticket_icon_renderer.gd:97-102`) for any spot
 carrying a `prize` (i.e. every "YOUR" number) does:
@@ -151,20 +151,20 @@ surface.surface_label_centered(str(number), number_rect, ...)
 ```
 
 The digit is centred in the **top 72 %** of the region, so its centre sits at
-36 % of the region height — **≈5.2 px above the printed oval's centre in a
+36 % of the region height - **≈5.2 px above the printed oval's centre in a
 35 px-tall oval (≈15 %)**. The prize text below it starts at `y + 0.69h` with
 height `0.28h`, reaching 97 % of the region, i.e. past the printed rim.
 `_paint_tic_mark` (line 116) does the same thing with a `0.74h` band.
 
 This stacks on top of the RC-2 rect drift; the two are independent.
 
-### 1.6 RC-6 — measured error, per ticket
+### 1.6 RC-6 - measured error, per ticket
 
 Centre error and size error, converted to **on-screen pixels** at the real
 ticket rect. `printed W×H` is the size of the well the player actually sees;
 `icon sq` is the square `_paint_symbol_texture` would paint into it.
 
-**bonus_bingo** — 548×356 ticket, printed caller circle 14.1 × 14.1 px:
+**bonus_bingo** - 548×356 ticket, printed caller circle 14.1 × 14.1 px:
 
 | region | ΔcX px | ΔcY px | ΔW px | ΔH px | icon sq |
 |---|---|---|---|---|---|
@@ -173,11 +173,11 @@ ticket rect. `printed W×H` is the size of the well the player actually sees;
 | CALL 9 | +6.69 | −1.00 | +6.69 | +3.70 | 16.0 |
 | **CALL 12** | **+11.67** | −1.00 | +6.69 | +3.70 | 16.0 |
 
-The drift accumulates left-to-right and reaches **11.7 px — 83 % of a circle
-diameter** — by the twelfth column. Row 2 is identical. The region box is also
+The drift accumulates left-to-right and reaches **11.7 px - 83 % of a circle
+diameter** - by the twelfth column. Row 2 is identical. The region box is also
 47 % too wide and 25 % too tall.
 
-**lucky_7s** — 354×356 ticket, printed oval ≈48.6 × 35.1 px:
+**lucky_7s** - 354×356 ticket, printed oval ≈48.6 × 35.1 px:
 
 | region | ΔcX px | ΔcY px | ΔW px | ΔH px | icon sq |
 |---|---|---|---|---|---|
@@ -191,7 +191,7 @@ The third column is 6.8 px left of its printed oval, and the BONUS region is
 12.7 px taller than the printed well. On top of that, the digit is drawn a
 further ~5.2 px high (RC-5) and the coin is 69 % of the oval's width (RC-3b).
 
-**tic_tac_gold** — 354×356 ticket, printed cell ≈53 × 32 px:
+**tic_tac_gold** - 354×356 ticket, printed cell ≈53 × 32 px:
 
 | region | ΔcX px | ΔcY px | ΔW px | ΔH px |
 |---|---|---|---|---|
@@ -203,7 +203,7 @@ Every region is 9–12 px too wide and ~5 px too tall, and sits 2–3 px down-ri
 The printed columns are not even equal width (0.1462 / 0.1519 / 0.1548), which
 the single `0.18` in code cannot express.
 
-**golden_vault** — 292×366 ticket, printed rung 13.7 px tall:
+**golden_vault** - 292×366 ticket, printed rung 13.7 px tall:
 
 | region | ΔcX px | ΔcY px | ΔW px | ΔH px |
 |---|---|---|---|---|
@@ -211,7 +211,7 @@ the single `0.18` in code cannot express.
 | RUNG 3 | +0.44 | +2.84 | +11.39 | +2.01 |
 | **RUNG 5** | +0.44 | **+5.07** | +11.39 | +2.01 |
 
-Vertical drift reaches **5.07 px on a 13.7 px rung — 37 % of a rung height**,
+Vertical drift reaches **5.07 px on a 13.7 px rung - 37 % of a rung height**,
 so the bottom rung's text lands in the gap between two printed rungs.
 
 **high_roller_holdem** is the best of the set (worst centre error 2.18 px) but
@@ -219,7 +219,7 @@ still 7–9 px too wide and 5–7 px too tall per card.
 
 **two_fer** centres are close (worst ≈6.3 px on SPOT 3; printed pitch 0.2818 vs
 coded 0.292), but the symbol square is `min(112.5, 50.4) × 0.8 = 40 px` inside a
-105 × 47 px printed well — it floats in the middle of a wide box.
+105 × 47 px printed well - it floats in the middle of a wide box.
 
 **crossword_corner** is the worst case and is not merely misaligned. The
 GDScript grid `(0.06, 0.32, 0.50, 0.48)` and bank `(0.585, 0.42, 0.378, 0.37)`
@@ -230,10 +230,10 @@ Worse, the cream "word" cells painted into the art do **not** correspond to
 and the mechanical puzzle are different puzzles. Aligning rects will not fix
 this one; see Phase 5.
 
-### 1.7 RC-7 — the one guard in CI asserts the wrong invariant
+### 1.7 RC-7 - the one guard in CI asserts the wrong invariant
 
 `scratch_ticket_region_model.gd:104` stores `"art_rect": rect.duplicate(false)`
-— a slot for "where the printed art actually is", initialised to a copy of the
+- a slot for "where the printed art actually is", initialised to a copy of the
 mechanic rect. `scripts/tests/foundation/check_scratch_tickets.gd:391-393` then
 **fails the build if they ever differ**:
 
@@ -245,12 +245,12 @@ if JSON.stringify(art_rect) != JSON.stringify(values):
 
 That check is backwards. It locks the art rect to the mechanic rect, which is
 precisely the decoupling a fix needs. Of the **157 assertions** in that suite,
-**none** compares any region against the background texture — the check at line
+**none** compares any region against the background texture - the check at line
 178 verifies the layer *names* are `["background", "icons", "foil"]` and nothing
 about where those layers land. The drift is therefore invisible to CI, which is
 why eight `LAYOUT_VERSION` bumps never converged.
 
-### 1.8 RC-8 — the same rects also misplace the foil and the hit-testing
+### 1.8 RC-8 - the same rects also misplace the foil and the hit-testing
 
 The bug is not cosmetic-only. `ScratchTicketFoilRenderer._paint_region_mask`
 (`scratch_ticket_foil_renderer.gd:39-46`) and `ScratchTicketMask` rasterize from
@@ -264,11 +264,11 @@ the **same** `region["rect"]`. Consequences:
   built as `"rect"`, so a square foil patch sits over a round print.
 - The mask is a uniform 256×192 grid over the ticket rect
   (`scratch_ticket_mask.gd:5-6`), so foil edges quantize to ~2.1 × 1.9 px on a
-  548×356 ticket — a further ±2 px on top of the drift. Minor, but it means
+  548×356 ticket - a further ±2 px on top of the drift. Minor, but it means
   "pixel-perfect" is not achievable without accounting for it.
 - `_paint_validation_result` (`icon_renderer.gd:54-57`) uses yet another
   hard-coded rect `(0.31, 0.902, 0.38, 0.068)` unrelated to any art feature. On
-  Bonus Bingo the "NOT A WINNER" stamp lands across the printed rules band —
+  Bonus Bingo the "NOT A WINNER" stamp lands across the printed rules band -
   visible in the owner's screenshot.
 
 ### 1.9 Causal summary
@@ -295,11 +295,11 @@ Fixing only the rects will improve it and still look wrong.
 
 ---
 
-## Part 2 — Fix Prompt (for the executing agent)
+## Part 2 - Fix Prompt (for the executing agent)
 
 You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript casino
 roguelike (900×430 board, immediate-mode canvas surfaces, seeded RNG). Read
-Part 1 above in full before writing any code. Do not skim it — every phase below
+Part 1 above in full before writing any code. Do not skim it - every phase below
 targets a specific numbered root cause and the acceptance gates reference the
 measurements in §1.6.
 
@@ -312,13 +312,13 @@ measurements in §1.6.
   reference; the code moves to meet it. (Exception: Phase 5, crossword only,
   and only after checking in.)
 - `tools/generate_scratch_ticket_art.py` is dead code for the shipped art. Do
-  not "fix" its constants — either delete it or clearly mark it as producing the
+  not "fix" its constants - either delete it or clearly mark it as producing the
   unused `_v2` set. Decide and say which.
 - Preserve odds, payouts, RTP and all mechanics. This is a geometry fix only.
 - `python tools/scratch_ticket_alignment_audit.py` is a read-only diagnostic
   already in the repo. Use it throughout; extend it as needed.
 
-### Phase 1 — Make the printed geometry the source of truth
+### Phase 1 - Make the printed geometry the source of truth
 
 Replace the formula-generated rects with a **measured, per-well table**. A
 formula cannot work (RC-2: the printed pitch is irregular by construction).
@@ -345,12 +345,12 @@ formula cannot work (RC-2: the printed pitch is irregular by construction).
 2. The detectors in `DETECT` are tuned for five ticket types. You must tune
    `two_fer` and `crossword_corner` as well, and hand-verify all seven against
    the overlays. Where a detector cannot isolate a well reliably, measure it by
-   hand and record it — a correct hand-measured number beats a clever detector.
+   hand and record it - a correct hand-measured number beats a clever detector.
 3. `ScratchTicketRegionModel.build()` becomes a **loader**: read the table, pair
    each entry with its spot by index, and drop every hardcoded rect literal and
    every `CROSSWORD_*` constant from the script. Keep `build()`'s signature and
    the returned dictionary's keys so `ScratchTicketMask` and the renderers are
-   unaffected. Bump `LAYOUT_VERSION` to 9 — `ScratchTicketMask.ensure()` already
+   unaffected. Bump `LAYOUT_VERSION` to 9 - `ScratchTicketMask.ensure()` already
    rebuilds masks on a version change and preserves per-region progress
    (`scratch_ticket_mask.gd:40-60`), so in-flight saves migrate for free.
    **Verify that migration path explicitly**, it is the one save-compat risk here.
@@ -358,12 +358,12 @@ formula cannot work (RC-2: the printed pitch is irregular by construction).
 **Gate:** no numeric rect literal remains in
 `scripts/games/scratch_ticket_region_model.gd`.
 
-### Phase 2 — Give all three layers one undistorted coordinate space
+### Phase 2 - Give all three layers one undistorted coordinate space
 
 Fixes RC-3. Do **not** change `_ticket_rect_for_size`'s four sizes (they are
 asserted in `check_scratch_tickets.gd:739-741` and drive board layout).
 
-Add a contain-fit helper — art aspect preserved, centred inside the ticket rect:
+Add a contain-fit helper - art aspect preserved, centred inside the ticket rect:
 
 ```gdscript
 static func art_frame(ticket_rect: Rect2, art_size: Vector2) -> Rect2:
@@ -376,7 +376,7 @@ Compute it **once** at `scratch_tickets.gd:1613` and pass the same frame to all
 three renderers (they already share `render_rect`, so this is a one-line change
 at the call site plus the helper). Route `ScratchTicketMask`'s rasterization and
 the pointer hit-testing (`scratch_tickets.gd:438`, `:1631`) through the same
-frame — otherwise scratching lands where the art no longer is.
+frame - otherwise scratching lands where the art no longer is.
 
 Note the frame is smaller than the ticket rect for lucky_7s / tic_tac_gold
 (354×356 → 251×356) and golden_vault (292×366 → 233×366). Confirm the ticket
@@ -387,7 +387,7 @@ adjust the badge/stamp anchors to the frame, not the ticket rect.
 **Gate:** for every ticket, `art_frame` aspect equals the source PNG aspect to
 within 0.5 %. Printed circles are circles on screen.
 
-### Phase 3 — Draw icons as the region, not as an offset square
+### Phase 3 - Draw icons as the region, not as an offset square
 
 Fixes RC-4, RC-5, RC-6.
 
@@ -404,22 +404,22 @@ Fixes RC-4, RC-5, RC-6.
 4. `_paint_lucky_number` and `_paint_tic_mark` must centre their primary glyph
    on the **region centre**. If a well genuinely has a two-line print (number
    above, prize below), encode that split as two sub-rects **in the data table**
-   measured from the art — never as a `0.72` literal in the renderer.
+   measured from the art - never as a `0.72` literal in the renderer.
 5. Fix `_paint_validation_result`'s hard-coded `(0.31, 0.902, 0.38, 0.068)`:
    anchor it to the art frame, or measure a printed stamp area into the table.
 
-### Phase 4 — Match the foil to the printed well shape
+### Phase 4 - Match the foil to the printed well shape
 
 Fixes RC-8. Carry `shape` from the table into `region["mask_shape"]` so Bonus
 Bingo's 24 caller circles and any other round well get `"ellipse"`, not just
 lucky_7s. `_sample_inside_region` already handles it
-(`scratch_ticket_mask.gd:301-313`) — it is only ever fed `"rect"`. Verify the
+(`scratch_ticket_mask.gd:301-313`) - it is only ever fed `"rect"`. Verify the
 foil fully covers each printed well before scratching and leaves no residue ring
 after, at the 256×192 mask granularity (~2 px). If a 2 px residue is visible,
-grow the foil rect by one mask cell relative to `art_rect` — the foil may
+grow the foil rect by one mask cell relative to `art_rect` - the foil may
 over-cover, the icon may not.
 
-### Phase 5 — crossword_corner (check in with the owner first)
+### Phase 5 - crossword_corner (check in with the owner first)
 
 Alignment alone cannot fix this one: the printed word cells do not correspond to
 `CROSSWORD_ENTRIES`, so the printed puzzle and the mechanical puzzle differ
@@ -434,7 +434,7 @@ Alignment alone cannot fix this one: the printed word cells do not correspond to
 
 Do not choose unilaterally.
 
-### Phase 6 — Make the alignment testable so it cannot regress again
+### Phase 6 - Make the alignment testable so it cannot regress again
 
 Fixes RC-7. This is the phase that decides whether this is fixed for good or for
 one more `LAYOUT_VERSION`.
@@ -453,7 +453,7 @@ one more `LAYOUT_VERSION`.
    **5 %**. Wire it into whatever runs `tools/*.ps1` locally.
 4. Regenerate the three-state review sheet
    (`docs/screenshots/scratch_ticket_three_state_review/`) and check every
-   ticket by eye at 1× — the numbers can pass while the result still reads wrong.
+   ticket by eye at 1× - the numbers can pass while the result still reads wrong.
 
 ### How to validate
 
@@ -464,7 +464,7 @@ run it after every phase:
 pwsh -File tools/check_godot.ps1 -Suite Contract -FoundationSuite scratch_tickets -RequireGodot
 ```
 
-Before reporting done, run the full gate — this fix touches the mask, the
+Before reporting done, run the full gate - this fix touches the mask, the
 renderers and the hit-testing, so a green scratch suite alone is not enough:
 
 ```bash
@@ -477,7 +477,7 @@ The python diagnostic needs `pillow`, `numpy`, `scipy`:
 python tools/scratch_ticket_alignment_audit.py --overlay --measure
 ```
 
-## Execution record — 2026-09-02
+## Execution record - 2026-09-02
 
 - Replaced the held Crossword configuration with active seven-ticket stock and
   a v4→v5 machine migration that activates historical held rows without
@@ -522,7 +522,7 @@ inside this task. Report any test you could not run and why.
 - A ticket in flight across the `LAYOUT_VERSION` 8→9 bump migrates without
   losing scratch progress or changing its outcome.
 - Report the measured before/after table in your summary. Do not report "looks
-  better" — report pixels.
+  better" - report pixels.
 
 ### Files in scope
 
@@ -536,8 +536,8 @@ inside this task. Report any test you could not run and why.
 | `scripts/games/scratch_ticket_mask.gd` | rasterize in art frame, ellipse shapes (Phase 2/4) |
 | `scripts/tests/foundation/check_scratch_tickets.gd:391-393` | invert the backwards guard (Phase 6) |
 | `tools/scratch_ticket_alignment_audit.py` | extend to generator + `--verify` (Phase 1/6) |
-| `data/games/scratch_ticket_regions.json` | **new** — the source of truth (Phase 1) |
-| `tools/generate_scratch_ticket_art.py` | dead for `_pro` art — delete or mark |
+| `data/games/scratch_ticket_regions.json` | **new** - the source of truth (Phase 1) |
+| `tools/generate_scratch_ticket_art.py` | dead for `_pro` art - delete or mark |
 
 ### Reference artifacts
 

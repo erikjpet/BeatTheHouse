@@ -70,7 +70,7 @@ Copy everything below this line into the agent.
 ---
 
 You are working in `D:\Projects\Beat-The-House` (Godot 4.6 GDScript casino
-roguelike — see CLAUDE.md). The 0.4.0 release is pushed to GitHub (see the
+roguelike - see CLAUDE.md). The 0.4.0 release is pushed to GitHub (see the
 "Published" section of `docs/archive/0.4/plans/0.4_release_checklist.md`) and the owner
 uploads the zips to itch manually. This task verifies the release players
 actually receive and produces the devlog assets. Publishing the devlog
@@ -95,17 +95,17 @@ post itself remains the owner's action.
    cleanly. Confirm the version string shows 0.4.0.
 3. Any discrepancy between shipped behavior and the release checklist is a
    release defect: report it immediately and clearly at the top of your
-   summary — do not bury it. Hotfix decisions belong to the owner.
+   summary - do not bury it. Hotfix decisions belong to the owner.
 
 ## 2. Devlog #4 assets
 
 1. Update `tools/generate_devlog_social.py`'s DEVLOG config for 0.4.0
    (tag `v0_4_0`, kicker "DEVLOG #4", hero "v0.4 IS OUT") using the 0.4
-   headline features from `docs/archive/0.4/plans/0.4_publish_copy.md` — home &
+   headline features from `docs/archive/0.4/plans/0.4_publish_copy.md` - home &
    housing progression, collections/bags, dialogue & talk, day/night
    venue hours, world map travel pricing, stability. Choose panel
    screenshots that show the NEW systems (capture fresh ones through the
-   layout-screenshot/visual-QA tooling if branding/screenshots lacks them —
+   layout-screenshot/visual-QA tooling if branding/screenshots lacks them -
    at minimum the walkable home room and a dialogue in the talk dock).
 2. Generate the 1080 card + 720 mobile variants into branding/social/ with
    the established naming (`beat_the_house_v0_4_0_instagram*`).

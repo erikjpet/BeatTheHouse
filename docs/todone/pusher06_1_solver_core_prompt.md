@@ -1,16 +1,16 @@
-Status: SUPERSEDED — do not claim. The V3 machine rework
+Status: SUPERSEDED - do not claim. The V3 machine rework
 (docs/plans/coin_pusher_v3_machine_rework_plan.md, owner round-6 design session
 2026-08-17) replaces this work. See the pusherv3_* rows on the board.
 Board row: `pusher06_1` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** -
+- **Completion/implementation commits:** -
+- **Verification:** -
+- **Deviations:** -
 
-# Agent Prompt — pusher06_1: Authoritative Solver + Quarter Falls
+# Agent Prompt - pusher06_1: Authoritative Solver + Quarter Falls
 
 Copy everything below this line into the agent.
 
@@ -33,7 +33,7 @@ payout edge is what pays. There is no reconciliation layer, no
 outcome table the physics is steered toward, and no seeded result the
 coins merely animate toward. If you find yourself writing code that
 decides a payout and then makes the coins agree, you have misread
-this prompt — that is the exact defect the owner rejected.
+this prompt - that is the exact defect the owner rejected.
 
 ## Board protocol
 
@@ -51,7 +51,7 @@ this prompt — that is the exact defect the owner rejected.
 
 `pusher06_0` DONE with a **GO or Partial GO** verdict. Build to the
 coin cap that verdict proved, not a hoped-for one. If the verdict was
-NO-GO, do not claim this row — it is an owner decision.
+NO-GO, do not claim this row - it is an owner decision.
 
 ## Task
 
@@ -63,7 +63,7 @@ NO-GO, do not claim this row — it is an owner decision.
 - Pile state is the set of real coins. Persist it in the node
   snapshot (world-map revisit contract): the physical arrangement the
   player built is there on return, and scenario reset flags may still
-  replace it. Serialize compactly — coin state is fixed-point, so
+  replace it. Serialize compactly - coin state is fixed-point, so
   quantize deliberately and prove round-trip exactness.
 - Keep the existing schema-version discipline; migrate old
   height-grid snapshots to a freshly seeded physical pile and log the
@@ -73,7 +73,7 @@ NO-GO, do not claim this row — it is an owner decision.
 
 - Drop-lane aim and drop timing against the sweep cycle are the core
   skill and must be legible on screen (real position, real cycle
-  phase — no "timing window" abstraction over an invisible cycle).
+  phase - no "timing window" abstraction over an invisible cycle).
 - A dropped coin is a real coin entering the field. Where it lands,
   what it disturbs, and whether anything falls are solver outcomes.
 - Payout is read from the **tray sensor**: coins that physically
@@ -84,7 +84,7 @@ NO-GO, do not claim this row — it is an owner decision.
 ### 3. Carry the kept systems onto real coins
 
 These shipped correctly and must survive with their contracts intact
-(verify the landed behavior by code — code reality wins):
+(verify the landed behavior by code - code reality wins):
 
 - **Nudge system**: force (tap/shove/slam) × direction × timing.
   A nudge is now a real impulse to the cabinet that shoves and
@@ -97,7 +97,7 @@ These shipped correctly and must survive with their contracts intact
 - **The alarm contract, unchanged**: a hard alarm locks that machine
   for the night, lands a significant heat spike, writes node memory
   (staff watch you next visit), and **never forces the player out of
-  the environment** (owner decision 23) — other games in the venue
+  the environment** (owner decision 23) - other games in the venue
   stay playable and the heat flows through existing heat systems.
   Smash-and-grab stays a viable strategy: a slam produces a genuinely
   big physical drop before the alarm bites.
@@ -127,7 +127,7 @@ Measure it, do not impose it:
   band per machine configuration.
 - Tune the **machine** (geometry, sweep throw, gutter width, drop
   cost, coin value, spawn seeding) to bring EV into the documented
-  design band — never a post-hoc payout multiplier on simulated
+  design band - never a post-hoc payout multiplier on simulated
   results.
 - Document the final tuning and the measured band in data.
 
@@ -152,7 +152,7 @@ Measure it, do not impose it:
    upper→lower fall, tray payout, gutter loss, cascade from a single
    landing, nudge-induced collapse.
 3. Authority proof: a test that asserts payout equals tray sensor
-   contents — with a deliberately introduced steering path failing
+   contents - with a deliberately introduced steering path failing
    the test (prove the guard works in both directions).
 4. Nudge/alarm matrix: clean-drop windows, tolerance depletion per
    force, tell ladder order, hard alarm = lockdown + heat + node

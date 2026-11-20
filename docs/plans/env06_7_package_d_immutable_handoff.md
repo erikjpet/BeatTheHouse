@@ -1,4 +1,4 @@
-# env06_7 Package D — Immutable Remediation Handoff
+# env06_7 Package D - Immutable Remediation Handoff
 
 Historical note: this rejected-branch handoff is superseded by
 `env06_7_package_d_ordered_recovery.md` and is retained only as recovery

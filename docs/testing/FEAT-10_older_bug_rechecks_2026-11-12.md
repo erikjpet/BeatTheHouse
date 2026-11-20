@@ -1,4 +1,4 @@
-# FEAT-10 — three older bugs rechecked through visible controls
+# FEAT-10 - three older bugs rechecked through visible controls
 
 Date: 2026-11-12. Documentation starting source:
 `d95c817d510695598edcc5cd911be1251ef7109e`.

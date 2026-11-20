@@ -638,7 +638,7 @@ func _write_report(report: Dictionary) -> Dictionary:
 
 
 func _markdown(report: Dictionary) -> String:
-	var lines: Array[String] = ["# Crew Hold'em personality simulation — %s" % _label, "", "Hands: %d across %d lineups." % [int(report.get("total_hands", 0)), int(report.get("lineup_count", 0))], ""]
+	var lines: Array[String] = ["# Crew Hold'em personality simulation - %s" % _label, "", "Hands: %d across %d lineups." % [int(report.get("total_hands", 0)), int(report.get("lineup_count", 0))], ""]
 	for bot in (report.get("by_player_bot", {}) as Dictionary).keys():
 		var section: Dictionary = (report.get("by_player_bot", {}) as Dictionary).get(bot, {})
 		var flow: Dictionary = section.get("flow", {})

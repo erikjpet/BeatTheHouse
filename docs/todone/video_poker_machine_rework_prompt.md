@@ -1,4 +1,4 @@
-# Agent Prompt — Video Poker Complete Rework (3 Cabinets, Slot-Level Polish)
+# Agent Prompt - Video Poker Complete Rework (3 Cabinets, Slot-Level Polish)
 
 Copy everything below this line into the worker agent. This is a large,
 creative+technical rework; use a capable model.
@@ -21,7 +21,7 @@ feel). This supersedes the recent holdout rework.
 
 | Cabinet | Base game | Hands | Identity |
 | --- | --- | --- | --- |
-| **Jacks or Better** | Jacks or Better (9/6) | 1 | The honest baseline — retro-neon diner cabinet |
+| **Jacks or Better** | Jacks or Better (9/6) | 1 | The honest baseline - retro-neon diner cabinet |
 | **Double Deuces** | Deuces Wild | 2 | Wilds, electric/flashy cabinet; the "double" plays 2 hands at once |
 | **Triple Double Bonus** | Double Double Bonus | 3 | High-variance four-of-a-kind bonuses; premium gold high-roller cabinet; plays 3 hands at once |
 
@@ -41,7 +41,7 @@ poker before implementing; the rules below are the spec to hit.
   includes Natural Royal, Four Deuces, Wild Royal, Five of a Kind, Straight
   Flush, Four of a Kind, Full House, Flush, Straight, Three of a Kind. The
   player holds from one dealt hand; TWO independent draws resolve from the
-  remaining deck, each its own hand — both shown and paid.
+  remaining deck, each its own hand - both shown and paid.
 - **Triple Double Bonus (Double Double Bonus, 3 hands):** big bonuses for
   four-of-a-kinds, with the kicker bonuses (Four Aces with a 2/3/4 kicker,
   Four 2-4 with an A-4 kicker, etc.); high variance. THREE independent draws
@@ -54,24 +54,24 @@ poker before implementing; the rules below are the spec to hit.
   lands in an audited RTP band (extend the existing RTP/audit tooling for
   the three cabinets; report measured RTP per cabinet).
 
-### The cheat — reworked, per-cabinet, blunt
+### The cheat - reworked, per-cabinet, blunt
 
 Completely rework the cheat. Keep a SKILL-BASED TIMED MINIGAME as the
-trigger (the concept is right), but the current chain is bad — replace it
+trigger (the concept is right), but the current chain is bad - replace it
 with something intuitive and FUN, and make each cabinet's cheat a
 RELATIVELY UNIQUE variant of the SAME underlying skill mechanism (so the
 three feel distinct but share a coherent skill). Requirements:
 
 - **Intuitive & fun:** the player immediately understands what to do and it
-  feels good to pull off — a clean, readable timed skill beat (or short
+  feels good to pull off - a clean, readable timed skill beat (or short
   chain) themed to the cabinet, not the confusing PALM/SWAP/COVER sequence.
 - **Per-cabinet flavor:** e.g. a palm-and-swap on the retro machine, a
   wild-deuce swap on Double Deuces, a high-stakes hold on Triple Double
-  Bonus — same skill core (timing/precision), different dressing.
+  Bonus - same skill core (timing/precision), different dressing.
 - **BLUNT, FORWARD FEEDBACK (the core fix):** after the cheat resolves, a
-  LOUD, UNMISTAKABLE result beat states EXACTLY what the cheat did — which
+  LOUD, UNMISTAKABLE result beat states EXACTLY what the cheat did - which
   card was swapped in and the resulting hand ("You slipped in the Ace of
-  Spades — FOUR ACES"). The player must never be confused about what
+  Spades - FOUR ACES"). The player must never be confused about what
   happened or whether the cheat worked. No off-to-the-side ambiguity.
 - **Preserve the cheat economy:** the ideal palmed card stays seeded/
   deterministic; performance maps to the existing quality→heat/evidence
@@ -85,7 +85,7 @@ three feel distinct but share a coherent skill). Requirements:
 
 - Each cabinet reads as its own machine: cohesive art, integrated buttons,
   themed meters/paytable, a clear multi-hand display, and per-cabinet custom
-  sounds (following the SFX rework's casino-smooth palette — if that pass
+  sounds (following the SFX rework's casino-smooth palette - if that pass
   has landed, reuse its synth helpers; otherwise synthesize in-theme).
 - Satisfying feel: deal/hold/draw have tactile feedback; wins celebrate at a
   scale matched to the payout; the multi-hand reveal is legible and
@@ -107,7 +107,7 @@ three feel distinct but share a coherent skill). Requirements:
   style. Web-safe. Style: tabs, typed GDScript, sparse comments; captures/
   RTP under `.tmp/`. Suite timeout = max(300s, ceil(baseline × 1.5)).
 - Coordination: the writing pass may supply cabinet flavor names/lines; the
-  SFX pass owns the sound palette — align with both if they've landed,
+  SFX pass owns the sound palette - align with both if they've landed,
   otherwise keep art/sound in-theme and reusable.
 
 ## QA / Tests
@@ -126,7 +126,7 @@ three feel distinct but share a coherent skill). Requirements:
    motion fallback works.
 5. Auto/collect + double-up flows are clean (no stranded credits).
 6. Perf: the cabinet surface within its probe budget; liveness advances.
-7. FEEL ACCEPTANCE (manual, report in words): play all three cabinets — each
+7. FEEL ACCEPTANCE (manual, report in words): play all three cabinets - each
    feels like a distinct, polished machine on par with the slots; the cheat
    is fun and its outcome is unmistakable; the multi-hand reveals are
    exciting.

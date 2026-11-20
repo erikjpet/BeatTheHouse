@@ -117,7 +117,7 @@ def map_title(surface: dict[str, Any], archetypes: dict[str, dict[str, Any]]) ->
         return base_title
     layer = mapping(mapping(archetype.get("layers")).get(layer_id))
     layer_title = str(layer.get("layer_display_name", "")).strip() or friendly(layer_id)
-    return f"{base_title} — {layer_title}"
+    return f"{base_title} - {layer_title}"
 
 
 def scenario_catalog_rows(
@@ -356,7 +356,7 @@ def placement_state(slot: dict[str, Any], claimant_labels: list[str], exact: boo
         return "Provisional geometry" if bool(slot.get("provisional_geometry", False)) else "Exact scenario"
     if bool(slot.get("runtime_reserve", False)):
         reason = str(slot.get("reserve_reason", "")).strip()
-        return f"Runtime reserve — {reason}" if reason else "Runtime reserve"
+        return f"Runtime reserve - {reason}" if reason else "Runtime reserve"
     if bool(slot.get("occupancy_required", False)):
         return "Required"
     if claimant_labels == ["Empty capacity"]:
@@ -366,7 +366,7 @@ def placement_state(slot: dict[str, Any], claimant_labels: list[str], exact: boo
 
 def labels_cell(labels: Iterable[str]) -> str:
     rendered = [markdown_text(label) for label in unique_strings(labels)]
-    return "<br>".join(rendered) if rendered else "—"
+    return "<br>".join(rendered) if rendered else "-"
 
 
 def append_shared_table(
@@ -388,7 +388,7 @@ def append_shared_table(
                 markdown_text(slot.get("physical_role", "")),
                 code(slot.get("footprint_class", "")),
                 code(position(slot, map_id)),
-                code(support) if support else "—",
+                code(support) if support else "-",
                 labels_cell(labels),
                 markdown_text(placement_state(slot, labels)),
             )
@@ -410,7 +410,7 @@ def append_exact_table(lines: list[str], layout: dict[str, Any]) -> None:
                 markdown_text(slot.get("physical_role", "")),
                 code(slot.get("footprint_class", "")),
                 code(position(slot, layout_id)),
-                code(support) if support else "—",
+                code(support) if support else "-",
                 labels_cell(labels),
                 markdown_text(placement_state(slot, labels, exact=True)),
             )
@@ -602,9 +602,9 @@ def render(model: dict[str, Any]) -> str:
         counts = Counter(family for family, _slot in base_slots[map_id])
         lines.extend(
             [
-                f"### {markdown_text(titles[map_id])} — {code(map_id)}",
+                f"### {markdown_text(titles[map_id])} - {code(map_id)}",
                 "",
-                f"#### Base / No Scenario — {code(f'{map_id}::__base')}",
+                f"#### Base / No Scenario - {code(f'{map_id}::__base')}",
                 "",
                 "**Save snapshot:** %d slots = %d fixed + %d event + %d shared scenario + %d exit. Exact scenarios on this map: %d."
                 % (len(base_slots[map_id]), counts["fixed"], counts["event"], counts["scenario"], counts["exit"], len(map_layouts)),
@@ -619,7 +619,7 @@ def render(model: dict[str, Any]) -> str:
             exact_slots = values(layout.get("scenario_slots"))
             lines.extend(
                 [
-                    f"#### Scenario — {markdown_text(layout.get('display_name', ''))} — {code(layout.get('layout_id', ''))}",
+                    f"#### Scenario - {markdown_text(layout.get('display_name', ''))} - {code(layout.get('layout_id', ''))}",
                     "",
                     "**Full save:** %d slots = %d shared + %d exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs."
                     % (len(base_slots[map_id]) + len(exact_slots), len(base_slots[map_id]), len(exact_slots)),

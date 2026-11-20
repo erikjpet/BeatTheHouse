@@ -8,7 +8,7 @@ Board row: `crew06_5` in `docs/todo/README_0_6_board.md`
 - **Verification:** Focused Contract PASS (7 primary/fallback routes, rank gates/services, seeded presence, signposting, save/load, ignored-run byte golden) in 190.136 s / 230.391 s; integrated Systems 49/49 in 39.895 s / 43.712 s; UI 0 failures with `ui_scene_compile` 57.828 s / 124.851 s; 10-seed determinism 590/590 checkpoints with identical combined hash `3567232055`; 75-state visual QA, 0 warnings/overlaps/stderr; PM manual voice review passed all seven authored registers.
 - **Deviations:** Code-reality arbitration preserved the shipped Rook Crew-loan/legacy-Marker flow instead of inventing a duplicate fallback; Mags consumes the live `back_alley_fence_night` anchor and a generated casino-layer fallback because the roadmap's pawn-shop/Punchline wording did not match landed scenario topology; Velvet fallback is Slow Night only; Bishop refreshes within the Grand Casino cage subroom. All decisions are recorded on the board; no owner-locked design was guessed.
 
-# Agent Prompt — 0.6 crew06_5: Crew Recruitment (Seven Placements)
+# Agent Prompt - 0.6 crew06_5: Crew Recruitment (Seven Placements)
 
 Copy everything below this line into the agent.
 
@@ -16,7 +16,7 @@ Copy everything below this line into the agent.
 
 You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript
 casino roguelike (Web/itch.io + Windows, 1280×720). Binding design
-contract: `docs/plans/0.6_living_world_roadmap.md` — Pillar 3 "The
+contract: `docs/plans/0.6_living_world_roadmap.md` - Pillar 3 "The
 seven, placed in the world" + trust ladder. The 7 crew characters
 (voices authored) are in `data/characters/characters.json`; env06_2/3
 placed inert recruitment anchor flags in scenarios. Voice: both voice
@@ -46,25 +46,25 @@ anchor flag ids by code.
 
 Wire each member's recruitment where their life happens (anchor
 scenarios from env06_2/3; fallback encounters so no member is
-unmeetable in a run whose scenarios didn't align — data-tuned
+unmeetable in a run whose scenarios didn't align - data-tuned
 secondary placements):
 
-- **Rook** — already met via the crew loan (the recruiter). Extend
+- **Rook** - already met via the crew loan (the recruiter). Extend
   his post-Marker dialogue: he names the others as they become
-  meetable ("Switch works the truck stops") — the path's diegetic
+  meetable ("Switch works the truck stops") - the path's diegetic
   signposting, subtle, never a quest log.
-- **Switch** — gas station *Trucker Convoy* (fallback: back alley).
-- **Mags** — pawn shop *Fence Night* (fallback: Punchline L2).
-- **Knuckles** — bar *Fight Night* (fallback: Punchline door).
-- **Velvet** — kitty lounge *The Buyout* (fallback: Slow Night beat).
-- **Bishop** — Grand Casino periphery/cage window (a quiet two-beat
+- **Switch** - gas station *Trucker Convoy* (fallback: back alley).
+- **Mags** - pawn shop *Fence Night* (fallback: Punchline L2).
+- **Knuckles** - bar *Fight Night* (fallback: Punchline door).
+- **Velvet** - kitty lounge *The Buyout* (fallback: Slow Night beat).
+- **Bishop** - Grand Casino periphery/cage window (a quiet two-beat
   encounter; he never breaks cover on the floor).
-- **Lucky** — beach *Festival Weekend* (fallback: any Numbers venue
-  once crew06_3 is live — data-gated).
+- **Lucky** - beach *Festival Weekend* (fallback: any Numbers venue
+  once crew06_3 is live - data-gated).
 
 Each intro: an encounter event (existing event mechanics) with a
 choice beat that grants first trust and opens that member's
-`associate` job availability. Dialogue per authored voice styles —
+`associate` job availability. Dialogue per authored voice styles -
 each member must sound like their `characters.json` entry.
 
 ### 2. Mechanics unlocked by rank (wire the ones that exist)
@@ -72,15 +72,15 @@ each member must sound like their `characters.json` entry.
 - `associate`: member's jobs appear on offer surfaces (job board
   arrives in crew06_6; until then the member's own encounter offers).
 - Switch `associate+`: wire town06_3's `sweep_status()` capability +
-  remote scenario reveal (map heard-tier upgrades via town06_2 —
+  remote scenario reveal (map heard-tier upgrades via town06_2 -
   data-limited uses per visit).
 - Rook `made`: L3 escort flag for env06_4's door.
 - Knuckles `associate+`: contraband stash service (pre-sweep stashing
-  seam from town06_3 — a stash inventory that survives sweep
+  seam from town06_3 - a stash inventory that survives sweep
   encounters, data-capped).
 - Velvet/Bishop/Mags/Lucky rank perks beyond the above land with
   their systems (plays: crew06_7; heist: crew06_8; Numbers:
-  crew06_3) — leave their rank gates defined in `data/crew/crew.json`
+  crew06_3) - leave their rank gates defined in `data/crew/crew.json`
   so those prompts consume, not invent.
 
 ### 3. Presence

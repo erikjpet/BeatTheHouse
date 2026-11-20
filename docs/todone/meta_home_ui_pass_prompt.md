@@ -1,4 +1,4 @@
-# Agent Prompt — Meta-Home UI Pass (Simple HUD, Item Display, Map Framing)
+# Agent Prompt - Meta-Home UI Pass (Simple HUD, Item Display, Map Framing)
 
 Copy everything below this line into the worker agent.
 
@@ -8,7 +8,7 @@ You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript casino
 roguelike (900×430 board, immediate-mode canvas, foundation_main host,
 data-driven, post-0.5-UI-overhaul design-token system). This file is a
 three-part meta-home UI pass. Audit current code first; line references may
-have drifted — code reality wins. Use the 0.5 design tokens +
+have drifted - code reality wins. Use the 0.5 design tokens +
 `FoundationWidgets` kit only (no raw color/size literals), and register any
 new/changed UI files in the token-adoption check and the UI redesign report
 so the UI05 coverage gates stay green.
@@ -20,20 +20,20 @@ Meta-home mode is detectable via `foundation_main.gd` `_is_meta_session()` /
 
 ---
 
-## PART 1 — A simple, distinct meta-home HUD (top bar)
+## PART 1 - A simple, distinct meta-home HUD (top bar)
 
 The top HUD is built for RUN state (`scripts/ui/foundation_hud_view_model.gd`
-— bankroll, chips, heat, alcohol/time, run clock, run objective) and shows
+- bankroll, chips, heat, alcohol/time, run clock, run objective) and shows
 that run chrome inside the meta home, where it is meaningless. Give the home
 session its own simple top bar.
 
-Home-mode top bar shows EXACTLY these — nothing else:
+Home-mode top bar shows EXACTLY these - nothing else:
 
-1. **Home type + current location** — the current meta location and housing
+1. **Home type + current location** - the current meta location and housing
    tier (e.g. "Home · House", or "Sal's Pawn Shop" when there). Source:
    `housing_tier()` + the current meta location.
-2. **Gold** — the home currency, prominent.
-3. **Gold goal to tier up** — the gold needed for the next housing upgrade
+2. **Gold** - the home currency, prominent.
+3. **Gold goal to tier up** - the gold needed for the next housing upgrade
    (e.g. "Next tier: 400g" or a gold-toward-goal readout). Source:
    `next_housing_upgrade()`. If already at the top tier, show a clean
    "Top tier" state.
@@ -51,7 +51,7 @@ split; do not grow `foundation_main.gd`.
 
 ---
 
-## PART 2 — Reorganize the home item storage display
+## PART 2 - Reorganize the home item storage display
 
 Items stored in the home currently render disorganized and OVERLAPPING and
 are hard to read. The display flows through
@@ -62,12 +62,12 @@ are hard to read. The display flows through
 
 Rework the stored-item presentation into a clean, organized layout:
 
-- A proper grid/list with consistent spacing — NO overlapping items,
+- A proper grid/list with consistent spacing - NO overlapping items,
   labels, or icons at any count; content never collides or clips.
 - Sensible grouping and ordering (by collection / tier / container, and
   unopened bags distinct from owned items), so a player can scan what they
   own.
-- Each item reads clearly: icon, name, count, and its rarity treatment —
+- Each item reads clearly: icon, name, count, and its rarity treatment -
   reuse the rarity-outline card treatment established by the bag-open reel
   (`bag_open_reel.gd`) so item rarity is consistent across the meta UI.
 - Readable and non-overlapping at 1280×720 AND small-screen; if the
@@ -76,11 +76,11 @@ Rework the stored-item presentation into a clean, organized layout:
 - Token-based styling; hierarchy first (what you own at a glance).
 
 This is a presentation/layout reorganization: do not change what items exist,
-their data, or the sale/interaction actions — only how they are shown.
+their data, or the sale/interaction actions - only how they are shown.
 
 ---
 
-## PART 3 — Fix the meta-home map framing (pawn shop is off-frame)
+## PART 3 - Fix the meta-home map framing (pawn shop is off-frame)
 
 On the meta-home world map, not all visitable locations are viewable: the
 pawn shop node sits just outside the frame and is therefore not selectable.
@@ -94,7 +94,7 @@ the framed/visible bounds.
 
 Fix it so EVERY meta location is fully visible and selectable: the meta map
 must frame ALL of its nodes (home + pawn shop + any future meta nodes)
-within view with padding — either by computing the view bounds to fit every
+within view with padding - either by computing the view bounds to fit every
 meta node, or by placing the meta nodes within the guaranteed-visible frame.
 Verify every meta node is on-screen and clickable at 1280×720 and
 small-screen, and that selection + travel to the pawn shop works from the
@@ -126,8 +126,8 @@ map.
    bounds at both sizes; the pawn shop is selectable and travel to it works.
 4. UI gates: token-adoption and surface-coverage checks green with new/
    changed files accounted; reduce-motion clean.
-5. Manual: open the home — read location/gold/next-tier at a glance; open
-   storage — items are organized and never overlap; open the map — the pawn
+5. Manual: open the home - read location/gold/next-tier at a glance; open
+   storage - items are organized and never overlap; open the map - the pawn
    shop is on-screen and selectable; travel there.
 
 ## Gates
@@ -156,7 +156,7 @@ report verbatim.
 
 ---
 
-## Execution record — 2026-07-28 20:48:13 -05:00
+## Execution record - 2026-07-28 20:48:13 -05:00
 
 - HUD mode commit: `1ec64e3f` (`Add simple meta-home HUD mode`)
 - Item display commit: `20307955` (`Reorganize meta-home item storage display`)

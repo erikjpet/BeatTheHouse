@@ -239,7 +239,7 @@ func _markdown_report(report: Dictionary) -> String:
 	var lines: Array = [
 		"# fix06_1 Full Event Catalog Audit",
 		"",
-		"Catalog: %d events — %d authored speakers, %d synthesized speakers." % [int(report.get("event_count", 0)), int(report.get("authored_speaker_count", 0)), int(report.get("synthesized_speaker_count", 0))],
+		"Catalog: %d events - %d authored speakers, %d synthesized speakers." % [int(report.get("event_count", 0)), int(report.get("authored_speaker_count", 0)), int(report.get("synthesized_speaker_count", 0))],
 		"",
 		"`before` reintroduces the legacy normalization default only for events with no authored `speaker`. `after` uses the repaired normalization. Counts are `can_trigger=true / declared host observations`; `working` additionally requires non-empty choices.",
 		"",

@@ -1,4 +1,4 @@
-# Owner Checklist — Package and Publish Beat the House 0.5.0
+# Owner Checklist - Package and Publish Beat the House 0.5.0
 
 Last reconciled: 2026-08-12
 Status: GITHUB 0.5 RELEASE APPROVED AND EXECUTED
@@ -35,7 +35,7 @@ GitHub integration branch on 2026-08-12.
 - [ ] Stop and open a new defect TODO if any crash, hang, stutter, frozen idle,
   missing asset, dead click, stale overlay, clipped text, or mismatch appears.
 
-## Publish to itch.io — explicit owner authorization required
+## Publish to itch.io - explicit owner authorization required
 
 - [ ] Upload Web to `html` with user version `0.5.0`.
 - [ ] Upload Windows to `windows` with user version `0.5.0`.
@@ -44,7 +44,7 @@ GitHub integration branch on 2026-08-12.
 - [ ] Test the live page and downloaded Windows artifact.
 - [ ] Record URLs, channel/build IDs, timestamps, and artifact hashes.
 
-## Publish GitHub release/tag — explicit owner authorization required
+## Publish GitHub release/tag - explicit owner authorization required
 
 - [x] Confirm approved source exactly matches published artifacts.
 - [x] Create annotated `v0.5.0` at that exact commit and push it.

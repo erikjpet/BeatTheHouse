@@ -1,7 +1,7 @@
 Status: LAUNCHER
-Board section: `Family 2 — Crew and world surface depth` in `docs/todo/README_0_6_board.md`
+Board section: `Family 2 - Crew and world surface depth` in `docs/todo/README_0_6_board.md`
 
-# Orchestration Prompt — Crew and World Surface Depth Program (Family 2)
+# Orchestration Prompt - Crew and World Surface Depth Program (Family 2)
 
 Copy everything below this line into one primary Codex agent. That agent is the
 program integrator and must employ sub-agents; it is not permitted to implement
@@ -38,7 +38,7 @@ evidence.
 The Crew path is 0.6's flagship pillar and it is still a text menu. Streets
 deliveries, the Numbers book and desk, the job board, recruitment encounters,
 coordinated plays, Police Sweep encounters, the heist phases and the Turn
-confrontation all resolve through `EventModule` choice actions — see
+confrontation all resolve through `EventModule` choice actions - see
 `crew_heist_table_choices()`, `crew_job_accept`, `crew_rook_ride`,
 `crew_practice_rig` and their siblings in `scripts/core/event_module.gd`.
 `env06_6` builds the spatial, actor, objective and aftermath machinery these
@@ -105,7 +105,7 @@ Give each agent a bounded, read-only audit with a required written handoff:
   cannot yet express.
 - **Crew model inventory:** `delivery_run_model.gd`, `numbers_model.gd`,
   `police_sweep_model.gd`, `crew_play_model.gd`, `crew_recruitment_model.gd`,
-  `crew_state_model.gd`, `crew_heist_model.gd`, `crew_turn_model.gd` — public
+  `crew_state_model.gd`, `crew_heist_model.gd`, `crew_turn_model.gd` - public
   API, persisted state, action-boundary contracts, and every test asserting on
   them.
 - **Hidden-state map:** every place Turn or heist hidden state is stored,
@@ -137,7 +137,7 @@ after verifying the registered path and only after its branch is safely merged.
 
 ## 5. Dependency-aware execution waves
 
-### Wave 1 — the adapter
+### Wave 1 - the adapter
 
 Claim `world06_1`. Assign it to one runtime worker. Its branch must include at
 least these logical commits: (1) the adapter contract and validation; (2) the
@@ -154,12 +154,12 @@ sections 7 and 8. Once accepted, merge with `--no-ff` into the integration
 branch, run smoke and regression gates there, update the board, and record the
 integration commit. Only that accepted commit may base consumer branches.
 
-### Wave 2 — parallel conversion
+### Wave 2 - parallel conversion
 
 From the accepted adapter commit, start `world06_2` through `world06_6`
 concurrently, one owner per branch. Ownership is by model file and is exclusive,
 per the task contracts. `world06_5` also needs the `game06_1` actor vocabulary
-for crew presence at tables — if Family 1's runtime has not landed, it
+for crew presence at tables - if Family 1's runtime has not landed, it
 implements the sweep half first and the plays half after, and the ledger records
 that ordering.
 
@@ -170,7 +170,7 @@ If a worker needs a change to a `world06_1` or `env06_6` file, it does not edit
 it. It files a request with exact evidence; you decide whether to reopen the
 owning row or grant a narrow, reviewed exception recorded in the ledger.
 
-### Wave 3 — integrate one at a time
+### Wave 3 - integrate one at a time
 
 Each branch requires independent review and all focused gates before it is
 eligible. Merge accepted branches one at a time with `--no-ff`, preserving
@@ -179,7 +179,7 @@ save and UI smoke on the integration branch. If a later merge breaks an earlier
 one, assign the finding to the responsible branch or an explicit cross-system
 remediation commit; never mask it in the merge resolution.
 
-### Wave 4 — independent release gate
+### Wave 4 - independent release gate
 
 Claim `world06_7`. Spawn at least three reviewers who owned none of the relevant
 implementation: one for correctness, state, determinism and economy; one for
@@ -200,10 +200,10 @@ unmet prompt checkbox blocks closure, and any hidden-state leak is a P0.
   is seeded from run RNG.
 - Ordinary travel, ordinary events and ordinary environment functionality must
   survive at every node a sequence touches. A crew-ignoring run must be a true
-  no-op — `crew_ignored_golden_probe.gd` exists because that broke once already.
+  no-op - `crew_ignored_golden_probe.gd` exists because that broke once already.
 - Bounded effects only: no sequence may invent money, trust, heat or items
   outside the landed economy contracts.
-- Voice obeys the Voice Bible register split — house courtesy, street bluntness,
+- Voice obeys the Voice Bible register split - house courtesy, street bluntness,
   brevity throughout.
 
 ## 7. Mandatory branch self-review protocol

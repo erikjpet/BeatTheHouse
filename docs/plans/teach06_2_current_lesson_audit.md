@@ -1,6 +1,6 @@
 # teach06_2 current lesson audit (dependency-held pre-stage)
 
-Status: **UNREVIEWED — do not use as acceptance evidence**  
+Status: **UNREVIEWED - do not use as acceptance evidence**  
 Trace base: `9ea919fe9b53ab3ae37e085ed462febaa8ad76f8`  
 Catalog: `data/tutorial/lessons.json` (63 entries: 56 `tutorial_run`, 7 `normal_run`)
 
@@ -26,28 +26,28 @@ static trace: diegetic sufficiency requires the dependency-complete cold run.
 
 ## Evidence and dependency legend
 
-- **CAT** — exact authored entry and trigger/anchor/copy at the cited line in
+- **CAT** - exact authored entry and trigger/anchor/copy at the cited line in
   `data/tutorial/lessons.json`.
-- **SEQ** — the contract freezes the exact 56 guided IDs and seven contextual
+- **SEQ** - the contract freezes the exact 56 guided IDs and seven contextual
   IDs (`scripts/tests/foundation/onboarding_06_contract.gd:7-31,89-90`).
-- **GUIDE** — current static assertions cover dialogue delivery, map anchors,
+- **GUIDE** - current static assertions cover dialogue delivery, map anchors,
   Blackjack boundaries, Cage placement, Heat, and drink sequencing
   (`scripts/tests/foundation/check_core_content.gd:3848-3938`). Recovery stress
   traverses every authored guided frontier
   (`scripts/tests/tutorial_guardrail_recovery_stress_check.gd:35-60`).
-- **PTAB** — the authored pull-tab action IDs remain live command boundaries
+- **PTAB** - the authored pull-tab action IDs remain live command boundaries
   (`scripts/tests/foundation/check_table_games.gd:5691-5733,5818-5865`).
-- **BJ** — current Blackjack maps and renders the authored action IDs
+- **BJ** - current Blackjack maps and renders the authored action IDs
   (`scripts/games/blackjack.gd:539-567,2253-2325,2937`).
-- **CTX** — current positive/negative contextual matrices are at
+- **CTX** - current positive/negative contextual matrices are at
   `scripts/tests/foundation/onboarding_06_contract.gd:97-135`; the public context
   is projected at `scripts/ui/coach_overlay.gd:300-318`.
-- **PUSH** — current coin-pusher public verbs are `coin_pusher_carriage_drag` and
+- **PUSH** - current coin-pusher public verbs are `coin_pusher_carriage_drag` and
   `coin_pusher_drop_charge` (`scripts/games/coin_pusher.gd:6,233-249`), rendered
   as drag and hold regions
   (`scripts/games/coin_pusher/coin_pusher_renderer.gd:589,623`).
-- **D1** — re-audit after `depth06_1`; **G8** — re-audit after `game06_8`;
-  **W7** — re-audit after `world06_7`; **—** — no known dependency-owned surface.
+- **D1** - re-audit after `depth06_1`; **G8** - re-audit after `game06_8`;
+  **W7** - re-audit after `world06_7`; **-** - no known dependency-owned surface.
 
 “Correct” below means the copy, trigger, and target agree with the code on the
 trace base. It is not a claim that dependency-complete pointer placement,
@@ -58,7 +58,7 @@ diegetic redundancy, density, or cold-run order has passed.
 | # | Lesson | Class | Exact current trace | Unresolved dependency | Disposition |
 | ---: | --- | --- | --- | --- | --- |
 | 1 | `tutorial_apartment_xray` | correct | CAT:3-10; SEQ; GUIDE | W7 | Keep; re-trace world anchor. |
-| 2 | `tutorial_inventory_xray` | correct | CAT:15-22; SEQ; GUIDE | — | Keep. |
+| 2 | `tutorial_inventory_xray` | correct | CAT:15-22; SEQ; GUIDE | - | Keep. |
 | 3 | `tutorial_open_map_corner` | correct | CAT:27-34; SEQ; GUIDE | W7 | Keep; re-trace travel surface. |
 | 4 | `tutorial_travel_corner` | correct | CAT:39-46; SEQ; GUIDE | W7 | Keep; re-trace route target. |
 | 5 | `tutorial_inspect_coffee` | correct | CAT:51-59; SEQ; GUIDE | W7 | Keep; re-trace fixture. |
@@ -67,7 +67,7 @@ diegetic redundancy, density, or cold-run order has passed.
 | 8 | `tutorial_buy_remaining_store_item` | correct | CAT:88-99; SEQ; GUIDE | W7 | Keep; re-trace conditional anchor. |
 | 9 | `tutorial_crew_warning` | correct | CAT:104-111; SEQ; GUIDE | W7 | Keep; re-trace crew handoff. |
 | 10 | `tutorial_family_phone` | correct | CAT:115-122; SEQ; GUIDE | W7 | Keep; re-trace event fixture. |
-| 11 | `tutorial_family_debt` | correct | CAT:127-134; SEQ; GUIDE | — | Keep. |
+| 11 | `tutorial_family_debt` | correct | CAT:127-134; SEQ; GUIDE | - | Keep. |
 | 12 | `tutorial_parking_tip` | correct | CAT:138-145; SEQ; GUIDE | W7 | Keep; re-trace event fixture. |
 | 13 | `tutorial_route_map` | correct | CAT:150-157; SEQ; GUIDE | W7 | Keep; re-trace route choice. |
 | 14 | `tutorial_route_choice` | correct | CAT:162-169; SEQ; GUIDE | W7 | Keep; re-trace route target. |
@@ -112,7 +112,7 @@ diegetic redundancy, density, or cold-run order has passed.
 | 53 | `tutorial_return_cage` | correct | CAT:648-655; SEQ; GUIDE | W7 | Re-trace depth route. |
 | 54 | `tutorial_reopen_linda` | correct | CAT:660-667; SEQ; GUIDE | W7 | Re-trace Cage fixture. |
 | 55 | `tutorial_claim_bronze` | correct | CAT:672-679; SEQ; GUIDE | W7 | Re-trace objective handoff. |
-| 56 | `tutorial_meta_home_card` | correct | CAT:684-691; SEQ; GUIDE | — | Keep. |
+| 56 | `tutorial_meta_home_card` | correct | CAT:684-691; SEQ; GUIDE | - | Keep. |
 | 57 | `tip06_tonight_changes_rooms` | correct | CAT:697-702; CTX | W7 | Keep pending scenario/rumor re-trace. |
 | 58 | `tip06_delivery_route` | correct | CAT:706-711; CTX | W7 | Keep pending delivery/route re-trace. |
 | 59 | `tip06_numbers_book` | correct | CAT:716-721; CTX | W7 | Keep pending world-truth/secrecy re-trace. |

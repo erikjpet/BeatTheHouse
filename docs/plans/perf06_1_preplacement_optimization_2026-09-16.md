@@ -1,6 +1,6 @@
-# perf06_1 Pre-placement Optimization Probe — 2026-09-16
+# perf06_1 Pre-placement Optimization Probe - 2026-09-16
 
-Status: **REDUCED, NON-BINDING DIAGNOSTIC — not Phase 4 qualification**
+Status: **REDUCED, NON-BINDING DIAGNOSTIC - not Phase 4 qualification**
 
 This pass profiles and improves shared code that is expected to survive the
 replacement-placement work. It deliberately does not change a published

@@ -8,7 +8,7 @@ Board row: `crew06_6` in `docs/todo/README_0_6_board.md`
 - **Verification:** Focused layer-three contract PASS; combined Contracts, Systems, UI, 10-seed determinism, and zero-warning visual QA PASS. Furnished Punchline layer captures are in `.tmp/crew06_release_screenshots/`.
 - **Deviations:** None. Contact services retain priority when job offers share the compact interaction surface.
 
-# Agent Prompt — 0.6 crew06_6: Layer 3 Build-Out + Jobs Content
+# Agent Prompt - 0.6 crew06_6: Layer 3 Build-Out + Jobs Content
 
 Copy everything below this line into the agent.
 
@@ -18,7 +18,7 @@ You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript
 casino roguelike (Web/itch.io + Windows, 1280×720). env06_4 shipped
 the Punchline with L3 as a shell; crew06_1 shipped the job framework;
 rework06_1 replaced the rejected Streets board with real-map delivery runs; crew06_5 shipped recruitment.
-Binding design contract: `docs/plans/0.6_living_world_roadmap.md` —
+Binding design contract: `docs/plans/0.6_living_world_roadmap.md` -
 Pillar 3 "Layer 3", "Jobs", and the Practice Rig. This prompt is
 self-contained for rules and scope.
 
@@ -38,7 +38,7 @@ self-contained for rules and scope.
 
 `crew06_1`, `env06_4`, `rework06_1`, `crew06_5` DONE. Coordinate with
 crew06_2 (poker table lives here) and crew06_3 (Numbers desk) via the
-board — whichever lands later integrates with the earlier one's
+board - whichever lands later integrates with the earlier one's
 furniture; verify by code.
 
 ## Task
@@ -46,7 +46,7 @@ furniture; verify by code.
 ### 1. The back room, furnished
 
 - Build out L3 as a real environment layer: layout spots for the
-  **job board**, **planning table** (inert until crew06_8 — shows
+  **job board**, **planning table** (inert until crew06_8 - shows
   "when the score is real" flavor), **Numbers desk** (crew06_3
   integration or its minimal stand-in), **back-room poker table**
   (crew06_2 integration), **Practice Rig**, and crew residency spots.
@@ -55,14 +55,14 @@ furniture; verify by code.
   exist; otherwise a local seeded rotation). Present members carry
   their contextual lines and offer their jobs in person.
 - L3 services: Rook's ride (a free/discounted travel service with
-  data-limited uses per rank — routes through normal travel, no
-  separate delivery surface), Mags' bench (item repair/upgrade seam —
+  data-limited uses per rank - routes through normal travel, no
+  separate delivery surface), Mags' bench (item repair/upgrade seam -
   content06_1 fills the catalog; ship the service surface).
 
 ### 2. The job board
 
 - The board surfaces available jobs from all met members
-  (`data/crew/jobs.json` — extend the schema as needed, never fork
+  (`data/crew/jobs.json` - extend the schema as needed, never fork
   it): package runs (the real-map `delivery_begin_package` API),
   Numbers routes (if crew06_3 landed), lookout holds (the real-venue
   `delivery_begin_hold` mode), **stake-horse plays** (new here:
@@ -70,7 +70,7 @@ furniture; verify by code.
   split + trust; bust = trust hit and, if the player shrugs it off
   through the offered choice beat, the `stake_horse_loss_shrugged`
   grievance), and **collections** (new here: a Knuckles two-beat
-  encounter chain — the friendly-face visit, then the choice of how
+  encounter chain - the friendly-face visit, then the choice of how
   hard to press; outcomes tune trust vs heat vs cash).
 - Author a launch set of **10–14 job definitions** across the five
   kinds and all seven members, rank-gated per `data/crew/crew.json`,
@@ -83,18 +83,18 @@ furniture; verify by code.
 - A layer-3 interactable minigame: dice-setting practice (throw
   timing windows against a target distribution readout, diegetic
   "Mags' rig"). Sessions grant `craps_setting_trained` progress
-  (shared progress pool with craps06_2's street route — verify the
+  (shared progress pool with craps06_2's street route - verify the
   landed grant API and use it; never a second flag).
 - Short, replayable, deterministic; no stakes, no heat.
 
 ## Hard rules
 
 - L1/L2 behavior untouched (regression via env06_4's tests).
-- All job content routes through the crew06_1 framework — no bespoke
+- All job content routes through the crew06_1 framework - no bespoke
   job state.
 - Grievance writers added here (`stake_horse_loss_shrugged`,
   collections-related if the design note in the roadmap taxonomy
-  applies) go through the taxonomy — no new kinds without a board
+  applies) go through the taxonomy - no new kinds without a board
   Discovery entry.
 - Determinism/perf/save/voice rules as other prompts (street
   register; residency seeded; idle liveness green in L3).

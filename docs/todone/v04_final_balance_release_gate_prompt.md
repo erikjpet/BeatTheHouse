@@ -62,7 +62,7 @@ of known release-gate failures.
    tier-2 rate, lender rate, challenge rate, collection engagement, median
    minutes, and showdown route rate. If the probe does not yet emit
    collection-engagement metrics (it predates the collection loops), extend
-   the probe to report them — do not skip the metric or estimate it by hand.
+   the probe to report them - do not skip the metric or estimate it by hand.
    If collection loadouts significantly change run outcomes, tune data
    rather than weakening checks.
 4. Run the strict 60-run mouse batch. 0.4 is an Act 1 completion cut, so do

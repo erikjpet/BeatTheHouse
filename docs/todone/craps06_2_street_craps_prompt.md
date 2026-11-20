@@ -8,7 +8,7 @@ Board row: `craps06_2` in `docs/todo/README_0_6_board.md`
 - **Verification:** PM line-by-line scope/design review; project validation; integrated Craps, systems, and full UI suites; 10-seed determinism (430 checkpoints, hash `4169024088`); canonical visual QA; three-image focused street-circle smoke; and million-roll RTP/fairness with exact core/street pass parity (`0.988326`) all PASS.
 - **Deviations:** None. Cruiser Parked remains mutually exclusive through the one-scenario-per-node selector; Street Craps is injected only by its exclusive scenario opportunity.
 
-# Agent Prompt — 0.6 craps06_2: Street Craps (Back-Alley Variant)
+# Agent Prompt - 0.6 craps06_2: Street Craps (Back-Alley Variant)
 
 Copy everything below this line into the agent.
 
@@ -16,7 +16,7 @@ Copy everything below this line into the agent.
 
 You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript
 casino roguelike (Web/itch.io + Windows, 1280×720). Binding design
-contract: `docs/plans/0.6_living_world_roadmap.md` — Pillar 4 "Craps"
+contract: `docs/plans/0.6_living_world_roadmap.md` - Pillar 4 "Craps"
 (the on-ramp) and Pillar 1's *Street Craps* back-alley scenario.
 env06_2 shipped the scenario shell with a `"game_hook": "street_craps"`
 seam; craps06_1 shipped the core module. This prompt is self-contained
@@ -42,30 +42,30 @@ the hook seam by code).
 
 - A street variant of the craps module activated by the *Street
   Craps* back-alley scenario through the env06_2 seam: same dice
-  core, radically simplified surface — pass/don't pass only, gutter
+  core, radically simplified surface - pass/don't pass only, gutter
   stakes (scenario economic profile), no odds/come/place, cash (never
   chips), circle-of-players presentation instead of a table.
 - **Teaching identity**: this is where the game teaches craps. First
   session per run gets diegetic one-line guidance from the circle
   (data-driven lines, street register, skippable, never a tutorial
   overlay).
-- **Street rules**: heat/security context of the alley applies — the
+- **Street rules**: heat/security context of the alley applies - the
   circle disperses if the sweep is adjacent (scenario/sweep flags) or
   on a heat spike, converting unresolved wagers per a fair,
   deterministic settlement rule (document it in data). Cruiser Parked
   + Street Craps co-existence must behave sensibly (verify scenario
   exclusivity or interaction, log the choice).
 - Dice setting works (same skill window, no practice gate at gutter
-  stakes — the street IS practice: successful street sessions can
+  stakes - the street IS practice: successful street sessions can
   grant `craps_setting_trained` progress per data, coordinating with
   the crew06_6 Practice Rig grant so neither path is required).
 - Variant config lives in `data/games/games.json` beside the core
-  entry — one module, two presentations; no forked logic.
+  entry - one module, two presentations; no forked logic.
 
 ## Hard rules
 
 - One rules engine: street mode must reuse craps06_1's roll/settle
-  core (no duplicated payout code — enforce by structure).
+  core (no duplicated payout code - enforce by structure).
 - Determinism, perf, save-compat, voice rules as craps06_1 (street
   register here).
 - The alley remains functional when the scenario isn't seeded (no

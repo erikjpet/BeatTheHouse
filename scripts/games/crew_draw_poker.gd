@@ -132,7 +132,7 @@ func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	elif bool(state.get("session_settled", false)):
 		result["message"] = "The last night is settled. A fresh visit can open a newly seeded table."
 	else:
-		result["message"] = "The crew is seated for Texas Hold'em: blinds, four betting streets, a shared board, and honest cards. Watch what they show—and choose what you show back."
+		result["message"] = "The crew is seated for Texas Hold'em: blinds, four betting streets, a shared board, and honest cards. Watch what they show-and choose what you show back."
 	return result
 
 
@@ -3350,7 +3350,7 @@ func _draw_controls(surface, state: Dictionary) -> void:
 		return
 	var actions := _draw_array_view(state.get("legal_actions", []))
 	if actions.is_empty() and not _draw_dict_view(state.get("active_tell", {})).is_empty():
-		surface.surface_label_centered("WATCH THE TABLE — THE ACTION WILL CONTINUE", Rect2(240, 382, 420, 34), 10, C_SOFT)
+		surface.surface_label_centered("WATCH THE TABLE - THE ACTION WILL CONTINUE", Rect2(240, 382, 420, 34), 10, C_SOFT)
 		return
 	var has_fake_tell := false
 	var has_raise := false

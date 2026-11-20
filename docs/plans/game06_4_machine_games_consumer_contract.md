@@ -1,6 +1,6 @@
 # game06_4 machine-games consumer contract
 
-Status: ACCEPTED / COMPLETE — W0 + H0 product and gates are green
+Status: ACCEPTED / COMPLETE - W0 + H0 product and gates are green
 
 Authority decision: Slot and Video Poker use the existing sealed host
 direct-bankroll boundary. No machine-credit ledger, buy-in, cash-out, or
@@ -69,13 +69,13 @@ Ritual id: `slot.machine_session`
 
 Phases:
 
-1. `bankroll` — denomination and direct-bankroll bet selection; spin permitted.
-2. `commitment` — exact selected cash wager is confirmed and locked.
-3. `activation` — handle/button press accepted; authoritative resolver runs once.
-4. `outcome_staging` — authored reel stops expose the already-fixed result.
-5. `feature` — existing bonus family progression, if any, remains resolver-owned.
-6. `payout_or_handpay` — coin-out is readable; threshold lockup summons attendant.
-7. `bankroll` — acknowledgement completes without paying again.
+1. `bankroll` - denomination and direct-bankroll bet selection; spin permitted.
+2. `commitment` - exact selected cash wager is confirmed and locked.
+3. `activation` - handle/button press accepted; authoritative resolver runs once.
+4. `outcome_staging` - authored reel stops expose the already-fixed result.
+5. `feature` - existing bonus family progression, if any, remains resolver-owned.
+6. `payout_or_handpay` - coin-out is readable; threshold lockup summons attendant.
+7. `bankroll` - acknowledgement completes without paying again.
 
 Terminal interruption uses the existing environment/session exit boundary and
 must preserve active bonus and the committed bankroll result.
@@ -138,15 +138,15 @@ Ritual id: `video_poker.machine_session`
 
 Phases:
 
-1. `bankroll` — denomination and direct-bankroll wager selection.
-2. `commitment` — exact wager confirmed.
-3. `initial_deal` — five authoritative cards staged in dealt order.
-4. `hold_selection` — independent card holds may be toggled.
-5. `draw` — one accepted draw replaces only unheld indices.
-6. `result_read` — exact existing paytable row and credit result highlighted.
-7. `double_up` — only when the shipped result offers it; existing authority.
-8. `payout` — readable direct-bankroll settlement.
-9. `bankroll` — repeat play, with no repeated award.
+1. `bankroll` - denomination and direct-bankroll wager selection.
+2. `commitment` - exact wager confirmed.
+3. `initial_deal` - five authoritative cards staged in dealt order.
+4. `hold_selection` - independent card holds may be toggled.
+5. `draw` - one accepted draw replaces only unheld indices.
+6. `result_read` - exact existing paytable row and credit result highlighted.
+7. `double_up` - only when the shipped result offers it; existing authority.
+8. `payout` - readable direct-bankroll settlement.
+9. `bankroll` - repeat play, with no repeated award.
 
 ### Video Poker actions
 

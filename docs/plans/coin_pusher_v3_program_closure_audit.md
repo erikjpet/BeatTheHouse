@@ -1,6 +1,6 @@
 # Coin Pusher V3 program closure audit
 
-Status: COMPLETE — accepted and archived 2026-09-02
+Status: COMPLETE - accepted and archived 2026-09-02
 Audit row: `pusherv3_11`
 Audit date: 2026-09-01
 Technical evidence updated: 2026-09-02

@@ -1,7 +1,7 @@
-Status: DONE — accepted by the exact-tree Family 2 closeout on 2026-09-03
+Status: DONE - accepted by the exact-tree Family 2 closeout on 2026-09-03
 Board row: `world06_6` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — 0.6 world06_6: Heist Phases and the Turn Confrontation
+# Agent Prompt - 0.6 world06_6: Heist Phases and the Turn Confrontation
 
 Copy everything below this line into the agent.
 
@@ -49,14 +49,14 @@ weighting, clue emission rules or any outcome ladder.
 - Use the neutral storage and addressing scheme from `world06_1`. Run its leak
   test against every surface this row adds, and extend it with heist-specific
   cases.
-- The three landed clue channels — poker tell misfire, itinerary lie, light
-  envelope — must keep emitting honestly at their landed rates and must now be
+- The three landed clue channels - poker tell misfire, itinerary lie, light
+  envelope - must keep emitting honestly at their landed rates and must now be
   observable in a staged scene without becoming easier or harder to read than the
   contract allows.
 - If staging a beat would require exposing hidden state, the beat is wrong.
   Redesign the beat.
 
-## 2. Plan A — The Count, staged
+## 2. Plan A - The Count, staged
 
 - Preserve the action-boundary phase window, the interleaving of decisions at
   authored round boundaries rather than all at the planning table, the functional
@@ -64,11 +64,11 @@ weighting, clue emission rules or any outcome ladder.
   requirement that progress comes from real distinct sessions of real table play.
 - Stage each phase as a place: the planning table, the floor, the count, the dock
   or the corridor, the exit. Decisions happen where and when they happen.
-- Consume the real production truths the landed row requires — normalized action
+- Consume the real production truths the landed row requires - normalized action
   kinds, game-specific settled fields, actual session counts. A fixture-shaped
   shortcut fails this row exactly as it failed `crew06_8`.
 
-## 3. Plan B — The Whale Game, staged
+## 3. Plan B - The Whale Game, staged
 
 - Preserve the authoritative Grand Casino chip flow scoring, the required mixed
   craps and card invitational rounds, the consumption of actual finite
@@ -82,7 +82,7 @@ weighting, clue emission rules or any outcome ladder.
 
 ## 4. Exits and the confrontation
 
-- A clean walk keeps zero pursuit across later action boundaries — not merely at
+- A clean walk keeps zero pursuit across later action boundaries - not merely at
   the moment of exit. A hot exit uses the `world06_2` chase verbs rather than a
   second chase implementation.
 - The unmarked confrontation becomes a scene: who is there, what is said, what

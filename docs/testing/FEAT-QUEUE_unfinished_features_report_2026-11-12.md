@@ -1,4 +1,4 @@
-# Beat the House unfinished-features queue — owner handoff, acceptance still open
+# Beat the House unfinished-features queue - owner handoff, acceptance still open
 
 Date:2026-11-12. This queue is **not finished**. Source fixes and several
 rendered checks are complete, but delivery, the pack decision and heist play
@@ -25,16 +25,16 @@ on070 is identified separately.
 | FEAT-02 | Investigated partially; Whale normal play NOT REACHED | f853fa69 /1f70b2e4 | [Combined report](FEAT-02_FEAT-07_private_heist_investigation_2026-11-12.md); native app access pending; no enablement on main |
 | FEAT-03 | Source fixed and checked; NEXT acceptance open | a875a68f /964d6df4 | [Daily seed](FEAT-03_daily_local_calendar_seed_2026-11-12.md); new scheme not yet served |
 | FEAT-04 | Closed as not wanted by owner; documentation delivery open | f12f8fa1 /fd8bb158; hold b4e0a00f /cbcb6784 | [Disposition](FEAT-04_collection_controls_not_wanted_2026-11-12.md); no collection controls built |
-| FEAT-05 | Out of scope; scenario walking remains paused | — | Unchanged audit; no work |
-| FEAT-06 | Out of scope; art required | — | Unchanged audit; no art/placement work |
+| FEAT-05 | Out of scope; scenario walking remains paused | - | Unchanged audit; no work |
+| FEAT-06 | Out of scope; art required | - | Unchanged audit; no art/placement work |
 | FEAT-07 | Investigated partially; full Count measurement NOT REACHED | f853fa69 /1f70b2e4 | [Combined report](FEAT-02_FEAT-07_private_heist_investigation_2026-11-12.md);48 batches /86 inputs on070, no full-route pass |
 | FEAT-08 | Moved to0.6.2; owner by hand | da53957d /8d40250f, plus checkpoint schema bookkeeping | [Future queue](FEAT-062_queue_record_2026-11-12.md); no worker copy pass |
 | FEAT-09 | Wedding visible acceptance passed; Arrival source fixed; delivery/Arrival Web acceptance open | Wedding3f08a8e8 /babc66ea; Arrival9ebce330 /2495b47e | [Wedding](BTH-SCENARIO-WEDDING-001_visible_completion_2026-11-12.md), [Arrival](BTH-SCENARIO-ARRIVAL-002_layer_arrival_order_2026-11-12.md); Wedding on070, new Arrival behavior pending |
 | FEAT-10 | Three older bugs not reproduced in stated current samples; documentation delivery open | c4653b3e /bc75a739 | [Rendered rechecks](FEAT-10_older_bug_rechecks_2026-11-12.md);070, original-seed limits retained |
 | FEAT-11 | Stopped before edits: reproduced specification conflict |81cae8af /d95c817d | [Pack preflight](FEAT-11_pack_defaults_preflight_2026-11-12.md); defaults unchanged; merchant decision pending |
-| QOL-06 to QOL-10 | Out of scope / not wanted now | — | Existing records retained; no plans or implementation |
-| Section6 | Out of scope: owner/platform/human work | — | No accounts, platform calls, signing, human test, Act2, art or publishing work |
-| Section7 | Out of scope: deferred campaigns | — | No economy, broad performance/platform, long audio or full named campaign started |
+| QOL-06 to QOL-10 | Out of scope / not wanted now | - | Existing records retained; no plans or implementation |
+| Section6 | Out of scope: owner/platform/human work | - | No accounts, platform calls, signing, human test, Act2, art or publishing work |
+| Section7 | Out of scope: deferred campaigns | - | No economy, broad performance/platform, long audio or full named campaign started |
 | Section8 | Closed as stale in source where supported; documentation delivery open | e52741c9 /7c0d0b17; hold da990b9c /87611c65 | [Closures](FEAT-STALE_plan_closures_2026-11-12.md); nine rooms rendered on070; limits below |
 | Section9 record | Five open future decisions recorded; no work authorized | da53957d /8d40250f, plus checkpoint schema bookkeeping | [Future queue](FEAT-062_queue_record_2026-11-12.md); no future objective Complete |
 
@@ -272,7 +272,7 @@ the next delivery checkpoint.
 The following is the earlier intake/progress record. Its pending statements are
 historical; the current status and limits above govern this handoff.
 
-# Unfinished-features queue — execution report (in progress)
+# Unfinished-features queue - execution report (in progress)
 
 ## Intake and governing scope
 

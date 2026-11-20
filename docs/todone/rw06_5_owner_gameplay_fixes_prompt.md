@@ -1,4 +1,4 @@
-# rw06_5 — Owner-requested gameplay fixes: talking to people, blackjack count, Cass gate
+# rw06_5 - Owner-requested gameplay fixes: talking to people, blackjack count, Cass gate
 
 Status: DONE. Completed 2026-09-23 by the release orchestrator.
 Depends on rw06_0 being DONE. Runs in parallel with rw06_1 and rw06_2.
@@ -39,7 +39,7 @@ Read the file at the start of every session. Pick up any ANSWERED entry whose
 `Resume` is yours. Never talk to the owner any other way, and never stall
 waiting.
 
-## Fix 1 — Clicking a person starts a conversation
+## Fix 1 - Clicking a person starts a conversation
 
 **Owner report.** Clicking a person to interact does not start a conversation.
 Example: "Word from Across Town" (`town_rumor_staff` in
@@ -82,7 +82,7 @@ the map preview.
   for the same instant-resolve problem, and fix them all through the same path.
   List them in your report.
 
-## Fix 2 — Show the player's count between blackjack hands
+## Fix 2 - Show the player's count between blackjack hands
 
 **Owner request.** When a blackjack hand ends and the player is deciding
 whether to deal again, show the count they're keeping, as long as they are
@@ -102,7 +102,7 @@ counting.
   chips or buttons in normal or expanded layouts.
 - Idle-liveness rules apply to any animation.
 
-## Fix 3 — Cass Venn needs a real count before a hand-off
+## Fix 3 - Cass Venn needs a real count before a hand-off
 
 **Owner report.** `chain06_cass_first_contact` (Cass Venn, the rival counter;
 seen at the Delta Queen riverboat casino) lets the player trade or share a count

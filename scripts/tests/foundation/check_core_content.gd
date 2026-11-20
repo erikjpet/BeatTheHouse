@@ -4370,7 +4370,7 @@ func _check_lottery_redemption_clerk_merge(failures: Array) -> void:
 			"object_id": "dialogue:pull_tab_clerk",
 			"object_type": "dialogue",
 			"source_id": "pull_tab_clerk",
-			"label": "Nell — Pull-Tab Help",
+			"label": "Nell - Pull-Tab Help",
 			"slot_binding_source_id": counter_host_id,
 			"available_actions": [{"id": "start_dialogue", "label": "Ask About Pull Tabs"}],
 			"confirm_action_id": "start_dialogue",

@@ -1,4 +1,4 @@
-# AUD061-01 — stale_rollback
+# AUD061-01 - stale_rollback
 
 Specification: [BTH_0.6.1_audit_work_orders.md](../todo/BTH_0.6.1_audit_work_orders.md). Started from `ca2302b6bbe36f9b2d6b2af7fbcd8728de9ab968`; remote source baseline `06e5492116b2f4aac78ffbc3d41ed15be64833a9`.
 

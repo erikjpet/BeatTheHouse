@@ -1,6 +1,6 @@
-Status: LAUNCHER — supersedes `depth06_0`, `game06_0`, `world06_0` and `cross06_0` as the single execution authority for 0.6
+Status: LAUNCHER - supersedes `depth06_0`, `game06_0`, `world06_0` and `cross06_0` as the single execution authority for 0.6
 
-# Orchestration Prompt — Single Project Manager Landing Program for 0.6
+# Orchestration Prompt - Single Project Manager Landing Program for 0.6
 
 Copy everything below this line into ONE primary Codex agent. That agent is the
 sole project manager for the remainder of 0.6. It must employ sub-agents for all
@@ -40,7 +40,7 @@ You are the single writer to `main`. No sub-agent merges to `main`, ever.
   balance tuning. `release06_1` stays parked and is not in your scope.
 - The owner has authorized committing the 0.6 program documentation described in
   section 4.1. Every other untracked or ignored path in the primary working tree
-  — `.tmp/`, `.tools/`, `review_artifacts/`, editor state, build output — is
+  - `.tmp/`, `.tools/`, `review_artifacts/`, editor state, build output - is
   owner property. Record it at preflight, never stage it, and never use reset,
   clean or checkout commands that could discard it.
 - Do not change RTP, EV, payout tables, odds, or any landed economic contract
@@ -48,7 +48,7 @@ You are the single writer to `main`. No sub-agent merges to `main`, ever.
   believes it needs a math change files a finding instead.
 - Two rows are blocked on owner decisions (section 6). Never guess them.
 
-## 3. What you are taking over — verify all of this yourself
+## 3. What you are taking over - verify all of this yourself
 
 State at handoff. Heads move; re-derive every one before relying on it.
 
@@ -58,19 +58,19 @@ State at handoff. Heads move; re-derive every one before relying on it.
 | `codex/cross-completion-integration` | `8a4d29be` | cross program ledger, `polish06_0` merged as `dba53fb5` |
 | `codex/cross-remediation` | `3e5c0378` | `fix06_4` **finished and PM-verified**, see 3.1; 50 ahead of `main`, 5 behind |
 | `codex/cross-meta` | `d7052142` | `meta06_1` implementation, 3 commits, 11 product files |
-| `codex/cross-balance` | `1c0dec3b` | `balance06_1` — **finalized and PM-verified**, see 3.2 |
+| `codex/cross-balance` | `1c0dec3b` | `balance06_1` - **finalized and PM-verified**, see 3.2 |
 | `codex/cross-board` | `114271b0` | `board06_1` board split into dated companion logs |
 | `codex/cross-polish` | `be14c1ce` | `polish06_0` accepted, no findings |
 | `codex/cross-pusher-audit` | `554773c6` | `pusherv3_11` static audit start only |
 | `codex/depth-program-integration` | `7dd770ad` | depth ledger and board deltas |
 | `codex/depth-env-runtime-2` | `a5ae1d8f` | **`env06_6` static implementation independently accepted** |
 | `codex/depth-env-runtime-5` | `fc0b8085` | active `env06_6` remediation, 18 commits ahead |
-| `codex/depth-env-runtime-3`, `-4` | — | catalog and lifecycle remediation lines |
+| `codex/depth-env-runtime-3`, `-4` | - | catalog and lifecycle remediation lines |
 
 There are roughly forty registered worktrees, most of them stale from waves that
 closed weeks ago. Inventory them; do not delete anything until section 11.
 
-### 3.1 `fix06_4` is finished — collect, review, land
+### 3.1 `fix06_4` is finished - collect, review, land
 
 **No external worker is live.** The `fix06_4` agent has reported and stopped.
 `codex/cross-remediation` is final at exact head `3e5c0378`
@@ -80,12 +80,12 @@ performed. Do not re-derive its work; collect it.
 
 It reproduced the defect conclusively on the unfixed head, closed the
 native-build detour, and grew the row beyond the four-line fix. Its final commit
-touches exactly three files — `scripts/tests/foundation/check_core_content.gd`,
-`tools/validate_project.ps1`, `tools/foundation_systems_shards_test.ps1` — and
+touches exactly three files - `scripts/tests/foundation/check_core_content.gd`,
+`tools/validate_project.ps1`, `tools/foundation_systems_shards_test.ps1` - and
 the branch contains:
 
 - the missing `surface_add_exact_hover_hit` on the double;
-- three further reachable gaps it found — `draw_arc` absent, `surface_hovered_index`
+- three further reachable gaps it found - `draw_arc` absent, `surface_hovered_index`
   absent, and `surface_add_invisible_hit` not mirroring the canvas's
   `expand_touch_hit` parameter;
 - a source-driven guard that fails when a game module calls a surface or draw
@@ -114,20 +114,20 @@ Confirm each claim rather than reopening it:
 What genuinely remains open on this row is the marginal Contract timing in
 section 5, and the agent's own disclosure that **the final scoped commit received
 self-review and validation but no independent agent review after the task was
-narrowed.** Your loop's step 4 is therefore mandatory here, not a formality — it
+narrowed.** Your loop's step 4 is therefore mandatory here, not a formality - it
 touches shared test infrastructure every subsequent row depends on.
 
 Two limits to carry forward rather than rediscover. The static parity guard
 recognizes calls through the `surface` identifier and literal
 `surface.call/has_method("surface_*")` forms; **arbitrary aliases and computed
 method names are not statically discoverable**, so the guard narrows this defect
-class without eliminating it — Families 1 and 2 should not assume total coverage.
-And canvas methods no game module currently calls — `surface_action_is_blocked`,
+class without eliminating it - Families 1 and 2 should not assume total coverage.
+And canvas methods no game module currently calls - `surface_action_is_blocked`,
 `surface_animation_liveness_active`, `surface_draw_guidance_border`,
 `surface_play_audio_cue`, `surface_presentation_time_msec`,
 `surface_realtime_state_refresh_enabled`, `surface_realtime_ui_status`,
 `surface_runtime_status`, `surface_start_audio_loop`, `surface_stop_audio_loop`,
-`surface_transition_animation_active` — stay documented findings and are
+`surface_transition_animation_active` - stay documented findings and are
 `game06_1`'s inheritance, not this row's.
 
 ### 3.1.1 The native plugin is required for honest gate runs
@@ -139,7 +139,7 @@ error you will notice.
 
 Before your first gate run, establish and record how you are supplying it:
 either build it via `tools/build_native_solver.ps1` once, deliberately, and
-record the hash, or copy the one the `fix06_4` agent measured against —
+record the hash, or copy the one the `fix06_4` agent measured against -
 `addons/coin_pusher_native/bin/coin_pusher_native.windows.template_debug.x86_64.nothreads.dll`,
 SHA-256 `3CC7567AF1BB4B77AB1C88BB3D1D4AB3CCB7A81B51AB619E1C5E24FE66FBCB79`.
 
@@ -150,7 +150,7 @@ on purpose, and never as a diagnostic reflex.
 Never commit the DLL, the `.os` objects, `.sconsign.dblite`, `.tools/native_solver/`
 or `addons/coin_pusher_native/`. They are ignored build products and remain so.
 
-### 3.2 `balance06_1` is finished and verified — do not redo it
+### 3.2 `balance06_1` is finished and verified - do not redo it
 
 `codex/cross-balance` is finalized at exact head `1c0dec3b`, base `3d4a41da`,
 two commits, working tree clean. It has been independently verified: scope is
@@ -171,7 +171,7 @@ its behalf.
 It needs exactly two things from you: an independent review by an agent that did
 not author it, and its gates on the exact head. Its own contracts-suite evidence
 is red for the `SurfaceHarness` defect and was correctly routed to `fix06_4`
-rather than patched or rerun — **so its gates cannot complete until Wave 0 step 2
+rather than patched or rerun - **so its gates cannot complete until Wave 0 step 2
 lands.** Sequence it accordingly.
 
 One decision is yours: the branch commits 4.3 MB of evidence, 3.5 MB of which is
@@ -179,11 +179,11 @@ three raw measurement JSONs (`determinism_first.json` and
 `cross_economy_audit_repeat.json` at 1.5 MB each, `smoke_retry2.json` at 0.5 MB)
 holding `n=1` point samples the full audit will supersede. Git history is
 permanent. Landing the report, handoff, README, `SHA256SUMS.txt` and the small
-validation logs while gzipping or omitting the three large files is defensible —
+validation logs while gzipping or omitting the three large files is defensible -
 the manifest already proves what was measured and the originals remain in
 `.tmp/`. Decide deliberately and record the reason; do not reopen the row for it.
 
-The remaining scope of `balance06_1` — the full multi-seed audit — is not
+The remaining scope of `balance06_1` - the full multi-seed audit - is not
 abandoned. Schedule it as a follow-on row after Families 1 and 2 land, when the
 economy it is meant to measure actually exists.
 
@@ -197,15 +197,15 @@ economy it is meant to measure actually exists.
    difference between a plan and a wish.
 3. Create `codex/land06-integration` from the exact current `main`. Stage every
    landing there first, then merge to `main`.
-4. Establish a landing ledger — branch, worktree, owner, base, dependencies,
+4. Establish a landing ledger - branch, worktree, owner, base, dependencies,
    status, reviewer, findings, evidence, accepted head, merge commit, post-land
-   `main` gate result, cleanup — and keep it current. It is the only place the
+   `main` gate result, cleanup - and keep it current. It is the only place the
    program's state lives.
 
 ### 4.1 First commit: the program documentation
 
 The 0.6 program contracts exist only as untracked files in the primary working
-tree — roughly 36 files under `docs/todo/` and `docs/plans/`, including every
+tree - roughly 36 files under `docs/todo/` and `docs/plans/`, including every
 `game06_*` and `world06_*` contract, the two family launchers, the cross-cutting
 launcher, `docs/plans/0.6_remaining_work_program.md`,
 `docs/todo/README_0_6_remaining_program.md`, and the modified board. Two
@@ -240,11 +240,11 @@ build output or editor state alongside them.
 - **The Contract suite's time budget is inside the machine's noise band.** The
   budget is a recorded baseline of 153.594s times a 1.5 multiplier = 230.391s,
   applied to the `foundation_contracts` stage. A byte-identical tree produced
-  213.643s on one run and 231.531s on another — 1.39x and 1.507x, straddling the
-  cap — on a host running parallel agents and native compiles. Treat a marginal
+  213.643s on one run and 231.531s on another - 1.39x and 1.507x, straddling the
+  cap - on a host running parallel agents and native compiles. Treat a marginal
   timing red as a measurement question, not a code regression: run the stage
   repeatedly on an idle host and report **every** result, never only the passing
-  one. If the median sits near the cap, the baseline is stale — 0.6 has added 55
+  one. If the median sits near the cap, the baseline is stale - 0.6 has added 55
   scenarios plus the crew systems, craps, poker and the pusher, all with contract
   checks. Re-baselining with a recorded date, host and method is a legitimate,
   owner-visible decision. Silently raising a cap, or rerunning until green, is
@@ -257,7 +257,7 @@ build output or editor state alongside them.
   counter-gate in `scripts/ui/performance_liveness_guard.gd` is mandatory
   wherever a surface is touched.
 
-## 6. Owner decisions outstanding — never guess
+## 6. Owner decisions outstanding - never guess
 
 - **`fix06_3` Phase 5:** how Crossword Corner reconciles its printed art with its
   mechanics. Everything else in that row is landed. Hold Phase 5.
@@ -270,47 +270,47 @@ build output or editor state alongside them.
 Follow this order. Within a wave, rows may proceed in parallel on their own
 branches, but they still land to `main` strictly one at a time.
 
-**Wave 0 — make the tree workable**
+**Wave 0 - make the tree workable**
 1. The documentation commit (section 4.1).
-2. `fix06_4` — the harness parity fix, final at `3e5c0378` on
+2. `fix06_4` - the harness parity fix, final at `3e5c0378` on
    `codex/cross-remediation`. Land the three-file payload per section 3.1 and the
    entangled-branch rule in step 6 of the landing loop; do not merge the branch.
    Nothing downstream can be validated until suites run clean, `balance06_1`
    included.
-3. `board06_1` — the board split, from `codex/cross-board`.
+3. `board06_1` - the board split, from `codex/cross-board`.
 
-**Wave 1 — work already done, sitting on branches**
+**Wave 1 - work already done, sitting on branches**
 4. `polish06_0` (accepted at `be14c1ce`).
 5. `meta06_1` (implementation at `d7052142`; needs independent review and gates).
 6. `balance06_1` (finalized at `1c0dec3b`; needs independent review and gates
-   only — see 3.2, and note its gates require step 2 to have landed).
+   only - see 3.2, and note its gates require step 2 to have landed).
 7. `pusherv3_11` (the V3 closure audit; the audit still has to be genuinely run).
 
-**Wave 2 — the depth program**
-8. `env06_6` — finish the withheld gates, integrate the remediation branches.
-9. `env06_7`, `craps06_3`, `crew06_10` — parallel implementation, sequential
+**Wave 2 - the depth program**
+8. `env06_6` - finish the withheld gates, integrate the remediation branches.
+9. `env06_7`, `craps06_3`, `crew06_10` - parallel implementation, sequential
    landing.
-10. `depth06_1` — independent gate, owned by an agent that implemented none of it.
+10. `depth06_1` - independent gate, owned by an agent that implemented none of it.
 
-**Wave 3 — Family 1, game depth parity** (`game06_1` first; it depends on
+**Wave 3 - Family 1, game depth parity** (`game06_1` first; it depends on
 `craps06_3`), then `game06_2` through `game06_7`, then the `game06_8` gate.
 
-**Wave 4 — Family 2, crew and world depth** (`world06_1` first; it depends on
+**Wave 4 - Family 2, crew and world depth** (`world06_1` first; it depends on
 `env06_6`), then `world06_2` through `world06_6`, then the `world06_7` gate.
-Waves 3 and 4 may overlap — they own different files — except `world06_5`, which
+Waves 3 and 4 may overlap - they own different files - except `world06_5`, which
 needs `game06_1`'s actor vocabulary and builds its sweep half first otherwise.
 
-**Wave 5 — cross-cutting completion**
+**Wave 5 - cross-cutting completion**
 `audio06_1`, then `integ06_1` and `perf06_1` in parallel, then `teach06_2`.
 
-**Wave 6 — close out**
+**Wave 6 - close out**
 `playtest06_2` to re-scope the playtest gate, then `playtest06_1` itself, which
 ends the board with the owner handoff. `voice06_1` and `release06_1` stay parked.
 
 Each row's binding contract is its own prompt in `docs/todo/`. Read it in full
 before assigning it. Do not weaken a contract to fit available time.
 
-## 8. The landing loop — run this for every row
+## 8. The landing loop - run this for every row
 
 1. **Claim** the row on the board and in the ledger.
 2. **Assign** it to a sub-agent in its own worktree, based on the exact current
@@ -337,7 +337,7 @@ before assigning it. Do not weaken a contract to fit available time.
 5. **Gates on the exact accepted head**: project validation, the relevant
    foundation suites, 10-seed determinism, native/Web parity, performance with
    the mandatory idle-liveness counter-gate, accessibility, save and migration,
-   and visual QA — plus whatever the row's own contract adds.
+   and visual QA - plus whatever the row's own contract adds.
 6. **Land**: merge to `main` with `git merge --no-ff`, preserving logical
    commits. Never squash a clean row branch into one commit.
 
@@ -354,7 +354,7 @@ before assigning it. Do not weaken a contract to fit available time.
 
    `codex/cross-remediation` is the worked example: merge base `a0d2b6ff`, 50
    commits ahead, 5 commits behind `main`, carrying `polish06_0` and the cross
-   ledger. Its actual `fix06_4` payload against current `main` is three files —
+   ledger. Its actual `fix06_4` payload against current `main` is three files -
    `scripts/tests/foundation/check_core_content.gd`, `tools/validate_project.ps1`,
    `tools/foundation_systems_shards_test.ps1`. Land that, not the branch.
 7. **Post-land verification**: re-run the row's gates plus a smoke pass on `main`

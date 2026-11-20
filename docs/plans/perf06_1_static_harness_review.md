@@ -283,7 +283,7 @@ The repository has strong reusable performance infrastructure, especially for
 native game surfaces and Coin Pusher, but the final `perf06_1` verdict is not
 available. Missing maximal-composition, Crew Draw Poker, complete Craps and
 Scratch Web, general Web liveness, warm-start, and measured low-end rows are
-real work—not paperwork—and remain open until the final candidate is frozen.
+real work-not paperwork-and remain open until the final candidate is frozen.
 
 ## 2026-09-04 recovered closeout preparation
 

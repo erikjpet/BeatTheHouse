@@ -1,7 +1,7 @@
-Status: DONE — accepted on the integrated current-main candidate, 2026-08-31
+Status: DONE - accepted on the integrated current-main candidate, 2026-08-31
 Board row: `env06_6` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — 0.6 env06_6: Dynamic Scenario Runtime
+# Agent Prompt - 0.6 env06_6: Dynamic Scenario Runtime
 
 Copy everything below this line into the agent.
 

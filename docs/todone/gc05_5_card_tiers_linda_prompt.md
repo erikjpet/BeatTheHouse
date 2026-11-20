@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-16
 - **Completion/implementation commits:** `caa61f33`
-- **Verification:** PASS — tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_visual_qa.ps1; tools/foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_visual_qa.ps1; tools/foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — 0.5 Slice 5: Players Card Tiers + Linda, Keeper of the Cage
+# Agent Prompt - 0.5 Slice 5: Players Card Tiers + Linda, Keeper of the Cage
 
 Copy everything below this line into the agent.
 
@@ -16,25 +16,25 @@ roguelike (Web/itch.io + Windows, 1280×720). Data-driven content; dialogue
 via the talk-dock/dialogue pipeline (`scripts/ui/talk_dock.gd`,
 `data/dialogue/dialogues.json`, `data/events/events.json`); UI via
 extracted components. This file is self-contained; the binding design
-contract is `docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` sections 5-6 —
+contract is `docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` sections 5-6 -
 read it first. Requires slices 1-2 landed (rooms + Cage window); slice 3
 recommended first. Re-verify actual code; code reality wins.
 
 ## Task
 
-### 1. Card tiers — Bronze / Silver / Gold (data-driven)
+### 1. Card tiers - Bronze / Silver / Gold (data-driven)
 
 - Replace the single clean-route checkpoint with a three-tier ladder,
   thresholds in the Grand Casino `demo_objective` data *(all tunable)*:
-  - **Bronze**: first recognition — settled games + small net winnings
+  - **Bronze**: first recognition - settled games + small net winnings
     at low heat. Benefits: bar comps, small chip bonus, Linda's
     dialogue opens.
-  - **Silver**: sustained clean play — more settled games, higher net
+  - **Silver**: sustained clean play - more settled games, higher net
     winnings, heat ceiling held. Benefits: HIGH-LIMIT ROOM ACCESS
     (drive slice 1's `grand_casino_high_limit_access` gate; the cash
     buy-in path remains as the cheater's entrance), improved comps,
     and one "look away" (below).
-  - **Gold**: the win — the Gold review at the Cage IS the clean
+  - **Gold**: the win - the Gold review at the Cage IS the clean
     victory. Preserve `high_roller_cashout` event/action id and
     `demo_victory_route = "high_roller_cashout"` exactly (canonical
     contract in `docs/plans/grand_casino_endgame_design.md`; update
@@ -47,20 +47,20 @@ recommended first. Re-verify actual code; code reality wins.
   Cage window states ineligibility plainly. This is the two-path split:
   honest players climb; cheaters buy in and live spatially (slice 3).
 
-### 2. Linda — the clean path's boss character
+### 2. Linda - the clean path's boss character
 
 - Linda (canonical name, owner-locked) is the keeper of the Cage and
-  the card program — Rourke's mirror. Give her real DIALOGUE SCENES via
+  the card program - Rourke's mirror. Give her real DIALOGUE SCENES via
   the existing dialogue/talk pipeline: tier-up scenes (Bronze, Silver),
   the Gold review scene, and 2-3 ambient encounter lines on the Main
   Floor. Her tone: warm, professional, invested in the player's clean
   climb.
 - **Generosity mechanics** (clean path only, data-tuned):
   - Comps at each tier (free drink tokens, chip bonuses, one suite
-    rest that restores like the motel service — reuse existing
+    rest that restores like the motel service - reuse existing
     service-effect plumbing).
   - **One "look away" per run at Silver+**: the next small heat gain
-    (below a data threshold) is forgiven with a Linda story line —
+    (below a data threshold) is forgiven with a Linda story line -
     implemented as a one-shot flag consumed at the suspicion-apply
     seam, ONLY while card-eligible and evidence-free.
 - Promotions list in the Cage window populates from tier benefits.

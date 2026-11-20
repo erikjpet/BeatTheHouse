@@ -1,7 +1,7 @@
-Status: DONE — independent exact-tree security acceptance completed 2026-09-03
+Status: DONE - independent exact-tree security acceptance completed 2026-09-03
 Board row: `world06_7` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — 0.6 world06_7: Crew and World Depth Release Gate
+# Agent Prompt - 0.6 world06_7: Crew and World Depth Release Gate
 
 Copy everything below this line into the agent.
 
@@ -28,7 +28,7 @@ wrong agent for this row.
    Numbers including a rig route, coordinated plays at their games, a Police
    Sweep encounter while carrying cargo, both heist plans, and the Turn
    confrontation with and without a traitor in play.
-3. **Hidden-information audit — the blocking one.** With full access to the
+3. **Hidden-information audit - the blocking one.** With full access to the
    serialized save, scene state, actor state, captures, logs and test fixtures,
    attempt to determine the traitor, the grievance weights and the resolution
    state before the Turn's contract discloses them. Attempt it for a run where
@@ -36,8 +36,8 @@ wrong agent for this row.
    indistinguishable. Any distinguishing signal is a P0 and blocks closure.
 4. Verify all three clue channels emit honestly at their landed rates in staged
    scenes, and that a player can act on a correctly read clue.
-5. Verify exactly-once semantics for every consequence in the program — rewards,
-   trust, grievances, heat, debts, costs, aftermath — across save, reload,
+5. Verify exactly-once semantics for every consequence in the program - rewards,
+   trust, grievances, heat, debts, costs, aftermath - across save, reload,
    travel, revisit, abort and expiry, in every order you can construct.
 6. Verify the crew-ignoring run is a true no-op: no mounting, no scanning, no
    rebuilt map nodes, no measurable cost. Run the golden probe and confirm it

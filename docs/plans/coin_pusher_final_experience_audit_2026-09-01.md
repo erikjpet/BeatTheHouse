@@ -1,4 +1,4 @@
-# Coin Pusher final experience audit — 2026-09-01
+# Coin Pusher final experience audit - 2026-09-01
 
 ## Outcome
 
@@ -37,12 +37,12 @@ solver were retained rather than rebuilt.
 
 | Gate | Result |
 | --- | --- |
-| Focused production suite | PASS — validation, import, script loading, and exhaustive Coin Pusher foundation contract; `.tmp/test_reports/coin_pusher_finalize_focus_8/summary.json` |
-| Opening/Plinko contract | PASS — 7,680 exhaustive drops, zero stuck; Quarter max cup rates `7.9167%/6.4583%`, Ridge `0.8333%/1.25%`, Vault `0.625%/3.3333%` |
-| Exact platform parity | PASS — Windows native repeats exactly, Web reference repeats exactly, payloads identical; `.tmp/coin_pusher_final_parity/manifest.json` |
-| Actual-GL delivery QA | PASS — three cabinets, six cup hits, three near misses; `.tmp/coin_pusher_final_delivery_gl_2/manifest.json` |
-| Actual-GL feel QA | PASS — three cabinets × nine normal/reduced production scenes; `.tmp/coin_pusher_final_feel_4/manifest.json` |
-| Persistent economy audit | PASS — eight shards and 200,000 accepted drops per cabinet; `.tmp/coin_pusher_final_ev_8/manifest.json` |
+| Focused production suite | PASS - validation, import, script loading, and exhaustive Coin Pusher foundation contract; `.tmp/test_reports/coin_pusher_finalize_focus_8/summary.json` |
+| Opening/Plinko contract | PASS - 7,680 exhaustive drops, zero stuck; Quarter max cup rates `7.9167%/6.4583%`, Ridge `0.8333%/1.25%`, Vault `0.625%/3.3333%` |
+| Exact platform parity | PASS - Windows native repeats exactly, Web reference repeats exactly, payloads identical; `.tmp/coin_pusher_final_parity/manifest.json` |
+| Actual-GL delivery QA | PASS - three cabinets, six cup hits, three near misses; `.tmp/coin_pusher_final_delivery_gl_2/manifest.json` |
+| Actual-GL feel QA | PASS - three cabinets × nine normal/reduced production scenes; `.tmp/coin_pusher_final_feel_4/manifest.json` |
+| Persistent economy audit | PASS - eight shards and 200,000 accepted drops per cabinet; `.tmp/coin_pusher_final_ev_8/manifest.json` |
 
 ## Economy and goal reachability
 

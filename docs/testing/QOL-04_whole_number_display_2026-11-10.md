@@ -1,4 +1,4 @@
-# QOL-04 — Whole-number display after Continue
+# QOL-04 - Whole-number display after Continue
 
 Started from main **28cc9bf93d8201bd5d9ef43904be9845a6d9dc2e** (QOL-03 delivery receipt); runtime NEXT49f0b2931b14ac139273b4ec54166fa709f7c21a. Specification: [audit work order](../todo/BTH_0.6.1_audit_work_orders.md#qol-04--loaded-numbers-can-render-as-20).
 

@@ -11,7 +11,7 @@ Board row: `polish06_0` in `docs/todo/README_0_6_board.md`
 - **Custody and authority:** All generated program documents and prompts remain PARKED and non-claimable until the owner explicitly opens the polish pass. No version bump, packaging, release, remote, product or cleanup action occurred. Owner dirty files, untracked paths and `review_artifacts/` were untouched; source and evidence worktrees remain retained pending cleanup.
 - **Deviations:** None.
 
-# Agent Prompt — 0.6 polish06_0: The Second Half of 0.6
+# Agent Prompt - 0.6 polish06_0: The Second Half of 0.6
 
 Copy everything below this line into the agent.
 
@@ -25,19 +25,19 @@ activity of any kind.
 Read the board's terminus section in `docs/todo/README_0_6_board.md`,
 `docs/todo/voice06_1_voice_pass_prompt.md`,
 `docs/todo/release06_1_ship_prompt.md`,
-`docs/plans/0.6_remaining_work_program.md`, and the 0.5 release artefacts —
+`docs/plans/0.6_remaining_work_program.md`, and the 0.5 release artefacts -
 `0.5_release_checklist.md`, `0.5_publish_copy.md`, `0.5.0_devlog_post.md`,
 `0.5_trailer_production.md`, `0.5_talking_points.md`,
-`0.5_pre_release_audit.md`, `0.5_final_rc_evidence.md` — which are the shape the
+`0.5_pre_release_audit.md`, `0.5_final_rc_evidence.md` - which are the shape the
 0.6 equivalents should take.
 
 ## Why this row exists
 
 The owner declared that the polish and cleanup pass following the playtest is the
 second half of 0.6. That half currently consists of two parked prompts:
-`voice06_1` and `release06_1`. Everything else about it — how findings become
+`voice06_1` and `release06_1`. Everything else about it - how findings become
 work, who tunes balance, what gets cleaned up, what gets written, what the
-release checklist is — exists only as an expectation.
+release checklist is - exists only as an expectation.
 
 The value of doing this now is that it gets designed while the project is
 understood and calm, rather than in the tired stretch after a long playtest when
@@ -60,7 +60,7 @@ activity.
   `playtest06_2` delivers.
 - Defects become `fix06_*` rows with a defined template: reproduction, expected
   behavior, severity, owning system, and the gate that should have caught it.
-  That last field matters — a defect that escaped a gate is also a gate defect.
+  That last field matters - a defect that escaped a gate is also a gate defect.
 - Design objections become owner decisions recorded in the roadmap. Write the
   rule that an agent never redirects locked design on its own reading of a
   playtest note, and make the protocol enforce it rather than merely state it.
@@ -71,7 +71,7 @@ activity.
 ## 2. The balance tuning pass
 
 - Write the prompt that consumes `balance06_1`'s ranked proposals and the
-  playtest's felt experience and actually applies tuning — the row `balance06_1`
+  playtest's felt experience and actually applies tuning - the row `balance06_1`
   was explicitly forbidden from being.
 - It must re-run `balance06_1`'s committed harness after tuning and show the
   before-and-after distributions, not just assert improvement.

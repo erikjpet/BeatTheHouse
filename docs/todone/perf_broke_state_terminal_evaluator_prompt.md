@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-12
 - **Completion/implementation commits:** `80614895`
-- **Verification:** PASS — powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100; powershell -ExecutionPolicy Bypass -File tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100; powershell -ExecutionPolicy Bypass -File tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — Stop Running the Terminal Evaluator Every Frame While Broke
+# Agent Prompt - Stop Running the Terminal Evaluator Every Frame While Broke
 
 Copy everything below this line into the agent.
 
@@ -21,7 +21,7 @@ host is `scripts/ui/foundation_main.gd`. This file is fully self-contained.
 
 `_advance_deferred_bankroll_failure` (`scripts/ui/foundation_main.gd:969-979`)
 is called from `_process` every frame. Its guards pass whenever
-`run_state.bankroll <= 0` and the run is not terminal — which is exactly the
+`run_state.bankroll <= 0` and the run is not terminal - which is exactly the
 deferred-bankroll-zero recovery state a player can sit in for a long time
 while deciding what to do. In that state it calls
 `RunTerminalEvaluatorScript.evaluate(run_state, library)` EVERY FRAME.
@@ -50,7 +50,7 @@ per-frame evaluation is pure waste.
    it does today; a run with recovery options must stay alive exactly as
    today. Timing-wise, deferring the verdict from "same frame" to "same
    action boundary" is acceptable ONLY if today's verdict also only ever
-   changes at action boundaries — verify this claim in code before relying
+   changes at action boundaries - verify this claim in code before relying
    on it, and document what you found.
 3. While in the file, confirm no OTHER `_process` subsystem calls the
    terminal evaluator or similarly heavy core evaluation per frame; report

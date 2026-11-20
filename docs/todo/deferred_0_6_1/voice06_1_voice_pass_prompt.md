@@ -1,14 +1,14 @@
-Status: PARKED — do not claim until owner playtest findings and final copy exist
+Status: PARKED - do not claim until owner playtest findings and final copy exist
 Board row: `voice06_1` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** -
+- **Completion/implementation commits:** -
+- **Verification:** -
+- **Deviations:** -
 
-# Agent Prompt — 0.6 voice06_1: Full Voice Pass (Voice Bible II)
+# Agent Prompt - 0.6 voice06_1: Full Voice Pass (Voice Bible II)
 
 Copy everything below this line into the agent.
 
@@ -21,7 +21,7 @@ casino roguelike (Web/itch.io + Windows, 1280×720). Binding contracts:
 how power gets expressed, bluntness is how powerlessness gets
 expressed; narration register rules; period methodology; measurable
 brevity rule). This is a copy-quality pass over ALL text added in 0.6
-— no mechanical changes. This prompt is self-contained for rules and
+- no mechanical changes. This prompt is self-contained for rules and
 scope.
 
 ## Board protocol
@@ -30,7 +30,7 @@ scope.
    to `IN_PROGRESS` with agent + date, append a Work Log line, commit
    the claim. If the row is not `TODO`, stop. **Precondition: every
    content-bearing row (env/town/crew/craps/push/streets/chain/content)
-   is DONE** — verify on the board before claiming.
+   is DONE** - verify on the board before claiming.
 2. Log discoveries/deviations tagged `[voice06_1]`; owner-only
    questions under Owner Questions.
 3. If blocked: row → `BLOCKED` + reason, log, stop.
@@ -45,7 +45,7 @@ scope.
 2. **Register audit**: every line classified house-side or
    street-side; house lines carry courtesy-with-a-hook; street lines
    say the thing flatly. The Punchline is the showcase (the street
-   *performing* — its L1 comedy lines must be bad on purpose and
+   *performing* - its L1 comedy lines must be bad on purpose and
    period-true); the Grand Casino heist copy is the house register
    under pressure.
 3. **Brevity rule**: apply the bible's measurable rule to every
@@ -56,7 +56,7 @@ scope.
    whale) get one-line style notes added to the 0.6 bible's cast
    appendix (extend the doc, don't rewrite it).
 5. **Discipline double-check**: while touching every string, verify
-   crew06_9's rule — nothing player-visible names the hidden systems
+   crew06_9's rule - nothing player-visible names the hidden systems
    (Turn/clues/ledger, past-posting mechanics beyond diegetic talk).
 6. Fix in place (data edits; script-embedded strings edited without
    logic changes). Anything that can't be fixed without mechanical
@@ -66,8 +66,8 @@ scope.
 
 - Zero mechanical/behavioral changes: string-only diffs (enforce by
   review; tests must pass unchanged with no re-tuning).
-- Ids, flags, and keys never change — display text only.
-- Determinism untouched (no string used as an RNG input may change —
+- Ids, flags, and keys never change - display text only.
+- Determinism untouched (no string used as an RNG input may change -
   audit for that anti-pattern first; if found, board Discovery, skip
   the string).
 - Suite timeout = max(300s, baseline×1.5).

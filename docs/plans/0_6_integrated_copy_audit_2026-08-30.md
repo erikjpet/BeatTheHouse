@@ -1,4 +1,4 @@
-# 0.6 integrated-copy audit — 2026-08-30
+# 0.6 integrated-copy audit - 2026-08-30
 
 Candidate: `D:\bth-0.6-integrated-copy`
 

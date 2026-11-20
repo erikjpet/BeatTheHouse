@@ -1,6 +1,6 @@
 # integ06_1 historical fixture preparation WIP
 
-Status: **PREPARATION ONLY — `integ06_1` is not claimed or accepted**  
+Status: **PREPARATION ONLY - `integ06_1` is not claimed or accepted**  
 Preparation base: `9e8af74b712ed9c3a2bf69f9a330a57719cb0f85`  
 Historical source: annotated tag `v0.5.1`, commit
 `f1ce7ec814b5034c229f53dcc0db6e799aaaee0b`

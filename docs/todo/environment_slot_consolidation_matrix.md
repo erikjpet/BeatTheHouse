@@ -1,6 +1,6 @@
 # Environment slot consolidation matrix
 
-Status: **HISTORICAL PRE-RELEASE-3 CONSOLIDATION SNAPSHOT — SUPERSEDED.**
+Status: **HISTORICAL PRE-RELEASE-3 CONSOLIDATION SNAPSHOT - SUPERSEDED.**
 
 Use `environment_scenario_slot_instance_rework.md` for the implemented model
 and `../plans/environment_scenario_layout_breakdown.md` for the generated

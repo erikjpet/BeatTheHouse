@@ -1,7 +1,7 @@
-Status: DONE — 2026-08-25
+Status: DONE - 2026-08-25
 Board row: `pusherv3_6` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — pusherv3_6: Plinko Bounce and Entry Boards
+# Agent Prompt - pusherv3_6: Plinko Bounce and Entry Boards
 
 Follow-up to archived `docs/todone/pusherv3_5_contact_piles_and_visible_exits_prompt.md`.
 

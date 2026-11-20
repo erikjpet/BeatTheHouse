@@ -1,4 +1,4 @@
-# FEAT-STALE — dated historical-plan closures
+# FEAT-STALE - dated historical-plan closures
 
 Starting commit070fc937ad69de8d152b0dddae769f5206704821.
 Spec: docs/todo/BTH_unfinished_features_audit.md section8, unchanged owner audit.

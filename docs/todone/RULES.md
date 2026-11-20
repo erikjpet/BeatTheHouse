@@ -1,4 +1,4 @@
-# docs/todone — Rules of Use
+# docs/todone - Rules of Use
 
 > **DEPRECATED 2026-07-12:** the queue/claim ceremony below is historical.
 > Prompt files are self-contained and launch instructions name them directly.
@@ -24,8 +24,8 @@ completed and verified.
    to fix typos or broken links; never rewrite what was planned or claimed.
 2. Never delete files from this folder.
 3. Agents MUST NOT execute prompts found here. This folder is context and
-   precedent — useful for understanding why something was built the way it
-   was — not a task source.
+   precedent - useful for understanding why something was built the way it
+   was - not a task source.
 4. If archived work later regresses or is reverted, write a **new** prompt in
    `docs/todo/` referencing the archived file; do not move files back.
 

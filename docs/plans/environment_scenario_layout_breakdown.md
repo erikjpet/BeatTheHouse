@@ -80,9 +80,9 @@ The raw inventory includes generic source scenario capacity and the template-onl
 | Motel<br><code>motel</code> | <code>motel::__base</code> | 11 | 6 | 3 | 2 | 22 | 4 | 53 | 75 |
 | Bar<br><code>bar</code> | <code>bar::__base</code> | 7 | 7 | 4 | 1 | 19 | 7 | 73 | 92 |
 | Gas Station Casino<br><code>gas_station_casino</code> | <code>gas_station_casino::__base</code> | 6 | 8 | 3 | 1 | 18 | 5 | 65 | 83 |
-| The Punchline — Comedy Club<br><code>small_underground_casino:club</code> | <code>small_underground_casino:club::__base</code> | 5 | 8 | 3 | 2 | 18 | 5 | 51 | 69 |
-| The Punchline — Hidden Casino<br><code>small_underground_casino:casino</code> | <code>small_underground_casino:casino::__base</code> | 10 | 10 | 3 | 3 | 26 | 3 | 30 | 56 |
-| The Punchline — Crew Back Room<br><code>small_underground_casino:back_room</code> | <code>small_underground_casino:back_room::__base</code> | 8 | 7 | 3 | 2 | 20 | 0 | 0 | 20 |
+| The Punchline - Comedy Club<br><code>small_underground_casino:club</code> | <code>small_underground_casino:club::__base</code> | 5 | 8 | 3 | 2 | 18 | 5 | 51 | 69 |
+| The Punchline - Hidden Casino<br><code>small_underground_casino:casino</code> | <code>small_underground_casino:casino::__base</code> | 10 | 10 | 3 | 3 | 26 | 3 | 30 | 56 |
+| The Punchline - Crew Back Room<br><code>small_underground_casino:back_room</code> | <code>small_underground_casino:back_room::__base</code> | 8 | 7 | 3 | 2 | 20 | 0 | 0 | 20 |
 | Jazz Club<br><code>jazz_club</code> | <code>jazz_club::__base</code> | 10 | 4 | 3 | 1 | 18 | 4 | 45 | 63 |
 | Kitty Cat Lounge<br><code>kitty_cat_lounge</code> | <code>kitty_cat_lounge::__base</code> | 12 | 8 | 3 | 1 | 24 | 4 | 44 | 68 |
 | Delta Queen<br><code>delta_queen</code> | <code>delta_queen::__base</code> | 12 | 10 | 3 | 1 | 26 | 5 | 61 | 87 |
@@ -165,9 +165,9 @@ The Punchline (<code>small_underground_casino</code>) is retained only as raw la
 
 Positions are canonical 900×430 board coordinates from the base slot authorities, before committed or machine-local placement overrides. Base tables list the exact source slots for Base / No Scenario. Exact tables list only the scenario-local additions; every scenario's full save also includes the shared base rows immediately above it. Use the in-game marker position or schema-3 export for the effective authored coordinate.
 
-### Corner Store — <code>corner_store</code>
+### Corner Store - <code>corner_store</code>
 
-#### Base / No Scenario — <code>corner_store::__base</code>
+#### Base / No Scenario - <code>corner_store::__base</code>
 
 **Save snapshot:** 20 slots = 11 fixed + 5 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 5.
 
@@ -188,13 +188,13 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 | <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>516, 370</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
 | <code>event</code> | <code>event.ground_marker_1</code> | Floor marker | <code>ground_marker</code> | <code>41, 406</code> | <code>stage</code> | Parking Lot Tip | Mapped capacity |
 | <code>event</code> | <code>event.behind_counter_person_2</code> | Counter staff | <code>behind_counter_person</code> | <code>94, 212</code> | <code>delivery_clerk_rail_left</code> | Word from Across Town | Mapped capacity |
-| <code>event</code> | <code>event.lucky_recruitment</code> | Lucky recruitment | <code>standing_person</code> | <code>120, 294</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Lucky can visit alongside Dave's traveling encounter and the current Store scenario. |
-| <code>scenario</code> | <code>scenario.standing_person_4</code> | Runtime contact reserve | <code>standing_person</code> | <code>484, 164</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
-| <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>486, 62</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Delivery package reserve | <code>floor_fixture</code> | <code>174, 370</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>event</code> | <code>event.lucky_recruitment</code> | Lucky recruitment | <code>standing_person</code> | <code>120, 294</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Lucky can visit alongside Dave's traveling encounter and the current Store scenario. |
+| <code>scenario</code> | <code>scenario.standing_person_4</code> | Runtime contact reserve | <code>standing_person</code> | <code>484, 164</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>486, 62</code> | <code>wall</code> | Variable runtime content | Runtime reserve - Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Delivery package reserve | <code>floor_fixture</code> | <code>174, 370</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
 | <code>exit</code> | <code>exit.safe_right</code> | Travel exit | <code>doorway</code> | <code>859, 286</code> | <code>right_exit</code> | Leave | Mapped capacity |
 
-#### Scenario — The Aftermath — <code>corner_store::corner_store_aftermath</code>
+#### Scenario - The Aftermath - <code>corner_store::corner_store_aftermath</code>
 
 **Full save:** 28 slots = 20 shared + 8 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -209,7 +209,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 | <code>scenario.local_surface_item_3</code> | Scenario alternatives: Evidence Sweep Hold / Police Hold | <code>surface_item</code> | <code>236, 168</code> | <code>manual_placement_required</code> | Evidence Sweep Hold<br>Police Hold | Provisional geometry |
 | <code>scenario.local_wall_item_1</code> | Boarded Glass | <code>wall_mounted</code> | <code>400, 56</code> | <code>manual_placement_required</code> | Boarded Glass | Provisional geometry |
 
-#### Scenario — Dead Shift — <code>corner_store::corner_store_dead_shift</code>
+#### Scenario - Dead Shift - <code>corner_store::corner_store_dead_shift</code>
 
 **Full save:** 28 slots = 20 shared + 8 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -224,7 +224,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 | <code>scenario.local_wall_item_2</code> | Handwritten Camera Warning | <code>wall_mounted</code> | <code>568, 88</code> | <code>manual_placement_required</code> | Handwritten Camera Warning | Provisional geometry |
 | <code>scenario.local_wall_item_3</code> | Scenario alternatives: Flicker Lockout / Flicker Lockout Refused | <code>wall_mounted</code> | <code>408, 160</code> | <code>manual_placement_required</code> | Flicker Lockout<br>Flicker Lockout Refused | Provisional geometry |
 
-#### Scenario — Delivery Day — <code>corner_store::corner_store_delivery_day</code>
+#### Scenario - Delivery Day - <code>corner_store::corner_store_delivery_day</code>
 
 **Full save:** 32 slots = 20 shared + 12 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -243,7 +243,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 | <code>scenario.local_surface_item_3</code> | Damaged Delivery Manifest | <code>surface_item</code> | <code>172, 216</code> | <code>manual_placement_required</code> | Damaged Delivery Manifest | Provisional geometry |
 | <code>scenario.local_wall_item_1</code> | Stocked rack | <code>wall_mounted</code> | <code>400, 56</code> | <code>manual_placement_required</code> | Stocked rack | Provisional geometry |
 
-#### Scenario — Inventory Night — <code>corner_store::corner_store_inventory_night</code>
+#### Scenario - Inventory Night - <code>corner_store::corner_store_inventory_night</code>
 
 **Full save:** 27 slots = 20 shared + 7 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -257,7 +257,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 | <code>scenario.local_surface_item_1</code> | Discrepancy Shelf | <code>surface_item</code> | <code>814, 148</code> | <code>cooler_upper</code> | Discrepancy Shelf | Exact scenario |
 | <code>scenario.local_wall_item_1</code> | Public Inventory Notice | <code>wall_mounted</code> | <code>400, 56</code> | <code>manual_placement_required</code> | Public Inventory Notice | Provisional geometry |
 
-#### Scenario — Lotto Fever — <code>corner_store::corner_store_lotto_fever</code>
+#### Scenario - Lotto Fever - <code>corner_store::corner_store_lotto_fever</code>
 
 **Full save:** 29 slots = 20 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -273,9 +273,9 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 | <code>scenario.local_wall_item_2</code> | Public Stock Notice | <code>wall_mounted</code> | <code>568, 88</code> | <code>manual_placement_required</code> | Public Stock Notice | Provisional geometry |
 | <code>scenario.local_wall_item_3</code> | Number Board Abandoned | <code>wall_mounted</code> | <code>408, 160</code> | <code>manual_placement_required</code> | Number Board Abandoned | Provisional geometry |
 
-### Back Alley — <code>back_alley</code>
+### Back Alley - <code>back_alley</code>
 
-#### Base / No Scenario — <code>back_alley::__base</code>
+#### Base / No Scenario - <code>back_alley::__base</code>
 
 **Save snapshot:** 27 slots = 14 fixed + 9 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 4.
 
@@ -298,18 +298,18 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 | <code>event</code> | <code>event.behind_counter_person_1</code> | Counter staff | <code>behind_counter_person</code> | <code>644, 208</code> | <code>right_crate_counter</code> | Late Shift Discount | Mapped capacity |
 | <code>event</code> | <code>event.ground_marker_1</code> | Floor marker | <code>ground_marker</code> | <code>44, 412</code> | <code>stage</code> | Parking Lot Tip | Mapped capacity |
 | <code>event</code> | <code>event.floor_fixture_1</code> | Floor prop | <code>floor_fixture</code> | <code>624, 370</code> | <code>floor</code> | Back Alley Offer | Mapped capacity |
-| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>100, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>252, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>404, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>556, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>708, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>150, 140</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>376, 272</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
-| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>772, 370</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>100, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>252, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>404, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>556, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>708, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>150, 140</code> | <code>wall</code> | Variable runtime content | Runtime reserve - Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>376, 272</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>772, 370</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
 | <code>exit</code> | <code>exit.right_upper</code> | Travel exit | <code>doorway</code> | <code>856, 272</code> | <code>right_alley</code> | Leave | Mapped capacity |
 
-#### Scenario — Cruiser Parked — <code>back_alley::back_alley_cruiser_parked</code>
+#### Scenario - Cruiser Parked - <code>back_alley::back_alley_cruiser_parked</code>
 
 **Full save:** 36 slots = 27 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -325,7 +325,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 | <code>scenario.local_standing_person_1</code> | Patrol Officer | <code>standing_person</code> | <code>556, 256</code> | <code>manual_placement_required</code> | Patrol Officer | Provisional geometry |
 | <code>scenario.local_standing_person_2</code> | Patrol Officer | <code>standing_person</code> | <code>250, 260</code> | <code>floor</code> | Patrol Officer | Exact scenario |
 
-#### Scenario — Fence Night — <code>back_alley::back_alley_fence_night</code>
+#### Scenario - Fence Night - <code>back_alley::back_alley_fence_night</code>
 
 **Full save:** 38 slots = 27 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -343,7 +343,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 | <code>scenario.local_surface_item_5</code> | Buyer-Tagged Goods Table | <code>surface_item</code> | <code>804, 136</code> | <code>manual_placement_required</code> | Buyer-Tagged Goods Table | Provisional geometry |
 | <code>scenario.local_surface_item_6</code> | Public Price Card | <code>surface_item</code> | <code>108, 88</code> | <code>manual_placement_required</code> | Public Price Card | Provisional geometry |
 
-#### Scenario — Nothing Moving — <code>back_alley::back_alley_nothing_moving</code>
+#### Scenario - Nothing Moving - <code>back_alley::back_alley_nothing_moving</code>
 
 **Full save:** 35 slots = 27 shared + 8 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -358,7 +358,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 | <code>scenario.local_standing_person_2</code> | Returning Regular | <code>standing_person</code> | <code>250, 260</code> | <code>floor</code> | Returning Regular | Exact scenario |
 | <code>scenario.local_surface_item_1</code> | Shutter Gap | <code>surface_item</code> | <code>570, 112</code> | <code>folding_table_upper</code> | Shutter Gap | Exact scenario |
 
-#### Scenario — Street Craps — <code>back_alley::back_alley_street_craps</code>
+#### Scenario - Street Craps - <code>back_alley::back_alley_street_craps</code>
 
 **Full save:** 36 slots = 27 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -374,9 +374,9 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 | <code>scenario.local_surface_item_1</code> | Bottle-Cap Lookout Signal | <code>surface_item</code> | <code>570, 112</code> | <code>folding_table_upper</code> | Bottle-Cap Lookout Signal | Exact scenario |
 | <code>scenario.local_wall_item_1</code> | Fallen Bottle-Cap Lookout Signal | <code>wall_mounted</code> | <code>152, 216</code> | <code>manual_placement_required</code> | Fallen Bottle-Cap Lookout Signal | Provisional geometry |
 
-### Motel — <code>motel</code>
+### Motel - <code>motel</code>
 
-#### Base / No Scenario — <code>motel::__base</code>
+#### Base / No Scenario - <code>motel::__base</code>
 
 **Save snapshot:** 22 slots = 11 fixed + 6 event + 3 shared scenario + 2 exit. Exact scenarios on this map: 4.
 
@@ -396,16 +396,16 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 | <code>event</code> | <code>event.behind_counter_person_1</code> | Counter staff | <code>behind_counter_person</code> | <code>700, 228</code> | <code>front_desk</code> | Word from Across Town | Mapped capacity |
 | <code>event</code> | <code>event.ground_marker_1</code> | Floor marker | <code>ground_marker</code> | <code>804, 414</code> | <code>floor</code> | Parking Lot Tip | Mapped capacity |
 | <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>208, 424</code> | <code>floor</code> | Dave's Second Truth<br>Dave's Last Stop | Mapped capacity |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>144, 424</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>408, 334</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>144, 424</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>408, 334</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>450, 424</code> | <code>floor</code> | Silas | Mapped capacity |
-| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>486, 342</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_4</code> | Runtime contact reserve | <code>standing_person</code> | <code>508, 260</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
-| <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>58, 36</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>486, 342</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_4</code> | Runtime contact reserve | <code>standing_person</code> | <code>508, 260</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>58, 36</code> | <code>wall</code> | Variable runtime content | Runtime reserve - Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
 | <code>exit</code> | <code>exit.door_curtain</code> | Travel exit | <code>doorway</code> | <code>468, 144</code> | <code>curtain_passage</code> | Leave | Mapped capacity |
-| <code>exit</code> | <code>exit.motel_room</code> | Owned motel-room entrance | <code>doorway</code> | <code>303, 168</code> | <code>room_door</code> | Variable runtime content | Runtime reserve — Active motel-room ownership adds a return door beside the normal travel exit. |
+| <code>exit</code> | <code>exit.motel_room</code> | Owned motel-room entrance | <code>doorway</code> | <code>303, 168</code> | <code>room_door</code> | Variable runtime content | Runtime reserve - Active motel-room ownership adds a return door beside the normal travel exit. |
 
-#### Scenario — Conventioneers — <code>motel::motel_conventioneers</code>
+#### Scenario - Conventioneers - <code>motel::motel_conventioneers</code>
 
 **Full save:** 37 slots = 22 shared + 15 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -429,7 +429,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 **Action-only IDs (1; no placement marker):** <code>motel_conventioneers_station</code>
 
-#### Scenario — The Stakeout — <code>motel::motel_stakeout</code>
+#### Scenario - The Stakeout - <code>motel::motel_stakeout</code>
 
 **Full save:** 35 slots = 22 shared + 13 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -451,7 +451,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 **Action-only IDs (1; no placement marker):** <code>motel_stakeout_station</code>
 
-#### Scenario — Wedding Overflow — <code>motel::motel_wedding_overflow</code>
+#### Scenario - Wedding Overflow - <code>motel::motel_wedding_overflow</code>
 
 **Full save:** 36 slots = 22 shared + 14 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -474,7 +474,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 **Action-only IDs (1; no placement marker):** <code>motel_wedding_overflow_station</code>
 
-#### Scenario — Weekly Rates — <code>motel::motel_weekly_rates</code>
+#### Scenario - Weekly Rates - <code>motel::motel_weekly_rates</code>
 
 **Full save:** 33 slots = 22 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -494,9 +494,9 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 **Action-only IDs (1; no placement marker):** <code>motel_weekly_rates_station</code>
 
-### Bar — <code>bar</code>
+### Bar - <code>bar</code>
 
-#### Base / No Scenario — <code>bar::__base</code>
+#### Base / No Scenario - <code>bar::__base</code>
 
 **Save snapshot:** 19 slots = 7 fixed + 7 event + 4 shared scenario + 1 exit. Exact scenarios on this map: 7.
 
@@ -512,17 +512,17 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 | <code>event</code> | <code>event.behind_counter_person_1</code> | Counter staff | <code>behind_counter_person</code> | <code>310, 218</code> | <code>bar_counter</code> | Word from Across Town | Mapped capacity |
 | <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>102, 414</code> | <code>floor</code> | Rowdy Regular | Mapped capacity |
 | <code>event</code> | <code>event.doorway_1</code> | Doorway / exit | <code>doorway</code> | <code>38, 370</code> | <code>left_exit</code> | Side Door | Mapped capacity |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>480, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>670, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>480, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>670, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>290, 414</code> | <code>floor</code> | Silas | Mapped capacity |
-| <code>scenario</code> | <code>scenario.floor_fixture_4</code> | Delivery package reserve | <code>floor_fixture</code> | <code>624, 290</code> | <code>stage</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>680, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_4</code> | Runtime contact reserve | <code>standing_person</code> | <code>492, 144</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
-| <code>scenario</code> | <code>scenario.seated_person_2</code> | Recruitment contact reserve | <code>seated_person</code> | <code>600, 120</code> | <code>provisional_booth</code> | Variable runtime content | Runtime reserve — Knuckles recruitment can coexist with the Fight Night seated actor. |
+| <code>scenario</code> | <code>scenario.floor_fixture_4</code> | Delivery package reserve | <code>floor_fixture</code> | <code>624, 290</code> | <code>stage</code> | Variable runtime content | Runtime reserve - Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>680, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve - Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_4</code> | Runtime contact reserve | <code>standing_person</code> | <code>492, 144</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.seated_person_2</code> | Recruitment contact reserve | <code>seated_person</code> | <code>600, 120</code> | <code>provisional_booth</code> | Variable runtime content | Runtime reserve - Knuckles recruitment can coexist with the Fight Night seated actor. |
 | <code>exit</code> | <code>exit.travel_right</code> | Travel exit | <code>doorway</code> | <code>880, 418</code> | <code>right_exit</code> | Leave | Mapped capacity |
 
-#### Scenario — Darts League Night — <code>bar::bar_darts_league_night</code>
+#### Scenario - Darts League Night - <code>bar::bar_darts_league_night</code>
 
 **Full save:** 30 slots = 19 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -542,7 +542,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 **Action-only IDs (6; no placement marker):** <code>bar_darts_league_night_task_0</code><br><code>bar_darts_league_night_task_1</code><br><code>bar_darts_league_night_task_2</code><br><code>bar_darts_league_night_task_3</code><br><code>bar_darts_league_night_task_4</code><br><code>bar_darts_league_night_task_5</code>
 
-#### Scenario — Dead Tuesday — <code>bar::bar_dead_tuesday</code>
+#### Scenario - Dead Tuesday - <code>bar::bar_dead_tuesday</code>
 
 **Full save:** 27 slots = 19 shared + 8 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -559,7 +559,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 **Action-only IDs (5; no placement marker):** <code>bar_dead_tuesday_bartender_zone</code><br><code>bar_dead_tuesday_booth_zone</code><br><code>bar_dead_tuesday_patron_zone</code><br><code>bar_dead_tuesday_task_0</code><br><code>bar_dead_tuesday_task_1</code>
 
-#### Scenario — Fight Night — <code>bar::bar_fight_night</code>
+#### Scenario - Fight Night - <code>bar::bar_fight_night</code>
 
 **Full save:** 33 slots = 19 shared + 14 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -582,7 +582,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 **Action-only IDs (6; no placement marker):** <code>bar_fight_night_task_0</code><br><code>bar_fight_night_task_1</code><br><code>bar_fight_night_task_2</code><br><code>bar_fight_night_task_3</code><br><code>bar_fight_night_task_4</code><br><code>bar_fight_night_task_5</code>
 
-#### Scenario — Live Band — <code>bar::bar_live_band</code>
+#### Scenario - Live Band - <code>bar::bar_live_band</code>
 
 **Full save:** 29 slots = 19 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -601,7 +601,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 **Action-only IDs (5; no placement marker):** <code>bar_live_band_task_0</code><br><code>bar_live_band_task_1</code><br><code>bar_live_band_task_2</code><br><code>bar_live_band_task_3</code><br><code>bar_live_band_task_4</code>
 
-#### Scenario — Lock-In — <code>bar::bar_lock_in</code>
+#### Scenario - Lock-In - <code>bar::bar_lock_in</code>
 
 **Full save:** 28 slots = 19 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -619,7 +619,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 **Action-only IDs (5; no placement marker):** <code>bar_lock_in_task_0</code><br><code>bar_lock_in_task_1</code><br><code>bar_lock_in_task_2</code><br><code>bar_lock_in_task_3</code><br><code>bar_lock_in_task_4</code>
 
-#### Scenario — Payday Rush — <code>bar::bar_payday_rush</code>
+#### Scenario - Payday Rush - <code>bar::bar_payday_rush</code>
 
 **Full save:** 31 slots = 19 shared + 12 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -640,7 +640,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 **Action-only IDs (3; no placement marker):** <code>bar_payday_rush_task_0</code><br><code>bar_payday_rush_task_1</code><br><code>bar_payday_rush_task_2</code>
 
-#### Scenario — The Wake — <code>bar::bar_wake</code>
+#### Scenario - The Wake - <code>bar::bar_wake</code>
 
 **Full save:** 28 slots = 19 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -658,9 +658,9 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 **Action-only IDs (3; no placement marker):** <code>bar_wake_task_0</code><br><code>bar_wake_task_1</code><br><code>bar_wake_task_2</code>
 
-### Gas Station Casino — <code>gas_station_casino</code>
+### Gas Station Casino - <code>gas_station_casino</code>
 
-#### Base / No Scenario — <code>gas_station_casino::__base</code>
+#### Base / No Scenario - <code>gas_station_casino::__base</code>
 
 **Save snapshot:** 18 slots = 6 fixed + 8 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 5.
 
@@ -675,17 +675,17 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 | <code>event</code> | <code>event.doorway_1</code> | Doorway / exit | <code>doorway</code> | <code>41, 210</code> | <code>forecourt_left</code> | Side Door | Mapped capacity |
 | <code>event</code> | <code>event.ground_marker_1</code> | Floor marker | <code>ground_marker</code> | <code>156, 248</code> | <code>stage</code> | Parking Lot Tip | Mapped capacity |
 | <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>290, 414</code> | <code>floor</code> | Dave's Second Truth<br>Dave's Last Stop | Mapped capacity |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>480, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>670, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>480, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>670, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>100, 414</code> | <code>floor</code> | Scratch Ticket Scalper | Mapped capacity |
 | <code>event</code> | <code>event.surface_item_1</code> | Crew Money note on the machine bank | <code>surface_item</code> | <code>530, 122</code> | <code>machine_bank_top</code> | Crew Money | Mapped capacity |
-| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Delivery package reserve | <code>floor_fixture</code> | <code>158, 152</code> | <code>stage</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.wall_item_3</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>40, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_5</code> | Runtime contact reserve | <code>standing_person</code> | <code>492, 332</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Delivery package reserve | <code>floor_fixture</code> | <code>158, 152</code> | <code>stage</code> | Variable runtime content | Runtime reserve - Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_3</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>40, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve - Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_5</code> | Runtime contact reserve | <code>standing_person</code> | <code>492, 332</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
 | <code>exit</code> | <code>exit.left_upper</code> | Travel exit | <code>doorway</code> | <code>41, 114</code> | <code>forecourt_left</code> | Leave | Mapped capacity |
 
-#### Scenario — Graveyard Shift — <code>gas_station_casino::gas_station_graveyard_shift</code>
+#### Scenario - Graveyard Shift - <code>gas_station_casino::gas_station_graveyard_shift</code>
 
 **Full save:** 32 slots = 18 shared + 14 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -708,7 +708,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 **Action-only IDs (1; no placement marker):** <code>gas_station_graveyard_shift_station</code>
 
-#### Scenario — Road Crew Payday — <code>gas_station_casino::gas_station_road_crew_payday</code>
+#### Scenario - Road Crew Payday - <code>gas_station_casino::gas_station_road_crew_payday</code>
 
 **Full save:** 31 slots = 18 shared + 13 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -730,7 +730,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 **Action-only IDs (1; no placement marker):** <code>gas_station_road_crew_payday_station</code>
 
-#### Scenario — Storm Shelter — <code>gas_station_casino::gas_station_storm_shelter</code>
+#### Scenario - Storm Shelter - <code>gas_station_casino::gas_station_storm_shelter</code>
 
 **Full save:** 32 slots = 18 shared + 14 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -753,7 +753,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 **Action-only IDs (1; no placement marker):** <code>gas_station_storm_shelter_station</code>
 
-#### Scenario — Tour Bus Stop — <code>gas_station_casino::gas_station_tour_bus_stop</code>
+#### Scenario - Tour Bus Stop - <code>gas_station_casino::gas_station_tour_bus_stop</code>
 
 **Full save:** 29 slots = 18 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -773,7 +773,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 **Action-only IDs (1; no placement marker):** <code>gas_station_tour_bus_stop_station</code>
 
-#### Scenario — Trucker Convoy — <code>gas_station_casino::gas_station_trucker_convoy</code>
+#### Scenario - Trucker Convoy - <code>gas_station_casino::gas_station_trucker_convoy</code>
 
 **Full save:** 31 slots = 18 shared + 13 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -795,9 +795,9 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 **Action-only IDs (1; no placement marker):** <code>gas_station_trucker_convoy_station</code>
 
-### The Punchline — Comedy Club — <code>small_underground_casino:club</code>
+### The Punchline - Comedy Club - <code>small_underground_casino:club</code>
 
-#### Base / No Scenario — <code>small_underground_casino:club::__base</code>
+#### Base / No Scenario - <code>small_underground_casino:club::__base</code>
 
 **Save snapshot:** 18 slots = 5 fixed + 8 event + 3 shared scenario + 2 exit. Exact scenarios on this map: 5.
 
@@ -809,20 +809,20 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 | <code>fixed</code> | <code>fixed.ambient_stage</code> | Comedy-club stage | <code>floor_fixture</code> | <code>546, 252</code> | <code>stage</code> | Ambient | Mapped capacity |
 | <code>fixed</code> | <code>fixed.numbers_book</code> | Numbers book | <code>surface_item</code> | <code>706, 194</code> | <code>right_table</code> | Book | Mapped capacity |
 | <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>100, 414</code> | <code>floor</code> | Cass Venn<br>Word from Across Town<br>Silas | Mapped capacity |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>208.571429, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>317.142857, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>425.714286, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>534.285714, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>642.857143, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_7</code> | Standing person | <code>standing_person</code> | <code>751.428571, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_8</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>222, 142</code> | <code>stage</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>40, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_4</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 248</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>208.571429, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>317.142857, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>425.714286, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>534.285714, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>642.857143, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_7</code> | Standing person | <code>standing_person</code> | <code>751.428571, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_8</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>222, 142</code> | <code>stage</code> | Variable runtime content | Runtime reserve - Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>40, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve - Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_4</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 248</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
 | <code>exit</code> | <code>exit.door_side</code> | Travel exit | <code>doorway</code> | <code>36, 118</code> | <code>left_exit</code> | Casino | Mapped capacity |
 | <code>exit</code> | <code>exit.left_lower</code> | Travel exit | <code>doorway</code> | <code>36, 346</code> | <code>left_exit</code> | Leave | Mapped capacity |
 
-#### Scenario — Bringer Show — <code>small_underground_casino:club::punchline_bringer_show</code>
+#### Scenario - Bringer Show - <code>small_underground_casino:club::punchline_bringer_show</code>
 
 **Full save:** 28 slots = 18 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -841,7 +841,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 **Action-only IDs (4; no placement marker):** <code>punchline_bringer_show_task_0</code><br><code>punchline_bringer_show_task_1</code><br><code>punchline_bringer_show_task_2</code><br><code>punchline_bringer_show_task_3</code>
 
-#### Scenario — Debt Court — <code>small_underground_casino:club::punchline_debt_court</code>
+#### Scenario - Debt Court - <code>small_underground_casino:club::punchline_debt_court</code>
 
 **Full save:** 28 slots = 18 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -860,7 +860,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 **Action-only IDs (4; no placement marker):** <code>punchline_debt_court_task_0</code><br><code>punchline_debt_court_task_1</code><br><code>punchline_debt_court_task_2</code><br><code>punchline_debt_court_task_3</code>
 
-#### Scenario — Headliner Night — <code>small_underground_casino:club::punchline_headliner_night</code>
+#### Scenario - Headliner Night - <code>small_underground_casino:club::punchline_headliner_night</code>
 
 **Full save:** 28 slots = 18 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -879,7 +879,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 **Action-only IDs (5; no placement marker):** <code>punchline_headliner_night_task_0</code><br><code>punchline_headliner_night_task_1</code><br><code>punchline_headliner_night_task_2</code><br><code>punchline_headliner_night_task_3</code><br><code>punchline_headliner_night_task_4</code>
 
-#### Scenario — Open Mic Night — <code>small_underground_casino:club::punchline_open_mic_night</code>
+#### Scenario - Open Mic Night - <code>small_underground_casino:club::punchline_open_mic_night</code>
 
 **Full save:** 29 slots = 18 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -899,7 +899,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 **Action-only IDs (4; no placement marker):** <code>punchline_open_mic_night_task_0</code><br><code>punchline_open_mic_night_task_1</code><br><code>punchline_open_mic_night_task_2</code><br><code>punchline_open_mic_night_task_3</code>
 
-#### Scenario — Raid Jitters — <code>small_underground_casino:club::punchline_raid_jitters</code>
+#### Scenario - Raid Jitters - <code>small_underground_casino:club::punchline_raid_jitters</code>
 
 **Full save:** 28 slots = 18 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -918,9 +918,9 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 **Action-only IDs (5; no placement marker):** <code>punchline_raid_jitters_task_0</code><br><code>punchline_raid_jitters_task_1</code><br><code>punchline_raid_jitters_task_2</code><br><code>punchline_raid_jitters_task_3</code><br><code>punchline_raid_jitters_task_4</code>
 
-### The Punchline — Hidden Casino — <code>small_underground_casino:casino</code>
+### The Punchline - Hidden Casino - <code>small_underground_casino:casino</code>
 
-#### Base / No Scenario — <code>small_underground_casino:casino::__base</code>
+#### Base / No Scenario - <code>small_underground_casino:casino::__base</code>
 
 **Save snapshot:** 26 slots = 10 fixed + 10 event + 3 shared scenario + 3 exit. Exact scenarios on this map: 3.
 
@@ -937,23 +937,23 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 | <code>fixed</code> | <code>fixed.numbers_book</code> | Numbers book | <code>surface_item</code> | <code>688, 142</code> | <code>right_table</code> | Book | Mapped capacity |
 | <code>fixed</code> | <code>fixed.staff_ox</code> | Ox | <code>standing_person</code> | <code>628, 358</code> | <code>floor</code> | Ox | Required |
 | <code>event</code> | <code>event.behind_counter_person_1</code> | Counter staff | <code>behind_counter_person</code> | <code>136, 226</code> | <code>left_table</code> | Word from Across Town | Mapped capacity |
-| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>208.571429, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>317.142857, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>425.714286, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>534.285714, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>642.857143, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>751.428571, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_7</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>208.571429, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>317.142857, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>425.714286, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>534.285714, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>642.857143, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>751.428571, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_7</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_8</code> | Standing person | <code>standing_person</code> | <code>100, 414</code> | <code>floor</code> | Silas | Mapped capacity |
 | <code>event</code> | <code>event.surface_item_1</code> | Crew Money note on the left table | <code>surface_item</code> | <code>300, 154</code> | <code>left_table</code> | Crew Money | Mapped capacity |
-| <code>scenario</code> | <code>scenario.wall_item_3</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>200, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>400, 168</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
-| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>874, 370</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_3</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>200, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve - Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>400, 168</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>874, 370</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
 | <code>exit</code> | <code>exit.door_guarded_lower</code> | Travel exit | <code>doorway</code> | <code>798, 220</code> | <code>guarded_exit</code> | Back Room | Mapped capacity |
 | <code>exit</code> | <code>exit.door_left_lower</code> | Travel exit | <code>doorway</code> | <code>36, 376</code> | <code>left_exit</code> | Club | Mapped capacity |
 | <code>exit</code> | <code>exit.guarded_upper</code> | Travel exit | <code>doorway</code> | <code>798, 124</code> | <code>guarded_exit</code> | Leave | Mapped capacity |
 
-#### Scenario — Greased Week — <code>small_underground_casino:casino::punchline_greased_week</code>
+#### Scenario - Greased Week - <code>small_underground_casino:casino::punchline_greased_week</code>
 
 **Full save:** 36 slots = 26 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -972,7 +972,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 **Action-only IDs (5; no placement marker):** <code>punchline_greased_week_task_0</code><br><code>punchline_greased_week_task_1</code><br><code>punchline_greased_week_task_2</code><br><code>punchline_greased_week_task_3</code><br><code>punchline_greased_week_task_4</code>
 
-#### Scenario — High-Stakes Night — <code>small_underground_casino:casino::punchline_high_stakes_night</code>
+#### Scenario - High-Stakes Night - <code>small_underground_casino:casino::punchline_high_stakes_night</code>
 
 **Full save:** 37 slots = 26 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -992,7 +992,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 **Action-only IDs (4; no placement marker):** <code>punchline_high_stakes_night_task_0</code><br><code>punchline_high_stakes_night_task_1</code><br><code>punchline_high_stakes_night_task_2</code><br><code>punchline_high_stakes_night_task_3</code>
 
-#### Scenario — New Muscle — <code>small_underground_casino:casino::punchline_new_muscle</code>
+#### Scenario - New Muscle - <code>small_underground_casino:casino::punchline_new_muscle</code>
 
 **Full save:** 35 slots = 26 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -1010,9 +1010,9 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 **Action-only IDs (5; no placement marker):** <code>punchline_new_muscle_task_0</code><br><code>punchline_new_muscle_task_1</code><br><code>punchline_new_muscle_task_2</code><br><code>punchline_new_muscle_task_3</code><br><code>punchline_new_muscle_task_4</code>
 
-### The Punchline — Crew Back Room — <code>small_underground_casino:back_room</code>
+### The Punchline - Crew Back Room - <code>small_underground_casino:back_room</code>
 
-#### Base / No Scenario — <code>small_underground_casino:back_room::__base</code>
+#### Base / No Scenario - <code>small_underground_casino:back_room::__base</code>
 
 **Save snapshot:** 20 slots = 8 fixed + 7 event + 3 shared scenario + 2 exit. Exact scenarios on this map: 0.
 
@@ -1026,24 +1026,24 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 | <code>fixed</code> | <code>fixed.event_practice_rig</code> | Crew practice rig | <code>floor_fixture</code> | <code>300, 358</code> | <code>floor</code> | Mags' Practice Rig | Mapped capacity |
 | <code>fixed</code> | <code>fixed.event_rook_ride</code> | Rook's ride | <code>doorway</code> | <code>830, 106</code> | <code>rook_exit</code> | Rook's Ride | Mapped capacity |
 | <code>fixed</code> | <code>fixed.ambient_rook</code> | Rook | <code>standing_person</code> | <code>750, 358</code> | <code>floor</code> | Ambient | Mapped capacity |
-| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>252, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>404, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>556, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>708, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>252, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>404, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>556, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>708, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>100, 414</code> | <code>floor</code> | Silas | Mapped capacity |
 | <code>event</code> | <code>event.behind_counter_person_1</code> | Numbers desk staff | <code>behind_counter_person</code> | <code>126, 236</code> | <code>numbers_desk</code> | Word from Across Town | Mapped capacity |
-| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>600, 358</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>350, 188</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 248</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>600, 358</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>350, 188</code> | <code>wall</code> | Variable runtime content | Runtime reserve - Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 248</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
 | <code>exit</code> | <code>exit.layer_door</code> | Travel exit | <code>doorway</code> | <code>830, 202</code> | <code>rook_exit</code> | Casino | Mapped capacity |
 | <code>exit</code> | <code>exit.left_1</code> | Travel exit | <code>doorway</code> | <code>36, 264</code> | <code>left_exit</code> | Leave | Mapped capacity |
 
 This map has no exact catalog scenario. Its manual coverage ends with the base context.
 
-### Jazz Club — <code>jazz_club</code>
+### Jazz Club - <code>jazz_club</code>
 
-#### Base / No Scenario — <code>jazz_club::__base</code>
+#### Base / No Scenario - <code>jazz_club::__base</code>
 
 **Save snapshot:** 18 slots = 10 fixed + 4 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 4.
 
@@ -1059,16 +1059,16 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>fixed</code> | <code>fixed.musician_cello</code> | Cello Player | <code>standing_person</code> | <code>304, 236</code> | <code>stage</code> | Cello Player | Required |
 | <code>fixed</code> | <code>fixed.tip_jar_band</code> | Band Tip Jar | <code>surface_item</code> | <code>494, 150</code> | <code>band_service_rail</code> | Band Tip Jar | Required |
 | <code>fixed</code> | <code>fixed.patron_dot</code> | Dot | <code>standing_person</code> | <code>364, 326</code> | <code>floor</code> | Dot | Required |
-| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>810, 350</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>236, 258</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>810, 350</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>236, 258</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>744, 326</code> | <code>floor</code> | Silas | Mapped capacity |
-| <code>event</code> | <code>event.surface_item_1</code> | Paper lead on the front service shelf | <code>surface_item</code> | <code>419, 404</code> | <code>front_service_shelf</code> | Variable runtime content | Runtime reserve — A physical paper lead can coexist with the performers, independent contacts, and authored Jazz scenario props. |
-| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>667, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>216, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>396, 244</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>event</code> | <code>event.surface_item_1</code> | Paper lead on the front service shelf | <code>surface_item</code> | <code>419, 404</code> | <code>front_service_shelf</code> | Variable runtime content | Runtime reserve - A physical paper lead can coexist with the performers, independent contacts, and authored Jazz scenario props. |
+| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>667, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>216, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve - Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>396, 244</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
 | <code>exit</code> | <code>exit.door_right_upper</code> | Travel exit | <code>doorway</code> | <code>864, 116</code> | <code>right_exit</code> | Leave | Mapped capacity |
 
-#### Scenario — Guest Legend — <code>jazz_club::jazz_club_guest_legend</code>
+#### Scenario - Guest Legend - <code>jazz_club::jazz_club_guest_legend</code>
 
 **Full save:** 29 slots = 18 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -1088,7 +1088,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 **Action-only IDs (6; no placement marker):** <code>jazz_club_guest_legend_task_0</code><br><code>jazz_club_guest_legend_task_1</code><br><code>jazz_club_guest_legend_task_2</code><br><code>jazz_club_guest_legend_task_3</code><br><code>jazz_club_guest_legend_task_4</code><br><code>jazz_club_guest_legend_task_5</code>
 
-#### Scenario — Recording Night — <code>jazz_club::jazz_club_recording_night</code>
+#### Scenario - Recording Night - <code>jazz_club::jazz_club_recording_night</code>
 
 **Full save:** 28 slots = 18 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -1107,7 +1107,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 **Action-only IDs (3; no placement marker):** <code>jazz_club_recording_night_task_0</code><br><code>jazz_club_recording_night_task_1</code><br><code>jazz_club_recording_night_task_2</code>
 
-#### Scenario — Rent Party — <code>jazz_club::jazz_club_rent_party</code>
+#### Scenario - Rent Party - <code>jazz_club::jazz_club_rent_party</code>
 
 **Full save:** 30 slots = 18 shared + 12 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -1128,7 +1128,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 **Action-only IDs (4; no placement marker):** <code>jazz_club_rent_party_task_0</code><br><code>jazz_club_rent_party_task_1</code><br><code>jazz_club_rent_party_task_2</code><br><code>jazz_club_rent_party_task_3</code>
 
-#### Scenario — Union Trouble — <code>jazz_club::jazz_club_union_trouble</code>
+#### Scenario - Union Trouble - <code>jazz_club::jazz_club_union_trouble</code>
 
 **Full save:** 30 slots = 18 shared + 12 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -1149,9 +1149,9 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 **Action-only IDs (4; no placement marker):** <code>jazz_club_union_trouble_task_0</code><br><code>jazz_club_union_trouble_task_1</code><br><code>jazz_club_union_trouble_task_2</code><br><code>jazz_club_union_trouble_task_3</code>
 
-### Kitty Cat Lounge — <code>kitty_cat_lounge</code>
+### Kitty Cat Lounge - <code>kitty_cat_lounge</code>
 
-#### Base / No Scenario — <code>kitty_cat_lounge::__base</code>
+#### Base / No Scenario - <code>kitty_cat_lounge::__base</code>
 
 **Save snapshot:** 24 slots = 12 fixed + 8 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 4.
 
@@ -1171,18 +1171,18 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>fixed</code> | <code>fixed.patron_dot</code> | Dot | <code>seated_person</code> | <code>250, 234</code> | <code>stage_mid</code> | Dot | Required |
 | <code>event</code> | <code>event.seated_person_1</code> | Seated person | <code>seated_person</code> | <code>358, 234</code> | <code>stage_right</code> | Rowdy Regular | Mapped capacity |
 | <code>event</code> | <code>event.doorway_1</code> | Doorway / exit | <code>doorway</code> | <code>859, 300</code> | <code>right_exit</code> | Side Door | Mapped capacity |
-| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>450, 278</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>78, 254</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>78, 172</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>244, 170</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>450, 278</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>78, 254</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>78, 172</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>244, 170</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>704, 294</code> | <code>floor</code> | Silas | Mapped capacity |
-| <code>event</code> | <code>event.sal_address_note</code> | Sal address note | <code>surface_item</code> | <code>128, 308</code> | <code>floor_table_left</code> | Variable runtime content | Runtime reserve — A carried Sal estate map can place one address note alongside the current Lounge scenario. |
-| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>302, 358</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>108, 88</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
-| <code>scenario</code> | <code>scenario.wall_item_3</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>220, 60</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>event</code> | <code>event.sal_address_note</code> | Sal address note | <code>surface_item</code> | <code>128, 308</code> | <code>floor_table_left</code> | Variable runtime content | Runtime reserve - A carried Sal estate map can place one address note alongside the current Lounge scenario. |
+| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>302, 358</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>108, 88</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.wall_item_3</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>220, 60</code> | <code>wall</code> | Variable runtime content | Runtime reserve - Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
 | <code>exit</code> | <code>exit.left_lower</code> | Travel exit | <code>doorway</code> | <code>36, 356</code> | <code>left_exit</code> | Leave | Mapped capacity |
 
-#### Scenario — Amateur Night — <code>kitty_cat_lounge::kitty_cat_lounge_amateur_night</code>
+#### Scenario - Amateur Night - <code>kitty_cat_lounge::kitty_cat_lounge_amateur_night</code>
 
 **Full save:** 35 slots = 24 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -1202,7 +1202,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 **Action-only IDs (5; no placement marker):** <code>kitty_cat_lounge_amateur_night_task_0</code><br><code>kitty_cat_lounge_amateur_night_task_1</code><br><code>kitty_cat_lounge_amateur_night_task_2</code><br><code>kitty_cat_lounge_amateur_night_task_3</code><br><code>kitty_cat_lounge_amateur_night_task_4</code>
 
-#### Scenario — Bachelorette Storm — <code>kitty_cat_lounge::kitty_cat_lounge_bachelorette_storm</code>
+#### Scenario - Bachelorette Storm - <code>kitty_cat_lounge::kitty_cat_lounge_bachelorette_storm</code>
 
 **Full save:** 34 slots = 24 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -1221,7 +1221,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 **Action-only IDs (6; no placement marker):** <code>kitty_cat_lounge_bachelorette_storm_task_0</code><br><code>kitty_cat_lounge_bachelorette_storm_task_1</code><br><code>kitty_cat_lounge_bachelorette_storm_task_2</code><br><code>kitty_cat_lounge_bachelorette_storm_task_3</code><br><code>kitty_cat_lounge_bachelorette_storm_task_4</code><br><code>kitty_cat_lounge_bachelorette_storm_task_5</code>
 
-#### Scenario — The Buyout — <code>kitty_cat_lounge::kitty_cat_lounge_buyout</code>
+#### Scenario - The Buyout - <code>kitty_cat_lounge::kitty_cat_lounge_buyout</code>
 
 **Full save:** 35 slots = 24 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -1241,7 +1241,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 **Action-only IDs (5; no placement marker):** <code>kitty_cat_lounge_buyout_task_0</code><br><code>kitty_cat_lounge_buyout_task_1</code><br><code>kitty_cat_lounge_buyout_task_2</code><br><code>kitty_cat_lounge_buyout_task_3</code><br><code>kitty_cat_lounge_buyout_task_4</code>
 
-#### Scenario — Slow Night — <code>kitty_cat_lounge::kitty_cat_lounge_slow_night</code>
+#### Scenario - Slow Night - <code>kitty_cat_lounge::kitty_cat_lounge_slow_night</code>
 
 **Full save:** 36 slots = 24 shared + 12 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -1262,9 +1262,9 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 **Action-only IDs (4; no placement marker):** <code>kitty_cat_lounge_slow_night_task_0</code><br><code>kitty_cat_lounge_slow_night_task_1</code><br><code>kitty_cat_lounge_slow_night_task_2</code><br><code>kitty_cat_lounge_slow_night_task_3</code>
 
-### Delta Queen — <code>delta_queen</code>
+### Delta Queen - <code>delta_queen</code>
 
-#### Base / No Scenario — <code>delta_queen::__base</code>
+#### Base / No Scenario - <code>delta_queen::__base</code>
 
 **Save snapshot:** 26 slots = 12 fixed + 10 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 5.
 
@@ -1287,17 +1287,17 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>event</code> | <code>event.behind_counter_person_1</code> | Counter staff | <code>behind_counter_person</code> | <code>408, 186</code> | <code>right_table</code> | Word from Across Town | Mapped capacity |
 | <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>400, 282</code> | <code>floor</code> | Cass Venn | Mapped capacity |
 | <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>686, 278</code> | <code>floor</code> | Dave's Last Stop | Mapped capacity |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>750, 278</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>532, 258</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>322, 246</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>258, 246</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>750, 278</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>532, 258</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>322, 246</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>258, 246</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
 | <code>event</code> | <code>event.surface_item_1</code> | Crew Money note on the scoreboard ledge | <code>surface_item</code> | <code>272, 150</code> | <code>scoreboard_ledge</code> | Crew Money | Mapped capacity |
-| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>704, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.wall_item_4</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>426, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>784, 84</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>704, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_4</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>426, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve - Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>784, 84</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
 | <code>exit</code> | <code>exit.door_right_middle</code> | Travel exit | <code>doorway</code> | <code>864, 210</code> | <code>gangway_right</code> | Leave | Mapped capacity |
 
-#### Scenario — Captain's Invitational — <code>delta_queen::delta_queen_captains_invitational</code>
+#### Scenario - Captain's Invitational - <code>delta_queen::delta_queen_captains_invitational</code>
 
 **Full save:** 39 slots = 26 shared + 13 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -1319,7 +1319,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 **Action-only IDs (7; no placement marker):** <code>delta_queen_captains_invitational_task_0</code><br><code>delta_queen_captains_invitational_task_1</code><br><code>delta_queen_captains_invitational_task_2</code><br><code>delta_queen_captains_invitational_task_4</code><br><code>delta_queen_captains_invitational_work_3_choice_0</code><br><code>delta_queen_captains_invitational_work_3_choice_1</code><br><code>delta_queen_captains_invitational_work_3_choice_2</code>
 
-#### Scenario — Engine Trouble — <code>delta_queen::delta_queen_engine_trouble</code>
+#### Scenario - Engine Trouble - <code>delta_queen::delta_queen_engine_trouble</code>
 
 **Full save:** 37 slots = 26 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -1339,7 +1339,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 **Action-only IDs (7; no placement marker):** <code>delta_queen_engine_trouble_task_0</code><br><code>delta_queen_engine_trouble_task_1</code><br><code>delta_queen_engine_trouble_task_2</code><br><code>delta_queen_engine_trouble_task_4</code><br><code>delta_queen_engine_trouble_work_3_choice_0</code><br><code>delta_queen_engine_trouble_work_3_choice_1</code><br><code>delta_queen_engine_trouble_work_3_choice_2</code>
 
-#### Scenario — Fog Delay — <code>delta_queen::delta_queen_fog_delay</code>
+#### Scenario - Fog Delay - <code>delta_queen::delta_queen_fog_delay</code>
 
 **Full save:** 36 slots = 26 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -1358,7 +1358,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 **Action-only IDs (6; no placement marker):** <code>delta_queen_fog_delay_task_0</code><br><code>delta_queen_fog_delay_task_2</code><br><code>delta_queen_fog_delay_task_3</code><br><code>delta_queen_fog_delay_work_1_choice_0</code><br><code>delta_queen_fog_delay_work_1_choice_1</code><br><code>delta_queen_fog_delay_work_1_choice_2</code>
 
-#### Scenario — Wedding Charter — <code>delta_queen::delta_queen_wedding_charter</code>
+#### Scenario - Wedding Charter - <code>delta_queen::delta_queen_wedding_charter</code>
 
 **Full save:** 41 slots = 26 shared + 15 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -1382,7 +1382,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 **Action-only IDs (6; no placement marker):** <code>delta_queen_wedding_charter_task_0</code><br><code>delta_queen_wedding_charter_task_2</code><br><code>delta_queen_wedding_charter_task_3</code><br><code>delta_queen_wedding_charter_work_1_choice_0</code><br><code>delta_queen_wedding_charter_work_1_choice_1</code><br><code>delta_queen_wedding_charter_work_1_choice_2</code>
 
-#### Scenario — Whale Aboard — <code>delta_queen::delta_queen_whale_aboard</code>
+#### Scenario - Whale Aboard - <code>delta_queen::delta_queen_whale_aboard</code>
 
 **Full save:** 38 slots = 26 shared + 12 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -1403,9 +1403,9 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 **Action-only IDs (6; no placement marker):** <code>delta_queen_whale_aboard_task_0</code><br><code>delta_queen_whale_aboard_task_1</code><br><code>delta_queen_whale_aboard_task_3</code><br><code>delta_queen_whale_aboard_work_2_choice_0</code><br><code>delta_queen_whale_aboard_work_2_choice_1</code><br><code>delta_queen_whale_aboard_work_2_choice_2</code>
 
-### The Beach — <code>beach</code>
+### The Beach - <code>beach</code>
 
-#### Base / No Scenario — <code>beach::__base</code>
+#### Base / No Scenario - <code>beach::__base</code>
 
 **Save snapshot:** 8 slots = 2 fixed + 1 event + 4 shared scenario + 1 exit. Exact scenarios on this map: 3.
 
@@ -1413,14 +1413,14 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | <code>fixed</code> | <code>fixed.service_beach_sand_pile</code> | Beach sand pile | <code>floor_fixture</code> | <code>864, 406</code> | <code>stage</code> | Sand Pile | Mapped capacity |
 | <code>fixed</code> | <code>fixed.game_slot</code> | Slot machine | <code>floor_fixture</code> | <code>502, 180</code> | <code>stage</code> | Empty capacity | Optional empty capacity |
-| <code>event</code> | <code>event.standing_person_1</code> | Delivery handoff contact | <code>standing_person</code> | <code>788, 406</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>scenario</code> | <code>scenario.floor_fixture_4</code> | Delivery package reserve | <code>floor_fixture</code> | <code>398, 180</code> | <code>stage</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>128, 48</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_4</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 116</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
-| <code>scenario</code> | <code>scenario.standing_person_5</code> | Recruitment contact reserve | <code>standing_person</code> | <code>348, 304</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Lucky recruitment can coexist with the Festival scenario cast. |
+| <code>event</code> | <code>event.standing_person_1</code> | Delivery handoff contact | <code>standing_person</code> | <code>788, 406</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>scenario</code> | <code>scenario.floor_fixture_4</code> | Delivery package reserve | <code>floor_fixture</code> | <code>398, 180</code> | <code>stage</code> | Variable runtime content | Runtime reserve - Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>128, 48</code> | <code>wall</code> | Variable runtime content | Runtime reserve - Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_4</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 116</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.standing_person_5</code> | Recruitment contact reserve | <code>standing_person</code> | <code>348, 304</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Lucky recruitment can coexist with the Festival scenario cast. |
 | <code>exit</code> | <code>exit.right_upper</code> | Travel exit | <code>doorway</code> | <code>864, 274</code> | <code>boardwalk_right</code> | Leave | Mapped capacity |
 
-#### Scenario — Bonfire Night — <code>beach::beach_bonfire_night</code>
+#### Scenario - Bonfire Night - <code>beach::beach_bonfire_night</code>
 
 **Full save:** 21 slots = 8 shared + 13 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -1442,7 +1442,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 **Action-only IDs (1; no placement marker):** <code>beach_bonfire_night_station</code>
 
-#### Scenario — Festival Weekend — <code>beach::beach_festival_weekend</code>
+#### Scenario - Festival Weekend - <code>beach::beach_festival_weekend</code>
 
 **Full save:** 22 slots = 8 shared + 14 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -1465,7 +1465,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 **Action-only IDs (1; no placement marker):** <code>beach_festival_weekend_station</code>
 
-#### Scenario — Storm Coming — <code>beach::beach_storm_coming</code>
+#### Scenario - Storm Coming - <code>beach::beach_storm_coming</code>
 
 **Full save:** 19 slots = 8 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -1485,9 +1485,9 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 **Action-only IDs (1; no placement marker):** <code>beach_storm_coming_station</code>
 
-### Sal's Pawn Shop — <code>pawn_shop</code>
+### Sal's Pawn Shop - <code>pawn_shop</code>
 
-#### Base / No Scenario — <code>pawn_shop::__base</code>
+#### Base / No Scenario - <code>pawn_shop::__base</code>
 
 **Save snapshot:** 16 slots = 8 fixed + 4 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 3.
 
@@ -1502,15 +1502,15 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>fixed</code> | <code>fixed.item_shop_5</code> | Shop item | <code>shop_item</code> | <code>492, 70</code> | <code>estate_top_shelf</code> | Sal's Shelf Slot 5 | Mapped capacity |
 | <code>fixed</code> | <code>fixed.item_shop_6</code> | Shop item | <code>shop_item</code> | <code>596, 70</code> | <code>estate_top_shelf</code> | Sal's Shelf Slot 6 | Mapped capacity |
 | <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>392, 414</code> | <code>floor</code> | Chatty Clerk<br>Word from Across Town | Mapped capacity |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>528, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>592, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>672, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — A delivery handoff contact and resident Crew member may coexist with both ordinary shop events. |
-| <code>scenario</code> | <code>scenario.standing_person_2</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 248</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
-| <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>786, 60</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Delivery package reserve | <code>floor_fixture</code> | <code>192, 370</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>528, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>592, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>672, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - A delivery handoff contact and resident Crew member may coexist with both ordinary shop events. |
+| <code>scenario</code> | <code>scenario.standing_person_2</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 248</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>786, 60</code> | <code>wall</code> | Variable runtime content | Runtime reserve - Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Delivery package reserve | <code>floor_fixture</code> | <code>192, 370</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
 | <code>exit</code> | <code>exit.door_right_lower</code> | Travel exit | <code>doorway</code> | <code>864, 362</code> | <code>right_exit</code> | Leave | Mapped capacity |
 
-#### Scenario — Estate Lot Day — <code>pawn_shop::pawn_shop_estate_lot_day</code>
+#### Scenario - Estate Lot Day - <code>pawn_shop::pawn_shop_estate_lot_day</code>
 
 **Full save:** 27 slots = 16 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -1528,7 +1528,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>scenario.local_surface_item_4</code> | Provenance Marks Abandoned | <code>surface_item</code> | <code>196, 136</code> | <code>manual_placement_required</code> | Provenance Marks Abandoned | Provisional geometry |
 | <code>scenario.local_wall_item_1</code> | Displayed Lot | <code>wall_mounted</code> | <code>704, 72</code> | <code>manual_placement_required</code> | Displayed Lot | Provisional geometry |
 
-#### Scenario — Sal's Mood — <code>pawn_shop::pawn_shop_sals_mood</code>
+#### Scenario - Sal's Mood - <code>pawn_shop::pawn_shop_sals_mood</code>
 
 **Full save:** 25 slots = 16 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -1544,7 +1544,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>scenario.local_surface_item_3</code> | Private Appraisal | <code>surface_item</code> | <code>676, 56</code> | <code>manual_placement_required</code> | Private Appraisal | Provisional geometry |
 | <code>scenario.local_surface_item_4</code> | Posted Appraisal Sheet | <code>surface_item</code> | <code>196, 136</code> | <code>manual_placement_required</code> | Posted Appraisal Sheet | Provisional geometry |
 
-#### Scenario — Serial-Check Day — <code>pawn_shop::pawn_shop_serial_check_day</code>
+#### Scenario - Serial-Check Day - <code>pawn_shop::pawn_shop_serial_check_day</code>
 
 **Full save:** 24 slots = 16 shared + 8 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -1559,9 +1559,9 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>scenario.local_surface_item_4</code> | Scenario alternatives: Serial Sweep Hold / Waiting Hold / Waiting Hold Refused | <code>surface_item</code> | <code>196, 136</code> | <code>manual_placement_required</code> | Serial Sweep Hold<br>Waiting Hold<br>Waiting Hold Refused | Provisional geometry |
 | <code>scenario.local_wall_item_1</code> | Disclosed Hold | <code>wall_mounted</code> | <code>704, 72</code> | <code>manual_placement_required</code> | Disclosed Hold | Provisional geometry |
 
-### Grand Casino Main Floor — <code>grand_casino</code>
+### Grand Casino Main Floor - <code>grand_casino</code>
 
-#### Base / No Scenario — <code>grand_casino::__base</code>
+#### Base / No Scenario - <code>grand_casino::__base</code>
 
 **Save snapshot:** 31 slots = 12 fixed + 11 event + 4 shared scenario + 4 exit. Exact scenarios on this map: 3.
 
@@ -1583,23 +1583,23 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>event</code> | <code>event.behind_counter_person_2</code> | Casino host | <code>behind_counter_person</code> | <code>622, 242</code> | <code>cocktail_service</code> | Comped Suite Offer | Mapped capacity |
 | <code>event</code> | <code>event.behind_counter_person_3</code> | Pit boss | <code>behind_counter_person</code> | <code>780, 294</code> | <code>right_table_felt</code> | The House Calls | Mapped capacity |
 | <code>event</code> | <code>event.wall_item_1</code> | Wall item | <code>wall_mounted</code> | <code>92, 36</code> | <code>wall</code> | Noticed | Mapped capacity |
-| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>156, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>260, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>364, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>468, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>572, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>676, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_7</code> | Standing person | <code>standing_person</code> | <code>780, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Delivery package reserve | <code>floor_fixture</code> | <code>636, 430</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Crew live-table reserve | <code>floor_fixture</code> | <code>744, 352</code> | <code>floor</code> | Variable runtime content | Runtime reserve — The Crew's live table can follow the player into this room beside authored scenario objects. |
-| <code>scenario</code> | <code>scenario.wall_item_3</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>450, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>392, 248</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>156, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>260, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>364, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>468, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>572, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>676, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_7</code> | Standing person | <code>standing_person</code> | <code>780, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Delivery package reserve | <code>floor_fixture</code> | <code>636, 430</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Crew live-table reserve | <code>floor_fixture</code> | <code>744, 352</code> | <code>floor</code> | Variable runtime content | Runtime reserve - The Crew's live table can follow the player into this room beside authored scenario objects. |
+| <code>scenario</code> | <code>scenario.wall_item_3</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>450, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve - Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>392, 248</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
 | <code>exit</code> | <code>exit.travel_back_room</code> | Travel exit | <code>doorway</code> | <code>36, 246</code> | <code>left_exit</code> | Grand Casino Back Room | Mapped capacity |
 | <code>exit</code> | <code>exit.travel_high_limit</code> | Travel exit | <code>doorway</code> | <code>36, 398</code> | <code>left_exit</code> | Grand Casino High-Limit Room | Mapped capacity |
 | <code>exit</code> | <code>exit.travel_cage</code> | Travel exit | <code>doorway</code> | <code>864, 246</code> | <code>right_exit</code> | Grand Casino Cage | Mapped capacity |
 | <code>exit</code> | <code>exit.travel_leave</code> | Travel exit | <code>doorway</code> | <code>864, 398</code> | <code>right_exit</code> | Leave | Mapped capacity |
 
-#### Scenario — Audit Night — <code>grand_casino::grand_casino_audit_night</code>
+#### Scenario - Audit Night - <code>grand_casino::grand_casino_audit_night</code>
 
 **Full save:** 44 slots = 31 shared + 13 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -1621,7 +1621,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 **Action-only IDs (6; no placement marker):** <code>grand_casino_audit_night_task_0</code><br><code>grand_casino_audit_night_task_2</code><br><code>grand_casino_audit_night_task_3</code><br><code>grand_casino_audit_night_work_1_choice_0</code><br><code>grand_casino_audit_night_work_1_choice_1</code><br><code>grand_casino_audit_night_work_1_choice_2</code>
 
-#### Scenario — Convention Crowd — <code>grand_casino::grand_casino_convention_crowd</code>
+#### Scenario - Convention Crowd - <code>grand_casino::grand_casino_convention_crowd</code>
 
 **Full save:** 43 slots = 31 shared + 12 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -1642,7 +1642,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 **Action-only IDs (6; no placement marker):** <code>grand_casino_convention_crowd_task_0</code><br><code>grand_casino_convention_crowd_task_1</code><br><code>grand_casino_convention_crowd_task_3</code><br><code>grand_casino_convention_crowd_work_2_choice_0</code><br><code>grand_casino_convention_crowd_work_2_choice_1</code><br><code>grand_casino_convention_crowd_work_2_choice_2</code>
 
-#### Scenario — Gala Night — <code>grand_casino::grand_casino_gala_night</code>
+#### Scenario - Gala Night - <code>grand_casino::grand_casino_gala_night</code>
 
 **Full save:** 44 slots = 31 shared + 13 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
@@ -1664,9 +1664,9 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 **Action-only IDs (6; no placement marker):** <code>grand_casino_gala_night_task_0</code><br><code>grand_casino_gala_night_task_1</code><br><code>grand_casino_gala_night_task_3</code><br><code>grand_casino_gala_night_work_2_choice_0</code><br><code>grand_casino_gala_night_work_2_choice_1</code><br><code>grand_casino_gala_night_work_2_choice_2</code>
 
-### Grand Casino High-Limit Room — <code>grand_casino_high_limit</code>
+### Grand Casino High-Limit Room - <code>grand_casino_high_limit</code>
 
-#### Base / No Scenario — <code>grand_casino_high_limit::__base</code>
+#### Base / No Scenario - <code>grand_casino_high_limit::__base</code>
 
 **Save snapshot:** 17 slots = 4 fixed + 6 event + 4 shared scenario + 3 exit. Exact scenarios on this map: 0.
 
@@ -1677,24 +1677,24 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>fixed</code> | <code>fixed.game_table_3</code> | Random game table | <code>surface_item</code> | <code>590, 258</code> | <code>right_table</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.game_table_4</code> | Random game table | <code>surface_item</code> | <code>744, 258</code> | <code>right_table</code> | Empty capacity | Optional empty capacity |
 | <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>162, 414</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>282, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>402, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>522, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>642, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>762, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>44, 60</code> | <code>left_notice_panel</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>744, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 248</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
-| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Crew live-table reserve | <code>floor_fixture</code> | <code>762, 426</code> | <code>floor</code> | Variable runtime content | Runtime reserve — The Crew's live table can follow the player into this room beside authored scenario objects. |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>282, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>402, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>522, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>642, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>762, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>44, 60</code> | <code>left_notice_panel</code> | Variable runtime content | Runtime reserve - Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>744, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 248</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Crew live-table reserve | <code>floor_fixture</code> | <code>762, 426</code> | <code>floor</code> | Variable runtime content | Runtime reserve - The Crew's live table can follow the player into this room beside authored scenario objects. |
 | <code>exit</code> | <code>exit.travel_left</code> | Travel exit | <code>doorway</code> | <code>36, 390</code> | <code>left_exit</code> | Grand Casino Main Floor | Mapped capacity |
 | <code>exit</code> | <code>exit.travel_right</code> | Travel exit | <code>doorway</code> | <code>864, 390</code> | <code>right_exit</code> | Grand Casino Cage | Mapped capacity |
 | <code>exit</code> | <code>exit.safe_left</code> | Travel exit | <code>doorway</code> | <code>36, 278</code> | <code>left_exit</code> | Leave | Mapped capacity |
 
 This map has no exact catalog scenario. Its manual coverage ends with the base context.
 
-### Grand Casino Back Room — <code>grand_casino_back_room</code>
+### Grand Casino Back Room - <code>grand_casino_back_room</code>
 
-#### Base / No Scenario — <code>grand_casino_back_room::__base</code>
+#### Base / No Scenario - <code>grand_casino_back_room::__base</code>
 
 **Save snapshot:** 12 slots = 2 fixed + 5 event + 4 shared scenario + 1 exit. Exact scenarios on this map: 0.
 
@@ -1703,21 +1703,21 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>fixed</code> | <code>fixed.game_table_left</code> | Random game table | <code>surface_item</code> | <code>218, 258</code> | <code>left_table</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.game_table_right</code> | Random game table | <code>surface_item</code> | <code>682, 258</code> | <code>right_table</code> | Empty capacity | Optional empty capacity |
 | <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>210, 414</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
-| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>330, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>450, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>570, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>690, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
-| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>708, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>520, 188</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>444, 248</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
-| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Crew live-table reserve | <code>floor_fixture</code> | <code>726, 426</code> | <code>floor</code> | Variable runtime content | Runtime reserve — The Crew's live table can follow the player into this room beside authored scenario objects. |
+| <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>330, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>450, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>570, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>690, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>708, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>520, 188</code> | <code>wall</code> | Variable runtime content | Runtime reserve - Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>444, 248</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Crew live-table reserve | <code>floor_fixture</code> | <code>726, 426</code> | <code>floor</code> | Variable runtime content | Runtime reserve - The Crew's live table can follow the player into this room beside authored scenario objects. |
 | <code>exit</code> | <code>exit.travel_left</code> | Travel exit | <code>doorway</code> | <code>36, 390</code> | <code>left_exit</code> | Leave | Mapped capacity |
 
 This map has no exact catalog scenario. Its manual coverage ends with the base context.
 
-### Grand Casino Cage — <code>grand_casino_cage</code>
+### Grand Casino Cage - <code>grand_casino_cage</code>
 
-#### Base / No Scenario — <code>grand_casino_cage::__base</code>
+#### Base / No Scenario - <code>grand_casino_cage::__base</code>
 
 **Save snapshot:** 14 slots = 7 fixed + 1 event + 4 shared scenario + 2 exit. Exact scenarios on this map: 0.
 
@@ -1731,18 +1731,18 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>fixed</code> | <code>fixed.fixture_cage_atm</code> | Cage ATM | <code>wall_mounted</code> | <code>720, 203</code> | <code>atm</code> | Cage ATM | Mapped capacity |
 | <code>fixed</code> | <code>fixed.staff_linda</code> | Linda | <code>behind_counter_person</code> | <code>500, 340</code> | <code>teller_counter</code> | Linda | Required |
 | <code>event</code> | <code>event.recruitment_bishop</code> | Bishop at the Cage window | <code>standing_person</code> | <code>620, 350</code> | <code>floor</code> | Bishop | Mapped capacity |
-| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>160, 358</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>690, 188</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 212</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
-| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Crew live-table reserve | <code>floor_fixture</code> | <code>178, 370</code> | <code>floor</code> | Variable runtime content | Runtime reserve — The Crew's live table can follow the player into this room beside authored scenario objects. |
+| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>160, 358</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>690, 188</code> | <code>wall</code> | Variable runtime content | Runtime reserve - Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 212</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Crew live-table reserve | <code>floor_fixture</code> | <code>178, 370</code> | <code>floor</code> | Variable runtime content | Runtime reserve - The Crew's live table can follow the player into this room beside authored scenario objects. |
 | <code>exit</code> | <code>exit.casino_floor_door</code> | Travel exit | <code>doorway</code> | <code>847, 248</code> | <code>floor_door</code> | Grand Casino Main Floor | Mapped capacity |
 | <code>exit</code> | <code>exit.travel_floor_door</code> | Travel exit | <code>doorway</code> | <code>847, 160</code> | <code>floor_door</code> | Leave | Mapped capacity |
 
 This map has no exact catalog scenario. Its manual coverage ends with the base context.
 
-### Motel Room — <code>motel_room</code>
+### Motel Room - <code>motel_room</code>
 
-#### Base / No Scenario — <code>motel_room::__base</code>
+#### Base / No Scenario - <code>motel_room::__base</code>
 
 **Save snapshot:** 15 slots = 11 fixed + 0 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 0.
 
@@ -1759,16 +1759,16 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>fixed</code> | <code>fixed.home_item_3</code> | Home item 3 | <code>surface_item</code> | <code>440, 294</code> | <code>rug</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.home_upgrade</code> | Home upgrade board | <code>wall_mounted</code> | <code>820, 72</code> | <code>wall</code> | Home | Mapped capacity |
 | <code>fixed</code> | <code>fixed.home_storage</code> | Home storage | <code>floor_fixture</code> | <code>830, 358</code> | <code>floor</code> | Place | Mapped capacity |
-| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>302, 358</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>180, 206</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 376</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>302, 358</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>180, 206</code> | <code>wall</code> | Variable runtime content | Runtime reserve - Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 376</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
 | <code>exit</code> | <code>exit.left_door</code> | Travel exit | <code>doorway</code> | <code>36, 262</code> | <code>left_exit</code> | Leave | Mapped capacity |
 
 This map has no exact catalog scenario. Its manual coverage ends with the base context.
 
-### Apartment — <code>apartment</code>
+### Apartment - <code>apartment</code>
 
-#### Base / No Scenario — <code>apartment::__base</code>
+#### Base / No Scenario - <code>apartment::__base</code>
 
 **Save snapshot:** 15 slots = 11 fixed + 0 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 0.
 
@@ -1785,16 +1785,16 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>fixed</code> | <code>fixed.home_container_3</code> | Home container 3 | <code>floor_fixture</code> | <code>290, 358</code> | <code>floor</code> | Trunk 01 | Mapped capacity |
 | <code>fixed</code> | <code>fixed.home_upgrade</code> | Home upgrade board | <code>wall_mounted</code> | <code>570, 24</code> | <code>wall</code> | Home | Mapped capacity |
 | <code>fixed</code> | <code>fixed.home_storage</code> | Home storage | <code>floor_fixture</code> | <code>820, 358</code> | <code>floor</code> | Place | Mapped capacity |
-| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>700, 270</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>350, 206</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 384</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>700, 270</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>350, 206</code> | <code>wall</code> | Variable runtime content | Runtime reserve - Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 384</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
 | <code>exit</code> | <code>exit.left_door</code> | Travel exit | <code>doorway</code> | <code>36, 262</code> | <code>left_exit</code> | Leave | Mapped capacity |
 
 This map has no exact catalog scenario. Its manual coverage ends with the base context.
 
-### House — <code>house</code>
+### House - <code>house</code>
 
-#### Base / No Scenario — <code>house::__base</code>
+#### Base / No Scenario - <code>house::__base</code>
 
 **Save snapshot:** 15 slots = 11 fixed + 0 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 0.
 
@@ -1811,9 +1811,9 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>fixed</code> | <code>fixed.home_item_3</code> | Home item 3 | <code>surface_item</code> | <code>650, 296</code> | <code>rug</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.home_upgrade</code> | Home upgrade board | <code>wall_mounted</code> | <code>335, 120</code> | <code>television_screen</code> | Home | Mapped capacity |
 | <code>fixed</code> | <code>fixed.home_storage</code> | Home storage | <code>floor_fixture</code> | <code>570, 358</code> | <code>floor</code> | Place | Mapped capacity |
-| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>302, 358</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>520, 206</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
-| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 172</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
+| <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>302, 358</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>520, 206</code> | <code>wall</code> | Variable runtime content | Runtime reserve - Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
+| <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 172</code> | <code>floor</code> | Variable runtime content | Runtime reserve - Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
 | <code>exit</code> | <code>exit.travel_door</code> | Travel exit | <code>doorway</code> | <code>864, 358</code> | <code>right_exit</code> | Leave | Mapped capacity |
 
 This map has no exact catalog scenario. Its manual coverage ends with the base context.

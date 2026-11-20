@@ -112,7 +112,7 @@ Only after every gate passes AND the docs/captures are complete and verified:
    `docs/todone/`, append a short execution record to the bottom of the moved
    file (date, implementing commit hashes, gate results, deviations), and
    stage the moved file so the archive lands in the final commit.
-3. PUSH to the remote (code + docs only — do NOT create the git tag, do NOT
+3. PUSH to the remote (code + docs only - do NOT create the git tag, do NOT
    publish, do NOT upload; those remain the owner's actions).
 4. Report: the identity bump locations, the checklist's pending items, and the
    capture index.

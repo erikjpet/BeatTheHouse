@@ -1,4 +1,4 @@
-# CLOSE-02 — complete Bar Dice financial labels
+# CLOSE-02 - complete Bar Dice financial labels
 
 Registered before implementation under CLOSE-02 and BTH061-RC-BARDICE-COVER-CLIP-001.
 Baseline source973f0ba2 (CLOSE-01 code and strict Smoke qualified; NEXT delivery pending

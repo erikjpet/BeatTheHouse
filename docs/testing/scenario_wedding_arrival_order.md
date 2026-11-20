@@ -1,6 +1,6 @@
 # BTH-SCENARIO-WEDDING-001: delayed arrival after Wedding tasks
 
-Parent: **BTH-11 — Scenario polish**. Both items remain open through their
+Parent: **BTH-11 - Scenario polish**. Both items remain open through their
 recorded commit and required NEXT/behavior acceptance. There are no intentional
 holds. Current owner: `Resume scenario improvements`
 (`01a1a3e5-607c-73bf-b678-e3e03f5e40f6`).

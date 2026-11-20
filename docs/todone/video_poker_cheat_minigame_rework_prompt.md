@@ -1,4 +1,4 @@
-# Agent Prompt — Video Poker Cheat Rework: Center-Focus WarioWare Minigame Chain
+# Agent Prompt - Video Poker Cheat Rework: Center-Focus WarioWare Minigame Chain
 
 Copy everything below this line into the worker agent.
 
@@ -13,7 +13,7 @@ direction, verbatim intent:
 
 - The cheat (nudge/mark cards) must pop a CENTER-FOCUS popup that pulls the
   player's attention, instead of sitting off to the side.
-- Make it more of a MINIGAME — WarioWare-style: several fast micro-beats in
+- Make it more of a MINIGAME - WarioWare-style: several fast micro-beats in
   a row to trigger the cheat.
 - REMOVE the collect button; pay out automatically.
 - Add a YELLOW BORDER that guides the player where to click.
@@ -21,7 +21,7 @@ direction, verbatim intent:
 ## What exists (audit first; code reality wins)
 
 `scripts/games/video_poker.gd`: the holdout/mark cheat today is a SINGLE
-timed input — `HOLDOUT_PROMPT_BASE_MSEC` (~:62) with perfect/good/close
+timed input - `HOLDOUT_PROMPT_BASE_MSEC` (~:62) with perfect/good/close
 windows (~:63-65), quality → heat mapping (`HOLDOUT_*_HEAT_*`), the ideal
 "palmed" card chosen from a deterministic hash of run seed/state (see the
 header comment ~:24-28, `holdout_tell` ~:299), item modifiers
@@ -49,11 +49,11 @@ dimmed. It must read as the moment that matters.
 Replace the single timed input with a short CHAIN of 2-3 fast micro-beats
 (each ~0.5-1.0s, tunable), performed in sequence, e.g.:
 
-- **PALM** — tap exactly when a sweeping marker hits the target zone
+- **PALM** - tap exactly when a sweeping marker hits the target zone
   (timing).
-- **SWAP** — click/flick the correct card into the holdout slot (target
+- **SWAP** - click/flick the correct card into the holdout slot (target
   selection).
-- **COVER** — hold briefly and release on cue (release timing).
+- **COVER** - hold briefly and release on cue (release timing).
 
 Design 3 authored micro-beats (data-tunable windows). Each beat:
 - shows a **yellow guidance border/highlight** on exactly the control to
@@ -71,7 +71,7 @@ the beat windows and contraband sharpens them, reusing the existing
 **Determinism (critical):** the ideal palmed card and the mechanical
 outcome stay seeded exactly as today; the minigame measures the player's
 inputs, and the SAME inputs on the SAME seed must produce the SAME quality
-tier and result. No wall-clock in the resolved outcome — beat windows
+tier and result. No wall-clock in the resolved outcome - beat windows
 resolve against simulation/surface time the way the current holdout timing
 does (study it first). Zero-copy per-frame; the overlay animates from the
 module snapshot.
@@ -81,7 +81,7 @@ simplified, un-timed-or-generously-timed center input (still yellow-guided,
 still center-focus), so the cheat remains performable without fast motor
 demands. Document the fallback.
 
-### 3. Remove the collect button — auto-payout
+### 3. Remove the collect button - auto-payout
 
 Delete the manual collect step. When a hand resolves, pay out automatically
 after a short readable beat (the win reads, then credits land). The
@@ -154,7 +154,7 @@ report verbatim.
 
 ---
 
-## Execution record — 2026-07-27 23:29 -05:00
+## Execution record - 2026-07-27 23:29 -05:00
 
 - Implementation commit: `1871b0e1` (`Rework video poker holdout flow`).
 - Archive commit: this archival commit.

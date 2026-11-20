@@ -1,4 +1,4 @@
-# AUD061-11 — Frozen candidate acceptance
+# AUD061-11 - Frozen candidate acceptance
 
 Specification: docs/todo/BTH_0.6.1_audit_work_orders.md.
 Started from and tested proposed candidate **fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc**, tree **2d49cb17f83379715435a2576473c5cba52728ff**. HEAD stayed at that SHA during these runs. Only reports/ledgers were edited; a guarded diff over scripts, data, scenes, assets, project/export settings and the exporter returned exit 0 with no output.

@@ -544,7 +544,7 @@ func _consume_production_action_channel(run_state: Variant, definition: Dictiona
 		var bankroll_after_once := int(run_state.bankroll)
 		var pre_save_authority := _persistent_scenario_authority(_dict(run_state.current_environment))
 		# Exercise the production save projection, exact integer transport, JSON
-		# boundary, and RunState restore—not merely a copied scenario sub-dictionary.
+		# boundary, and RunState restore-not merely a copied scenario sub-dictionary.
 		var encoded := RunSaveCodecScript.encode(run_state.to_dict())
 		var transported_value: Variant = JSON.parse_string(JSON.stringify(encoded))
 		var decoded := RunSaveCodecScript.decode(_dict(transported_value))

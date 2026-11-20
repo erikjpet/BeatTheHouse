@@ -16,7 +16,7 @@ one screen.
 This capture comes from a long two-day run through eight locations, several
 games, three lenders, and a high-roller finish at the Grand Casino.
 
-Still in development—but the whole night finally has a proper sendoff. What
+Still in development-but the whole night finally has a proper sendoff. What
 would you check first: the route, the score, or the heat timeline?
 
 #indiegame #indiedev #godot #roguelike #pixelart #gamedev

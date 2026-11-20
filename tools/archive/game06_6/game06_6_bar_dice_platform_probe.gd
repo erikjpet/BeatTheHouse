@@ -131,7 +131,7 @@ func _die_box() -> StyleBoxFlat:
 
 func _update_canvas(trace: Dictionary) -> void:
 	var phase_id := str(trace.get("phase_id", "")); var money := _dict(trace.get("money", {})); var opponent := _dict(trace.get("opponent_actor", {})); var tell := _dict(opponent.get("tell", {})); var interruption := _dict(trace.get("interruption", {}))
-	_title.text = "BAR DICE — %s" % phase_id.replace("_", " ").to_upper()
+	_title.text = "BAR DICE - %s" % phase_id.replace("_", " ").to_upper()
 	_status.text = "Cover: %s  |  Energy: %s  |  Outcome: %s" % [str(trace.get("cover_state", "")), str(trace.get("energy_tier", "")), str(trace.get("outcome", "unresolved"))]
 	_opponent.text = "MARA ACROSS THE BAR\n%s / %s" % [str(opponent.get("pose", "")), str(opponent.get("behavior_state", ""))]
 	_tell.text = "TELL: %s\nSource: %s\n%s" % [str(tell.get("id", "")), str(tell.get("source_fact", "")), str(tell.get("reliability", ""))]
@@ -142,7 +142,7 @@ func _update_canvas(trace: Dictionary) -> void:
 	for index in range(_onlookers.size()): _onlookers[index].visible = index < crowd_count
 	_bar.color = Color("723b3b") if bool(interruption.get("active", false)) else Color("34536b") if bool(trace.get("colorblind", false)) else Color("513525")
 	var controls := _array(trace.get("available_controls", []))
-	for index in range(_buttons.size()): _buttons[index].text = str(controls[index]).replace("_", " ") if index < controls.size() else "—"; _buttons[index].disabled = index >= controls.size()
+	for index in range(_buttons.size()): _buttons[index].text = str(controls[index]).replace("_", " ") if index < controls.size() else "-"; _buttons[index].disabled = index >= controls.size()
 	_canvas.scale = Vector2(0.78, 0.78) if bool(trace.get("small_screen", false)) else Vector2.ONE
 	_canvas.modulate = Color(0.9, 0.9, 0.9) if bool(trace.get("reduced_motion", false)) else Color.WHITE
 	if not controls.is_empty(): _buttons[0].grab_focus()

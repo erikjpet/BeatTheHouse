@@ -1,9 +1,9 @@
-Status: DONE — absorbed and completed by `fix06_28` on 2026-09-07
+Status: DONE - absorbed and completed by `fix06_28` on 2026-09-07
 Board row: `env06_9` in `docs/todo/README_0_6_board.md`
 Origin: the two P1 findings from the `env06_8` second review (`REJECT 9c4196dd`, 2026-09-06)
 Owner decision: `env06_8` was split on 2026-09-06; its structural half lands separately, this is its visual half
 
-# Agent Prompt — 0.6 env06_9: Visual Consequence and Object Identifiability
+# Agent Prompt - 0.6 env06_9: Visual Consequence and Object Identifiability
 
 **Archive note:** This prompt preserves the original parked scope and decision
 questions. The owner later set the playability bar, and `fix06_28` absorbed and
@@ -20,14 +20,14 @@ sampled contact sheets:
   45 unchanged settled-room rasters, 3 failed cue/event consumer receipts, 31
   missing action-definition receipts, 27 missing before/after rasters, 12 missing
   created objects, 9 projection failures.
-- **Objects are not reliably identifiable without their labels** — sampled sheets
+- **Objects are not reliably identifiable without their labels** - sampled sheets
   repeatedly reuse generic note, screen and fixture glyphs.
 
 `env06_8` was rejected twice against this bar before the owner determined the bar
 was unreachable from that row's scope. The findings were never disputed. Only
 their ownership changed.
 
-## 2. Root cause — established, do not re-derive
+## 2. Root cause - established, do not re-derive
 
 Both findings share one mechanism in `scripts/ui/pixel_scene_canvas.gd`:
 
@@ -39,7 +39,7 @@ func _fallback_event_prop(visual_key: String, icon_key: String) -> String:
 
 Consequences:
 
-1. `change_scene_object` — the dominant scenario consequence handler, 360 uses —
+1. `change_scene_object` - the dominant scenario consequence handler, 360 uses -
    changes an object's `state`, which changes its `description_variants` entry
    and therefore its panel text. It **cannot** change the object's glyph. A
    settled-room raster is therefore byte-identical before and after the action,
@@ -55,7 +55,7 @@ Consequences:
    collapse onto the same glyph.
 
 A replication of the first seven keyword rules put roughly 300 distinct object
-labels in the generic tail. Treat that as an **upper bound**, not an exact count —
+labels in the generic tail. Treat that as an **upper bound**, not an exact count -
 the real ladder has more rules. Re-derive it properly when this row is claimed.
 
 **The implication for scoping:** this is renderer and art work, not scenario-data
@@ -63,7 +63,7 @@ work. Fixing it means either teaching prop selection to read `state`, authoring
 `icon_key` for the unauthored objects, expanding the glyph vocabulary, or some
 combination. That is why it is its own row.
 
-## 3. Owner questions — this row stays parked until these are answered
+## 3. Owner questions - this row stays parked until these are answered
 
 1. **What counts as "visible consequence"?** The owner's original `env06_8`
    ruling said acting on an object must produce "a conversation, an item, a
@@ -77,7 +77,7 @@ combination. That is why it is its own row.
    contained pass.
 3. **Is this 0.6 scope at all?** The alternative is the post-playtest polish
    pass, alongside `voice06_1`. Distinct per-object art is exactly the kind of
-   thing the owner's own playtest is best placed to prioritize — they will know
+   thing the owner's own playtest is best placed to prioritize - they will know
    which rooms actually feel indistinct in play.
 
 Record the answers here before claiming the row.

@@ -1,4 +1,4 @@
-# Deprecated-code audit continuation — 2026-11-04
+# Deprecated-code audit continuation - 2026-11-04
 
 Task `BTH061-AUDIT-001` / `BTH-DEPRECATED-CODE-AUDIT-001` is reopened.
 Baseline: `ecdccee418c2297a0fb864d00c902a4c159dfd5c`.

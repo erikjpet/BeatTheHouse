@@ -1,4 +1,4 @@
-# QOL-05 — Copy build and save diagnostics
+# QOL-05 - Copy build and save diagnostics
 
 Started from main **1874c946d0b379410f99c70104e2d798be1640c0**(QOL-04 receipt); NEXT d258f3dc14866f2e8bfd9ee35e3e707507acea95. Specification: [audit work order](../todo/BTH_0.6.1_audit_work_orders.md#qol-05--no-way-to-copy-version-and-save-diagnostics).
 

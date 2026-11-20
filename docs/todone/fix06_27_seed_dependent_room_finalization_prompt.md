@@ -1,9 +1,9 @@
-Status: DONE — completed 2026-09-07; archived after main integration reconciliation
-Priority: P1 gameplay defect — reintroduces the original dead-room symptom on a minority of seeds
+Status: DONE - completed 2026-09-07; archived after main integration reconciliation
+Priority: P1 gameplay defect - reintroduces the original dead-room symptom on a minority of seeds
 Board row: `fix06_27` in `docs/todo/README_0_6_board.md`
 Found: 2026-09-07 by PM verification of the `playtest06_1` handoff claim
 
-# Agent Prompt — fix06_27: Seed-Dependent Room Finalization Failures
+# Agent Prompt - fix06_27: Seed-Dependent Room Finalization Failures
 
 Copy everything below this line into one agent.
 
@@ -13,7 +13,7 @@ Copy everything below this line into one agent.
 
 The `playtest06_1` handoff records **55/55 rooms finalizing**. That result is real
 but **seed-specific**. Independent PM verification on `main` at `152db3c7` swept
-five seed families across all 55 sequence scenarios — 275 room instantiations —
+five seed families across all 55 sequence scenarios - 275 room instantiations -
 and found three failures:
 
 | Seed family | Result |
@@ -30,7 +30,7 @@ degraded `trusted_base_result` fallback when finalization fails,
 `scenario_semantic_ready` stays false, so the player gets unpopulated object
 panels *and* `scenario_preflight_environment_change()` refuses to let them travel
 out. This is the owner's original reported bug, reduced from 8 unconditional
-rooms to a seed-dependent minority — not eliminated.
+rooms to a seed-dependent minority - not eliminated.
 
 ## 2. The three observed failures
 
@@ -79,8 +79,8 @@ It was a point fix. At least one more room has the same problem.
      scenario object label rects, so a seeded event never lands on an authored
      object's label;
    - or reserve authored label bands that event placement may not occupy;
-   - or make finalization degrade gracefully for a *label* collision — keeping
-     the room live and readable — while still failing closed for genuine access
+   - or make finalization degrade gracefully for a *label* collision - keeping
+     the room live and readable - while still failing closed for genuine access
      and hit-authority defects.
    The third is the smallest change but weakens a guarantee, so it needs an
    explicit recorded decision rather than a quiet edit. **Do not simply relax the
@@ -98,7 +98,7 @@ It was a point fix. At least one more room has the same problem.
 - Case A has an explicit recorded design decision, not a silently relaxed rule.
 - The multi-seed gate is checked in and green on the exact head.
 - No change to money, RNG, RTP, payouts, odds, schema or migration.
-- No scenario object deleted to make a collision go away — object counts do not
+- No scenario object deleted to make a collision go away - object counts do not
   regress.
 
 ## 5. Standards
@@ -111,15 +111,15 @@ It was a point fix. At least one more room has the same problem.
 - **Hidden state is absolute.** A leak is an automatic P0.
 - **Any harness that travels between rooms must finalize on arrival** exactly as
   the production host does. Five recorded false-failure incidents in this
-  program — see `docs/todone/playtest06_current_source_bug_investigation_2026-09-07.md`
+  program - see `docs/todone/playtest06_current_source_bug_investigation_2026-09-07.md`
   for the most recent, a wrong-target click in `tools/foundation_visual_qa.gd`.
 - Delete nothing; leave no diagnostics in the tree.
 - No release activity: no version bump, tag, packaging, or publish.
 
 ## 6. Related, separately tracked
 
-- `docs/todone/playtest06_current_source_bug_investigation_2026-09-07.md` — the
+- `docs/todone/playtest06_current_source_bug_investigation_2026-09-07.md` - the
   `foundation_visual_qa.gd` wrong-target defect (test infrastructure, already
   root-caused, fix specified, not yet applied).
-- `docs/todone/env06_9_visual_consequence_and_object_identity_prompt.md` — absorbed and completed by `fix06_28`
+- `docs/todone/env06_9_visual_consequence_and_object_identity_prompt.md` - absorbed and completed by `fix06_28`
   visual identity work.

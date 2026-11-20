@@ -155,7 +155,7 @@ resulting pushed main/NEXT publication state is recorded separately in
 task-14/outcome-custody-followup.json. This test/documentation follow-up changes
 no production runtime behavior.
 
-## Remaining evidence limit review — 2026-11-04
+## Remaining evidence limit review - 2026-11-04
 
 **The parent remains Open.** Review at source
 `2954398c011ed4a01d6894b8fe129dba5bb213f6` found no additional ordinary-action

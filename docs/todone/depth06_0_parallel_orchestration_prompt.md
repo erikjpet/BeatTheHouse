@@ -1,4 +1,4 @@
-# Orchestration Prompt — Complete the Living Games and Environment Depth Program
+# Orchestration Prompt - Complete the Living Games and Environment Depth Program
 
 Copy everything below this line into one primary Codex agent. That agent is the
 program integrator and must employ sub-agents; it is not permitted to implement
@@ -127,7 +127,7 @@ Every worker assignment must state:
 
 ## 4. Dependency-aware execution waves
 
-### Wave 1 — dynamic runtime
+### Wave 1 - dynamic runtime
 
 Claim `env06_6` on the board. Assign its implementation to a runtime worker in
 `codex/depth-env-runtime`. While it works, use remaining agents for read-only
@@ -147,7 +147,7 @@ branch, run runtime smoke/regression gates there, update/archive `env06_6`, and
 record the integration commit. Only this accepted commit may be the base for
 consumer implementation branches.
 
-### Wave 2 — parallel consumers
+### Wave 2 - parallel consumers
 
 From the accepted runtime integration commit, claim and start `craps06_3`,
 `crew06_10`, and the environment-content packages concurrently. Keep all
@@ -193,7 +193,7 @@ sub-agents for isolated rule/property tests, presentation/accessibility, policy
 analysis, or capture review when slots become available, but one branch owner
 remains accountable for coherent implementation and commit history.
 
-### Wave 3 — package review and catalog assembly
+### Wave 3 - package review and catalog assembly
 
 Independently review each scenario package before assembly. Accepted package
 heads are then rebased or merged onto the current catalog-integration base in a
@@ -213,7 +213,7 @@ practical, re-review, and reintegrate. Only then merge the catalog-integration
 branch with `--no-ff` into the main program integration branch and close/archive
 `env06_7`.
 
-### Wave 4 — integrate Craps and poker
+### Wave 4 - integrate Craps and poker
 
 Each game branch requires independent review and all focused gates before it is
 eligible. Merge accepted game branches one at a time with `--no-ff`, preserving
@@ -225,7 +225,7 @@ cross-system remediation commit; never mask it in the merge resolution.
 Update/archive `craps06_3` and `crew06_10` only after their accepted heads and
 post-merge integration gates are recorded.
 
-### Wave 5 — independent release gate
+### Wave 5 - independent release gate
 
 Claim `depth06_1`. Spawn at least two reviewers who did not own the relevant
 implementation:

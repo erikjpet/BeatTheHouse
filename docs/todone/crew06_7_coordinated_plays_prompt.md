@@ -8,7 +8,7 @@ Board row: `crew06_7` in `docs/todo/README_0_6_board.md`
 - **Verification:** Focused five-play contract and sustained heat-pressure harness PASS; combined Contracts, Systems, UI, 10-seed determinism, and zero-warning visual QA PASS.
 - **Deviations:** None. Play tuning is centralized in the approved `data/crew/plays.json` schema.
 
-# Agent Prompt — 0.6 crew06_7: Coordinated Plays (Crew in the Casino)
+# Agent Prompt - 0.6 crew06_7: Coordinated Plays (Crew in the Casino)
 
 Copy everything below this line into the agent.
 
@@ -16,9 +16,9 @@ Copy everything below this line into the agent.
 
 You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript
 casino roguelike (Web/itch.io + Windows, 1280×720). Binding design
-contract: `docs/plans/0.6_living_world_roadmap.md` — Pillar 3
+contract: `docs/plans/0.6_living_world_roadmap.md` - Pillar 3
 "Coordinated plays": five limited-use, visible-cost tools available
-when a `made` member is present in-venue — never passive buffs.
+when a `made` member is present in-venue - never passive buffs.
 Blackjack's count/suspicion systems and the skill-cheat pattern
 (`docs/plans/skill_based_cheating_methods_plan.md`) are the
 integration substrate. This prompt is self-contained for rules and
@@ -39,7 +39,7 @@ scope.
 ## Dependencies
 
 `crew06_1` + `crew06_5` DONE (rank/presence). Verify by code which
-members can be in-venue (itineraries/residency) — a play needs its
+members can be in-venue (itineraries/residency) - a play needs its
 member physically present at the venue, and presence must be checkable.
 
 ## Task
@@ -60,24 +60,24 @@ member physically present at the venue, and presence must be checkable.
 
 1. **Spotter** (Switch, blackjack): during the window, count accuracy
    assistance (the existing count-challenge surface gets a
-   confidence assist — never auto-answers) + suspicion accrual
+   confidence assist - never auto-answers) + suspicion accrual
    reduced (data multiplier). Detection risk: a pit sweep during the
    window burns the play and adds heat.
 2. **Distraction** (Velvet or Lucky): once-per-activation immediate
    heat/suspicion dump at the current venue (data amount) with a
    scene beat; the member is "spent" (cooldown) afterward.
 3. **Big Player call-in** (needs Spotter active): walk into a
-   pre-warmed shoe — next blackjack session starts at the spotted
+   pre-warmed shoe - next blackjack session starts at the spotted
    count state; pairs the two plays into the classic team structure.
 4. **Chip Dump** (any member, baccarat): partner-play moves a
    data-bounded chip amount between player and member discreetly
-   (money movement with a laundering flavor — a transfer with a fee
+   (money movement with a laundering flavor - a transfer with a fee
    and a detection roll, not free money).
 5. **Table Flood** (any two members present): the crew crowds the
-   table for a window — camouflage: cheat-detection odds reduced
+   table for a window - camouflage: cheat-detection odds reduced
    (data multiplier) for the window's duration.
 - Grievance seam: letting a Distraction member eat a resulting
-  security consequence (the escalation lands while they're spent —
+  security consequence (the escalation lands while they're spent -
   detectable condition) writes `distraction_heat_dumped` via the
   crew06_1 taxonomy.
 
@@ -92,12 +92,12 @@ member physically present at the venue, and presence must be checkable.
 - Never passive: no play effect without explicit activation; all
   effects windowed and visible.
 - Game cores untouched: plays modify inputs the games already expose
-  (suspicion rates, count surfaces, detection odds, transfers) — no
+  (suspicion rates, count surfaces, detection odds, transfers) - no
   forked game logic; where a game lacks the seam, add the generic
   seam, never a special case.
 - Determinism: windows in action boundaries; detection rolls seeded.
 - Balance: each play's numbers in data with documented intent; the
-  full five together must not trivialize heat — cap concurrent
+  full five together must not trivialize heat - cap concurrent
   active plays at one (+ Big Player pairing) and prove heat pressure
   survives in the harness.
 - Perf/save/style/voice as other prompts. Suite timeout = max(300s,

@@ -1,4 +1,4 @@
-Status: DONE — 2026-08-24
+Status: DONE - 2026-08-24
 Board row: `pusherv3_4` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record
@@ -8,14 +8,14 @@ Board row: `pusherv3_4` in `docs/todo/README_0_6_board.md`
 - **Verification:** `tools/check_godot.ps1 -RequireGodot -FoundationSuite all -NoImport` PASS (`.tmp/test_reports/20260824_230744_smoke/summary.json`); focused `coin_pusher` suite PASS (`.tmp/test_reports/20260824_225350_smoke/summary.json`); `tools/foundation_performance_probe.ps1 -RequireGodot` PASS, including the 300-body live sequence; `tools/foundation_visual_qa.ps1 -RequireGodot` PASS; 9/9 GL cabinet-feel capture PASS (`.tmp/pusherv3_4_final_cabinet_gl/manifest.json`); all-machine delivery-board capture PASS (`.tmp/pusherv3_4_final_delivery/manifest.json`); exact Windows native-v3/Web GDScript-v3 input parity PASS (`.tmp/pusherv3_4_final_input_parity/manifest.json`, payload `1d60cc839f3c9264de792cbb030276e3ecfa6b8a2a3812f27a0fc3f90e67f179`); 10-seed/two-process determinism PASS (510 checkpoints, combined hash `2576813936`); 200,000 accepted drops per machine EV aggregation PASS (`.tmp/pusherv3_4_final_ev/manifest.json`): Quarter Falls `0.818655`, Jackpot Ridge `0.994905`, Vault Drop `0.848435` physical ROI.
 - **Deviations:** No gameplay or economy deviation. The first EV wrapper pass misread completed Windows process handles as exit `-2`; all 24 shards had already emitted PASS reports with empty stderr, so the documented `-AggregateOnly` path revalidated those exact saved reports and produced the passing manifest. No geometry retuning was needed because all three measured bands passed. The decorative tray pile is capped at 12 drawn coins while its exact count/value readout and physical state remain unchanged, preserving the expanded surface's 300-body draw budget.
 
-# Agent Prompt — pusherv3_4: Variations, Integration, Closure
+# Agent Prompt - pusherv3_4: Variations, Integration, Closure
 
 Copy everything below this line into the agent.
 
 ---
 
 You are working in `D:\Projects\Beat-The-House`. **Binding design
-contract:** `docs/plans/coin_pusher_v3_machine_rework_plan.md` —
+contract:** `docs/plans/coin_pusher_v3_machine_rework_plan.md` -
 sections 3.5, 5.3–5.5, 7, 8, 9. This stage puts the other machines on
 the new physics, re-wires the town/economy integrations, and closes
 the coin pusher rebuild.
@@ -35,7 +35,7 @@ the coin pusher rebuild.
 
 ## Task
 
-### 0A. Amendment 6.3 — real-weight gravity and impact feel
+### 0A. Amendment 6.3 - real-weight gravity and impact feel
 
 - Rework the shared deterministic gravity/contact model so inserted coins and
   coins falling between platform/deck/tray levels accelerate and settle with
@@ -53,7 +53,7 @@ the coin pusher rebuild.
   and reference/native parity. Refresh player-eye captures for insert-board,
   row-to-row, and tray falls in normal and reduced-motion modes.
 
-### 0B. Amendment 6.4 — playfield-dominant environment composition
+### 0B. Amendment 6.4 - playfield-dominant environment composition
 
 - Redesign the 900×430 pusher surface so the physical delivery board, moving
   platform, lower deck, falling bodies, and tray are the dominant visual area.
@@ -69,7 +69,7 @@ the coin pusher rebuild.
 - Add layout assertions and refreshed per-machine captures proving the new
   composition; stale small-window golden geometry is not an acceptance target.
 
-### 0. Amendment 6.2 — rear-fed visible delivery surface
+### 0. Amendment 6.2 - rear-fed visible delivery surface
 
 - Replace the rejected direct-to-lower-deck landing window. Every machine
   releases at the rear delivery board and every inserted coin's first support
@@ -94,14 +94,14 @@ the coin pusher rebuild.
 - Pucks are physical bodies on the deck (mass ≈ 3× coin), seeded
   from sub-game data; multiplier/lock/jam logic consumes PHYSICAL
   exit and position events only. A jammed lane is a puck physically
-  sitting in a hole mouth — remove it by pushing it out. Ridge's
+  sitting in a hole mouth - remove it by pushing it out. Ridge's
   multiplier scales tray-value crediting of coins that fell while
-  armed (plan 5.5) — it never moves a coin.
+  armed (plan 5.5) - it never moves a coin.
 - A physically banked lock puck preserves the currently armed multiplier
   against expiry for one complete 240-tick stroke cycle. It does not stop,
   slow, or otherwise steer the motor/platform physics.
 - Ridge Run (three multipliers banked within one stroke cycle) sets
-  `rate = 2` for its bonus cycles — a physically faster motor, with
+  `rate = 2` for its bonus cycles - a physically faster motor, with
   the motor-pitch audio following.
 
 ### 2. Vault Drop on the real machine (plan 5.5)
@@ -112,13 +112,13 @@ the coin pusher rebuild.
   door live on the cabinet backglass (stage 3 reserved the space).
 - Apparatus per its definition (rail_slot with its own peg layout
   until the third machine's design arrives; the schema fields for a
-  future custom apparatus stay open — owner will design it later).
+  future custom apparatus stay open - owner will design it later).
 
 ### 3. Integration re-wiring (plan 5.3–5.4)
 
 - Nudge in continuous time: impulse to all bodies per force ×
   direction data; tolerance, tell ladder (600-tick rung decay), hard
-  alarm night-lock (motor stops, cabinet dark, slot refuses — player
+  alarm night-lock (motor stops, cabinet dark, slot refuses - player
   never ejected). Skill stop stays outside the tell system entirely.
 - Cheat items against the new state: cold_quarters (mass), shim
   (gutter recovery re-implemented as a physical return: the coin
@@ -149,7 +149,7 @@ the coin pusher rebuild.
 
 ## Hard rules
 
-- Three machines must play as three machines — apparatus, geometry,
+- Three machines must play as three machines - apparatus, geometry,
   cabinet, and sub-game all differ by DATA; any variation-specific
   branch in solver or renderer code is a defect.
 - Sub-games consume physics; they never steer it.

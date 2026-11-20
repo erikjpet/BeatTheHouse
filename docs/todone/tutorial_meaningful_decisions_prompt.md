@@ -1,10 +1,10 @@
-# Agent Prompt — Meaningful Destination Decisions (+ tutorial route branch)
+# Agent Prompt - Meaningful Destination Decisions (+ tutorial route branch)
 
 Last reconciled: 2026-08-05
 Release target: 0.5.0
 Status: **PARTIAL / WHOLE-GAME DECISION CONTRACT OPEN**
 
-## Execution record — 2026-08-05
+## Execution record - 2026-08-05
 
 Status: **COMPLETE**
 
@@ -46,22 +46,22 @@ Copy everything below the line into the worker agent. This is one of two
 feature prompts split out of the tutorial playtest pass
 (`tutorial_playtest_fixes_prompt.md`, notes 10 and 26) because it is a design
 feature, not a tweak. The map-mechanics bugs (hover-focus, seen-node
-persistence, backtracking, scroll — H-1..H-4) stay in that sibling pass;
+persistence, backtracking, scroll - H-1..H-4) stay in that sibling pass;
 this prompt is about making the CHOICE matter.
 
 ## Decisions to confirm at kickoff (owner may answer inline; else use the
 ## recommended default)
 
 1. **Commitment:** are destination choices one-way (you give something up by
-   going — recommended, that is what creates weight) or freely reversible?
+   going - recommended, that is what creates weight) or freely reversible?
    This interacts with backtracking (H-3 in the sibling pass): recommended is
    that you CAN travel back where a route exists, but each choice still costs
    time/opportunity so it is not free.
 2. **How divergent are the two tutorial paths?** Recommended: meaningfully
-   different — the gas-station casino is the safer, smaller intro (fewer games,
+   different - the gas-station casino is the safer, smaller intro (fewer games,
    low heat, gentle money); straight underground is higher stakes (more games,
    faster heat, quicker toward the Grand Casino invite line). Confirm the shape.
-3. **How many real decision points** in the guided run — just the one branch
+3. **How many real decision points** in the guided run - just the one branch
    (recommended for the tutorial), or a couple?
 
 Proceed on the recommended defaults if not told otherwise; note the choices in
@@ -75,11 +75,11 @@ map model `scripts/core/world_map.gd`, `scripts/ui/foundation_travel_view_model.
 events `data/events/events.json`; the tutorial engine `scripts/core/tutorial_flow.gd`
 + `data/tutorial/lessons.json`.
 
-## Part 1 — Make the destination decision impactful (whole game)
+## Part 1 - Make the destination decision impactful (whole game)
 
 Right now choosing where to go feels inconsequential. Give the decision weight:
-- Destinations lead to **meaningfully different content and consequence** — a
-  different mix of games, events, characters, heat, and reward — not the same
+- Destinations lead to **meaningfully different content and consequence** - a
+  different mix of games, events, characters, heat, and reward - not the same
   loop with a different backdrop.
 - The pre-travel presentation must make the trade **legible**: what this
   destination offers AND what you are giving up by not taking the other (clear
@@ -87,14 +87,14 @@ Right now choosing where to go feels inconsequential. Give the decision weight:
 - Keep it honest to the sim: consequences fire in data
   (`routes.json` / `events.json`), determinism preserved. Coordinate with the
   sibling pass's backtracking rule (H-3) so "impactful" does not mean "you can
-  never see the other place" — it means the choice costs something.
+  never see the other place" - it means the choice costs something.
 
-## Part 2 — The tutorial route branch
+## Part 2 - The tutorial route branch
 
 In the guided run, add the real fork the playtest asked for: **gas-station
 casino** vs **straight underground**.
 - Both branches are selectable, deterministic, and dead-end free (a caught or
-  broke state still continues — see B-4 in the sibling pass).
+  broke state still continues - see B-4 in the sibling pass).
 - Each branch teaches through genuinely different early play per decision 2
   above, and both converge back into the tutorial's finale so no path is a
   worse tutorial.
@@ -125,7 +125,7 @@ casino** vs **straight underground**.
 - `tools\validate_project.ps1`
 - every supported `-FoundationSuite` (systems + ui)
 - `tools\foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10`
-- `tools\foundation_mouse_batch_playtest.ps1` (strict — no soft-locks)
+- `tools\foundation_mouse_batch_playtest.ps1` (strict - no soft-locks)
 - `tools\foundation_visual_qa.ps1`
 
 ## On completion

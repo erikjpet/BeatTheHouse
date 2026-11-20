@@ -1,4 +1,4 @@
-# BTH061-FIRST-LESSON-CHOICE-001 — source candidate
+# BTH061-FIRST-LESSON-CHOICE-001 - source candidate
 
 Base: `89403f389a5807e050a450cd27b1bd93b3a4a41e` (current main at checkout creation, 2026-11-19). This is an isolated, uncommitted source candidate. No engine, browser, build, main push, NEXT deploy or protected profile was used for this candidate.
 

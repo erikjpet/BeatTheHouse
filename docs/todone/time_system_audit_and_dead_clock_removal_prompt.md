@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-12
 - **Completion/implementation commits:** `d579aa97`
-- **Verification:** PASS — powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; powershell -ExecutionPolicy Bypass -File tools/foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; powershell -ExecutionPolicy Bypass -File tools/foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — Time System Audit: Player-Correct Behavior, No Softlocks, Dead Clock Scaffolding Removed
+# Agent Prompt - Time System Audit: Player-Correct Behavior, No Softlocks, Dead Clock Scaffolding Removed
 
 Copy everything below this line into the agent.
 
@@ -31,7 +31,7 @@ stuck-state sweep has a `broke_closing_walk_fallback` scenario).
 
 - `_run_clock_should_tick` (`foundation_main.gd:409-425`) has ZERO callers.
 - `_advance_run_game_clock` (`:405-406`) runs every `_process` frame and
-  only zeroes `run_clock_minute_accumulator` — which nothing reads.
+  only zeroes `run_clock_minute_accumulator` - which nothing reads.
 - Nine `_pause_run_clock_for_ui_preview` call sites (`:428-429`, `:1088`,
   `:1141`, `:1168`, `:7326`, `:7337`, `:7348`, `:7694`) maintain
   `run_clock_ui_preview_pause_frames`, consumed only by the dead function.
@@ -46,7 +46,7 @@ audit that fed it.
 Delete `_run_clock_should_tick`, `_advance_run_game_clock` (and its
 `_process` call), `_pause_run_clock_for_ui_preview` and all nine call
 sites, and the `run_clock_minute_accumulator` /
-`run_clock_ui_preview_pause_frames` variables plus their reset sites —
+`run_clock_ui_preview_pause_frames` variables plus their reset sites -
 UNLESS your audit (below) finds a live consumer this analysis missed, in
 which case keep exactly what is consumed and report it.
 
@@ -81,12 +81,12 @@ test where coverage is missing:
    - edge case to explicitly test: ALL neighboring venues also closed at
      that minute → the player must still have somewhere to go (24h venues
      exist: motel, back_alley, gas_station_casino,
-     small_underground_casino, grand_casino — verify at least one is
+     small_underground_casino, grand_casino - verify at least one is
      always reachable from every venue at every minute given current
      data; if a gap exists, fix it in data, not code, and report it);
    - mid-presentation case: closing during an active game presentation
      must not strand the game surface (grace rules apply).
-5. **Determinism.** Time advancement is action-driven only — confirm no
+5. **Determinism.** Time advancement is action-driven only - confirm no
    wall-clock (`Time.get_ticks_*`, `get_datetime_*`) leaks into
    simulation state anywhere in `scripts/core/` (presentation timing in
    UI is fine; the daily-challenge seed derivation from the system date

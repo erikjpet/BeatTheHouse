@@ -159,8 +159,8 @@ Lender characters also declare only the authoritative lender reference:
 ```
 
 Do not duplicate loan amounts in character data. At resolution time the
-character snapshot receives `lender_terms`—amount, range, interest, deadline,
-favor count, and default consequence—from `data/debt/lenders.json`. This keeps
+character snapshot receives `lender_terms`-amount, range, interest, deadline,
+favor count, and default consequence-from `data/debt/lenders.json`. This keeps
 personality and visual design reusable while lender mechanics stay
 authoritative.
 

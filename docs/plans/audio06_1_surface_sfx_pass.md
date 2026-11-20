@@ -3,7 +3,7 @@
 Date: 2026-09-03
 Independent closeout branch: `codex/audio-final-closeout`
 Final integrated base: `0937922c277b52a7973c09db1841e78b87edfe9f`
-Status: **COMPLETE — accepted and archived**
+Status: **COMPLETE - accepted and archived**
 
 ## Outcome
 
@@ -54,15 +54,15 @@ prewarm queue, so no manifest parsing or bulk sound generation occurs per frame.
 
 ## Independent verification
 
-- `tools/archive/audio06_1/audio06_1_surface_sfx_audit.gd`: PASS on the exact integrated candidate — 13
+- `tools/archive/audio06_1/audio06_1_surface_sfx_audit.gd`: PASS on the exact integrated candidate - 13
   profiles, 80 complete generated/delivered waveforms with signal, ten seed
   traces, native/Web selection parity, paired hidden-state observers, strict
   negative manifest cases, hostile capability/rebind cases, deterministic
   same/global stealing, bounded native/Web pools, SFX-bus routing, visual/text
   counterparts, and idle-frame no-event/no-load behavior.
-- Focused Foundation combined runner: PASS — `music_fx_foundation` (78 ms) and
+- Focused Foundation combined runner: PASS - `music_fx_foundation` (78 ms) and
   `music_stem_director_foundation` (248 ms).
-- `tools/roulette_audio_audit.gd`: PASS — 14 events, 254,016 PCM bytes, one
+- `tools/roulette_audio_audit.gd`: PASS - 14 events, 254,016 PCM bytes, one
   intentional loop.
 - `tools/validate_project.ps1 -Quiet`: PASS twice through the supported harness.
 - Godot import: PASS. Non-test GDScript load sweep: PASS.

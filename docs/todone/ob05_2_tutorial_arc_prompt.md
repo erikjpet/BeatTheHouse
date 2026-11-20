@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-17
 - **Completion/implementation commits:** `7dbf77ba`
-- **Verification:** PASS — tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_visual_qa.ps1; tools/foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_visual_qa.ps1; tools/foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — Onboarding Slice 2: The First Card Tutorial Arc (Beats 1-5)
+# Agent Prompt - Onboarding Slice 2: The First Card Tutorial Arc (Beats 1-5)
 
 Copy everything below this line into the agent.
 
@@ -14,7 +14,7 @@ Copy everything below this line into the agent.
 You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript casino
 roguelike (Web/itch.io + Windows, 1280×720). This file is self-contained;
 the binding design contract is `docs/archive/0.5/plans/0.5_onboarding_tutorial_plan.md`
-Part 2 — read it first. REQUIRES: onboarding slice 1 (Coach engine) and
+Part 2 - read it first. REQUIRES: onboarding slice 1 (Coach engine) and
 the gc05 Grand Casino queue landed (invite gate, chips, Linda exist).
 Re-verify actual code; code reality wins.
 
@@ -23,7 +23,7 @@ Re-verify actual code; code reality wins.
 ### 1. Entry + lifecycle
 
 - A fresh profile (no run history, no collection, `tutorial_completed`
-  unset) auto-starts the tutorial when the player first starts a run —
+  unset) auto-starts the tutorial when the player first starts a run -
   framed as "First night in town", not as a menu mode.
 - `tutorial_first_card` challenge config in `data/challenges/
   challenges.json`: fixed tutorial seed, tutorial-scoped objective
@@ -34,7 +34,7 @@ Re-verify actual code; code reality wins.
   skipping sets `tutorial_completed`, and converts the run in place to
   a normal run OR exits to menu (implement whichever the run/challenge
   machinery supports cleanly WITHOUT hacks; if in-place conversion is
-  dirty, end-and-return-to-menu is the correct choice — state your
+  dirty, end-and-return-to-menu is the correct choice - state your
   choice and why). Replayable from the start screen ("Replay the
   lessons") on any profile.
 
@@ -48,7 +48,7 @@ until the path holds; record the audition evidence in `.tmp/`.
 1. **Home**: walk, inspect a container, view the empty loadout, leave
    via the map (venue hours pointed out on the map popup).
 2. **Corner store**: buy one cheap item with starting cash.
-3. **Bar**: guided low-stakes blackjack — wager, actions, result
+3. **Bar**: guided low-stakes blackjack - wager, actions, result
    presentation; heat introduced by watching the meter move; one-step
    count-challenge taste with a safety note.
 4. **Talk/event**: one scripted friendly talk-dock event teaching
@@ -59,7 +59,7 @@ until the path holds; record the audition evidence in `.tmp/`.
    exists without the tier-2 climb).
 
 Gating rules: each beat's gating lesson restricts interactables to the
-intended path but never soft-locks — the "skip lessons" escape is
+intended path but never soft-locks - the "skip lessons" escape is
 always reachable, and the stuck-state sweep must stay green on the
 tutorial config.
 

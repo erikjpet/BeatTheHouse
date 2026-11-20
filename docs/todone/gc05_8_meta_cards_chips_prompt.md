@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-16
 - **Completion/implementation commits:** `ed71b347`
-- **Verification:** PASS — tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_visual_qa.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_visual_qa.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — 0.5 Slice 8: Meta Loop — Players Card Items, Prestige Runs, Pawnable Chips
+# Agent Prompt - 0.5 Slice 8: Meta Loop - Players Card Items, Prestige Runs, Pawnable Chips
 
 Copy everything below this line into the agent.
 
@@ -18,7 +18,7 @@ lives in `scripts/core/meta_collection_service.gd` +
 schema (`data/collections/collections.json`); the meta home + Sal's Pawn
 Shop sell collection items for gold; run loadouts inject meta items into
 runs. This file is self-contained; the design contract is
-`docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` section 8 — read it first.
+`docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` section 8 - read it first.
 Requires slices 5 and 7 landed; re-verify actual code.
 
 ## Task
@@ -42,7 +42,7 @@ Requires slices 5 and 7 landed; re-verify actual code.
   from any usage-decay pass (audit the durability handling in the
   collection schema and carve the card class explicitly).
 - **Carrying a card into a run that is LOST destroys that card
-  forever** — removed from the meta collection at run failure, with a
+  forever** - removed from the meta collection at run failure, with a
   story/report line. Run success returns it (plus prestige effects
   below).
 
@@ -51,12 +51,12 @@ Requires slices 5 and 7 landed; re-verify actual code.
 - Carrying a Players Card in the run loadout makes the run a PRESTIGE
   run, recorded on run state:
   - **Recognition**: Grand Casino entry starts with reduced initial
-    attention *(tunable)* — the staff knows you.
+    attention *(tunable)* - the staff knows you.
   - **Expectations**: the clean-route heat ceiling tightens *(tunable)*
-    — recognized players are held to a higher standard.
+    - recognized players are held to a higher standard.
   - **Reward depth**: run-end collection drops roll at a higher value
     band / deeper subcategory access *(tunable; reuse the existing
-    drop-tier machinery — do not build a new tree this slice)*.
+    drop-tier machinery - do not build a new tree this slice)*.
 - Prestige status and its modifiers surface in the Cage window card
   block and the run report.
 
@@ -66,7 +66,7 @@ Requires slices 5 and 7 landed; re-verify actual code.
   into a "Grand Casino Chips" meta item (single stack instance, value =
   chip amount) granted alongside run-end drops.
 - Sal's Pawn Shop (meta) prices it for gold at a fenced rate *(tunable,
-  propose 60% of face)* — Sal fences what the casino wouldn't cash.
+  propose 60% of face)* - Sal fences what the casino wouldn't cash.
   Reuse the existing meta sale flow end-to-end.
 
 ## Hard rules

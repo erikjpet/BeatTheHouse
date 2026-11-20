@@ -30,7 +30,7 @@ Copy everything below this line into the agent.
 ---
 
 You are working in `D:\Projects\Beat-The-House` (Godot 4.6 GDScript casino
-roguelike — see CLAUDE.md). This promotes the parked Act-1 board task T5.3
+roguelike - see CLAUDE.md). This promotes the parked Act-1 board task T5.3
 (docs/plans/act_one_feature_complete_task_board.md:1163). Goal: finish what
 persists across runs and present it in the main-menu profile view.
 
@@ -39,12 +39,12 @@ persists across runs and present it in the main-menu profile view.
 - `scripts/core/profile_inventory.gd` (`ProfileInventory`): load/save,
   to_dict/from_dict, reference chips, item quantities, and challenge
   completion flags (`mark_challenge_completed` :102,
-  `has_challenge_completion` :115). This is the profile store — extend it,
+  `has_challenge_completion` :115). This is the profile store - extend it,
   do not create a second profile file.
 - `scripts/core/user_settings.gd`: the atomic-write pattern (:6, :67).
 - `MetaCollectionService` (item meta P0, if archived in docs/todone/): the
   newest persistence layer. **Alignment requirement:** profile and meta
-  stores must share the same discipline — schema_version field, atomic
+  stores must share the same discipline - schema_version field, atomic
   write, corrupt-file → defaults, normalize-on-load, unknown keys
   preserved. Match its conventions so future migrations are one pattern,
   not two. Do NOT merge the files; ProfileInventory stays the profile
@@ -54,22 +54,22 @@ persists across runs and present it in the main-menu profile view.
 
 ## Scope: what persists (Act 1 only)
 
-1. **Run history** — last 20 results, appended at every run end (victory
+1. **Run history** - last 20 results, appended at every run end (victory
    AND each failure route: bust, arrest, debt default, abandon): `seed`,
    `route/outcome`, `final_bankroll`, `day_count`, `duration_actions`,
-   completion timestamp (calendar date is acceptable here — this is
+   completion timestamp (calendar date is acceptable here - this is
    out-of-run bookkeeping, not run-deterministic state).
-2. **Daily runs** — current streak, best streak, best daily result. Streak
+2. **Daily runs** - current streak, best streak, best daily result. Streak
    rules: consecutive calendar days with a completed daily run; document
    the timezone/day-boundary rule in a comment.
-3. **Lifetime stats** — total runs, victories per route (players-card
+3. **Lifetime stats** - total runs, victories per route (players-card
    cashout vs showdown), biggest single win, total bankroll won/lost,
    games-played tallies per game id.
-4. **Challenge flags** — already exist; surface them (list completed
+4. **Challenge flags** - already exist; surface them (list completed
    challenges with titles in the profile view).
 
 Explicitly NOT in scope (T5.3's own boundary): unlockables, meta-currency,
-Act 2 unlocks — those belong to the item-meta and act-seam tracks.
+Act 2 unlocks - those belong to the item-meta and act-seam tracks.
 
 ## Presentation
 
@@ -83,7 +83,7 @@ architecture. Numbers format through existing helpers.
 One choke point: the run-conclusion path in foundation_main/run_state where
 victory and failure routes already resolve (grep the victory summary build
 and each terminal-state handler). Every terminal route calls the same
-`record_run_result(profile, snapshot)` helper — no per-route copies.
+`record_run_result(profile, snapshot)` helper - no per-route copies.
 
 ## Hard constraints
 

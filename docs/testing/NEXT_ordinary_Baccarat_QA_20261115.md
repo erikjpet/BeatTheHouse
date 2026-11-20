@@ -1,4 +1,4 @@
-# Ordinary High-Limit and Baccarat continuation — 2026-11-15
+# Ordinary High-Limit and Baccarat continuation - 2026-11-15
 
 Supplemental BTH061-006 native coverage; parent remains open. Executor /root/find_next_game_bugs on main-equivalent eb024000. Real normally generated seed NEXT-ORDINARY-20261115-O, admitted isolated E profiles and capped Jobs. No injected funds, unlocked gates, game outcome edits, or user save access. This is headless production Host/public-callback coverage, not rendered Web acceptance.
 

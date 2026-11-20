@@ -269,7 +269,7 @@ reports from different product trees are incomparable.
 
 Current overall verdict: **BLOCKED/UNVERIFIED**. No completion claim is made.
 
-## Superseding game06_3 reconciliation — 2026-09-02
+## Superseding game06_3 reconciliation - 2026-09-02
 
 This section supersedes only the historical game06_3/D3 entries above; it does
 not change the manifest's overall game06_8 verdict or any other row.
@@ -294,7 +294,7 @@ game06_8 must use the final closeout in `docs/plans/game06_3_handoff.md` for thi
 slice and must not revive the older D3 blocker unless a new regression is
 demonstrated on current `main`.
 
-## Superseding game06_6 reconciliation — 2026-09-02
+## Superseding game06_6 reconciliation - 2026-09-02
 
 This section supersedes only the historical game06_6/D7/D8 entries above; it
 does not change the manifest's overall game06_8 verdict or any other row.
@@ -321,7 +321,7 @@ purposes. game06_8 must consume the final closeout for this slice and must not
 revive the earlier contract-only/product-missing blocker unless a new
 regression is demonstrated on current `main`.
 
-## Superseding game06_7 reconciliation — 2026-09-02
+## Superseding game06_7 reconciliation - 2026-09-02
 
 This section supersedes only the historical game06_7/D9 entries above; it does
 not change the manifest's overall game06_8 verdict or any other row.
@@ -347,7 +347,7 @@ purposes. game06_8 must consume the final closeout for this slice and must not
 revive D9's obsolete product-missing blocker unless a new regression is
 demonstrated on current `main`.
 
-## Superseding game06_4 reconciliation — 2026-09-02
+## Superseding game06_4 reconciliation - 2026-09-02
 
 This section supersedes only the historical game06_4/D4/D5 entries above; it
 does not change the manifest's overall game06_8 verdict or any other row.
@@ -375,7 +375,7 @@ purposes. game06_8 must consume the final closeout for this slice and must not
 revive D4/D5's obsolete unselected-authority blockers unless a new regression
 is demonstrated on current `main`.
 
-## Superseding game06_1/game06_2/depth06_1 reconciliation — 2026-09-03
+## Superseding game06_1/game06_2/depth06_1 reconciliation - 2026-09-03
 
 This section supersedes the historical D1, D2, D10, D11 and D12 blockers. It
 does not erase the rejected or prestage heads above.
@@ -406,7 +406,7 @@ Accordingly, all Family 1 intake dependencies are **VERIFIED/DONE**. The final
 game06_8 verdict is governed by
 `docs/plans/game06_8_final_closeout.md`, not this historical prestage section.
 
-## Superseding final Family 1 closure — 2026-09-03
+## Superseding final Family 1 closure - 2026-09-03
 
 This section supersedes every remaining pending aggregate, Blackjack, and Crew
 entry in this historical intake manifest.

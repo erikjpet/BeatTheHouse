@@ -1,4 +1,4 @@
-# Ordinary Crew return-route reachability — 2026-11-15
+# Ordinary Crew return-route reachability - 2026-11-15
 
 Supplemental BTH061-006 coverage by /root/find_next_game_bugs, source44c5a71e. Two distinct copies of the same self-owned ordinary seed O after earned Bronze comp, not outcome rerolls. Native production Host/public controls only. No funds, reputation, route or world edits. All launches admitted under E and capped; completed with zero owned processes.
 

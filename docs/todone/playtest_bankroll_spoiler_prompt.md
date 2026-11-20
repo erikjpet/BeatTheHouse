@@ -19,14 +19,14 @@ Copy everything below this line into the agent.
 ---
 
 You are working in `D:\Projects\Beat-The-House` (Godot 4.6 GDScript casino
-roguelike — see CLAUDE.md). Owner playtest: **the player bankroll updates
+roguelike - see CLAUDE.md). Owner playtest: **the player bankroll updates
 the moment a bet starts/resolves internally, not after the result is
-visually apparent — spoiling game outcomes.** Watch the top bar during a
+visually apparent - spoiling game outcomes.** Watch the top bar during a
 roulette spin: the payout is readable before the wheel stops.
 
 ## The architectural constraint that shapes this fix (binding)
 
-The simulation deliberately settles at action time — e.g. roulette
+The simulation deliberately settles at action time - e.g. roulette
 resolves at spin START and the wheel animation plays out the already-known
 `last_result`. That design is what keeps runs deterministic, save-safe,
 and fuzz-proof, and it MUST NOT change. Do not delay actual settlement,
@@ -36,14 +36,14 @@ the *actual* bankroll until the result-reveal moment.
 
 ## Required behavior
 
-1. **Stake deduction may show immediately** — placing a bet visibly
+1. **Stake deduction may show immediately** - placing a bet visibly
    reducing the bankroll is correct and expected.
 2. **Winnings/net results appear only when the result is apparent**: the
    wheel has stopped, the cards are revealed, the dice have landed, the
    reels have settled, the tab is opened. Concretely: introduce a
    presented-bankroll display value in the host bar that syncs to the
    actual bankroll at result-presentation boundaries (each game already
-   has a payout-presentation moment/channel — reuse those signals; do not
+   has a payout-presentation moment/channel - reuse those signals; do not
    invent per-game timers).
 3. Applies to **all seven games**, including multi-stage flows: slot
    autoplay chains sync per spin presentation; pinball/buffalo bonuses
@@ -74,14 +74,14 @@ already run (ui/games), not an opt-in script.
 
 ## Verification
 
-1. Manual: roulette spin with a winning bet — bankroll holds steady until
+1. Manual: roulette spin with a winning bet - bankroll holds steady until
    the wheel stops, then pays; same spot-check in blackjack and slot
    autoplay.
 2. `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1`
 3. `tools\check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300`
    and `-FoundationSuite games -TimeoutSec 600` (with the new guard).
 4. `tools\foundation_determinism_probe.ps1 -RequireGodot -SeedCount 5
-   -SeedPrefix V04-BANKROLL` — proves the presentation layer touched
+   -SeedPrefix V04-BANKROLL` - proves the presentation layer touched
    nothing deterministic.
 5. Note that 0.4.0 packages remain stale until the repackage step.
    Archive to docs/todone/ with the execution record; update QUEUE.md and
@@ -91,7 +91,7 @@ already run (ui/games), not an opt-in script.
 
 1. RunState/simulation untouched; presented value is derived, never
    serialized, never read by game logic.
-2. One shared presented-bankroll mechanism in the host — not seven
+2. One shared presented-bankroll mechanism in the host - not seven
    per-game copies.
 3. Zero per-frame allocations; sync on presentation events, not polling.
 4. Match house style: tabs, typed GDScript, sparse constraint comments.

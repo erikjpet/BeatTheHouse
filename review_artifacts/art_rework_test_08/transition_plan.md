@@ -22,12 +22,12 @@ This prevents ghosted architecture, shifting platforms, or double furniture duri
 
 ## Planned time states
 
-1. `midnight` — restored Test 04 art
-2. `dawn` — dark navy/magenta room with a pale cyan horizon and practical lights still active
-3. `morning` — softened daylight, reduced neon, visible local materials
-4. `noon` — restrained colorful daytime state, never high-key white
-5. `golden_hour` — coral and amber directional light with long graphic shadows
-6. `dusk` — cobalt sky, magenta horizon, practical lights activating
+1. `midnight` - restored Test 04 art
+2. `dawn` - dark navy/magenta room with a pale cyan horizon and practical lights still active
+3. `morning` - softened daylight, reduced neon, visible local materials
+4. `noon` - restrained colorful daytime state, never high-key white
+5. `golden_hour` - coral and amber directional light with long graphic shadows
+6. `dusk` - cobalt sky, magenta horizon, practical lights activating
 
 ## Game-clock schedule
 

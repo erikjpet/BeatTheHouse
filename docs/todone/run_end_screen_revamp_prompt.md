@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-16
 - **Completion/implementation commits:** `77e3f3ec`
-- **Verification:** PASS — powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1; -FoundationSuite; tools/check_godot.ps1 -RequireGodot; powershell -ExecutionPolicy Bypass -File tools/foundation_visual_qa.ps1; powershell -ExecutionPolicy Bypass -File tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; powershell -ExecutionPolicy Bypass -File tools/foundation_performance_probe.ps1 -RequireGodot; tools/foundation_mouse_playtest.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1; -FoundationSuite; tools/check_godot.ps1 -RequireGodot; powershell -ExecutionPolicy Bypass -File tools/foundation_visual_qa.ps1; powershell -ExecutionPolicy Bypass -File tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; powershell -ExecutionPolicy Bypass -File tools/foundation_performance_probe.ps1 -RequireGodot; tools/foundation_mouse_playtest.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — Run End Screen Revamp: One-Screen Visual Report (Win + Loss)
+# Agent Prompt - Run End Screen Revamp: One-Screen Visual Report (Win + Loss)
 
 Copy everything below this line into the agent.
 
@@ -21,7 +21,7 @@ art are data-driven. This file is fully self-contained.
 ## The problem
 
 The run-over screens (SCREEN_FAILURE / SCREEN_VICTORY,
-`foundation_main.gd` — `_render_failure_summary` / `_render_victory_summary`
+`foundation_main.gd` - `_render_failure_summary` / `_render_victory_summary`
 around :1053, victory panel built near :4980) are scrolling TEXT DUMPS:
 lists of story lines, inventory strings, debt strings, and a
 programmer-style score readout. The owner wants a complete revamp: **one
@@ -32,27 +32,27 @@ sections that each tell one chunk of the run's story at a glance.
 
 - **Seam:** `scripts/ui/terminal_consequence_view_model.gd`
   (`TerminalConsequenceViewModel`) already aggregates failure data from
-  run state as a pure static builder — extend/replace its output rather
+  run state as a pure static builder - extend/replace its output rather
   than adding rendering logic to `foundation_main.gd`. Build the new
   screen as its own component (`RunReportScreen` + a pure
   `RunReportViewModel`), following the established extraction pattern.
 - **Outcomes:** failure reasons are `bankroll_zero`, `stranded`,
   `police_capture`, `casino_taken_out_back`, `abandoned`
   (`run_state.gd:40-45`), plus two victory flavors (clean Players Card
-  cashout vs. surviving Rourke's showdown — see the victory path).
+  cashout vs. surviving Rourke's showdown - see the victory path).
 - **Score:** `run_state.terminal_score_summary()` (`run_state.gd:4437`)
   → `{base_spending, multiplier, score}`; spending accumulates via
   `record_score_spending` (travel + purchases), multiplier is the
   victory multiplier or 1.
 - **Story data:** `run_state.story_log` (capped at 240 +
   `story_log_archive_count`), entries carry `type`, `bankroll_delta`,
-  `suspicion_delta`, environment ids, game/lender/item ids — enough to
+  `suspicion_delta`, environment ids, game/lender/item ids - enough to
   aggregate money per source and per game.
 - **Environment timeline:** `run_state.environment_history` (capped 48,
   `run_state.gd:124,1046`).
 - **Travel:** `run_state.world_map` has `visited_path`, node positions,
   states; `scripts/ui/world_map_canvas.gd` already renders the map.
-- **Debt:** live `run_state.debt` only holds ACTIVE debts — paid ones are
+- **Debt:** live `run_state.debt` only holds ACTIVE debts - paid ones are
   removed at settle (`_settle_paid_debt`) and defaults are removed or
   mutated; history exists only in story_log (`debt_paid`,
   `debt_default`, lender story entries).
@@ -104,7 +104,7 @@ not the structure). Wireframe on the 1280×720 design surface:
 Human-friendly, not a programmer dump. Show it as a visible calculation:
 "Money put to work" (base spending) × "Winner's bonus ×N" (only on win)
 = "Final score", with the numbers large and the labels plain. Use the
-CURRENT formula from `terminal_score_summary()` — presentation changes
+CURRENT formula from `terminal_score_summary()` - presentation changes
 only, math unchanged.
 
 ### 3. ITEMS
@@ -134,7 +134,7 @@ keys. Compact: icon + tiny label, counts collapse duplicates.
 
 ### 5. DEBT
 
-Every loan taken during the run — paid or not. Live `debt` only has
+Every loan taken during the run - paid or not. Live `debt` only has
 active entries, so the view model must reconstruct the full ledger from
 story_log lender/debt entries (borrowed X from Y; repaid / defaulted /
 collateral kept; pawn tickets redeemed or forfeited). One row per loan:
@@ -143,7 +143,7 @@ lender, amount, outcome, color-coded (settled / outstanding / burned).
 ### 6. STORY (money flow, not a log dump)
 
 Replace the story text dump with a per-source money summary: one bar row
-per source showing NET gain/loss — each casino game the player actually
+per source showing NET gain/loss - each casino game the player actually
 played (slots +$120, pull tabs +$40, bar dice −$85 …), plus rows for
 events, services, lenders, items bought/sold, and travel costs.
 Aggregate from story_log `bankroll_delta` by source type/game id in the
@@ -151,10 +151,10 @@ view model. Positive bars one accent color, negative another, sorted by
 absolute value. The player must be able to see "I made money at slots
 and pull tabs and lost it at dice" in two seconds.
 
-### 7. TRAVEL REPLAY (the centerpiece — most important section)
+### 7. TRAVEL REPLAY (the centerpiece - most important section)
 
 - Render the world map (reuse `world_map_canvas.gd` rendering or a
-  read-only variant fed by a snapshot — do NOT fork a second map
+  read-only variant fed by a snapshot - do NOT fork a second map
   renderer if reuse is feasible; if a variant is genuinely needed,
   extract shared drawing helpers instead of copying them).
 - Show the full traveled path (`visited_path`) as a polyline over the
@@ -163,7 +163,7 @@ and pull tabs and lost it at dice" in two seconds.
   path leg by leg in order, the currently-visited venue highlights and
   labels itself, and the path draws in progressively behind the marker.
 - **Scrubber coupling:** the replay drives a progress cursor rendered ON
-  the heat-timeline graph (section 4), video-editor style — as the
+  the heat-timeline graph (section 4), video-editor style - as the
   marker travels, the cursor sweeps the same run timeline, so map
   position and heat history stay in sync. Clicking/dragging on the heat
   graph seeks the replay to that point. Map both directions through one
@@ -181,14 +181,14 @@ and pull tabs and lost it at dice" in two seconds.
   visible at once. Budget the grid so TRAVEL gets the largest area and
   HEAT the full lower-left width (they share the timeline).
 - Small-screen play mode exists (see the recent small-screen commit):
-  the report must remain usable there — compact paddings/fonts first;
+  the report must remain usable there - compact paddings/fonts first;
   if it genuinely cannot fit, sections may collapse into two tab groups
-  (Result+Score+Travel / Heat+Story+Items+Debt) — tabs, never scroll.
+  (Result+Score+Travel / Heat+Story+Items+Debt) - tabs, never scroll.
 - Both end screens (win and loss) route into this ONE component; delete
   the old text-dump rendering paths when the replacement lands (no dead
   parallel screens).
 - Buttons: keep existing post-run actions (new run, return home, copy
-  seed) — reuse existing wiring.
+  seed) - reuse existing wiring.
 
 ## Hard rules (binding)
 
@@ -204,7 +204,7 @@ and pull tabs and lost it at dice" in two seconds.
 - Simulation/UI split: ALL aggregation (money per source, debt ledger,
   item fates, timeline model) lives in a pure view model with explicit
   inputs; the screen component only draws. `foundation_main.gd` gains
-  only thin wiring (this file is under active decomposition — do not
+  only thin wiring (this file is under active decomposition - do not
   grow it).
 - Match existing style: tab indentation, typed GDScript, sparse
   constraint comments, VisualStyle palette, existing panel/button
@@ -245,7 +245,7 @@ and pull tabs and lost it at dice" in two seconds.
 - `powershell -ExecutionPolicy Bypass -File tools/foundation_performance_probe.ps1 -RequireGodot`
   (the end screen must not introduce a heavy surface; if the probe does
   not cover it, add it as a measured surface with a budget)
-- Strict mouse playtest run (`tools/foundation_mouse_playtest.ps1`) —
+- Strict mouse playtest run (`tools/foundation_mouse_playtest.ps1`) -
   it exercises run completion and must still pass end-to-end.
 
 ## On completion

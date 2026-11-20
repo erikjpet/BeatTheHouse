@@ -1,4 +1,4 @@
-# CLOSE-05 — frozen candidate and original Windows/Web packages
+# CLOSE-05 - frozen candidate and original Windows/Web packages
 
 Started2026-11-11; final checks/packages/launches completed2026-11-12 UTC.
 Specification: docs/todo/BTH_0.6.1_closeout_plan.md, unchanged SHA256

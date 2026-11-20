@@ -1,4 +1,4 @@
-Status: DONE — owner selected fixed production control/nozzle trace; verified 2026-09-01
+Status: DONE - owner selected fixed production control/nozzle trace; verified 2026-09-01
 Board row: `fix06_8` in `docs/todo/README_0_6_board.md`
 
 # fix06_8: deterministic upper-row join evidence

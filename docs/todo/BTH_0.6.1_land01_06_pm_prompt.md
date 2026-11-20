@@ -1,4 +1,4 @@
-# Beat the House 0.6.1 — LAND-01 to LAND-06 (project manager prompt)
+# Beat the House 0.6.1 - LAND-01 to LAND-06 (project manager prompt)
 
 Written 2026-11-19. Approved by the owner the same day.
 
@@ -127,7 +127,7 @@ Record all of these in the LAND-01 receipt.
    through normal controls. If it cannot, record the exact reason and stop
    and ask the owner. Do not look for a workaround.
 
-**"Close — delivered" in Appendix A** means: every commit the entry names is
+**"Close - delivered" in Appendix A** means: every commit the entry names is
 an ancestor of the commit NEXT serves at the time you check.
 
 ---
@@ -141,7 +141,7 @@ an ancestor of the commit NEXT serves at the time you check.
 | 2 | LAND-03: save/Continue money checks, native half | LAND-01 committed | LAND-02 |
 | 3 | LAND-04: browser pass, and LAND-05: travel timing | LAND-02 is on `main` and NEXT has promoted it | LAND-03 |
 | 4 | LAND-03W: the same money checks on Web | LAND-03's native half is done and its fixes are on NEXT | fixes from step 3 |
-| 5 | Fixes for anything steps 3 and 4 find, then rechecks | as findings arrive | — |
+| 5 | Fixes for anything steps 3 and 4 find, then rechecks | as findings arrive | - |
 | 6 | LAND-06: freeze RC2 and package | all start conditions below hold | alone |
 
 **File ownership in step 2.**
@@ -286,7 +286,7 @@ The specification has the full text, acceptance and rules for each.
     - Update both views in the same commit, once per work order or batch of
       fixes.
     - Write statuses in plain words of 12 words or fewer, for example
-      "Closed — delivered on NEXT 89403f3" or "Moved to 0.6.2 — owner
+      "Closed - delivered on NEXT 89403f3" or "Moved to 0.6.2 - owner
       2026-11-19".
 11. **Commits.**
     - One topic per commit. The message names the LAND ID and the ledger

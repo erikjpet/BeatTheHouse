@@ -1,6 +1,6 @@
-Status: SUPERSEDED — historical closeout prompt archived during two-branch consolidation
+Status: SUPERSEDED - historical closeout prompt archived during two-branch consolidation
 
-# Agent Prompt — closeout06_0: Finish the 0.6 Todo List
+# Agent Prompt - closeout06_0: Finish the 0.6 Todo List
 
 Copy everything below this line into one agent. It may spawn sub-agents freely.
 
@@ -19,7 +19,7 @@ document tells you what is true.
 **Most remaining rows are closeout work, not rebuild work.** Seventeen rows have
 their implementation on `main` already. They are not DONE because their prompts
 lack independent acceptance, visual and reachability evidence, or an explicit
-closeout record — not because code is missing.
+closeout record - not because code is missing.
 
 Start every one of those from the landed implementation on `main`. **Never
 rebuild a row from an old branch.** Doing so duplicates work and reintroduces
@@ -35,14 +35,14 @@ Follow the audit's recommended execution order:
    decision is resolved by `996a98b6`; Counter Games closed by `31103f7f`), then
    run the `game06_8` gate.
 3. **Close the world rows:** `world06_1` through `world06_6`, then run the
-   `world06_7` gate — hidden-information safety is its blocking concern.
+   `world06_7` gate - hidden-information safety is its blocking concern.
 4. **Perform the genuinely unbuilt rows:** the `balance06_1` follow-on,
    `audio06_1`, `integ06_1`, `perf06_1`, `teach06_2`. These are prestage-only
    today and need real work, not reconciliation.
 5. **Run `playtest06_2`, then `playtest06_1`**, and hand the owner an exact
    build. That ends your program.
 
-Coin Pusher is finished — `pusherv3_10`, `pusherv3_11`, `fix06_8`, `fix06_9` and
+Coin Pusher is finished - `pusherv3_10`, `pusherv3_11`, `fix06_8`, `fix06_9` and
 `fix06_13` are DONE and archived. Do not reopen them.
 
 ## The acceptance bar for a closeout row
@@ -52,7 +52,7 @@ A landed row moves to `docs/todone/` when all of these hold on the exact current
 
 - its prompt's requirements each map to landed code, data or tests, recorded;
 - its focused suite is green on the exact head, with the command and result;
-- the row's own evidence requirements are met — visual, reachability, platform
+- the row's own evidence requirements are met - visual, reachability, platform
   or determinism as its prompt names them;
 - exactly-once holds for every consequence it touches;
 - no hidden-state leak, and nothing trusts a caller-supplied capability;
@@ -65,7 +65,7 @@ blockers**. Record them and close the row.
 If a closeout reveals a genuine defect, fix it inline within that row when it
 blocks acceptance; otherwise put it on a deferred list.
 
-## How to not stall — this program has stalled three times
+## How to not stall - this program has stalled three times
 
 - **Park, never block.** If a row needs an owner decision, record the exact
   question, take the stated default, and move to the next row. Never halt.
@@ -85,12 +85,12 @@ blocks acceptance; otherwise put it on a deferred list.
   changed, or raise a budget. A budget crossing 16.67 ms needs owner sign-off.
 - Never perform release activity: no version bump, tag-as-release, packaging or
   publish. `release06_1` stays parked.
-- Delete nothing — no branch, worktree or stash. No `gc`, `reset --hard`,
+- Delete nothing - no branch, worktree or stash. No `gc`, `reset --hard`,
   `clean`.
 - Never stage owner property: `.tmp/`, `.tools/`, `review_artifacts/`, build
   output.
 - Commit work to a branch at least every 30 minutes, labeled if unreviewed.
-- Keep `main` green after every merge, and keep `origin/main` in sync — it is
+- Keep `main` green after every merge, and keep `origin/main` in sync - it is
   current now and must stay that way.
 
 ## Standards every row inherits
@@ -100,17 +100,17 @@ blocks acceptance; otherwise put it on a deferred list.
   touched. Four recorded regressions.
 - No per-frame deep copies. The slot bonus watchdog cost 32.6 ms/frame.
 - Action boundaries, never wall-clock. Everything seeded from run RNG.
-- Hidden state is absolute — Turn, traitor, grievance, rigged draw, unrevealed
+- Hidden state is absolute - Turn, traitor, grievance, rigged draw, unrevealed
   ticket. A leak is an automatic P0.
 - The crew-ignoring run stays a true no-op.
 - Depth changes presentation and interaction; rules and math are preserved.
 
-## Parked — do not start
+## Parked - do not start
 
 `triage06_1`, `balance06_2`, `voice06_1`, `cleanup06_1`, `release06_1`, and the
 seven `release06_1_*_template.md` companions. Their inputs come from the owner's
 playtest. Tutorial TUT-N17 needs five cold-player human sessions and cannot be
-done by an agent — record it as owner-dependent.
+done by an agent - record it as owner-dependent.
 
 ## Reporting
 

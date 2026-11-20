@@ -1,4 +1,4 @@
-# Agent Prompt — Scratch Tickets GROUND-UP REDESIGN (3-Layer, Contained, Polished)
+# Agent Prompt - Scratch Tickets GROUND-UP REDESIGN (3-Layer, Contained, Polished)
 
 Copy everything below this line into the worker agent. This is a large,
 careful rebuild; use a capable model. Multiple prior reworks produced
@@ -15,9 +15,9 @@ roguelike (900×430 board, immediate-mode canvas, per-game modules, seeded
 RNG). `scripts/games/scratch_tickets.gd` (~3,429 lines) renders tickets
 through ~20 tangled, overlapping draw functions (result overlays, slot wells,
 plaques, spot boxes, production text, symbol reveals...) and scratches through
-a coarse 48×32 grid mask — which is exactly why the result is messy, boxy, and
+a coarse 48×32 grid mask - which is exactly why the result is messy, boxy, and
 choppy. The DATA is fine (`data/games/scratch_tickets.json`: 7 tickets with
-face/palette, mechanic/legend, sections/rects, prize_table, rtp_band) — keep
+face/palette, mechanic/legend, sections/rects, prize_table, rtp_band) - keep
 the odds and mechanics. Rebuild the RENDERING and FEEL.
 
 ## THE CONTAINMENT MANDATE (the whole point)
@@ -26,7 +26,7 @@ Delete the tangle of overlapping draw functions and replace ticket rendering
 with EXACTLY THREE LAYERS, each a single-responsibility renderer with a clean
 interface and NO knowledge of the others. A ticket is drawn as Layer 1, then
 Layer 2 on top, then Layer 3 on top. Nothing else. This strict separation is
-how we keep it contained — do not reintroduce cross-cutting "overlay/plaque/
+how we keep it contained - do not reintroduce cross-cutting "overlay/plaque/
 well/box" helpers that blur the layers.
 
 Define one region model shared by all three layers: each ticket type declares
@@ -35,10 +35,10 @@ draws the printed slots for those regions, Layer 2 draws the result icon
 centered in each region, Layer 3 draws the foil masked over each region. One
 source of truth for region rects.
 
-### Layer 1 — Background (the printed ticket face)
+### Layer 1 - Background (the printed ticket face)
 
 The lowest layer: the ticket's printed appearance. Deterministic per TICKET
-TYPE (not per instance). It draws the full ticket artwork — frame, theme,
+TYPE (not per instance). It draws the full ticket artwork - frame, theme,
 title, the DEFINED result boxes/slots with their icon locations outlined, and
 the RULES printed within the artwork. It is the backdrop everything sits on
 and it defines the structure, art design, and rules of the ticket. Each of
@@ -48,7 +48,7 @@ Provable: rendered alone (foil/icons off), each ticket reads as a complete,
 professional printed ticket with clearly located empty result boxes and
 legible rules.
 
-### Layer 2 — Icons (the generated result layer)
+### Layer 2 - Icons (the generated result layer)
 
 The middle layer: the randomly generated result, drawn centered in each
 region's box. Rules:
@@ -57,25 +57,25 @@ region's box. Rules:
   method per the ticket's rules, but the SPECIFIC icons that reach it are
   freshly, uniquely generated each instance (same outcome, different faces).
   Two 2× winners must look different while both being valid 2× wins.
-- **High-fidelity icons — this is a hard requirement.** The icons are far more
+- **High-fidelity icons - this is a hard requirement.** The icons are far more
   defined than the current ones. PLAYING CARDS must be drawn with the SAME
   card renderer the table games use (blackjack/baccarat/video poker) so a card
-  on a ticket is identical in quality to a card in a game — find that renderer
+  on a ticket is identical in quality to a card in a game - find that renderer
   and reuse it. Numbers, suits, and symbols must be unambiguously identifiable
   as exactly what they are, no guessing.
 - **Contrast & color theory.** Each icon is designed for legibility against
-  its region within the ticket's theme palette — proper contrast, a coherent
+  its region within the ticket's theme palette - proper contrast, a coherent
   color scheme per ticket. Icons never blend into the background or each
   other.
 Provable: with the foil off, every result icon is instantly identifiable
 (card/number/suit/symbol), high-contrast, centered in its box; and repeated
 generation of the same payout yields visibly different but valid icon sets.
 
-### Layer 3 — Foil (the scratch layer)
+### Layer 3 - Foil (the scratch layer)
 
 The top layer: a designed, themed foil that covers each result region
 completely and is what the player removes by scratching. Rules:
-- It is a PLANNED DESIGN that matches the ticket's background theme — NOT a
+- It is a PLANNED DESIGN that matches the ticket's background theme - NOT a
   single solid grey "foil" blob. It looks like an intentional printed
   scratch-off coating for THIS ticket (theme-matched texture/pattern/sheen).
 - It covers the entire result region and sits centered over the Layer-2 icon
@@ -86,21 +86,21 @@ Provable: with icons hidden beneath, the foil reads as a designed, theme-
 matched coating over exactly the result regions, obviously scratchable, fully
 covering the icons until removed.
 
-## Scratch mechanics — smooth, like Scratchy Scratchy
+## Scratch mechanics - smooth, like Scratchy Scratchy
 
 The current scratch is choppy, boxy, and sometimes drops swipes for no reason.
 Rebuild it:
 - **Continuous, not grid-boxy.** Replace the coarse 48×32 grid mask with a
   smooth, high-resolution coverage mask so removal follows the pointer
   cleanly with no blocky steps. The foil should come off like DIRT the player
-  swipes away — a smooth, continuous clearing under a swiping click-drag.
+  swipes away - a smooth, continuous clearing under a swiping click-drag.
 - **Reliable pointer tracking.** Fix the dysfunctional swipes: interpolate the
   stroke between pointer samples (no gaps on fast swipes), and clear exactly
-  where the player drags, every time — never drop a swipe.
+  where the player drags, every time - never drop a swipe.
 - **Satisfying feel.** A soft brush with flakes/dust shedding at the stroke
   (presentational, zero-copy), a smooth reveal of the icon beneath as coverage
   builds, and the existing per-region auto-complete when a region is mostly
-  cleared (so no corner-grinding) — but the manual swiping itself must feel
+  cleared (so no corner-grinding) - but the manual swiping itself must feel
   great, smooth, and responsive. Reduce-motion: instant clear / scratch-all.
 Provable: a smooth-swipe demonstration; the mask clears continuously along the
 drag path with no boxy steps and no dropped swipes; a ten-ticket hand-scratch
@@ -109,20 +109,20 @@ feels smooth and satisfying (report in words).
 ## Throw tickets away (a waste basket)
 
 Add a WASTE BASKET the player can swipe a ticket into to discard it WITHOUT
-finishing the scratch — the moment they know it's a dud, they trash it and the
+finishing the scratch - the moment they know it's a dud, they trash it and the
 next queued ticket comes up. Requirements: a clearly drawn basket; swiping/
 dragging the ticket to it (or a clear discard control) removes the current
 ticket and advances the queue; discarding an unfinished ticket forfeits any
 unrevealed value exactly as if it were completed a loser (do not let discard
-skip a win — a ticket's outcome is fixed at purchase; discarding a WINNER
-still pays it out or clearly warns, your call — state the rule). Provable: buy
+skip a win - a ticket's outcome is fixed at purchase; discarding a WINNER
+still pays it out or clearly warns, your call - state the rule). Provable: buy
 several, trash a dud mid-scratch, confirm it's gone and the next appears.
 
-## The vending machine — recreate to match
+## The vending machine - recreate to match
 
 Rebuild the scratch vending machine to the SAME level of detail and polish as
 the redesigned tickets: a complete, professional, themed cabinet (study the
-slot machines — `scripts/games/slots/slot_renderer.gd` — for the quality bar)
+slot machines - `scripts/games/slots/slot_renderer.gd` - for the quality bar)
 showing the stocked tickets in their dispenser rows, price labels, a selection
 affordance, and a dispensing feel that hands the ticket to the play surface.
 It should feel just as finished as the tickets. Provable: a capture of the
@@ -140,7 +140,7 @@ machine that reads as a polished, complete cabinet on par with the slots.
   `duplicate(true)`); idle-animation liveness untouched; web-safe.
 - Style: tabs, typed GDScript, sparse comments; captures/RTP under `.tmp/`.
   Suite timeout = max(300s, ceil(recorded baseline × 1.5)).
-- The rebuild should SHRINK and clarify the module — three clean layer
+- The rebuild should SHRINK and clarify the module - three clean layer
   renderers plus the card/icon renderer, mask, and machine, not 20 tangled
   draw helpers. Report the before/after line count and the function map.
 - Working tree may contain uncommitted user-owned work; never revert or stage
@@ -149,10 +149,10 @@ machine that reads as a polished, complete cabinet on par with the slots.
 ## Provable deliverables / QA (prove each; report evidence)
 
 1. **Layer isolation:** captures of each ticket rendered with (a) Layer 1 only,
-   (b) Layers 1+2, (c) all three — proving clean separation and that each layer
+   (b) Layers 1+2, (c) all three - proving clean separation and that each layer
    is complete and professional on its own.
 2. **Icon fidelity:** cards match the game card renderer; numbers/suits/symbols
-   unambiguous; contrast good per theme — captures per ticket.
+   unambiguous; contrast good per theme - captures per ticket.
 3. **Per-instance uniqueness:** same payout generated N times yields visibly
    different, all-valid icon sets (assert + captures).
 4. **Foil:** theme-matched designed coating covering regions, obviously
@@ -163,7 +163,7 @@ machine that reads as a polished, complete cabinet on par with the slots.
 7. **Machine:** polished cabinet capture, slot-parity.
 8. **Determinism + RTP:** outcome fixed at purchase, reproducible; per-ticket
    RTP within bands (table).
-9. **Feel acceptance (manual, in words):** buy a stack across tickets — scratch
+9. **Feel acceptance (manual, in words):** buy a stack across tickets - scratch
    feels smooth and satisfying, icons are crisp and clear, foils look designed,
    trashing duds is easy, the machine feels complete.
 
@@ -199,17 +199,17 @@ commit, do NOT push, and report exactly what is not yet finished.
 
 ---
 
-## Execution record — 2026-07-31
+## Execution record - 2026-07-31
 
 ### Scope and commits
 
 - Branch: `scratch-redesign`
-- `bb19e5ea` — shared playing-card renderer used by blackjack, baccarat,
+- `bb19e5ea` - shared playing-card renderer used by blackjack, baccarat,
   video poker, and High Roller Hold'em scratch results.
-- `b7a3a2bb` — professional raster ticket faces, generated reveal artwork,
+- `b7a3a2bb` - professional raster ticket faces, generated reveal artwork,
   strict three-layer rendering, continuous mask, discard flow, and vending
   machine.
-- `16a519fc` — architecture assertions and the 56-file proof recorder.
+- `16a519fc` - architecture assertions and the 56-file proof recorder.
 
 The prompt remains archived here. The user-owned source copy in the primary
 working tree was not deleted or staged.

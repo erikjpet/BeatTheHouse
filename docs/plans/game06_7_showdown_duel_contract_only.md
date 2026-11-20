@@ -40,19 +40,19 @@ stack-zero outcomes.
 The contract projects the shipped encounter through stable, receipt-bound
 presentation phases:
 
-1. `approach` — Rourke's call and the walk; only the shipped walk response is
+1. `approach` - Rourke's call and the walk; only the shipped walk response is
    accepted.
-2. `seating` — pat-down result, chair, table, rail, and visible current stakes.
-3. `response` — three saved interrogation beats; evidence and responses remain
+2. `seating` - pat-down result, chair, table, rail, and visible current stakes.
+3. `response` - three saved interrogation beats; evidence and responses remain
    authoritative references.
-4. `commitment` — one duel hand's existing blackjack commitment controls.
-5. `reveal` — the authoritative hand/edge result is made legible.
-6. `phase_break` — a receipted transition between hands; it cannot deal or
+4. `commitment` - one duel hand's existing blackjack commitment controls.
+5. `reveal` - the authoritative hand/edge result is made legible.
+6. `phase_break` - a receipted transition between hands; it cannot deal or
    settle.
-7. `crowd_change` — actors, rail, staff, and security derive from the current
+7. `crowd_change` - actors, rail, staff, and security derive from the current
    ladder state at the same action boundary.
-8. `outcome_staging` — exactly one authoritative duel or route ending.
-9. `exit` — terminal acknowledgement with no economic or narrative mutation.
+8. `outcome_staging` - exactly one authoritative duel or route ending.
+9. `exit` - terminal acknowledgement with no economic or narrative mutation.
 
 Every transition requires an accepted frozen-envelope action or an existing
 authoritative result receipt. Entry operations and one-shot dialogue/audio use
@@ -77,7 +77,7 @@ output keys.
 
 - a versioned SHOWDOWN-DUEL ritual contract and immutable ladder table;
 - a pure projection model for staging, controls, actor/object state, and public
-  persistence — never settlement;
+  persistence - never settlement;
 - executable contract tests for phase reachability, receipt/replay safety,
   ladder preservation, ten-seed determinism, hidden-state noninterference,
   native/Web canonical parity, accessibility, and bounded liveness;
@@ -115,7 +115,7 @@ This park is deliberately **not** an accepted-ready head. The Integrator must
 receive a newly replayed immutable product head after both accepted dependency
 successors exist; this branch remains preserved as contract-only staging.
 
-## Final closeout reconciliation — 2026-09-02
+## Final closeout reconciliation - 2026-09-02
 
 The status above is retained as historical prestage evidence and is superseded
 for current-row intake by `docs/plans/game06_7_final_closeout.md`. The complete

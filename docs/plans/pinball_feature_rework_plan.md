@@ -1,11 +1,11 @@
-# Pinball Feature Event — Complete Rework Plan
+# Pinball Feature Event - Complete Rework Plan
 
 Status: **IMPLEMENTED AND ACTIVE in the current 0.6 source.** Sections 1 and 9
 are the historical problem statement and completed build sequence. The live
 feature includes all three boards under `scripts/games/slots/pinball/`;
 `slot_pinball_table.gd` was deleted as planned.
 Date: 2026-07-01
-Reference feel target: **Ballionaire** (roguelike plinko) — fast drops, readable boards,
+Reference feel target: **Ballionaire** (roguelike plinko) - fast drops, readable boards,
 trigger-chain satisfaction, item-driven builds. Blended with a **licensed pinball slot
 feature** structure (locks → multiball → jackpot ladder) and a **skill-shot launch**.
 
@@ -19,7 +19,7 @@ turn-based game-state pipeline. The game-wide slowdown during the feature is
 structural, not a tuning bug:
 
 - **Per-tick deep copies of everything.** Each 60Hz auto-tick runs
-  `read_machine` → `duplicate(true)` of the whole machine dict — including the
+  `read_machine` → `duplicate(true)` of the whole machine dict - including the
   live `pinball_session` (100+ element dicts, spatial bins, event log,
   trajectory array) and a `history` array of up to 24 entries that each hold
   their *own* copies of trajectories and event logs. Then `write_machine`/
@@ -36,7 +36,7 @@ structural, not a tuning bug:
   per query (`_has_active_ball`), per sync.
 - **Sim clock is hostage to the action pipeline.** Ticks arrive as
   `slot_bonus_tick` surface actions with catch-up budgets (`LIVE_TICK_BUDGET`),
-  so physics pacing degrades exactly when frame time degrades — a feedback loop.
+  so physics pacing degrades exactly when frame time degrades - a feedback loop.
 
 Conclusion: keep the *concepts* that work (deterministic fixed-dt plinko sim,
 normalized 0..1 board space, element vocabulary, layout-as-data, item hooks,
@@ -58,7 +58,7 @@ scratch.
    machine feature: skill shot → mode qualification → ball locks → multiball →
    jackpot → super jackpot ladder, with lit inserts telegraphing state.
 4. **Skill matters, bounded.** Timed launch (meter), aim, and mid-flight nudges
-   let a good player (or an item-boosted one) reliably reach high-pay areas —
+   let a good player (or an item-boosted one) reliably reach high-pay areas -
    but inside an auditable math envelope (cap + RTP budget).
 5. **Items are the roguelike layer.** Existing 6 pinball items plug into
    first-class sim hooks; new items modify the *board itself* (Ballionaire
@@ -98,26 +98,26 @@ data/games/pinball_boards.json   # optional: boards as content data (stretch)
   copies.
 - The machine dict stores only a compact, serializable summary written at
   **ball-end boundaries** (not per tick): `{seed, board_id, balls_remaining,
-  total_awarded, sequencer_snapshot, input_log}` — a few hundred bytes.
+  total_awarded, sequencer_snapshot, input_log}` - a few hundred bytes.
 - Save/load mid-ball: the sim is deterministic (fixed dt + seeded RNG + logged
   inputs), so a mid-ball save resumes by fast-forward replaying `input_log`
-  headlessly (milliseconds), or — simpler v1 — the ball is settled to its
+  headlessly (milliseconds), or - simpler v1 - the ball is settled to its
   deterministic outcome on save and the summary stored. Decide in Phase 2;
   default to settle-on-save.
 - Presentation/renderer read through `PinballView`, which exposes packed arrays
-  by reference (positions, radii, lit flags) — zero copies per frame.
+  by reference (positions, radii, lit flags) - zero copies per frame.
 
 ### 3.3 Sim core data model (zero-allocation hot loop)
 
 - Fixed dt **1/120s**, accumulator driven by real frame delta from the surface
   clock; render interpolates between last two sim states. Physics pacing is
-  therefore independent of the action pipeline — `slot_bonus_tick` disappears;
+  therefore independent of the action pipeline - `slot_bonus_tick` disappears;
   the surface runtime calls `sim.advance(delta_msec, input)` directly once per
   frame.
 - Balls: parallel packed arrays (`PackedVector2Array pos/prev_pos/vel`,
   `PackedFloat32Array radius`, `PackedInt32Array flags/age/stuck`), fixed max
   (12), free-list indices. No per-ball dictionaries.
-- Board: compiled once by `pinball_board.gd` into immutable typed arrays —
+- Board: compiled once by `pinball_board.gd` into immutable typed arrays -
   peg positions/radii, bumper table (pos, radius, kick, cooldown), sensor
   table, rect table, and a **static spatial hash** (`PackedInt32Array` cell →
   element index spans). Built at feature open, never mutated per tick (item
@@ -157,7 +157,7 @@ event density, and live tally cadence targets.
 | Flipper zones | timed arc impulse (120-180ms prompt window) | Simplified flippers: fixed rescue positions above outlanes; a well-timed press converts a drain into an up-board relaunch |
 
 Spin (angular term) is new: collisions transfer tangential velocity into a
-scalar spin that biases subsequent bounces — cheap (1 float/ball) and the
+scalar spin that biases subsequent bounces - cheap (1 float/ball) and the
 single biggest "lifelike" upgrade over the current sim.
 
 Stuck handling stays (rescue kick then force-drain) but on typed state.
@@ -187,7 +187,7 @@ spinner (award per pass-through tick), portal pair, splitter, multiplier gate,
 pocket row (bottom pay slots), jackpot cup, drain (bottom-outer + outlanes),
 flipper rescue zones, skill-shot lane.
 
-### Board A — "Bumper Alley" (mode `em_bumper_drop`, low volatility, 1–3 balls)
+### Board A - "Bumper Alley" (mode `em_bumper_drop`, low volatility, 1–3 balls)
 
 EM-era feel: peg pyramid over twin pop bumpers, pocket row bottom.
 
@@ -205,9 +205,9 @@ EM-era feel: peg pyramid over twin pop bumpers, pocket row bottom.
     fixed combo bonus.
 - Role: the common, quick feature. Whole event 8–20s.
 
-### Board B — "Lock & Cascade" (mode `lane_multiball`, medium volatility, 3–5 balls)
+### Board B - "Lock & Cascade" (mode `lane_multiball`, medium volatility, 3–5 balls)
 
-The multiball board — closest to a modern pinball slot feature.
+The multiball board - closest to a modern pinball slot feature.
 
 - Geometry: 9-row denser peg field; 3 pop bumpers in triangle; **2 lock gates**
   (left/right mid-board); splitter sensor top-center; multiplier gate (+1x,
@@ -225,7 +225,7 @@ The multiball board — closest to a modern pinball slot feature.
     persists rest of feature.
 - Role: the mid-tier "big feature." 20–40s.
 
-### Board C — "Jackpot Works" (mode `video_feature`, high volatility, 3–5 balls)
+### Board C - "Jackpot Works" (mode `video_feature`, high volatility, 3–5 balls)
 
 The wizard-mode board; ladder structure like a licensed video slot pinball
 bonus.
@@ -233,8 +233,8 @@ bonus.
 - Geometry: 10-row peg lab; 4 bumpers; **A-B-C drop-target bank** upper-center;
   2 up-launchers low-left/low-right that fire the ball back to the top; portal
   right edge; spinner lane left edge; multiplier gate (max 5x); pocket row
-  `12 / 18 / 24 / 18 / 12`; **SUPER lane** (wide, center-right, only opens —
-  gate sprite retracts — while Super Jackpot is lit); **RISK cup** top-right
+  `12 / 18 / 24 / 18 / 12`; **SUPER lane** (wide, center-right, only opens -
+  gate sprite retracts - while Super Jackpot is lit); **RISK cup** top-right
   (hard to reach, 6× jackpot, reachable mainly via launcher timing or nudge).
 - Sequence ladder (each stage lights inserts and re-arms):
   1. **Qualify:** complete A-B-C target bank → Super Jackpot lit, SUPER lane
@@ -255,7 +255,7 @@ not string compare): per-board rule table
 `{trigger: element/event pattern, condition: lights/locks state, effect:
 award/light/gate/spawn/multiplier, reset}`. All awards route through one
 `award(amount, source)` function that applies multipliers, item modifiers, and
-the session cap — one choke point for math audit.
+the session cap - one choke point for math audit.
 
 ---
 
@@ -299,20 +299,20 @@ the session cap — one choke point for math audit.
 ### 6.2 New item proposals (Ballionaire-style board modifiers)
 
 Board-mod (permanent class, `slot_pack` group):
-- **Rubber Pegs** — all peg restitution +15%: livelier board, more streaks.
-- **Magnet Cup** — jackpot/RISK cups gain a weak attraction field (bends
+- **Rubber Pegs** - all peg restitution +15%: livelier board, more streaks.
+- **Magnet Cup** - jackpot/RISK cups gain a weak attraction field (bends
   nearby trajectories toward them).
-- **Ghost Peg** — one random peg per ball phases out for 2s when first hit,
+- **Ghost Peg** - one random peg per ball phases out for 2s when first hit,
   opening a lane (telegraphed shimmer).
-- **Extra Ball Token** — +1 ball budget per feature (price accordingly; direct
+- **Extra Ball Token** - +1 ball budget per feature (price accordingly; direct
   EV item, cap still binds).
-- **Sticky Flippers** — flipper rescue window +60%; a caught ball can be held
+- **Sticky Flippers** - flipper rescue window +60%; a caught ball can be held
   briefly and aimed (tap again to release).
-- **Plunger Tuner** — skill-shot sweet zone width ×2 on the launch meter.
-- **Lock Jammer** (contraband) — first lock gate counts double toward
+- **Plunger Tuner** - skill-shot sweet zone width ×2 on the launch meter.
+- **Lock Jammer** (contraband) - first lock gate counts double toward
   multiball; small suspicion gain per use, matching the cheat/contraband
   economy.
-- **Weighted Ball** (contraband) — nudges move the ball ~40% more but tilt
+- **Weighted Ball** (contraband) - nudges move the ball ~40% more but tilt
   meter gains 20% more; risk/reward trajectory control.
 
 Implementation: `pinball_items.gd` registry maps `slot_pinball_*` effect keys →
@@ -325,11 +325,11 @@ registry entry; no sim-core edits.
 
 - Keep the existing outer envelope: feature triggers from the outcome table
   (`bonus` classification), `session_cap` (stake × mode multiplier × scale),
-  `feature_scale` from bonus/math variants, award trim rate — these numbers are
+  `feature_scale` from bonus/math variants, award trim rate - these numbers are
   already tuned against the slot RTP; the rework changes *how* awards are
   earned, not the budget.
 - All element awards defined as **basis points of stake** at board-definition
-  time (replaces the current absolute-award + `_scaled_layout` rescale chain —
+  time (replaces the current absolute-award + `_scaled_layout` rescale chain -
   one less transform to audit).
 - Ladder awards (jackpot/super/wizard) are the volatility carriers; pocket-row
   values are the floor. Target distribution per board asserted by the math
@@ -343,7 +343,7 @@ registry entry; no sim-core edits.
 ## 8. Presentation & juice
 
 - Renderer keeps the current pixel-canvas API but reads `PinballView`
-  (interpolated positions, lit-insert bitfield, event drain) — no dict copies.
+  (interpolated positions, lit-insert bitfield, event drain) - no dict copies.
 - Juice mapping (event → effect): peg hit = 1-frame flash + tick sfx pitch-up
   on streaks; bumper = radial spark + kick sfx; lock = ball visibly parked in
   gate; multiball start = flash + music layer; jackpot = full-board flash +
@@ -358,7 +358,7 @@ registry entry; no sim-core edits.
 
 ## 9. Build phases
 
-**Phase 0 — Ballionaire research capture.**
+**Phase 0 - Ballionaire research capture.**
 Before writing sim code, research Ballionaire specifically (store page, gameplay
 videos, reviews, design writeups/interviews) and write
 `docs/plans/pinball_feel_reference.md` capturing: drop pacing (seconds per ball,
@@ -366,35 +366,35 @@ time-to-first-payout), trigger density (visible events per second), how it
 telegraphs item/trigger interactions, bounce feel (restitution/gravity
 impression), camera/board proportions, payout tally presentation, and what
 makes chain reactions satisfying. Extract concrete numeric feel targets and
-reconcile them against §3.4 — where they disagree, update §3.4. Every feel
+reconcile them against §3.4 - where they disagree, update §3.4. Every feel
 decision in Phases 1–6 must cite this doc.
 
-**Phase 1 — Sim core (isolated).**
+**Phase 1 - Sim core (isolated).**
 `pinball_sim.gd` + `pinball_board.gd` with Board A only; headless test tool
 (`tools/pinball_sim_probe.gd`): determinism (same seed+inputs = same result),
 perf (tick budget, zero-alloc), drain-rate sanity. No game integration yet.
 
-**Phase 2 — Runtime integration.**
+**Phase 2 - Runtime integration.**
 `pinball_feature.gd` adapter + runtime session cache; delete per-tick session
 round-tripping from `slot_family_pinball.gd`; surface pumps `sim.advance()`;
 machine dict reduced to the compact summary; save/load = settle-on-save.
 Renderer switched to `PinballView`. Old `slot_pinball_table.gd` deleted.
-Perf probe must pass with wide margin here — this is the gate.
+Perf probe must pass with wide margin here - this is the gate.
 
-**Phase 3 — Sequencer + Boards B/C.**
+**Phase 3 - Sequencer + Boards B/C.**
 `pinball_sequencer.gd`, lock/multiball/jackpot ladders, all three boards,
 insert lights, combo timers. Math probe distributions asserted.
 
-**Phase 4 — Skill layer.**
+**Phase 4 - Skill layer.**
 Real timed launch meter, nudge/tilt rework, flipper rescue zones.
 Perfect-vs-random policy probe pins the skill edge.
 
-**Phase 5 — Items.**
+**Phase 5 - Items.**
 `pinball_items.gd` registry; port the 6 existing items; add 3–4 new items
 (suggest: Rubber Pegs, Extra Ball Token, Plunger Tuner, Lock Jammer);
 art + items.json entries.
 
-**Phase 6 — Juice + polish.**
+**Phase 6 - Juice + polish.**
 Event-driven VFX/SFX, trails, tally, tilt drama; update
 `foundation_check.gd` expectations, `slot_pinball_physics_audit.gd`,
 `slot_cabinet_visual_qa.gd`; refresh branding screenshots.
@@ -425,7 +425,7 @@ machinery; `_preview_input_score` synthetic preview; guided-assist remnants.
   Plan says impulse zones (cheap, deterministic, fits plinko frame); revisit
   only if feel tests demand true flippers.
 - **GDScript ceiling:** if the packed-array sim still misses budget at 8 balls
-  (unlikely — the current sim's cost is copies, not math), fallback is a
+  (unlikely - the current sim's cost is copies, not math), fallback is a
   C# module or server-physics offload; keep the sim API narrow so the core is
   swappable.
 - **RTP retune:** boards with a real skill edge shift average feature return;

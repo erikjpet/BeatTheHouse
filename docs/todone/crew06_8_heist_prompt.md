@@ -8,7 +8,7 @@ Board row: `crew06_8` in `docs/todo/README_0_6_board.md`
 - **Verification:** PM production-path Plans A/B E2E with real delivery and mid-route save/load PASS; exact Rourke showdown and Players Card act-seam bytes plus full shipped-route behavior PASS; final combined Systems/UI/Contracts, 10-seed determinism, and zero-warning visual QA PASS.
 - **Deviations:** None.
 
-# Agent Prompt — 0.6 crew06_8: The Heist (Plans A + B, Victory Route)
+# Agent Prompt - 0.6 crew06_8: The Heist (Plans A + B, Victory Route)
 
 Copy everything below this line into the agent.
 
@@ -16,10 +16,10 @@ Copy everything below this line into the agent.
 
 You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript
 casino roguelike (Web/itch.io + Windows, 1280×720). Binding design
-contract: `docs/plans/0.6_living_world_roadmap.md` — Pillar 3 "The
+contract: `docs/plans/0.6_living_world_roadmap.md` - Pillar 3 "The
 Heist": **Plans A ("The Count") + B ("The Whale Game") ship; C + D
 stay documented only.** Plans are world-seed-gated (owner decision 16:
-live only when the run's world criteria align — common enough, never
+live only when the run's world criteria align - common enough, never
 forced). The Grand Casino boss structure (duel, invite gate, chips,
 Players Card) per `docs/plans/grand_casino_endgame_design.md` is
 read-only substrate; the act-seam contract
@@ -42,7 +42,7 @@ rules and scope.
 ## Dependencies
 
 `crew06_5/6/7`, `craps06_1`, `rework06_1`, `env06_3` DONE. The Turn
-is crew06_9 — build this slice so the ladder's fourth outcome is a
+is crew06_9 - build this slice so the ladder's fourth outcome is a
 stub the next prompt fills (define the seam explicitly).
 
 ## Task
@@ -56,14 +56,14 @@ stub the next prompt fills (define the seam explicitly).
     Night*) + Velvet at `inner_circle`.
 - The L3 planning table (crew06_6 furniture) becomes live once any
   member reaches `inner_circle`: shows each plan as live / missing
-  stars (diegetic: "no audit on the books this season" — truthful
+  stars (diegetic: "no audit on the books this season" - truthful
   criteria states, no checklist UI beyond the table's own diegetic
   presentation).
 - Locking a plan is explicit and singular (one heist per run);
   locking fires the crew06_9 traitor-resolution seam (stub: resolves
   "no turn" until crew06_9).
 
-### 2. Plan A — The Count (procedural, silent)
+### 2. Plan A - The Count (procedural, silent)
 
 - **Setup objectives** (each a real, tracked-at-the-table activity):
   1. *Furniture identity*: N clean Grand Casino sessions inside
@@ -74,19 +74,19 @@ stub the next prompt fills (define the seam explicitly).
   3. *The swap cart*: a hard real-map package run to the service
      perimeter.
   4. *(Optional)* the corridor guard's marker via Debt Court
-     (env06_3 content seam) — completing it removes a Play-phase
+     (env06_3 content seam) - completing it removes a Play-phase
      hazard.
 - **The Play**: a phase-timed sequence at a designated table:
   maintain a live boring session (bet band + no heat spikes) while
   crew beats interleave; three decision points (call the go early vs
   hold; the deliberate small-heat distraction and sitting on it;
-  dock vs corridor exit — availability depends on Setup completion).
+  dock vs corridor exit - availability depends on Setup completion).
   Failure paths: heat spike mid-window degrades the outcome band;
   identity shortfall forces abort-with-consequences (not a run end).
 - **Payout**: flat massive cash band scaled per data; no gambling
   winnings involved.
 
-### 3. Plan B — The Whale Game (social, loud)
+### 3. Plan B - The Whale Game (social, loud)
 
 - **Setup objectives**:
   1. *The vouch*: the whale-scenario social chain (stake-horse his
@@ -96,7 +96,7 @@ stub the next prompt fills (define the seam explicitly).
   3. *The name*: Velvet's identity-building (spend/be-seen
      requirements, data-tuned).
   4. *The drunk*: Lucky seeding (automatic once 1–3 complete).
-- **The Play**: the private invitational — a multi-round high-stakes
+- **The Play**: the private invitational - a multi-round high-stakes
   table sequence (craps rounds + card rounds) with the full
   skill-cheat system live, a house counter-rig in play (scripted
   hazard rounds where honesty is correct), Rourke's attention as the
@@ -111,7 +111,7 @@ stub the next prompt fills (define the seam explicitly).
 - **Getaway**: the real-map `delivery_begin_getaway` mode with
   plan-flavored parameters (A: dock run; B: front-door walk that
   turns into a chase only on hot outcomes). Outcome ladder:
-  *Clean Sweep / Out Hot / Somebody Got Pinched / The Turn (stub)* —
+  *Clean Sweep / Out Hot / Somebody Got Pinched / The Turn (stub)* -
   ladder position derives deterministically from Play performance +
   getaway result.
 - **Victory route**: new `crew_heist` route id through the existing
@@ -131,7 +131,7 @@ stub the next prompt fills (define the seam explicitly).
   at any pre-Play point is a costed retreat, never a run end.
 - No Numbers coupling (owner-locked independence).
 - Determinism: criteria evaluation, phase timers, hazards, ladder
-  derivation — seeded + boundary-driven; scripted heists reproduce.
+  derivation - seeded + boundary-driven; scripted heists reproduce.
 - Perf/save/style rules as other prompts; mid-heist save/load
   restores phase state exactly.
 - Suite timeout = max(300s, baseline×1.5).

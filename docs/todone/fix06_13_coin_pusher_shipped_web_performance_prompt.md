@@ -1,7 +1,7 @@
-Status: DONE — exact-head technical acceptance recorded and archived 2026-09-02
+Status: DONE - exact-head technical acceptance recorded and archived 2026-09-02
 Board row: `fix06_13` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — fix06_13: Coin Pusher shipped-Web performance defect
+# Agent Prompt - fix06_13: Coin Pusher shipped-Web performance defect
 
 Work in `D:\Projects\Beat-The-House` from the exact current `main` after the
 accepted `fix06_9` evidence payload lands. This is the product-performance row
@@ -10,7 +10,7 @@ landing contract, `fix06_9` prompt and evidence handoff, the V3 machine plan,
 the native performance probe, the Web probe/telemetry path, renderer, live
 session and solver API before editing.
 
-## Retained first red — do not replace or hide it
+## Retained first red - do not replace or hide it
 
 The first actual run measured source `54e6398a151d0e9a095ebba5ae99d17a7d99f5e9`
 on `DESKTOP-1950ULQ`, Chrome `151.0.7922.174`, headless, 1280x720 at DPR 1,
@@ -27,7 +27,7 @@ Every completed shipped-Web scenario was materially red:
 
 | Scenario | frame p95 | locked cap | draw p95 | locked cap | sync resolve | locked cap |
 | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| settled idle | 144.142 ms | 16.000 ms | 53.865 ms | 5.000 ms | — | — |
+| settled idle | 144.142 ms | 16.000 ms | 53.865 ms | 5.000 ms | - | - |
 | DROP | 144.035 ms | 22.000 ms | 54.550 ms | 7.000 ms | 68.300 ms | 16.000 ms |
 | carriage/hole | 142.143 ms | 22.000 ms | 52.380 ms | 7.000 ms | 45.390 ms | 16.000 ms |
 | skill stop | 145.250 ms | 22.000 ms | 52.400 ms | 7.000 ms | 91.355 ms | 16.000 ms |
@@ -73,7 +73,7 @@ Commit logically, self-review the complete diff, obtain independent
 implementation and evidence review, and land only after exact-head and
 post-land gates are green.
 
-## Parking record — 2026-08-27
+## Parking record - 2026-08-27
 
 The current accepted work remains off-main on `codex/land06-fix06_13`:
 implementation `7ec148e4d9a6096627fa26e1afee508e5b1c0b25`, exact independent
@@ -115,7 +115,7 @@ is consumed. It owns deterministic cleanup of the exact launched Web server
 process tree exposed by the completed `fix06_14` qualification; it does not
 reopen or replace any retained performance result.
 
-## Retained exact-tree red record — 2026-09-02 — SUPERSEDED BY GREEN RUN
+## Retained exact-tree red record - 2026-09-02 - SUPERSEDED BY GREEN RUN
 
 The current product path is the accumulated exact-tree remediation ending at
 head `2d00206b43d54b56f099d6b5c3d4ce443cb406dc`. It retains the real 300-origin cabinet,
@@ -156,7 +156,7 @@ hidden. `fix06_14` and `fix06_16` were already landed before this evidence was
 consumed. At `2d00206b`, `fix06_13` correctly remained IN_PROGRESS without a
 waiver or budget change.
 
-## Current exact-tree record — 2026-09-02 — TECHNICAL GREEN
+## Current exact-tree record - 2026-09-02 - TECHNICAL GREEN
 
 The accumulated performance work landed through
 `0ce00c0ba941adac29e0a4c8a5d9f1cf842a866e`. GitHub `main` is now
@@ -191,7 +191,7 @@ recorded independent implementation/evidence review of the exact accepted head
 before `DONE` and archival. The final closeout below supersedes that process-only
 state; no additional product rebuild or re-optimization was required.
 
-## Final exact-head closeout — 2026-09-02
+## Final exact-head closeout - 2026-09-02
 
 Owner-directed process ruling: the owner instructed this session to perform all
 work needed to close `fix06_13` and `pusherv3_11`. Under that ruling, Codex
@@ -230,7 +230,7 @@ Ready was `18.554 s`. Frame/draw/resolve p95 milliseconds were idle
 `13.645/3.220/4.795`; COLLECT `16.857/6.275/7.810`; reduced motion
 `8.333/3.245/-`. Every unchanged locked limit passed. The row is DONE.
 
-## Required broad-gate receipt — post-land 2026-09-02
+## Required broad-gate receipt - post-land 2026-09-02
 
 The remaining named gates were run after the closeout reached remote `main` at
 `128a271c8fbc9d6ea0a11ec75f10bf4a54dd8e80`:

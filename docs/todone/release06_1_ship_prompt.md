@@ -1,16 +1,16 @@
 Superseded 2026-09-22 by rw06_4.
 
-Status: PARKED — do not claim until playtest, triage, tuning, voice, and cleanup are complete
+Status: PARKED - do not claim until playtest, triage, tuning, voice, and cleanup are complete
 Board row: `release06_1` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** -
+- **Completion/implementation commits:** -
+- **Verification:** -
+- **Deviations:** -
 
-# Agent Prompt — 0.6 release06_1: Balance, Verification, Release
+# Agent Prompt - 0.6 release06_1: Balance, Verification, Release
 
 Copy everything below this line into the agent.
 
@@ -30,7 +30,7 @@ This prompt is self-contained for rules and scope.
    `release06_1` to `IN_PROGRESS` with agent + date, append a Work Log
    line, commit the claim. **Precondition: ALL other rows DONE and the
    owner-triggered playtest round's `fix06_*` prompts (if any) DONE**
-   — verify on the board; if the playtest round hasn't happened, set
+   - verify on the board; if the playtest round hasn't happened, set
    `BLOCKED` with "awaiting owner playtest round" and stop.
 2. Log discoveries/deviations tagged `[release06_1]`; owner-only
    questions under Owner Questions.
@@ -45,7 +45,7 @@ This prompt is self-contained for rules and scope.
 
 - Consume content06_1's economy audit map: tune the flagged
   imbalances across Numbers EV, pusher bands, crew cuts, stake-horse
-  targets, heist payout bands, sweep costs — data-only changes,
+  targets, heist payout bands, sweep costs - data-only changes,
   documented per tuning in the commit messages. Re-run every EV/RTP
   harness after tuning.
 
@@ -55,12 +55,12 @@ This prompt is self-contained for rules and scope.
   `tools/validate_project.ps1`, every `-FoundationSuite`,
   `tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10`,
   `tools/foundation_visual_qa.ps1`, the performance/soak suite at 0.5
-  budgets (idle-liveness floors unchanged — a 0.000 idle number
+  budgets (idle-liveness floors unchanged - a 0.000 idle number
   without its liveness counter is an automatic FAIL per the recurring
   regression pattern), Web + Windows export smoke, save-migration
   matrix (0.5-release saves + mid-0.6 dev saves load correctly), and
   long-run stability (the 0.5 soak precedent).
-- Cross-system integration proofs the matrix might miss — drive each
+- Cross-system integration proofs the matrix might miss - drive each
   end-to-end at least once headless: full crew path to both heist
   plans + all four ladder outcomes; the Turn's both guarantees; solo
   run untouched-by-crew regression; Numbers fix + past-post + leak;
@@ -74,7 +74,7 @@ This prompt is self-contained for rules and scope.
   drafts (owner approves copy before any publish); reconcile the
   roadmap doc's status line to "shipped as 0.6.0" with the release
   commit hash.
-- **Owner gates (hard stops — request explicitly, never assume):**
+- **Owner gates (hard stops - request explicitly, never assume):**
   final source approval, packaged-artifact approval, and
   publish/upload authorization. Package only after source approval;
   publish only after explicit authorization; tag `v0.6.0` at the
@@ -86,7 +86,7 @@ This prompt is self-contained for rules and scope.
   assertion, or gate to go green.
 - Any post-approval code change invalidates the candidate: rerun
   affected gates and rebuild artifacts.
-- Historical reports prove only the hash they tested — the matrix
+- Historical reports prove only the hash they tested - the matrix
   runs on the exact candidate source.
 - Data-only balance changes in this task; code fixes discovered here
   become scoped `fix06_*` prompts on the board (add rows), not
@@ -97,7 +97,7 @@ This prompt is self-contained for rules and scope.
 
 - The full matrix summary (`.tmp/` reports), integration-proof list
   with seeds, migration matrix results, and packaged-artifact
-  playtests — all referenced from the Execution Record and the
+  playtests - all referenced from the Execution Record and the
   release checklist.
 
 ## On completion

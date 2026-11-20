@@ -1,9 +1,9 @@
-# AUD061-17 — Frozen candidate release coverage
+# AUD061-17 - Frozen candidate release coverage
 
 Specification: docs/todo/BTH_0.6.1_audit_work_orders.md.
 Registered before checks on main; registration and AUD061-11's post-delivery receipt were retained in Git checkpoint c854295b35a0af3781d8df282a37fbce74daf959. The approved E checkout was temporarily detached at **fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc**, tree **2d49cb17f83379715435a2576473c5cba52728ff**, for every new check below. Tracked source was clean before and after; only unrelated untracked Microsoft/ remained. Main e1f78f0c and the checkpoint were then restored without conflict. The checkpoint and original E run evidence are retained.
 
-Disposition: **FAILED — required release qualification remains incomplete.** This order records tests and separately diagnosed follow-ups. No production code, item/scenario content, migration or runtime version check was added.
+Disposition: **FAILED - required release qualification remains incomplete.** This order records tests and separately diagnosed follow-ups. No production code, item/scenario content, migration or runtime version check was added.
 
 ## Required gates
 
@@ -80,7 +80,7 @@ The documented fixed reference-time command in docs/todo/bth_task_ledger_checks.
 
 Report commit:97099e563b22ecc450f4e17852d51bb6cd9b3ad2. This is a docs/evidence-only descendant of the frozen tested source; acceptance is not relabeled to this commit. The report and SHA-association ledger commit will be pushed together after pull/rebase. Actual delivery receipt follows observation of that exact promoted commit.
 
-## Exact report delivery — observed2026-11-11T14:35:49Z
+## Exact report delivery - observed2026-11-11T14:35:49Z
 
 Existing watcher promoted 15a3077f7dec4209d601d83a3f5c76780c9966e2, tree c987e790a287a89bdb4827e80ee16a26797b333d, archive SHA256 111febf4134c3cc3e1971f6dd9a3fed603f433f1bf9f463e4c381a8408897517. Pipeline PCK AUDIT PASS files=1168, error null. Canonical next.json, manifest/stage and default redirect identify that exact revision. Served10 assets pass (8 complete GET hashes/lengths,2 unchanged pinned engine HEAD/MIME/length bindings). Fresh isolated ordinary unmodified browser startup and Daily Challenge pass:68 cash,4 WebAssembly/PCK requests200, page errors0, console warnings/errors0. Actual footer0.6.0-dev+15a3077f7dec. Primary100302 bytes SHA256 edb60cf4acd75865900524cef7a48f835e0c70471ac417aca693b1e9c0cebf27; no tmp/rollback residue. Screenshot review confirms main menu/footer and ordinary Daily house. Job exit0, timeout false, active release0.
 

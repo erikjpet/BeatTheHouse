@@ -8,7 +8,7 @@ Implementation fix commit: `aadd80ee` (`fix tutorial first route and binding gui
 
 ## Verdict
 
-**TUTORIAL COMPLETE PER SPEC — all 20 proven.**
+**TUTORIAL COMPLETE PER SPEC - all 20 proven.**
 
 The verification was run independently against production data, modules, room generation, game actions, dialogue UI, and save serialization. It found and fixed one gameplay defect: the generated world map overrode the tutorial apartment override and revealed the gas casino before the corner-store beat. The first reveal is now constrained by the tutorial-only `tutorial_initial_map_targets` modifier. It also corrected four binding dialogue phrases and expanded the proof harness so the Cage capture uses its real generated shop stock.
 

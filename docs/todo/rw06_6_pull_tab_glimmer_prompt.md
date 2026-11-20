@@ -1,6 +1,6 @@
-# rw06_6 — pull-tab yellow glimmer
+# rw06_6 - pull-tab yellow glimmer
 
-Status: **HISTORICAL / IMPLEMENTED — DO NOT LAUNCH.** The presentation-only
+Status: **HISTORICAL / IMPLEMENTED - DO NOT LAUNCH.** The presentation-only
 glimmer is in current `main` and retains fixed ticket contents, odds, and
 payouts.
 

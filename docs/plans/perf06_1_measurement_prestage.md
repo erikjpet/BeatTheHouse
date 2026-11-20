@@ -1,6 +1,6 @@
 # perf06_1 Measurement Prestage
 
-Status: **UNREVIEWED PRESTAGE — no 0.6 measurement claim**
+Status: **UNREVIEWED PRESTAGE - no 0.6 measurement claim**
 
 This document prepares the evidence contract for `perf06_1`. It does not claim
 the board row, does not replace its final report, and does not treat the current

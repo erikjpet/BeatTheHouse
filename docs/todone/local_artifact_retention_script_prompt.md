@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-13
 - **Completion/implementation commits:** `620570ba`
-- **Verification:** PASS — powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — Local Artifact Retention Script (Non-Destructive by Default)
+# Agent Prompt - Local Artifact Retention Script (Non-Destructive by Default)
 
 Copy everything below this line into the agent.
 
@@ -24,7 +24,7 @@ reports, QA screenshots, staging copies of old script versions), `.tools/`
 **Owner decision (authoritative): NOTHING is to be deleted now.** These
 are test evidence and reference material, kept locally until they are
 exported/backed up elsewhere as part of the release action. This task
-builds the tooling for that future action — it must not remove anything
+builds the tooling for that future action - it must not remove anything
 when it lands.
 
 ## The task
@@ -73,7 +73,7 @@ Also:
    `.tmp/retention_selftest/`, `-Export` it to a scratch destination,
    verify manifest + hashes, `-Clean -IAmSure` removes ONLY the exported
    selftest files, and refuses without the manifest or without
-   `-IAmSure`. The selftest must never touch real artifacts — prove it by
+   `-IAmSure`. The selftest must never touch real artifacts - prove it by
    re-running `-Report` and comparing totals (only the selftest delta may
    differ).
 3. Static check: the script contains no code path that deletes outside

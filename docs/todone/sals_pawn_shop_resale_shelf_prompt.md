@@ -4,25 +4,25 @@ Completion date: 2026-07-20
 
 Implementing commits:
 
-- `dd959027` — Add Sal resale shelf contract tests.
-- `ac4ee440` — Replace Sal item quotes with edge rarity curve.
-- `745cb40b` — Add persistent six-slot Sal inventory.
-- `084566c3` — Stock Sal once after every successful run.
-- `9bb3305c` — Add physical Sal shelf purchasing, dialogue, and starter tutorial.
-- `03c08bbf` — Polish Sal shelf visual layout and required QA states.
-- `ba5be285` — Align fresh meta defaults with protected starter stock.
+- `dd959027` - Add Sal resale shelf contract tests.
+- `ac4ee440` - Replace Sal item quotes with edge rarity curve.
+- `745cb40b` - Add persistent six-slot Sal inventory.
+- `084566c3` - Stock Sal once after every successful run.
+- `9bb3305c` - Add physical Sal shelf purchasing, dialogue, and starter tutorial.
+- `03c08bbf` - Polish Sal shelf visual layout and required QA states.
+- `ba5be285` - Align fresh meta defaults with protected starter stock.
 
 Verification gates:
 
-- `tools/validate_project.ps1` — PASS (26.8 s in a clean detached worktree at `ba5be285`).
-- `tools/collection_meta_check.ps1 -RequireGodot` — PASS (9.8 s after clean import).
-- `tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300` — PASS (77.9 s total; systems 25.428 s), report `.tmp/sal_resale_evidence/check_systems/summary.json`.
-- `tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300` — PASS (125.4 s total; UI 68.421 s and Dave 5.495 s), report `.tmp/sal_resale_evidence/check_ui/summary.json`.
-- `tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` — PASS (31.8 s; 326 checkpoints per run and identical hash `3683536865`).
-- `tools/foundation_performance_probe.ps1 -RequireGodot` — PASS (37.2 s; 62 observations and complete renderer/game/resolve/new-surface coverage).
-- `tools/foundation_visual_qa.ps1 -RequireGodot` — PASS (37.7 s; 51 states, 10 required Sal states, zero warnings), report `.tmp/sal_resale_evidence/foundation_visual_qa_report.json`.
-- `tools/foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100` — PASS (23.8 s; zero stuck states).
-- `tools/foundation_mouse_playtest.ps1 -RequireGodot -CleanSave` — PASS (41.2 s; 60 visible-control events, victory and recovery reached, zero warnings/errors), report `.tmp/sal_resale_evidence/foundation_mouse_playtest_report.json`.
+- `tools/validate_project.ps1` - PASS (26.8 s in a clean detached worktree at `ba5be285`).
+- `tools/collection_meta_check.ps1 -RequireGodot` - PASS (9.8 s after clean import).
+- `tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300` - PASS (77.9 s total; systems 25.428 s), report `.tmp/sal_resale_evidence/check_systems/summary.json`.
+- `tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300` - PASS (125.4 s total; UI 68.421 s and Dave 5.495 s), report `.tmp/sal_resale_evidence/check_ui/summary.json`.
+- `tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` - PASS (31.8 s; 326 checkpoints per run and identical hash `3683536865`).
+- `tools/foundation_performance_probe.ps1 -RequireGodot` - PASS (37.2 s; 62 observations and complete renderer/game/resolve/new-surface coverage).
+- `tools/foundation_visual_qa.ps1 -RequireGodot` - PASS (37.7 s; 51 states, 10 required Sal states, zero warnings), report `.tmp/sal_resale_evidence/foundation_visual_qa_report.json`.
+- `tools/foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100` - PASS (23.8 s; zero stuck states).
+- `tools/foundation_mouse_playtest.ps1 -RequireGodot -CleanSave` - PASS (41.2 s; 60 visible-control events, victory and recovery reached, zero warnings/errors), report `.tmp/sal_resale_evidence/foundation_mouse_playtest_report.json`.
 
 Evidence:
 
@@ -36,7 +36,7 @@ Deviations:
 - Concurrent uncommitted inventory-renovation work made the shared tree's validator reject its object-shaped `data/ui/inventory_containers.json` and made its UI runner stop at `Standalone run inventory did not auto-select the first item when selection was absent.` The official systems and UI gates therefore ran in a clean detached worktree at the identical Sal head `ba5be285`; the unrelated files were not edited, staged, or committed.
 - A first performance attempt was contaminated by a verified orphaned timed-out UI runner and failed unrelated roulette/baccarat timing rows. After stopping only that headless process pair, the unchanged implementation passed; both attempt reports are retained under `.tmp/sal_resale_evidence/`.
 
-# Agent Prompt — Sal's Pawn Shop: Persistent Resale Shelf and Float-Rarity Tutorial
+# Agent Prompt - Sal's Pawn Shop: Persistent Resale Shelf and Float-Rarity Tutorial
 
 Copy everything below this line into the worker agent.
 
@@ -49,10 +49,10 @@ or return Sal's room to a menu.
 
 Read completely before editing:
 
-1. `docs/archive/0.5/plans/0.5_sals_pawn_shop_resale_shelf_plan.md` — binding specification.
-2. `docs/plans/item_collection_meta_system_plan.md` — upstream collection model;
+1. `docs/archive/0.5/plans/0.5_sals_pawn_shop_resale_shelf_plan.md` - binding specification.
+2. `docs/plans/item_collection_meta_system_plan.md` - upstream collection model;
    this prompt supersedes its conflicting pawn-value assumptions only.
-3. `docs/plans/content_style_guide.md` — binding dialogue/copy rules.
+3. `docs/plans/content_style_guide.md` - binding dialogue/copy rules.
 4. Executed context in `docs/todone/v04_meta_home_environment_prompt.md`,
    `docs/todone/item_meta_p0_collections_schema_prompt.md`,
    `docs/todone/item_meta_p1_bag_drops_prompt.md`, and
@@ -110,7 +110,7 @@ Run relevant baselines and record timing. Keep reports under `.tmp/`. Suite
 timeout is `max(300 seconds, ceil(recorded tools/check_godot.ps1 baseline ×
 1.5))`.
 
-## Owner-locked rules — do not reinterpret
+## Owner-locked rules - do not reinterpret
 
 1. Exactly six Sal resale slots.
 2. Exactly one starter item on a new profile.
@@ -164,8 +164,8 @@ purchase quote/arm/confirm, and starter offer resolution. Views must not mutate.
 
 ## B. Seed and migrate the starter listing
 
-On a fresh store—or once when migrating any legacy store with no initialized
-Sal shelf—generate one starter listing and five empty slots.
+On a fresh store-or once when migrating any legacy store with no initialized
+Sal shelf-generate one starter listing and five empty slots.
 
 Generate the item through the shared virtual-bag pipeline, then:
 

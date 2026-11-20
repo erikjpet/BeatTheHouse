@@ -1,4 +1,4 @@
-# QOL-03 — actionable player error wording
+# QOL-03 - actionable player error wording
 
 Specification: [BTH_0.6.1_audit_work_orders.md](../todo/BTH_0.6.1_audit_work_orders.md). Started from `01a4548f9a1cf7e55762aebb79f3f8db69926572` (QOL-02 delivery receipt; runtime matches deployeded245d03).
 

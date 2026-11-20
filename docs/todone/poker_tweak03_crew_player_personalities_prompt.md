@@ -1,7 +1,7 @@
-Status: DONE — merged to `main` before `d2594eb3`; retained by the 2026-09-14 integration audit
+Status: DONE - merged to `main` before `d2594eb3`; retained by the 2026-09-14 integration audit
 Series: Back-room poker tweaks (tweak03; stacks on tweak01–02 on the same branch)
 
-# Agent Prompt — Back-Room Poker Tweak 03: Crew Player Personalities
+# Agent Prompt - Back-Room Poker Tweak 03: Crew Player Personalities
 
 Copy everything below this line into the agent.
 
@@ -9,7 +9,7 @@ Copy everything below this line into the agent.
 
 You are working on **Beat The House**, a Godot 4.6 GDScript roguelite. This
 prompt is self-contained: every rule you need is below. Read the named code
-before editing — do not plan from this prompt alone.
+before editing - do not plan from this prompt alone.
 
 ## Goal
 
@@ -18,8 +18,8 @@ nervous player: **most hands end in folds**, usually before the flop. The owner
 wants every one of the seven Crew members to have a **distinct, readable
 playstyle**, driven by **many custom attributes per person** (aggressiveness,
 bluffing frequency, how sticky they are, how they size bets, how they tilt, and
-more). Hands should usually be contested — **most hands must not just end in
-folds** — and the player should be able to learn "Knuckles will shove on a
+more). Hands should usually be contested - **most hands must not just end in
+folds** - and the player should be able to learn "Knuckles will shove on a
 draw, Rook only bets the nuts, Lucky calls everything".
 
 Build a data-driven personality system and a new decision engine for Crew
@@ -34,12 +34,12 @@ checkout.**
 - Work in the series worktree
   `D:\Projects\Beat-The-House-worktrees\backroom-poker-tweaks` on branch
   `codex/backroom-poker-tweaks`. It must already contain the tweak01 (five
-  opponents) and tweak02 (dealer/card animations) commits — check
+  opponents) and tweak02 (dealer/card animations) commits - check
   `git log` and the `Status:` lines of
   `docs/todo/poker_tweak01_five_opponents_prompt.md` and
   `docs/todo/poker_tweak02_dealer_and_card_animations_prompt.md` in the main
   checkout. If either is not DONE, stop: set this file's status to
-  `BLOCKED — waiting on tweak01/02` and do nothing else.
+  `BLOCKED - waiting on tweak01/02` and do nothing else.
 - Read `.tmp/backroom_poker_tweaks/table_map.md` in the worktree first (left by
   earlier tweaks) and both earlier execution records.
 - Do all edits, tests, and commits inside that worktree. The only file you may
@@ -47,24 +47,24 @@ checkout.**
 - Godot binary: `.tools\godot-4.6-stable\` in the main checkout (or
   `$env:GODOT_BIN`); point `GODOT_BIN` at it rather than copying `.tools`.
 
-## Architecture orientation (verified on main — re-read in the worktree, line numbers will have moved)
+## Architecture orientation (verified on main - re-read in the worktree, line numbers will have moved)
 
-- `scripts/games/crew_draw_poker.gd` — the table module. No-limit Hold'em on the
+- `scripts/games/crew_draw_poker.gd` - the table module. No-limit Hold'em on the
   `ordered_v1` turn engine (`legacy_v1` five-card draw still exists for old
   saves/tests). Key functions: `_ordered_npc_turn` (≈635), `_ordered_legal_actions`,
   `_minimum_raise_to` / `_maximum_raise_to`, `_advance_ordered_turn`,
   `_record_ordered_action`, `_maybe_surface` (tells), `_maybe_table_talk_request`,
   `_ordered_player_fake_tell` (the player's fake-tell signal),
   `_adaptive_npc_action` (legacy path, ≈1093).
-- `scripts/core/crew_poker_model.gd` — pure model: `policy(member_id)`,
+- `scripts/core/crew_poker_model.gd` - pure model: `policy(member_id)`,
   `holdem_strength` (≈236), `holdem_action` (≈288), hand evaluation,
   `split_pot`, `draw_indices` (legacy draw, uses `draw_caution`),
   `validate_content`.
-- `data/crew/poker.json` — tuning plus `policies`: today only four numbers per
+- `data/crew/poker.json` - tuning plus `policies`: today only four numbers per
   member (`tightness`, `aggression`, `bluff`, `draw_caution`) and a
-  `style_summary` string. `data/crew/tells.json` — per-member tell patterns.
-  `data/crew/crew.json` — who each Crew member is (use it for characterization).
-- `data/games/rituals/crew06_10_poker_nights.json` — five authored poker nights.
+  `style_summary` string. `data/crew/tells.json` - per-member tell patterns.
+  `data/crew/crew.json` - who each Crew member is (use it for characterization).
+- `data/games/rituals/crew06_10_poker_nights.json` - five authored poker nights.
 - Tests/tools: `scripts/tests/foundation/check_table_games.gd` (poker checks),
   `scripts/tests/foundation/crew06_10_depth_contract.gd` (asserts every member
   has a policy), `tools/crew_holdem_gameplay_audit.gd`,
@@ -72,7 +72,7 @@ checkout.**
   `tools/crew_poker_visual_capture.ps1`, `tools/foundation_performance_probe.gd`,
   `tools/perf06_budget_table.json`.
 
-## Why hands end in folds today (root causes — confirm them with numbers before changing anything)
+## Why hands end in folds today (root causes - confirm them with numbers before changing anything)
 
 In `CrewPokerModel.holdem_action`:
 
@@ -106,42 +106,42 @@ Replace the four-number `policies` entries in `data/crew/poker.json` with a
 versioned personality profile per member (bump the file's `schema_version`).
 Every attribute is an integer 0–100 unless noted, has a one-line definition in a
 schema doc comment in `crew_poker_model.gd`, and **must change decisions** (a test
-enforces this — see step 6). Starting attribute set; you may rename, merge, or
+enforces this - see step 6). Starting attribute set; you may rename, merge, or
 add, but keep at least this range of behaviour:
 
 **Preflop**
-- `looseness` — how wide a range of starting hands they play (drives VPIP).
-- `preflop_raise` — how often they come in raising rather than calling (PFR).
-- `reraise` — 3-bet frequency when someone has already raised.
-- `limp` — willingness to just call the big blind with speculative hands.
-- `position_awareness` — how much later seats widen and early seats tighten.
+- `looseness` - how wide a range of starting hands they play (drives VPIP).
+- `preflop_raise` - how often they come in raising rather than calling (PFR).
+- `reraise` - 3-bet frequency when someone has already raised.
+- `limp` - willingness to just call the big blind with speculative hands.
+- `position_awareness` - how much later seats widen and early seats tighten.
 
 **Postflop**
-- `aggression` — bet/raise versus check/call when they continue.
-- `continuation_bet` — bet the flop after raising preflop, hit or miss.
-- `bluff` — pure bluffs with no showdown value.
-- `semi_bluff` — betting/raising draws.
-- `stickiness` — calling down with marginal hands (calling-station dial).
-- `fold_to_pressure` — how readily they give up to big bets/raises.
-- `draw_chasing` — calling beyond pot odds to hit a draw.
-- `trap` — slow-playing very strong hands (check/call, then strike).
-- `check_raise` — check-raise frequency with strong hands or bluffs.
-- `river_bluff` — late-street bluffing, separate from early bluffs.
+- `aggression` - bet/raise versus check/call when they continue.
+- `continuation_bet` - bet the flop after raising preflop, hit or miss.
+- `bluff` - pure bluffs with no showdown value.
+- `semi_bluff` - betting/raising draws.
+- `stickiness` - calling down with marginal hands (calling-station dial).
+- `fold_to_pressure` - how readily they give up to big bets/raises.
+- `draw_chasing` - calling beyond pot odds to hit a draw.
+- `trap` - slow-playing very strong hands (check/call, then strike).
+- `check_raise` - check-raise frequency with strong hands or bluffs.
+- `river_bluff` - late-street bluffing, separate from early bluffs.
 
 **Sizing**
-- `bet_size` — typical bet as a share of pot (small → large).
-- `size_variance` — how much sizes vary; low values make sizes readable.
-- `overbet_shove` — willingness to overbet or go all-in.
+- `bet_size` - typical bet as a share of pot (small → large).
+- `size_variance` - how much sizes vary; low values make sizes readable.
+- `overbet_shove` - willingness to overbet or go all-in.
 
-**Temperament and reading** (only public information — see hard rules)
-- `tilt` — how much a big lost pot loosens/aggresses them, and for how long.
-- `momentum` — how a win streak changes play.
-- `short_stack_gamble` — how play changes when stack is small versus blinds.
-- `adapt_to_player` — how much they adjust to the player's observed habits
+**Temperament and reading** (only public information - see hard rules)
+- `tilt` - how much a big lost pot loosens/aggresses them, and for how long.
+- `momentum` - how a win streak changes play.
+- `short_stack_gamble` - how play changes when stack is small versus blinds.
+- `adapt_to_player` - how much they adjust to the player's observed habits
   (folds to bets, bluffs shown at showdown, raise frequency).
-- `signal_belief` — how much the player's fake tells (`player_signal`) and
+- `signal_belief` - how much the player's fake tells (`player_signal`) and
   `tell_reputation` move them.
-- `multiway_caution` — tightening as more players stay in the pot.
+- `multiway_caution` - tightening as more players stay in the pot.
 
 Also per member: `style_summary` (rewritten to match), and an optional
 `tell_leak` attribute scaling the existing `tells.json` `frequency_percent`
@@ -233,11 +233,11 @@ called from `_ordered_npc_turn`:
   counters, or **personality numbers, tilt levels, or equity estimates**. The
   player learns styles only by watching.
 
-### 5. Simulation tool — the acceptance authority
+### 5. Simulation tool - the acceptance authority
 
 Build `tools/crew_holdem_personality_sim.gd` on the real module
 (`crew_draw_poker.gd` legal actions and `_ordered_*` turn engine through the
-same seams `crew_holdem_gameplay_audit.gd` uses — no reimplementation of the
+same seams `crew_holdem_gameplay_audit.gd` uses - no reimplementation of the
 rules). It plays many seeded hands with the player seat driven by scripted
 **player bots**: `passive_caller`, `tight_folder`, `aggro_raiser`,
 `random_legal`, and `balanced`, across all 21 five-member lineups drawn from
@@ -325,10 +325,10 @@ Extend the existing Crew poker tests (don't create a parallel suite):
 2. `powershell -File tools\check_godot.ps1 -RequireGodot -FoundationSuite crew_poker`
 3. `powershell -File tools\check_godot.ps1 -RequireGodot -FoundationSuite games`
 4. `powershell -File tools\check_godot.ps1 -RequireGodot -Suite Smoke`
-5. `tools/crew_holdem_personality_sim.gd` — every acceptance target met.
+5. `tools/crew_holdem_personality_sim.gd` - every acceptance target met.
 6. `crew_holdem_gameplay_audit.gd`, `crew_holdem_dynamic_table_audit.gd`,
    `crew_poker_visual_seed_audit.gd`, `tools\crew_poker_visual_capture.ps1 -RequireGodot`,
-   `crew_holdem_dynamic_table_capture.gd` — passing, and you have opened the
+   `crew_holdem_dynamic_table_capture.gd` - passing, and you have opened the
    PNGs yourself: sized bet labels are readable and not clipped.
 7. Performance probe for `crew_draw_poker`: within budget, liveness passing.
 8. End-to-end: launch the game, reach the back room, and play at least **eight

@@ -11,19 +11,19 @@
   - Interactable event activation remains side-effect-free and opens the existing dismissible event popup to preserve the preview/no-mutation contract. Migrated event dialogues start from the explicit Talk action in the event panel.
   - The pull-tab clerk room object starts the new dialogue directly and exercises the pilot path.
   - No local commit was created because the tree is not cleanly partitionable.
-# Agent Prompt — Full Dialogue System: Multi-Turn Conversations in the Talk Dock (Pilot: Pull-Tab Clerk)
+# Agent Prompt - Full Dialogue System: Multi-Turn Conversations in the Talk Dock (Pilot: Pull-Tab Clerk)
 
 Copy everything below this line into the agent.
 
 ---
 
 You are working in `D:\Projects\Beat-The-House` (Godot 4.6 GDScript casino
-roguelike — see CLAUDE.md). The shipped talk dock
+roguelike - see CLAUDE.md). The shipped talk dock
 (`scripts/ui/talk_dock.gd`, archived prompt:
 docs/todone/talk_overlay_decision_system_prompt.md) currently addresses
 single comments to the player. This task grows it into a **full dialogue
-system**: multi-turn, branching conversations with any human in the game —
-shopkeepers, clerks, patrons — where the player makes decisions inside the
+system**: multi-turn, branching conversations with any human in the game -
+shopkeepers, clerks, patrons - where the player makes decisions inside the
 conversation and sees the mechanical effects of each choice (heat, money,
 story flags, travel unlocks) before picking.
 
@@ -45,10 +45,10 @@ today.
   (`bankroll_delta`, `suspicion_delta`, `resolve_event`, …). Inventory the
   full vocabulary before extending it.
 - Character rendering: table games build character dictionaries (name,
-  hair/jacket colors, silhouette, role — table_game_visuals.gd:130-142) fed
+  hair/jacket colors, silhouette, role - table_game_visuals.gd:130-142) fed
   to a shared character-drawing helper; pixel_scene_canvas.gd draws the
   corner-store "bored clerk" (:530). Locate the shared helper and reuse it
-  for portraits — do not write a second character renderer.
+  for portraits - do not write a second character renderer.
 - Pull-tab clerk: pull_tabs.gd exposes a room-side clerk/cashier for
   redeeming winning tabs (:234, :876); clerk events exist in events.json
   (`late_shift_discount`, `chatty_clerk`).
@@ -56,7 +56,7 @@ today.
 ## 1. Dialogue data (`data/dialogue/dialogues.json`, new)
 
 - Dialogue: `id`, `speaker` (same schema as talk-entry speakers: role, name,
-  silhouette, palette keys — so patrons/staff/strangers all work), `start`
+  silhouette, palette keys - so patrons/staff/strangers all work), `start`
   node id, `nodes`.
 - Node: `text` (what the speaker says), `choices` (1–4): `id`, `label`,
   `effects` (the existing consequence vocabulary), `goto` (next node id) or
@@ -65,7 +65,7 @@ today.
   `set_story_flag: "<flag>"` (new `story_flags` dict on RunState,
   normalized/serialized) and `unlock_travel_route: "<route_id>"` (wired to
   the world-map visibility/enable path). Everything else (heat, money,
-  items) must reuse existing keys — no forked effect semantics.
+  items) must reuse existing keys - no forked effect semantics.
 - Conditions (keep minimal): optional per-choice `requires` on story flags,
   bankroll floor, or heat band, hidden or greyed-with-reason when unmet.
 - Validate on load like existing content: unknown nodes/goto targets fail
@@ -84,7 +84,7 @@ today.
   speaker snapshot normalize on load; SB.3-style idempotence).
 - Starting a conversation: interactable props/NPCs enqueue a dialogue talk
   entry (the same way events enqueue today). Keep the trigger surface
-  generic — any environment prop or patron can reference a `dialogue_id`.
+  generic - any environment prop or patron can reference a `dialogue_id`.
 
 ## 3. Dock rework: smaller, with a speaker model
 
@@ -95,14 +95,14 @@ today.
   character-drawing helper into the portrait panel (a static pose is fine;
   reuse silhouette/palette from the speaker snapshot so the pull-tab clerk
   in the dock matches the clerk drawn in the room). Cache the rendered
-  texture per speaker key — no per-frame regeneration.
+  texture per speaker key - no per-frame regeneration.
 - **Effects are visible before choosing**: each choice row shows its
   mechanical effects (heat +2, $ +15, story, route unlock) via the badge
   row (`AttributeBadgeRowScript` is already preloaded; if the glyph
   registry lacks story/route glyphs, add them to
   data/runtime/attribute_glyphs.json). Hidden effects are allowed only when
   a dialogue explicitly marks a choice `effects_hidden: true` (deception is
-  a design tool — but the default is honest disclosure).
+  a design tool - but the default is honest disclosure).
 - Keep non-blocking semantics: gameplay stays interactive; walking away
   (traveling, starting a game action) suspends the conversation entry back
   to the queue rather than stranding it.
@@ -116,7 +116,7 @@ pull-tab room's clerk/cashier interaction:
 - Redeem chatter (ties into the existing redeem flow's messaging, not
   replacing its mechanics).
 - One risky branch (e.g. ask about "loose" tickets → heat gain, possible
-  payout — seeded roll through existing consequence keys).
+  payout - seeded roll through existing consequence keys).
 - One informational branch: clerk tip that sets a story flag and/or reveals
   a travel route (exercises both new effect keys).
 - Also migrate the two existing clerk events (`late_shift_discount`,
@@ -127,7 +127,7 @@ pull-tab room's clerk/cashier interaction:
 
 1. Zero per-frame allocations; portrait textures cached; per-frame paths
    stay zero-copy (see CLAUDE.md).
-2. One consequence applier — dialogue effects and event effects must never
+2. One consequence applier - dialogue effects and event effects must never
    diverge in behavior.
 3. Determinism gate must keep hash-matching (dialogue advance = action
    boundary; seeded rolls only). Extend the determinism probe's scripted
@@ -144,7 +144,7 @@ pull-tab room's clerk/cashier interaction:
 ## Coordination note
 
 Touches talk_dock.gd, foundation_main.gd, events/consequence paths, and the
-glyph registry — coordinate with QUEUE.md: wait for the claimed glyph/beach
+glyph registry - coordinate with QUEUE.md: wait for the claimed glyph/beach
 entries to land, then pull before starting.
 
 ## Verification gates (run at the end, not iteratively)
@@ -153,7 +153,7 @@ entries to land, then pull before starting.
 2. `tools\check_godot.ps1 -RequireGodot -FoundationSuite ui` and
    `-FoundationSuite systems`, plus `-FoundationSuite pull_tabs` for the
    pilot wiring.
-3. `tools\foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` —
+3. `tools\foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` -
    hash match with a scripted dialogue walk in the mix.
 4. Move this prompt to docs/todone/ with an execution record per RULES;
    update QUEUE.md. Commit locally; do NOT push.

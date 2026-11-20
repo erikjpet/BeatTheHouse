@@ -2,13 +2,13 @@
 
 Date: 2026-09-06
 
-Status: **DONE — RE-SCOPED STRUCTURAL ROW ACCEPTED AND LANDED**
+Status: **DONE - RE-SCOPED STRUCTURAL ROW ACCEPTED AND LANDED**
 
 Reviewed product head: `9c4196dd4d8b6061ee7e919cb21e22018689c77b`
 
 Independent reviewer: Gibbs (`/root/env06_8_final_review`)
 
-## Owner resolution — 2026-09-06
+## Owner resolution - 2026-09-06
 
 The owner re-prioritized the program toward a safe, playtestable build and split
 the row instead of granting an exception. `env06_8` now owns the structural and
@@ -55,7 +55,7 @@ release version or package state changed.
 
 The reviewer retained these blocking findings:
 
-- **P1 — observable consequence / visual QA:** a completed production probe at
+- **P1 - observable consequence / visual QA:** a completed production probe at
   `3621a696` recorded 127 failures across 53/55 scenarios: 45 unchanged
   settled-room rasters, three failed cue/event consumer receipts, 31 missing
   action-definition receipts, 27 missing before/after rasters, 12 missing
@@ -64,10 +64,10 @@ The reviewer retained these blocking findings:
   unchanged from that evidence. A fresh `bar_live_band` run was manually ended
   after ten CPU-active minutes before it emitted an artifact and is recorded as
   a non-result, not a pass or failure.
-- **P1 — unlabeled identifiability:** ten sampled contact sheets repeatedly use
+- **P1 - unlabeled identifiability:** ten sampled contact sheets repeatedly use
   generic note, screen and fixture glyphs, so distinct objects are not reliably
   identifiable without their labels.
-- **P2 — owner disposition:** the row also changed shared scenario runtime paths
+- **P2 - owner disposition:** the row also changed shared scenario runtime paths
   outside the prompt's exclusive list. No prohibited game, performance,
   integration-fixture, tutorial, audio or crew-model path changed.
 

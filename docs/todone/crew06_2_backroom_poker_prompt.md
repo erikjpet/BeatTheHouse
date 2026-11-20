@@ -8,7 +8,7 @@ Board row: `crew06_2` in `docs/todo/README_0_6_board.md`
 - **Verification:** PM line-by-line scope/design review; deterministic policy, hidden-tell, showdown-learning, trust, swing-cap, and save contracts; exact-tree full matrix; 10-seed/580-checkpoint determinism (`231360296`); canonical visual QA and four focused Poker captures all PASS.
 - **Deviations:** None. The shipped Crew lender flow remains behavior-identical and tell/learning state remains hidden from player-facing surfaces.
 
-# Agent Prompt — 0.6 crew06_2: Back-Room Poker (Crew Table + Tells)
+# Agent Prompt - 0.6 crew06_2: Back-Room Poker (Crew Table + Tells)
 
 Copy everything below this line into the agent.
 
@@ -16,7 +16,7 @@ Copy everything below this line into the agent.
 
 You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript
 casino roguelike (Web/itch.io + Windows, 1280×720). Binding design
-contract: `docs/plans/0.6_living_world_roadmap.md` — Pillar 3 "Crew
+contract: `docs/plans/0.6_living_world_roadmap.md` - Pillar 3 "Crew
 games" #1 and "The Turn" (the tells system is The Turn's skill gate:
 players can only notice a tell being *wrong* if they learned it being
 *right*). The 7 crew characters live in
@@ -39,16 +39,16 @@ rules and scope.
 
 `crew06_1` (trust API) + `env06_4` (layer 3 exists as shell) DONE.
 The table lives in L3; if crew06_6 hasn't furnished L3 yet, the table
-is the shell's first furniture — coordinate via the board log.
+is the shell's first furniture - coordinate via the board log.
 
 ## Task
 
 ### 1. The game
 
-- Five-card draw vs 2–3 crew NPCs (whoever is in residence — read
+- Five-card draw vs 2–3 crew NPCs (whoever is in residence - read
   itineraries if landed, else a seeded rotation): ante, one draw, one
   bet round each side of the draw, table stakes at friendly amounts
-  (data-tuned; this is a trust engine, not an ATM — cap session
+  (data-tuned; this is a trust engine, not an ATM - cap session
   win/loss swing in data).
 - NPC play driven by seeded, per-member policy profiles (Mags tight,
   Lucky loose, Knuckles aggressive… derive personality from the voice
@@ -56,7 +56,7 @@ is the shell's first furniture — coordinate via the board log.
 - Buy-in gated at `associate+` with any member present; playing earns
   small per-session trust with members at the table (via crew06_1
   API), win or lose; hustling them (win above a data threshold
-  repeatedly) earns respect from some, grievance from none — poker
+  repeatedly) earns respect from some, grievance from none - poker
   never writes grievances.
 
 ### 2. The tells system (The Turn's skill gate)
@@ -66,10 +66,10 @@ is the shell's first furniture — coordinate via the board log.
   a hand-strength condition (e.g., Mags re-stacks chips on a strong
   hand; Lucky goes quiet on a bluff). Tells surface through existing
   presentation channels (portrait variant, line selection, timing
-  beat) — subtle, never labeled.
+  beat) - subtle, never labeled.
 - **Hidden learning model**: per member, the run tracks tell-exposure
   events (tell shown while the condition was later verifiable at
-  showdown). Past a data threshold the member's tell is "learned" —
+  showdown). Past a data threshold the member's tell is "learned" -
   still no UI, no journal, no counter (owner discipline rule). Learned
   state is readable via API only (`tell_learned(member_id)`), consumed
   by crew06_9's misfire clue.
@@ -86,7 +86,7 @@ is the shell's first furniture — coordinate via the board log.
 
 ## Hard rules
 
-- Determinism: deck, NPC decisions, tell surfacing — all from run RNG;
+- Determinism: deck, NPC decisions, tell surfacing - all from run RNG;
   scripted sessions reproduce exactly.
 - Hidden means hidden: no tell/learning surface anywhere in UI, logs,
   or save-readable plain strings players would casually see (serialize

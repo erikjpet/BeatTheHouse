@@ -1,4 +1,4 @@
-# AUD061-15 — Wrong-sized install-key repair (item 2 only)
+# AUD061-15 - Wrong-sized install-key repair (item 2 only)
 
 Started from main 26f326ef64f7e8e63f69a9e29efb1270692a6b5a; accepted preceding NEXT facf757e9520800f4212266e42b4dedc6f3ad32b. Specification: [unchanged audit report](../todo/BTH_0.6.1_audit_work_orders.md#aud061-15--the-crew-private-capsule-is-bound-to-a-per-install-key-saves-are-not-portable). Owner-approved scope is item 2 only. No portability, message, override, format, derivation, padding, migration or old-save fixture work.
 

@@ -1,4 +1,4 @@
-# FEAT-02 / FEAT-07 — private heist investigation, incomplete acceptance
+# FEAT-02 / FEAT-07 - private heist investigation, incomplete acceptance
 
 Date: 2026-11-12.
 Main starting point: 2495b47eb3ce1e4c36da664a1cf39132ffd1dbd0.

@@ -1,4 +1,4 @@
-# rw06_0 — Verify the worker merge, commit the plan, organize todo
+# rw06_0 - Verify the worker merge, commit the plan, organize todo
 
 Status: DONE. Completed 2026-09-23 by the release orchestrator.
 

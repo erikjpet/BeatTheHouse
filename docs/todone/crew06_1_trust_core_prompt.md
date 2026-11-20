@@ -8,7 +8,7 @@ Board row: `crew06_1` in `docs/todo/README_0_6_board.md`
 - **Verification:** PM scope/design review; lender/favor compatibility, hidden ledger/jobs, save migration, integrated systems/UI/all-foundation, 10-seed determinism (`38535979`), and Wave A coexistence probe all PASS.
 - **Deviations:** None. No Crew trust, grievance, or job state is exposed in UI or logs.
 
-# Agent Prompt — 0.6 crew06_1: Crew Trust Core (Ladder, Ledger, Jobs)
+# Agent Prompt - 0.6 crew06_1: Crew Trust Core (Ladder, Ledger, Jobs)
 
 Copy everything below this line into the agent.
 
@@ -21,7 +21,7 @@ casino roguelike (Web/itch.io + Windows, 1280×720). Run logic in
 (`crew_favor_due`, `crew_favor_delivery`,
 `narrative_flags["crew_favor_pending"]`) and 7 crew characters in
 `data/characters/characters.json`. Binding design contract:
-`docs/plans/0.6_living_world_roadmap.md` — read Pillar 3 (trust ladder,
+`docs/plans/0.6_living_world_roadmap.md` - read Pillar 3 (trust ladder,
 jobs, The Turn's ledger) and Guardrails first. This prompt is
 self-contained for rules and scope.
 
@@ -40,7 +40,7 @@ self-contained for rules and scope.
 ## Dependencies
 
 None (Wave A). This is a state-model slice: **no new UI screens, no
-content** — it ships the typed model + API that every crew prompt
+content** - it ships the typed model + API that every crew prompt
 consumes. Keep the API boring and stable.
 
 ## Task
@@ -54,14 +54,14 @@ consumes. Keep the API boring and stable.
 - Rank ladder (data-tuned thresholds in a new `data/crew/crew.json`):
   `stranger → marker → associate → made → inner_circle`.
   Rank is per-member; crew standing gates shared unlocks (layer-3
-  access at first `made`, heist eligibility per plan requirements —
+  access at first `made`, heist eligibility per plan requirements -
   consumed later, defined here).
 - **Retcon, zero behavior change:** taking the existing crew loan sets
   Rook (and pool members involved) to `marker`. The shipped lender
   flow, favor scheduling, and cash-conversion behavior stay
-  byte-identical — trust is written alongside, never instead.
+  byte-identical - trust is written alongside, never instead.
 
-### 2. Grievance ledger (The Turn's fuel — model only this slice)
+### 2. Grievance ledger (The Turn's fuel - model only this slice)
 
 - Per-member ledger of typed grievance entries:
   `{id, member_id, kind, weight, turn_recorded, source_ref}`.
@@ -83,7 +83,7 @@ consumes. Keep the API boring and stable.
 - Ship one end-to-end proof job: reframe the existing
   `crew_favor_delivery` event resolution to route through the job
   framework (same player-visible behavior today; streets06_1 later
-  replaces its resolution with real gameplay — leave a marked seam).
+  replaces its resolution with real gameplay - leave a marked seam).
 - API for later prompts: `crew_trust(member)`, `crew_rank(member)`,
   `crew_add_trust(member, amount, reason)`, `grievance_add(entry)`,
   `job_offer/accept/resolve`, `crew_standing()`. Document each in the
@@ -93,12 +93,12 @@ consumes. Keep the API boring and stable.
 
 - Full serialization of trust, ledger, jobs; schema-versioned;
   pre-0.6 saves load with all members at `stranger` (or `marker` if
-  the legacy crew-debt flags indicate an active/converted crew loan —
+  the legacy crew-debt flags indicate an active/converted crew loan -
   derive, don't guess).
 
 ## Hard rules
 
-- Zero visible behavior change to the shipped crew lender/favor flow —
+- Zero visible behavior change to the shipped crew lender/favor flow -
   covered by regression test against current behavior.
 - Determinism: nothing here rolls RNG; all timing is action-boundary.
 - Hidden means hidden: no ledger or trust numbers in any UI/log string

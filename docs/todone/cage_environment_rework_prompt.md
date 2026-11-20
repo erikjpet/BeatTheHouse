@@ -4,27 +4,27 @@ Completion date: 2026-07-20
 
 Implementing commits:
 
-- `1fbc24fc` — Add Cage rework state contracts and focused tests.
-- `dd1e6c8b` — Build the walkable Grand Casino Cage room.
-- `36ede5f3` — Move Linda services into the walkable Cage.
-- `64d30c3a` — Make Players Card tiers sequential Linda claims.
-- `4317d15f` — Add Grand Casino ATM marker and interest clock.
-- `6aed6593` — Settle casino markers before chip cashout.
-- `c10c30b5` — Finish Cage gift shop tutorial and visual evidence.
-- `c3f4ed76` — Fix Cage recovery and visual gate coverage.
+- `1fbc24fc` - Add Cage rework state contracts and focused tests.
+- `dd1e6c8b` - Build the walkable Grand Casino Cage room.
+- `36ede5f3` - Move Linda services into the walkable Cage.
+- `64d30c3a` - Make Players Card tiers sequential Linda claims.
+- `4317d15f` - Add Grand Casino ATM marker and interest clock.
+- `6aed6593` - Settle casino markers before chip cashout.
+- `c10c30b5` - Finish Cage gift shop tutorial and visual evidence.
+- `c3f4ed76` - Fix Cage recovery and visual gate coverage.
 
 Verification gates:
 
-- `tools/validate_project.ps1` — PASS (22.1 s in the final UI suite run).
-- `tools/check_godot.ps1 -RequireGodot -FoundationSuite all -TimeoutSec 300` — PASS (183.9 s total; `foundation_all` 134.842 s), report `.tmp/cage_gates/foundation_all/summary.json`.
-- `tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300` — PASS (73.9 s total; `foundation_systems` 24.935 s), report `.tmp/cage_gates/foundation_systems_isolated/summary.json`.
-- `tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300` — PASS (103.1 s total; UI 48.917 s and Dave 5.064 s), report `.tmp/cage_gates/foundation_ui_isolated/summary.json`.
-- `tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` — PASS (34.236 s; 326 checkpoints per run and identical hash `365228681`).
-- `tools/foundation_performance_probe.ps1 -RequireGodot` — PASS (36.201 s; 62 observations, every renderer/game/resolve surface covered, no failures).
-- `tools/foundation_visual_qa.ps1 -RequireGodot` — PASS (30.430 s; 41 states, all eight required Cage states, zero warnings), report `.tmp/cage_gates/foundation_visual_qa_report.json`.
-- `tools/foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100` — PASS (24.089 s; 0 stuck states).
-- `tools/foundation_mouse_playtest.ps1 -RequireGodot -CleanSave -Seed CAGE-REWORK-FINAL` — PASS (28.921 s; 57 visible-control events and clean victory reached), report `.tmp/cage_mouse_playtest/cage_strict_mouse.json`.
-- `tools/collection_meta_check.ps1 -RequireGodot` — PASS (6.121 s).
+- `tools/validate_project.ps1` - PASS (22.1 s in the final UI suite run).
+- `tools/check_godot.ps1 -RequireGodot -FoundationSuite all -TimeoutSec 300` - PASS (183.9 s total; `foundation_all` 134.842 s), report `.tmp/cage_gates/foundation_all/summary.json`.
+- `tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300` - PASS (73.9 s total; `foundation_systems` 24.935 s), report `.tmp/cage_gates/foundation_systems_isolated/summary.json`.
+- `tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300` - PASS (103.1 s total; UI 48.917 s and Dave 5.064 s), report `.tmp/cage_gates/foundation_ui_isolated/summary.json`.
+- `tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` - PASS (34.236 s; 326 checkpoints per run and identical hash `365228681`).
+- `tools/foundation_performance_probe.ps1 -RequireGodot` - PASS (36.201 s; 62 observations, every renderer/game/resolve surface covered, no failures).
+- `tools/foundation_visual_qa.ps1 -RequireGodot` - PASS (30.430 s; 41 states, all eight required Cage states, zero warnings), report `.tmp/cage_gates/foundation_visual_qa_report.json`.
+- `tools/foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100` - PASS (24.089 s; 0 stuck states).
+- `tools/foundation_mouse_playtest.ps1 -RequireGodot -CleanSave -Seed CAGE-REWORK-FINAL` - PASS (28.921 s; 57 visible-control events and clean victory reached), report `.tmp/cage_mouse_playtest/cage_strict_mouse.json`.
+- `tools/collection_meta_check.ps1 -RequireGodot` - PASS (6.121 s).
 
 Evidence:
 
@@ -38,7 +38,7 @@ Deviations:
 - The performance probe retains its established informational no-game-room/slot-preview warnings and documented slot-autoplay waiver; it passed with no failure and no Cage regression. The mouse report retains one informational continued-state economy-wording warning and no error.
 - No economy value, canonical ending, test, performance budget, or baseline was weakened.
 
-# Agent Prompt — Cage Rework: Full Room, Silhouette Linda, ATM Debt, and Gift Shop
+# Agent Prompt - Cage Rework: Full Room, Silhouette Linda, ATM Debt, and Gift Shop
 
 Copy everything below this line into the worker agent.
 
@@ -50,14 +50,14 @@ rework of landed Grand Casino systems, not a greenfield feature.
 
 Read these files completely before editing:
 
-1. `docs/archive/0.5/plans/0.5_cage_environment_rework_plan.md` — the binding specification
+1. `docs/archive/0.5/plans/0.5_cage_environment_rework_plan.md` - the binding specification
    for this task.
-2. `docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` — binding except where the Cage
+2. `docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` - binding except where the Cage
    rework plan explicitly supersedes its old "Cage is not a room/modal window"
    decision.
-3. `docs/plans/grand_casino_endgame_design.md` — canonical endgame IDs, flags,
+3. `docs/plans/grand_casino_endgame_design.md` - canonical endgame IDs, flags,
    and route meanings must survive unchanged.
-4. `docs/plans/content_style_guide.md` — binding player-facing copy rules.
+4. `docs/plans/content_style_guide.md` - binding player-facing copy rules.
 
 Do not reinterpret the locked economy or progression rules. If code and this
 prompt disagree, preserve unrelated landed behavior but implement this prompt's
@@ -113,7 +113,7 @@ Run the relevant baseline suites and record timings before changing code. Use a
 suite timeout of `max(300 seconds, ceil(recorded tools/check_godot.ps1 baseline ×
 1.5))`. Put generated reports only under `.tmp/`.
 
-## Locked behavior — do not ask again
+## Locked behavior - do not ask again
 
 ### Linda
 
@@ -210,10 +210,10 @@ mouse targeting, reduced motion, and color/readability requirements.
 Create three stable fixture/action surfaces using established environment
 interaction patterns:
 
-1. **Cashout Counter** — Linda dialogue, chip purchase/cashout, card status,
+1. **Cashout Counter** - Linda dialogue, chip purchase/cashout, card status,
    card claims, comps, and promotions.
-2. **Casino ATM** — borrow, view balance/next interest, and repay from cash.
-3. **Gift Shop** — inspect stock and purchase with chips.
+2. **Casino ATM** - borrow, view balance/next interest, and repay from cash.
+3. **Gift Shop** - inspect stock and purchase with chips.
 
 Focused controls may open using the project's normal interaction panel pattern,
 but there must not be one monolithic Cage overlay. The room remains visually
@@ -306,7 +306,7 @@ Required behavior:
 
 Linda's UI must display each relevant requirement independently, e.g. games
 `2/3`, tier-segment net winnings `$9/$15`, and heat `18/30`, plus plain status
-copy such as "Silver ready — settle your $53 marker before Linda can issue it."
+copy such as "Silver ready - settle your $53 marker before Linda can issue it."
 
 ### G. Implement the ATM as the house marker
 

@@ -28,7 +28,7 @@ The manifest currently contains one profile, `coin_pusher`. The asset inventory 
 
 The implementation should treat a game fact or accepted transition op as the authority. A caller-provided profile, cue, asset path, volume, pitch, hidden flag, or elapsed time is presentation input only and must not create an event. Profile IDs and event classes must resolve through a closed manifest schema. Unknown profiles/classes, missing platform deliveries, paths outside the delivery roots, absent voice caps, duplicate IDs, and unsupported loop declarations must fail validation.
 
-Selection must be a pure function of the authoritative ordered fact/op trace, run seed, profile, event class, and deterministic occurrence index. Capture the selected event ID, occurrence index, start boundary, loop transition, and steal decision—not wall-clock timestamps. The ten-player global pool is bounded, but audio06_1 still needs an explicit per-surface cap and deterministic stealing policy in each profile or a shared default enforced by validation.
+Selection must be a pure function of the authoritative ordered fact/op trace, run seed, profile, event class, and deterministic occurrence index. Capture the selected event ID, occurrence index, start boundary, loop transition, and steal decision-not wall-clock timestamps. The ten-player global pool is bounded, but audio06_1 still needs an explicit per-surface cap and deterministic stealing policy in each profile or a shared default enforced by validation.
 
 ## Exact proof and capture plan
 

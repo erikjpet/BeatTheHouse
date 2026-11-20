@@ -1,5 +1,5 @@
-Status: TODO — owner-reported presentation defect; claimable now
-Priority: P1 — people float in mid-air in most rooms; every room reads as broken
+Status: TODO - owner-reported presentation defect; claimable now
+Priority: P1 - people float in mid-air in most rooms; every room reads as broken
 Board row: `fix06_31` in `docs/todo/README_0_6_board.md` (Defects table)
 Opened: 2026-09-10 from owner direction; evidence measured by the PM on `main` at `c570f2ce`
 
@@ -25,7 +25,7 @@ Opened: 2026-09-10 from owner direction; evidence measured by the PM on `main` a
   superseded per owner direction. Shipping placement is authored-first with a
   bounded local safety net only. No later profiling run was performed.
 
-# Agent Prompt — fix06_31: Environment Object Placement — Ground Every Person, Put Every Object Where It Belongs
+# Agent Prompt - fix06_31: Environment Object Placement - Ground Every Person, Put Every Object Where It Belongs
 
 Copy everything below this line into one agent. It may spawn sub-agents freely.
 
@@ -34,7 +34,7 @@ Copy everything below this line into one agent. It may spawn sub-agents freely.
 You are working in `D:\Projects\Beat-The-House` on `main` at `c570f2ce` or later.
 This prompt is complete on its own. Read all of it before you change anything.
 
-## 0. Authority — what the owner asked for
+## 0. Authority - what the owner asked for
 
 The owner's direction, verbatim:
 
@@ -341,7 +341,7 @@ positioned by their feet, not their centers.
 Commit at the end of each phase, and at least every 30 minutes, on a branch.
 Keep `main` green.
 
-### Phase A — Baseline (no edits)
+### Phase A - Baseline (no edits)
 
 1. Record the exact head, and run `powershell -ExecutionPolicy Bypass -File
    tools/validate_project.ps1`.
@@ -352,7 +352,7 @@ Keep `main` green.
    You must be able to prove that **only** layout moved.
 4. Confirm or correct every number in §2 by code. Report the differences.
 
-### Phase B — Audit harness and the full audit (the owner's first two asks)
+### Phase B - Audit harness and the full audit (the owner's first two asks)
 
 Build **one** audit tool. Extend `tools/environment_layout_screenshots.gd` or
 `tools/scenario_sequence_probe_main.tscn` (`--mode=visual`) rather than writing a
@@ -398,7 +398,7 @@ Machine output and captures go in `.tmp/fix06_31/` (never staged). The human
 report is committed as `docs/plans/fix06_31_environment_object_placement_report.md`.
 Commit the tool and the report before you start fixing. The report is the "before".
 
-### Phase C — Surface maps: make the art machine-readable
+### Phase C - Surface maps: make the art machine-readable
 
 For every room (every archetype and every layer art key), author a
 **placement surface map** in data, derived from that room's `_draw_<room>()`
@@ -438,7 +438,7 @@ Record per-room judgement calls in the report, with the reason:
 Add a debug overlay mode to the audit tool that draws the surface map over the
 room. Commit every map together with its overlay capture.
 
-### Phase D — Placement classes and one classifier
+### Phase D - Placement classes and one classifier
 
 Implement **one** classifier, a single function used by the resolver, the base
 generator, the renderer and the audit. It maps every object to a §1.2 class from
@@ -456,7 +456,7 @@ land there. Wire it into `tools/validate_project.ps1` following that script's
 existing JSON-check pattern. It is expected to fail loudly on current data. That
 failure list is your Phase F to-do list.
 
-### Phase E — Make the engine class-aware so it cannot float anything again
+### Phase E - Make the engine class-aware so it cannot float anything again
 
 1. **Contact-point anchoring.** For grounded classes, position by feet or base.
    A person's rect is derived from where the feet touch the surface, not from a
@@ -505,7 +505,7 @@ failure list is your Phase F to-do list.
    that float. Also check they do not stand inside an interactable object's rect,
    where two people would render on top of each other.
 
-### Phase F — The re-authoring pass (the owner's third ask)
+### Phase F - The re-authoring pass (the owner's third ask)
 
 Room by room, worst first. Take the order from your Phase B inventory; expect the
 bar, gas station, motel, Delta Queen and beach near the top. For each room:
@@ -549,7 +549,7 @@ someone. In order of preference:
 regress. If a phase genuinely cannot fit, record it with numbers and log it as an
 owner question. Do not guess.
 
-### Phase G — Permanent gates
+### Phase G - Permanent gates
 
 1. **Static grounding check** in `tools/validate_project.ps1` (Phase D), green.
 2. **Runtime grounding sweep:** the Phase B tool in pass/fail mode over all rooms

@@ -1,7 +1,7 @@
-Status: DONE — accepted by the exact-tree Family 2 closeout on 2026-09-03
+Status: DONE - accepted by the exact-tree Family 2 closeout on 2026-09-03
 Board row: `world06_2` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — 0.6 world06_2: Streets — Deliveries, Holds and Pursuit
+# Agent Prompt - 0.6 world06_2: Streets - Deliveries, Holds and Pursuit
 
 Copy everything below this line into the agent.
 
@@ -21,7 +21,7 @@ rest), the archived `streets06_1_streets_framework_prompt.md` and
 deliveries route over real map nodes with ordinary travel. What is left is that
 a delivery is still experienced as travel plus a choice list. The package is a
 cargo id, the pursuit is a timer, the lookout hold is a counter, and the verbs
-the original design named — move, wait, duck, stash, ditch — do not act on
+the original design named - move, wait, duck, stash, ditch - do not act on
 anything you can see.
 
 ## Board and dependencies
@@ -53,7 +53,7 @@ and reviewed; build only on its accepted head. You own
   than a parallel copy.
 - Sweep proximity must be legible before it is dangerous. The player should be
   able to make a bad decision knowingly.
-- The verbs — move, wait, duck, stash, ditch — become actions on scene objects
+- The verbs - move, wait, duck, stash, ditch - become actions on scene objects
   and positions with the `game06_1`-style equivalents for keyboard, controller
   and reduced motion where tactile input is used.
 - Attention and pursuit stay the same underlying numbers with the same contracts.
@@ -93,8 +93,8 @@ and reviewed; build only on its accepted head. You own
 
 ## 6. Tests and acceptance
 
-- Every shipped job kind that routes through deliveries — `package_delivery`,
-  `package_run`, `numbers_route`, `lookout_hold` — played end to end, with
+- Every shipped job kind that routes through deliveries - `package_delivery`,
+  `package_run`, `numbers_route`, `lookout_hold` - played end to end, with
   success, failure, abandonment, expiry and interruption.
 - Exactly-once assertions on every reward, trust change, grievance and heat
   effect across save, reload, revisit and expiry.

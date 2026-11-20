@@ -1,6 +1,6 @@
 # Beat the House 0.6.0 release copy
 
-Status: **PRE-PLACEMENT FINAL DRAFT — OWNER APPROVAL REQUIRED. DO NOT POST OR
+Status: **PRE-PLACEMENT FINAL DRAFT - OWNER APPROVAL REQUIRED. DO NOT POST OR
 UPLOAD.**
 
 Refreshed from the feature-complete, post-cleanup 0.6 source on 2026-10-18. The
@@ -221,7 +221,7 @@ Eight authored challenge runs and daily seeded runs wrap the same arc in new con
 
 ▌WORK WITH THE CREW
 
-The Crew is a connected campaign, not just another lender. Build trust through deliveries and Numbers work, recruit specialists, join coordinated table plays, and deal with the consequences when the police lean on the room. Favors, refusals, and grudges carry forward. Follow the route far enough and you can bring a Crew heist plan into the Grand Casino for a third way out—or ignore them and build your run another way.
+The Crew is a connected campaign, not just another lender. Build trust through deliveries and Numbers work, recruit specialists, join coordinated table plays, and deal with the consequences when the police lean on the room. Favors, refusals, and grudges carry forward. Follow the route far enough and you can bring a Crew heist plan into the Grand Casino for a third way out-or ignore them and build your run another way.
 
 ▌CHEAT WHEN YOU DARE
 
@@ -272,7 +272,7 @@ No public screenshot is approved yet. Trailer production is deferred to 0.6.1.
 
 ### Title
 
-**Beat the House 0.6.0 — The Living Town**
+**Beat the House 0.6.0 - The Living Town**
 
 ### Body
 
@@ -390,7 +390,7 @@ approval. Simulated gambling only; no real-money wagering or prizes.
 
 ## Player-facing changelog entry
 
-### 0.6.0 — The Living Town
+### 0.6.0 - The Living Town
 
 - Added 55 persistent Tonight scenarios with changing people, actions, routes,
   and aftermath.

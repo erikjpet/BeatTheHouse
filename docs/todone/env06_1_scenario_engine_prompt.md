@@ -8,7 +8,7 @@ Board row: `env06_1` in `docs/todo/README_0_6_board.md`
 - **Verification:** PM scope/design review; integrated `validate_project`, systems, UI, all-foundation, 10-seed determinism (`38535979`), visual QA, and Wave A coexistence probe all PASS.
 - **Deviations:** None. Shared pre-existing gate defects were root-fixed during PM integration without weakening coverage.
 
-# Agent Prompt — 0.6 env06_1: The Tonight System (Scenario Engine)
+# Agent Prompt - 0.6 env06_1: The Tonight System (Scenario Engine)
 
 Copy everything below this line into the agent.
 
@@ -21,7 +21,7 @@ environments generate via `EnvironmentInstance.from_archetype` from
 `data/environments/archetypes.json`; the world map stores per-node
 environment snapshots for revisits (contract:
 `docs/plans/world_map_design.md`). Binding design contract:
-`docs/plans/0.6_living_world_roadmap.md` — read the Vision, Pillar 1,
+`docs/plans/0.6_living_world_roadmap.md` - read the Vision, Pillar 1,
 and Guardrails sections first. This prompt is self-contained for rules
 and scope.
 
@@ -29,7 +29,7 @@ and scope.
 
 1. Before work: in `docs/todo/README_0_6_board.md`, set row `env06_1`
    to `IN_PROGRESS` with your agent name + date, append a Work Log
-   line, and commit the claim. If the row is not `TODO`, stop — pick
+   line, and commit the claim. If the row is not `TODO`, stop - pick
    other claimable work.
 2. Log scope-affecting discoveries/deviations in the board's Discovery
    & Decision Log (dated, tagged `[env06_1]`). Owner-only questions go
@@ -42,7 +42,7 @@ and scope.
 
 ## Dependencies
 
-None (Wave A). This is the foundation everything in Pillar 1 hangs on —
+None (Wave A). This is the foundation everything in Pillar 1 hangs on -
 API stability matters more than feature count here.
 
 ## Task
@@ -61,7 +61,7 @@ API stability matters more than feature count here.
   band, cheat-risk window, machine alarm tolerance band), and hook
   flags (recruitment/chain/rumor anchors).
 - Ship **2 placeholder scenarios for `bar` and 1 for `corner_store`**
-  as engine-proof content (env06_2/3 author the real launch cut — keep
+  as engine-proof content (env06_2/3 author the real launch cut - keep
   these minimal and clearly marked `"placeholder": true` so content
   prompts replace them).
 - Extend the content foundation check
@@ -80,7 +80,7 @@ API stability matters more than feature count here.
 - Challenge config may pin a scenario id or exclude ids per archetype
   (extend the existing challenge config surface minimally).
 - **Phases advance at action boundaries only** (the same boundary the
-  event/turn system already uses — never wall-clock). Phase advancement
+  event/turn system already uses - never wall-clock). Phase advancement
   applies that phase's mutation delta on top of the base scenario.
 - Archetypes with no scenarios defined behave byte-identically to
   today (empty-pool = no-op path; this is the compatibility guarantee
@@ -91,7 +91,7 @@ API stability matters more than feature count here.
 - Apply the selected scenario's mutations inside
   `EnvironmentInstance.from_archetype` (and the per-game
   `generate_environment_state` flow where game modifiers apply) at
-  **generation time** — mutations are computed once per
+  **generation time** - mutations are computed once per
   generation/phase-advance, never per frame.
 - Persist scenario id + phase index + phase action counter in the world
   node's environment snapshot; revisits restore exactly (world-map
@@ -106,7 +106,7 @@ API stability matters more than feature count here.
 
 - Extend `tools/tutorial_seed_audit.gd`-style seed tooling (or add
   `tools/scenario_seed_audit.gd`) to print, for a given seed, every
-  node's selected scenario — needed by QA and by env06_2/3 authors.
+  node's selected scenario - needed by QA and by env06_2/3 authors.
 
 ## Hard rules
 

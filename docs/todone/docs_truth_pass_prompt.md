@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-13
 - **Completion/implementation commits:** `cfd72e2b`
-- **Verification:** PASS — powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — Docs Truth Pass: Make Every Document Match the 0.4 Codebase
+# Agent Prompt - Docs Truth Pass: Make Every Document Match the 0.4 Codebase
 
 Copy everything below this line into the agent.
 
@@ -17,8 +17,8 @@ fully self-contained.
 
 **Release framing (owner-stated, authoritative):** 0.4.0 has NOT been
 released. A release candidate was built and tested, game-breaking bugs
-were found, and development continued. Everything landed since — including
-the current polish/perf/stability queue — is part of the 0.4.0 release,
+were found, and development continued. Everything landed since - including
+the current polish/perf/stability queue - is part of the 0.4.0 release,
 not post-release deviation. The docs must tell that story accurately:
 0.4.0 is in final development, pending final playtest, bugfixes, and
 manual publish steps.
@@ -38,26 +38,26 @@ landed, so document the tree as it actually is when you run.
 - `CHANGELOG.md`: update the 0.4.0 section to include the full polish
   line that landed since the first RC (gameplay gating, pawn shop run
   environment, time-system fixes, performance/stability hardening,
-  architecture cleanups — summarize from `git log` since the last 0.3.3
+  architecture cleanups - summarize from `git log` since the last 0.3.3
   tag/commit, do not guess). Keep the status line honest: packaged
   evidence pending final gate battery and manual publish.
 
-### 2. docs/plans — prune and mark
+### 2. docs/plans - prune and mark
 
 For each of the ~25 files in `docs/plans/`:
 
 - Historical release checklists and boards for shipped versions
-  (0.2, 0.3, 0.3.1, 0.3.2, 0.3.3) — add a one-line `HISTORICAL —
+  (0.2, 0.3, 0.3.1, 0.3.2, 0.3.3) - add a one-line `HISTORICAL -
   superseded, kept for reference` header if missing; do not rewrite them.
-- Plans whose work has shipped — mark `SHIPPED` with the landing summary
+- Plans whose work has shipped - mark `SHIPPED` with the landing summary
   at top (verify against code before marking).
 - Plans that are still live design references (act_two_seam,
   content_style_guide, grand_casino_endgame_design, world_map_design,
-  music docs, pinball docs, cheating plan) — verify their factual claims
+  music docs, pinball docs, cheating plan) - verify their factual claims
   still match the code; fix drifted file paths/line references or mark
   the specific sections stale. Do not delete live design work.
 - `0.4_release_checklist.md`, `0.4_devlog_post.md`, `0.4_publish_copy.md`
-  — refresh to match the final 0.4 content (these feed the itch page and
+  - refresh to match the final 0.4 content (these feed the itch page and
   devlog; they must describe what actually ships, including the polish
   queue outcomes).
 
@@ -66,9 +66,9 @@ For each of the ~25 files in `docs/plans/`:
 - Delete `docs/todo/QUEUE.md` and `docs/todo/RULES.md`: the owner
   deprecated the queue/claim ceremony on 2026-07-12; prompt files are now
   fully self-contained and launch prompts name files directly. If other
-  prompt files still sit in `docs/todo/` when you run, leave them — they
+  prompt files still sit in `docs/todo/` when you run, leave them - they
   are pending work, not docs.
-- `docs/todone/` is the historical archive — leave contents as-is, but if
+- `docs/todone/` is the historical archive - leave contents as-is, but if
   it has a RULES.md describing the dead ceremony, add a one-line
   deprecation note at the top rather than deleting history.
 
@@ -87,18 +87,18 @@ For each of the ~25 files in `docs/plans/`:
 - Truth over tidiness: never delete information that is the only record
   of why something happened; mark it historical instead.
 - Every factual claim you write must be verified against the current
-  tree (run the commands, read the code) — this is a truth pass, not a
+  tree (run the commands, read the code) - this is a truth pass, not a
   copy-edit.
 - Reports under `.tmp/` (gitignored) only.
 
 ## Verification
 
 - `powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1`
-  still passes (some validation includes docs/README checks — if a truth
+  still passes (some validation includes docs/README checks - if a truth
   fix conflicts with a validator expectation, the validator's expectation
   list is part of the truth pass and may be updated to match reality;
   say so explicitly in the report).
-- A link check over the docs you touched (manual or scripted) — no
+- A link check over the docs you touched (manual or scripted) - no
   dangling intra-repo references.
 
 ## On completion

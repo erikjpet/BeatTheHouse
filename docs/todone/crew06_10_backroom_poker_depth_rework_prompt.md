@@ -1,7 +1,7 @@
-Status: COMPLETE — landed safe-scope implementation accepted and archived 2026-09-03
+Status: COMPLETE - landed safe-scope implementation accepted and archived 2026-09-03
 Board row: `crew06_10` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — 0.6 crew06_10: Back-Room Poker Depth Rework
+# Agent Prompt - 0.6 crew06_10: Back-Room Poker Depth Rework
 
 Copy everything below this line into the agent.
 
@@ -146,7 +146,7 @@ native/Web parity, accessibility, performance, and visual QA. Report policy
 profiles, betting state machine, tell timeline, session reentry, five sequences,
 Turn compatibility, and exact gate evidence.
 
-## Execution record — 2026-09-03
+## Execution record - 2026-09-03
 
 Recovered the landed `0d4529ac` implementation, `040c0603` compatibility fix,
 and `f1ebe9a7` production scenario registration; no rebuild or product change

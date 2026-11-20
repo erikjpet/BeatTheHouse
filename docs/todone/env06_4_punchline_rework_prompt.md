@@ -8,7 +8,7 @@ Board row: `env06_4` in `docs/todo/README_0_6_board.md`
 - **Verification:** PM integrated-tree PASS: systems (`.tmp/pm_wave_b_env06_4_systems`), UI (`.tmp/pm_wave_b_env06_4_ui`), determinism 10 seeds / 320 checkpoints / hash `950792478`, visual QA, three-layer screenshot review with zero overlaps, L2 literal baseline SHA-256 `411a9b59089104975d1e45b7477b2ce103aeb4ce9bf617e5c73fe6f9be028624`, shortcut traversal, access, save/load, and eager legacy stored-node migration regressions.
 - **Deviations:** L1/L3 use registered art slots backed by the shipped underground raster plus distinct code-rendered scenes pending dedicated final raster art. L3 is the roadmap-authorized inert shell for `crew06_6`; no gameplay scope was added there.
 
-# Agent Prompt — 0.6 env06_4: The Punchline (3-Layer Venue Rework)
+# Agent Prompt - 0.6 env06_4: The Punchline (3-Layer Venue Rework)
 
 Copy everything below this line into the agent.
 
@@ -18,10 +18,10 @@ You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript
 casino roguelike (Web/itch.io + Windows, 1280×720). This task reworks
 the `small_underground_casino` archetype
 (`data/environments/archetypes.json`) into **The Punchline**: a
-three-layer venue — street-level comedy club (public cover), hidden
+three-layer venue - street-level comedy club (public cover), hidden
 casino (the existing underground content), hidden crew back room
 (shell only this slice; crew06_6 furnishes it). Binding design
-contract: `docs/plans/0.6_living_world_roadmap.md` — Pillar 3 "The
+contract: `docs/plans/0.6_living_world_roadmap.md` - Pillar 3 "The
 Punchline" section. World-map contract:
 `docs/plans/world_map_design.md` (node identity and the guaranteed
 `small_underground_casino → grand_casino` shortcut edge must survive).
@@ -41,7 +41,7 @@ This prompt is self-contained for rules and scope.
 
 ## Dependencies
 
-`env06_1` DONE (layers interact with scenario scoping — scenarios
+`env06_1` DONE (layers interact with scenario scoping - scenarios
 declare which layer they attach to; add that field to the schema if
 env06_1 didn't). Verify landed code.
 
@@ -51,29 +51,29 @@ env06_1 didn't). Verify landed code.
 
 - One map node, one archetype id (keep `small_underground_casino` as
   the internal id for route/save compatibility; display identity
-  becomes The Punchline — name data-driven). Three layers inside the
+  becomes The Punchline - name data-driven). Three layers inside the
   environment: `club` (L1), `casino` (L2), `back_room` (L3).
 - Layer navigation is in-environment (a transition object per layer
-  boundary using existing environment-object interaction idioms — no
+  boundary using existing environment-object interaction idioms - no
   world-map travel, no travel cost). Current layer persists in the
   node snapshot and saves.
 - Per-layer: own background asset slot, own layout spots, own music
   profile (club: tinny stage sound; casino: the existing underground
-  hush; back room: low and private — reuse/extend the music-profile
+  hush; back room: low and private - reuse/extend the music-profile
   system per layer), own game/event/service pools. Art: reuse existing
   underground art for L2; L1/L3 may ship with palette-shifted or
-  placeholder backgrounds registered through the art manifest — log
+  placeholder backgrounds registered through the art manifest - log
   final-art needs as a Discovery for the owner.
 
 ### 2. Access gating
 
 - **L1 is public**: anyone enters from the map; the venue presents as
   a comedy club (name, preview lines, map description all say comedy
-  club — the casino is never advertised).
+  club - the casino is never advertised).
 - **L1 → L2 discovery seam**: promote the existing `side_door` event
   into the canonical discovery: password/bribe/regular's-nod/crew
   standing paths (data-driven conditions; at least two ways in per
-  run). Once discovered, the node snapshot remembers — re-entry is
+  run). Once discovered, the node snapshot remembers - re-entry is
   one click. Players who never find it experience a slightly odd
   comedy club, and that is fine.
 - **L2 → L3**: locked behind crew rank (`made`, via crew06_1 API) or
@@ -98,9 +98,9 @@ env06_1 didn't). Verify landed code.
 ### 4. Ambient identity
 
 - L1 ships a minimal ambient stage bit (rotating one-line terrible
-  jokes from a data list, Voice Bible II register — the street
+  jokes from a data list, Voice Bible II register - the street
   *performing*), two-drink-minimum service reusing the house-drink
-  service pattern, and comedy-club patron dressing. Keep it lean —
+  service pattern, and comedy-club patron dressing. Keep it lean -
   env06_3 authors the real L1 scenarios on top.
 
 ## Hard rules

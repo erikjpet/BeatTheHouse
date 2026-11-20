@@ -1,6 +1,6 @@
-# env06_6 Dynamic Scenario Runtime — Runtime and Evidence Report
+# env06_6 Dynamic Scenario Runtime - Runtime and Evidence Report
 
-Status: **DONE / ACCEPTED ON CURRENT MAIN CANDIDATE — 2026-08-31**
+Status: **DONE / ACCEPTED ON CURRENT MAIN CANDIDATE - 2026-08-31**
 
 The previously host-blocked proof has now run against the recovered integrated
 candidate. The full hostile scenario contract, exact two-native/two-Web parity,
@@ -175,11 +175,11 @@ public contract.
 | Gate | Status |
 | --- | --- |
 | PowerShell/Node syntax, static JSON/object-envelope checks, executable-tool hostile contracts | **PASS** |
-| `powershell -NoProfile -ExecutionPolicy Bypass -File tools/validate_project.ps1` | **PASS** — 73.1 seconds, 2026-08-31 |
+| `powershell -NoProfile -ExecutionPolicy Bypass -File tools/validate_project.ps1` | **PASS** - 73.1 seconds, 2026-08-31 |
 | Godot GDScript load/compile check | **PASS** |
-| `env06_6_full_contract.gd` hostile runtime/persistence contract | **PASS** — 93 seconds, 2026-08-31 |
-| 55-scenario catalog/audit and uniqueness proof | **PASS** — 55 identities; 1,485 pairs; zero failures; 27 approved warnings |
-| `tools/scenario_sequence_parity_performance.ps1 -RequireGodot -Browser chrome -Cpu 4` exact native/Web trace | **PASS** — two native and two Web reports, exact canonical SHA |
+| `env06_6_full_contract.gd` hostile runtime/persistence contract | **PASS** - 93 seconds, 2026-08-31 |
+| 55-scenario catalog/audit and uniqueness proof | **PASS** - 55 identities; 1,485 pairs; zero failures; 27 approved warnings |
+| `tools/scenario_sequence_parity_performance.ps1 -RequireGodot -Browser chrome -Cpu 4` exact native/Web trace | **PASS** - two native and two Web reports, exact canonical SHA |
 | Deterministic replay and prepared-layout proof | **PASS** |
-| Exact authored visual evidence | **PASS** — 21 runtime checkpoints plus 683 ENV06_7 captures and 14 contact sheets |
-| Native/Web delivery transition and prepared-frame measurements | **PASS** — all locked p95/max budgets met |
+| Exact authored visual evidence | **PASS** - 21 runtime checkpoints plus 683 ENV06_7 captures and 14 contact sheets |
+| Native/Web delivery transition and prepared-frame measurements | **PASS** - all locked p95/max budgets met |

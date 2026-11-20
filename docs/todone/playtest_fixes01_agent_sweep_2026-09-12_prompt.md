@@ -1,7 +1,7 @@
-Status: DONE — fixes merged to `main` in `429079bb`; regression group passes on 2026-09-14
+Status: DONE - fixes merged to `main` in `429079bb`; regression group passes on 2026-09-14
 Source report: `docs/plans/agent_playtest/agent_playtest_report_2026-09-12.md` (23 findings, BUG-01 … BUG-23)
 
-# Agent Prompt — Playtest Fixes 01: Validate and Fix the 2026-09-12 Agent Sweep
+# Agent Prompt - Playtest Fixes 01: Validate and Fix the 2026-09-12 Agent Sweep
 
 Copy everything below this line into the agent.
 
@@ -9,7 +9,7 @@ Copy everything below this line into the agent.
 
 You are working on **Beat The House**, a Godot 4.6 GDScript roguelite. This
 prompt is self-contained: every rule you need is below. Read the named code
-before editing — do not plan from this prompt alone.
+before editing - do not plan from this prompt alone.
 
 ## Goal
 
@@ -20,7 +20,7 @@ Read it in full first. The owner wants **every valid bug fixed**.
 **The report is a set of claims, not facts.** For each bug you must:
 
 1. **independently prove it is real** on the current code;
-2. **find its actual root cause** — the report's "Likely cause" is a
+2. **find its actual root cause** - the report's "Likely cause" is a
    hypothesis with a confidence level;
 3. only then **fix it**.
 
@@ -28,7 +28,7 @@ Bugs you cannot prove are not fixed. They are reported back with evidence.
 
 ## Hard rules
 
-- **No commits, no pushes, no merges, no stashes, no resets** — anywhere. Leave
+- **No commits, no pushes, no merges, no stashes, no resets** - anywhere. Leave
   all changes uncommitted in the fix worktree for owner review.
 - Other agents are working in `D:\Projects\Beat-The-House` with uncommitted
   changes. **Do not edit, stage, or run the game from that checkout.** Several of
@@ -92,7 +92,7 @@ Bugs you cannot prove are not fixed. They are reported back with evidence.
   untouched base and record every failure as **pre-existing** before you change
   anything.
 
-## 2. Bug groups (shared root causes — validate individually, fix together where the cause is shared)
+## 2. Bug groups (shared root causes - validate individually, fix together where the cause is shared)
 
 | Group | Bugs | Area |
 |---|---|---|
@@ -150,7 +150,7 @@ Only `VALID` and `VALID-DIFFERENT-CAUSE` bugs get fixed.
 
 Line numbers are from the report on `56de6659`; re-locate them.
 
-**G1 — BUG-01 empty room after abandon/restart.**
+**G1 - BUG-01 empty room after abandon/restart.**
 - Find *why* generation yields an empty `current_environment` after the
   tutorial-skip → abandon → New Run → Main Menu → typed-seed sequence. Suspect
   stale generator/run state reused across runs. Fix that cause.
@@ -167,7 +167,7 @@ Line numbers are from the report on `56de6659`; re-locate them.
 - Prove same seed ⇒ same first room for normal (non-abandon) starts before and
   after.
 
-**G2 — BUG-02 coin pusher Leave never completes.**
+**G2 - BUG-02 coin pusher Leave never completes.**
 - Exit settlement must finish within a fixed bound: `MAX_SETTLE_TICKS` or
   equivalent. Find the path where a recovered shim clears completion and fix it.
 - At the bound, force a final stable, deterministic projection. Payouts for
@@ -179,7 +179,7 @@ Line numbers are from the report on `56de6659`; re-locate them.
 - Keep the native Coin Pusher library contracts green (`-FoundationSuite coin_pusher`).
   Performance must stay within budget and idle liveness must pass.
 
-**G3 — money and results.**
+**G3 - money and results.**
 - **BUG-03:** give exactly one layer ownership of each wager cost. Then **audit
   every game that goes through the pre-funded Grand Casino / practice wager
   path** (`foundation_main.gd` pre-fund + each module's returned
@@ -197,7 +197,7 @@ Line numbers are from the report on `56de6659`; re-locate them.
 - **BUG-13:** reset the HUD wallet delta on every practice launch from the Games
   library.
 
-**G4 — SFX cues.**
+**G4 - SFX cues.**
 - **BUG-04:** Craps emits its own profile's event classes (`chip_place` /
   `chip_collect` or whatever the `craps_table` profile defines), and the stuck
   command no longer happens. Confirm the hang is caused by the error, not a
@@ -210,7 +210,7 @@ Line numbers are from the report on `56de6659`; re-locate them.
   is emitted under. Fix any other mismatches it finds; each one is a validated
   bug by construction. List them.
 
-**G5 — tutorial and modals.** Run
+**G5 - tutorial and modals.** Run
 `scripts/tests/tutorial_guardrail_recovery_stress_check.gd`,
 `tutorial_dialogue_trigger_cadence_check.gd`,
 `tutorial_talk_target_nonoverlap_check.gd` and
@@ -230,7 +230,7 @@ Line numbers are from the report on `56de6659`; re-locate them.
   focus owner on close. Apply the same trap to Inventory and Run Menu if they
   share the defect (validate them).
 
-**G6 — room objects and copy.**
+**G6 - room objects and copy.**
 - **BUG-10:** Vic Mercer in the Punchline back room. First check the main
   checkout's uncommitted reusable-spawn-slot work (read-only diff of
   `environment_interaction_view_model.gd`, `pixel_scene_canvas.gd`,
@@ -260,7 +260,7 @@ Line numbers are from the report on `56de6659`; re-locate them.
   `class` alone. Instant Coffee reads as passive. Check every item in
   `items.json` for the same mismatch and add a test.
 
-**G7 — game surfaces.**
+**G7 - game surfaces.**
 - **BUG-11:** Video Poker denomination/bet commands change only the wager. They
   never deal, and every new hand starts with no holds. Keep the Video Poker
   suite and idle liveness green.
@@ -364,14 +364,14 @@ Do not edit the original sweep report. Structure:
    - gate results;
    - owner decisions needed.
 
-   Change `Status: READY` to `Status: DONE — fixes uncommitted in worktree,
+   Change `Status: READY` to `Status: DONE - fixes uncommitted in worktree,
    awaiting owner review`. Do not move the file.
 
 If a gate fails and you cannot resolve it without exceeding a bug's scope, leave
 the work uncommitted, set `Status: BLOCKED`, and paste the failing output
 verbatim into the execution record.
 
-## Execution record — 2026-09-12/13
+## Execution record - 2026-09-12/13
 
 - Base commit: `56de66598a2bcdbc3f171f090b48c361daf35563`.
 - Fix report: `D:\Projects\Beat-The-House\docs\plans\agent_playtest\agent_playtest_fixes_2026-09-12.md`.

@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-16
 - **Completion/implementation commits:** `3889b4ba`
-- **Verification:** PASS — tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_visual_qa.ps1; tools/foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_visual_qa.ps1; tools/foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — 0.5 Slice 6: Showdown Rework Phases 1-3 (The Walk, the Pat-Down, the Interrogation)
+# Agent Prompt - 0.5 Slice 6: Showdown Rework Phases 1-3 (The Walk, the Pat-Down, the Interrogation)
 
 Copy everything below this line into the agent.
 
@@ -18,7 +18,7 @@ state machine lives in `scripts/core/run_state.gd` under the canonical
 contract in `docs/plans/grand_casino_endgame_design.md` (ids
 `the_house_calls`, `casino_taken_out_back`, and the flag families are
 BINDING). This file is self-contained; the design contract is
-`docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` section 7 (phases 1-3) —
+`docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` section 7 (phases 1-3) -
 read both first. Requires slices 1-3 and 5 landed; re-verify actual code.
 
 ## Task
@@ -27,31 +27,31 @@ Rework the showdown's front half. The trigger conditions and
 `showdown-pending` state stay as-is; what happens after the player
 answers `the_house_calls` becomes three authored phases. The old
 single-roll Beat 2/Beat 3 resolution is REPLACED (slice 7 lands the
-finale; this slice must leave a functioning intermediate resolution —
+finale; this slice must leave a functioning intermediate resolution -
 keep the legacy final check as the temporary phase-4 stand-in wired to
 the new phase outputs, clearly marked for slice 7 replacement).
 
-### Phase 1 — The Walk (ditch exactly one item)
+### Phase 1 - The Walk (ditch exactly one item)
 
 Between answering the call and the back-room door: one screen/dialog
 offering AT MOST ONE ditch action, options data-authored and
 availability-gated:
-- **Hand off to the Crew** — available ONLY if the player interacted
+- **Hand off to the Crew** - available ONLY if the player interacted
   with The Crew this run (audit which crew flags prove interaction:
-  crew loans, favors, deliveries — pick the provable set). Item is
+  crew loans, favors, deliveries - pick the provable set). Item is
   SAVED: removed now, returned to inventory after the encounter
   resolves (any outcome except taken-out-back, where it is returned to
-  the meta side per slice 8 — for now: returned on survival, lost on
+  the meta side per slice 8 - for now: returned on survival, lost on
   failure, documented).
-- **Trash it** (bin/planter/toilet — flavor variants): item LOST; small
+- **Trash it** (bin/planter/toilet - flavor variants): item LOST; small
   seeded chance of being seen (heat sting + story line).
 - **Keep everything**: proceed.
 Enforce the one-ditch maximum in state, not UI.
 
-### Phase 2 — The Pat-Down (contraband punishment tiers)
+### Phase 2 - The Pat-Down (contraband punishment tiers)
 
 Classify what the player carries into the back room. Build a
-data-driven contraband classification (the item classes already exist —
+data-driven contraband classification (the item classes already exist -
 the current showdown item-modifier table in the design lock names the
 contraband and surveillance sets; convert that table into data):
 - **Clean**: no contraband/surveillance items → no penalty.
@@ -61,10 +61,10 @@ contraband and surveillance sets; convert that table into data):
   confiscated + a heavy handicap term recorded for the finale.
 - **Blatant** *(tunable threshold: 3+ contraband items, or
   watched-cheat evidence combined with any contraband)*: IMMEDIATE
-  `casino_taken_out_back` failure — no interrogation, no duel. Blatant
+  `casino_taken_out_back` failure - no interrogation, no duel. Blatant
   cheating forfeits the encounter; the failure message says so.
 
-### Phase 3 — The Interrogation (three beats)
+### Phase 3 - The Interrogation (three beats)
 
 Three dialogue beats. Each beat Rourke presents REAL evidence from THIS
 run, selected deterministically from the tracked state: watched-cheat
@@ -73,12 +73,12 @@ encounters (slice 3), card ineligibility. The player counters with 2-3
 choices per beat whose strength derives from run facts (clean-play
 history, held items, Linda standing, crew ties). Convert the old hidden
 formula modifiers (evidence penalty, clean-play modifier, item modifier,
-alcohol/debt penalty, prior-boss modifiers — exact tables in the design
+alcohol/debt penalty, prior-boss modifiers - exact tables in the design
 lock) into VISIBLE beat stakes.
 
 Output of phases 1-3 is a serialized `grand_casino_duel_terms` dict:
 starting stacks/handicaps, Rourke aggression/cheat level, and margin
-thresholds — consumed by slice 7's duel. Until slice 7 lands, feed the
+thresholds - consumed by slice 7's duel. Until slice 7 lands, feed the
 legacy check from these terms so the encounter remains winnable and
 losable.
 

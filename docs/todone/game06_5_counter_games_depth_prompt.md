@@ -1,7 +1,7 @@
-Status: COMPLETE — product and focused acceptance landed on remote `main`
+Status: COMPLETE - product and focused acceptance landed on remote `main`
 Board row: `game06_5` in `docs/todo/README_0_6_board.md`
 
-## Superseding owner decision and trunk landing — 2026-09-02
+## Superseding owner decision and trunk landing - 2026-09-02
 
 The owner superseded the historical Option C hold and directed a polished,
 denser interlocking Crossword. The final seven-ticket implementation landed on
@@ -33,7 +33,7 @@ The program root selected Option C with the historical-save policy
 This amendment was the prior bounded policy. It was superseded by the owner's
 2026-09-02 instruction and must not be used as current release behavior.
 
-# Agent Prompt — 0.6 game06_5: Counter Games Depth (Scratch Tickets, Pull Tabs)
+# Agent Prompt - 0.6 game06_5: Counter Games Depth (Scratch Tickets, Pull Tabs)
 
 Copy everything below this line into the agent.
 
@@ -51,7 +51,7 @@ document under `docs/plans/`.
 
 ## Why this rework exists
 
-These two are already the closest thing in the project to tactile play —
+These two are already the closest thing in the project to tactile play -
 `scratch_tickets.gd` is one of only two modules that implements
 `surface_pointer_command`, and the mask, foil and region renderers do real work.
 What is missing is everything around the ticket. You buy from nobody, you scratch
@@ -102,7 +102,7 @@ inherited surface; do not rebuild it inside this row.
 - A partially scratched ticket is a persistent object. Save, exit and revisit
   must restore exactly what has been revealed, with no replayed reward, audio or
   one-shot effect, and no re-revealing of a window.
-- Losing tickets need somewhere to go — a bin, a pocket, a counter — and the
+- Losing tickets need somewhere to go - a bin, a pocket, a counter - and the
   accumulated evidence of a bad session should be visible in the scene.
 
 ## 3. Cheats and secrecy

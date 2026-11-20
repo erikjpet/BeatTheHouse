@@ -8,7 +8,7 @@ Board row: `town06_2` in `docs/todo/README_0_6_board.md`
 - **Verification:** PM combined-tree PASS: systems (`.tmp/pm_wave_b_town06_2_systems`), UI (`.tmp/pm_wave_b_town06_2_ui`), determinism 10 seeds / 320 checkpoints / hash `1634084723`, visual QA, 20-seed rumor truth sweep, heard-tier/scouting separation, traveler presence/decay, Silas gating, reputation hop propagation and writer coverage, save round-trip, and pre-0.6 migration.
 - **Deviations:** Code reality required a separate partial `heard` payload instead of setting the existing full-detail `scouted` boolean. Canonical pre-seeded scenario definitions are stored separately from public rumor snapshots so tutorial mutation suppression remains exact; both decisions are generic, serialized, and board-logged.
 
-# Agent Prompt — 0.6 town06_2: Rumors, Travelers, Traveling Reputation
+# Agent Prompt - 0.6 town06_2: Rumors, Travelers, Traveling Reputation
 
 Copy everything below this line into the agent.
 
@@ -19,7 +19,7 @@ casino roguelike (Web/itch.io + Windows, 1280×720). The world map
 already supports `scouted` node flags that upgrade preview detail
 (`docs/plans/world_map_design.md`); the snitch/reputation event cluster
 and Dave the bus regular already exist. Binding design contract:
-`docs/plans/0.6_living_world_roadmap.md` — Pillar 2 (Rumors, Traveling
+`docs/plans/0.6_living_world_roadmap.md` - Pillar 2 (Rumors, Traveling
 NPCs, Consequences). Voice: both voice bibles. This prompt is
 self-contained for rules and scope.
 
@@ -42,11 +42,11 @@ truth-sources read `scenario_for_node` and TownState.
 
 ## Task
 
-### 1. Rumor system — true statements about elsewhere
+### 1. Rumor system - true statements about elsewhere
 
 - A rumor is generated from **actual state**: another node's seeded
   scenario, an active/incoming town condition, or a registered rumor
-  fact (extensible class registry — pusher piles, Numbers whispers,
+  fact (extensible class registry - pusher piles, Numbers whispers,
   and sweep sightings plug in via later prompts; ship the registry
   now with scenario/condition classes live).
 - Delivery surfaces (reuse existing systems, no new chrome): staff
@@ -61,7 +61,7 @@ truth-sources read `scenario_for_node` and TownState.
   Queen"). Data: rumor templates in `data/town/rumors.json` with
   per-class template pools, Voice Bible II register per speaker side.
 - Rumors are never false in 0.6 (trust in the system first; falsehood
-  is future design space — note in data comments).
+  is future design space - note in data comments).
 
 ### 2. Traveling NPC itineraries
 
@@ -75,10 +75,10 @@ truth-sources read `scenario_for_node` and TownState.
     venue she has left carries a `rival_worked_here` local modifier
     (slightly raised table attention) and a rumor fact; a venue she is
     in seeds her presence for chain06_1 (flag + ambient placement
-    only this slice — her chain content arrives there).
+    only this slice - her chain content arrives there).
   - **Silas Crow** (`silas_snitch`): his current node gates his
     existing snitch events/services; where he drinks is rumorable.
-- Read API: `traveler_node(character_id)`, `travelers_at(node_id)` —
+- Read API: `traveler_node(character_id)`, `travelers_at(node_id)` -
   consumed by crew06_9 (itinerary-lie clue) and chain06_1.
 
 ### 3. Traveling reputation (edge propagation)
@@ -89,7 +89,7 @@ truth-sources read `scenario_for_node` and TownState.
   per-hop decay (data-tuned). Environments read the local reputation
   value at generation into: door strictness band, staff line
   selection, and a rare reaction event. Legible, small, deterministic
-  — town gossip, not a global stat bar. Incident writers: wire the
+  - town gossip, not a global stat bar. Incident writers: wire the
   ones that exist today (thrown-out/security events, big-win logs);
   leave a registered writer API for pusher alarms and future systems.
 

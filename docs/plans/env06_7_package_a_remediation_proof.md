@@ -1,4 +1,4 @@
-# env06_7 Package A — First-Rejection Remediation Proof
+# env06_7 Package A - First-Rejection Remediation Proof
 
 > Historical rejection-response evidence. The `040c0603` production recovery
 > replaces its synthetic target inventory with sealed production composition;

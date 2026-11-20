@@ -1,4 +1,4 @@
-# Beat the House 0.6.1 audit — final execution report
+# Beat the House 0.6.1 audit - final execution report
 
 All **18 scoped orders have an execution disposition: 14 done, 1 not reproduced, 1 blocked, 2 failed qualification**. This does not qualify a release. The existing NEXT pipeline is flowing; no tag, official release, manual build upload, stable/itch publication or alternate deployment path was created.
 

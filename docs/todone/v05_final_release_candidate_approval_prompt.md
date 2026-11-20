@@ -1,4 +1,4 @@
-# Agent Prompt — Build and Approve the Final 0.5 Release Candidate
+# Agent Prompt - Build and Approve the Final 0.5 Release Candidate
 
 Last reconciled: 2026-08-12
 Release target: 0.5.0

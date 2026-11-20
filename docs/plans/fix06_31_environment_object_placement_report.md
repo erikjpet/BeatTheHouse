@@ -1,4 +1,4 @@
-# Fix 06.31 — Environment Object Placement and Grounding
+# Fix 06.31 - Environment Object Placement and Grounding
 
 Status: **COMPLETE / EXACT-HEAD GATES GREEN**
 Baseline product head: `c570f2ce6fafa4212292f8b129ca08f2e9e1e954`
@@ -124,7 +124,7 @@ the broader set so no state can inherit a bad physical relationship; the frozen
 These provisional judgements are used only to identify the before defect. Phase
 C moves them into authored per-room surface maps checked against clean captures.
 
-## Phase C — authored surface maps
+## Phase C - authored surface maps
 
 `data/environments/placement_surfaces.json` now contains 21 unique maps: every
 one of the 18 archetypes plus the Punchline's public club, hidden casino and

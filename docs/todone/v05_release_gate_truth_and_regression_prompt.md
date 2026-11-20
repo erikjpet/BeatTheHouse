@@ -4,7 +4,7 @@ Last reconciled: 2026-08-05
 Release target: 0.5.0
 Status: OPEN / BLOCKS FEATURE CLOSURE AND FINAL RC
 
-## Execution record — 2026-08-05
+## Execution record - 2026-08-05
 
 Status: **COMPLETE**
 

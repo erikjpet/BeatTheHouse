@@ -1,6 +1,6 @@
-# rw06 FINAL PUSH — shared prompt for every lane (2026-09-25)
+# rw06 FINAL PUSH - shared prompt for every lane (2026-09-25)
 
-Status: **HISTORICAL / SUPERSEDED — DO NOT LAUNCH.** This was the shared process
+Status: **HISTORICAL / SUPERSEDED - DO NOT LAUNCH.** This was the shared process
 for the dated final-lane push. The queue is closed; current state lives in
 `../current_game_state.md`.
 

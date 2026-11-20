@@ -1,7 +1,7 @@
-Status: DONE — 2026-08-25
+Status: DONE - 2026-08-25
 Board row: `pusherv3_7` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — pusherv3_7: Played-In Opening Stock
+# Agent Prompt - pusherv3_7: Played-In Opening Stock
 
 Follow-up to archived
 `docs/todone/pusherv3_6_plinko_bounce_and_entry_boards_prompt.md`.

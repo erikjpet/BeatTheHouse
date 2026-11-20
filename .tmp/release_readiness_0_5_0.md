@@ -4,7 +4,7 @@ Date: 2026-07-17 (America/Chicago)
 
 Tested source commit: `31f0020b` (`Handle blocking dialogue in strict mouse QA`)
 
-Result: **PASS — repository gates are green.**
+Result: **PASS - repository gates are green.**
 Scope: Grand Casino rework slices `gc05_1` through `gc05_9`. Packaging,
 publication, and the release tag remain owner-operated actions.
 

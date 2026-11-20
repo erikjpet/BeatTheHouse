@@ -68,4 +68,4 @@ The final Smoke run passed validation, import, script loading, foundation smoke,
 - Retained-memory slope and full 180-minute performance soak.
 - Final pre-human release matrix, refreshed evidence, and owner playtest preparation.
 
-Phase 1 verdict: **PASS — integration gates recovered without losing the preserved checkpoint.**
+Phase 1 verdict: **PASS - integration gates recovered without losing the preserved checkpoint.**

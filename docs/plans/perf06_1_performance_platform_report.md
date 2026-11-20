@@ -13,7 +13,7 @@
 > change this report's historical Phase 3 status or supply binding Phase 4
 > evidence.
 
-Status: HISTORICAL NON-BINDING PHASE 3 LEDGER — tooling is on `main`; binding Phase 4 waits for accepted placement.
+Status: HISTORICAL NON-BINDING PHASE 3 LEDGER - tooling is on `main`; binding Phase 4 waits for accepted placement.
 
 The retained rehearsal began from pushed `origin/main` commit `c570f2ce6fafa4212292f8b129ca08f2e9e1e954`. `fix06_31` later landed, but the owner rejected the subsequent reusable-slot/fixture placement experiment. Only a future exact pushed candidate containing an accepted replacement placement design may supply binding figures.
 
@@ -39,8 +39,8 @@ The shared phase assertion rejects idle rows unless sampled frame and draw mean/
 
 Verification:
 
-- `powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1` — PASS.
-- `powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -Suite Audit -RequireGodot` — PASS in 731.7 seconds, including all 13 new `perf06_audit_*` stages, the permanent 8×55 room finalization gate, Slot Pinball, the 10,000-case Slot deep audit, and Roulette audits. Structured diagnostic report: `.tmp/test_reports/20260911_192001_audit/summary.json`.
+- `powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1` - PASS.
+- `powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -Suite Audit -RequireGodot` - PASS in 731.7 seconds, including all 13 new `perf06_audit_*` stages, the permanent 8×55 room finalization gate, Slot Pinball, the 10,000-case Slot deep audit, and Roulette audits. Structured diagnostic report: `.tmp/test_reports/20260911_192001_audit/summary.json`.
 
 ## Reduced-sample dry run
 

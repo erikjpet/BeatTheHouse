@@ -1,6 +1,6 @@
-# rw06_4 — 0.6.0 release gate and artifact handoff
+# rw06_4 - 0.6.0 release gate and artifact handoff
 
-Status: **AUTHORIZED / IN PROGRESS — 2026-10-18.** The owner accepted the current
+Status: **AUTHORIZED / IN PROGRESS - 2026-10-18.** The owner accepted the current
 placement baseline and authorized the release owner to select and land the
 necessary changes, run the essential checks in their own environment, and
 produce the final source, Windows, and Web deliverables. Another full artistic

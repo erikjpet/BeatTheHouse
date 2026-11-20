@@ -289,7 +289,7 @@ mobile or Web. Tutorial owns runtime; no new engine/browser/build, E write or
 publication occurred in this source follow-up. All20 owned receipt hashes still
 report zero remaining processes. All six feature acceptance gates remain Open.
 
-## Actual corrected screenshot — latest checkpoint
+## Actual corrected screenshot - latest checkpoint
 
 The assigned screenshot-only runtime window produced the actual native title
 Games mouse press/release → corrected CRT menu at 1280 x 720. The game viewport

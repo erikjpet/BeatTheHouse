@@ -1,8 +1,8 @@
-Status: PARKED — Phases 1–3 machinery is on `main`; the binding platform pass waits for accepted placement and a quiesced witnessed candidate
+Status: PARKED - Phases 1–3 machinery is on `main`; the binding platform pass waits for accepted placement and a quiesced witnessed candidate
 Controlling continuation: `perf06_1_finish_and_qualify_prompt.md`
 Board row: `perf06_1` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — 0.6 perf06_1: Performance and Platform Pass
+# Agent Prompt - 0.6 perf06_1: Performance and Platform Pass
 
 Copy everything below this line into the agent.
 

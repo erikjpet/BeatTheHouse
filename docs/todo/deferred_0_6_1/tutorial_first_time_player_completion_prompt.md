@@ -1,4 +1,4 @@
-# Agent Prompt — Repair and Complete the 0.5 First-Time-Player Tutorial
+# Agent Prompt - Repair and Complete the 0.5 First-Time-Player Tutorial
 
 Last reconciled: 2026-08-05
 Release target: 0.5.0
@@ -25,8 +25,8 @@ defects those trials expose.
 
 Read completely before editing:
 
-- `docs/plans/tutorial_verification.md` — prior 20-point scripted baseline;
-- `docs/plans/tutorial_first_time_player_review.md` — TUT-N01 through N17;
+- `docs/plans/tutorial_verification.md` - prior 20-point scripted baseline;
+- `docs/plans/tutorial_first_time_player_review.md` - TUT-N01 through N17;
 - the 2026-08-03 independent real-interface audit incorporated below;
 - `data/challenges/challenges.json`, which specifies
   `home_archetype_id=apartment`;
@@ -75,9 +75,9 @@ Until the final real-interface matrix passes, these remain **UNPROVEN**:
 - Grand Casino Host, Rourke, Linda, chips, shop, compressed Bronze, and return;
 - tutorial ending and normal-run handoff.
 
-## P0A — restore the legitimate opening path
+## P0A - restore the legitimate opening path
 
-### TUT-N18 — Correct entry configuration
+### TUT-N18 - Correct entry configuration
 
 - Make clean-profile New Run and Replay Lessons enter the authored Apartment
   tutorial deterministically.
@@ -85,7 +85,7 @@ Until the final real-interface matrix passes, these remain **UNPROVEN**:
 - Assert the rendered room identity, world node, environment data, and tutorial
   challenge identity before the first lesson appears.
 
-### TUT-N19 — Remove the legacy tutorial chain
+### TUT-N19 - Remove the legacy tutorial chain
 
 - Prevent `DEALER'S ADVICE`, `tip_first_*`, and other deprecated ambient chains
   from activating in the guided tutorial through either entry path.
@@ -94,7 +94,7 @@ Until the final real-interface matrix passes, these remain **UNPROVEN**:
 - Confirm legacy tips remain unavailable after save/load, Replay Lessons,
   menu return, and tutorial restart.
 
-### TUT-N20 — Restore authored starting items
+### TUT-N20 - Restore authored starting items
 
 - Restore forced X-ray Glasses to the correct Apartment storage/inventory flow.
 - Prove storage contains the item, pickup transfers it once, inventory shows
@@ -102,7 +102,7 @@ Until the final real-interface matrix passes, these remain **UNPROVEN**:
   it.
 - Keep normal-run home/storage generation byte-identical and unscripted.
 
-### TUT-N21 — Synchronize target, focus, highlight, and hit region
+### TUT-N21 - Synchronize target, focus, highlight, and hit region
 
 - Bind highlights to the current rendered target screen transform and actual
   hit region after every camera, object, viewport, panel, and layout change.
@@ -113,7 +113,7 @@ Until the final real-interface matrix passes, these remain **UNPROVEN**:
   activate the same object/action the lesson expects.
 - Hide/fail safely when the target is unavailable; never point to empty space.
 
-### TUT-N22 — Correct overlay lifecycle and modal ownership
+### TUT-N22 - Correct overlay lifecycle and modal ownership
 
 - Suspend/reflow tutorial overlays for Inventory, Run Menu, map, and every
   modal without covering modal controls.
@@ -123,7 +123,7 @@ Until the final real-interface matrix passes, these remain **UNPROVEN**:
   active.
 - Ensure no stale popup survives profile/run replacement or Replay Lessons.
 
-### TUT-N23 — Safe skip and recovery
+### TUT-N23 - Safe skip and recovery
 
 - Make Skip/recovery advance to a valid recoverable state instead of looping
   backward.
@@ -131,7 +131,7 @@ Until the final real-interface matrix passes, these remain **UNPROVEN**:
 - Add recovery tests for missing target, offscreen target, interrupted modal,
   save/load, and menu-return cases.
 
-### TUT-N24 — Actions usable under and after dialogue
+### TUT-N24 - Actions usable under and after dialogue
 
 - Preserve the contract that requested actions remain usable under/after the
   intended dialogue presentation.
@@ -140,45 +140,45 @@ Until the final real-interface matrix passes, these remain **UNPROVEN**:
 - Unrelated allowed actions remain usable; disallowed actions explain the
   current requirement rather than appearing dead.
 
-## P0B — readability, teaching, and completion blockers (prior review)
+## P0B - readability, teaching, and completion blockers (prior review)
 
-### TUT-N01 — Fully readable dialogue
+### TUT-N01 - Fully readable dialogue
 
 Render real speaker names, complete lines, and responses inside the 1280x720
 safe area. Eliminate blank nameplates, two-line clipping, and offscreen choices.
 
-### TUT-N02 — Instruction and target visible together
+### TUT-N02 - Instruction and target visible together
 
 Position TalkDock/portraits so the complete instruction and actionable target
 remain visible and selectable simultaneously.
 
-### TUT-N03 — First-minute mental model
+### TUT-N03 - First-minute mental model
 
 Before leaving Apartment, explain the run goal/failure, Bankroll, Heat, Drunk,
 time/open hours, inventory/active items, spending, gambling, travel, debt, and
 Players Card purpose. Provide a compact current objective/next action.
 
-### TUT-N04 — Teach Blackjack before testing it
+### TUT-N04 - Teach Blackjack before testing it
 
 Teach 21, busting, dealer comparison, card values, Hit, Stand, selected wager,
 and wager lock before advanced actions. Use a deterministic meaningful hand.
 
-### TUT-N05 — Guaranteed Heat comprehension
+### TUT-N05 - Guaranteed Heat comprehension
 
 Teach Heat and exact cheat risks on perfect and mistake routes, with
 avoidance/recovery guidance and contextual follow-up after real Heat gain.
 
-### TUT-N06 — Clear stale Result output
+### TUT-N06 - Clear stale Result output
 
 Clear/collapse/expire Result output at travel, game, and guided-conversation
 boundaries while retaining optional history elsewhere.
 
-### TUT-N07 — Complete ending and handoff
+### TUT-N07 - Complete ending and handoff
 
 Fit Linda's content, standardize tier terminology, recap learned systems, and
 explain persistence and next steps for a normal run.
 
-## P1 — required comprehension work
+## P1 - required comprehension work
 
 - [x] TUT-N08: show actual item effects and passive/active/equipped/consumable/
   permanent behavior; explain the active-item slot.
@@ -192,7 +192,7 @@ explain persistence and next steps for a normal run.
 - [x] TUT-N13: split Linda's cash/chips/shop/debt explanation, state the comp
   reward/storage, and require inspection of one chip-priced offer.
 
-## P2 — polish and resilience
+## P2 - polish and resilience
 
 - [x] TUT-N14: blocked actions state the current requirement and keep the real
   target highlighted.

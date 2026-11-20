@@ -823,7 +823,7 @@ func _crew_heist_append_count_prompt(result: Dictionary, prompt: String) -> void
 		var existing := str(result.get(key, "")).strip_edges()
 		if existing.is_empty() or existing.contains(clean_prompt):
 			continue
-		result[key] = "%s  COUNT — %s" % [existing, clean_prompt]
+		result[key] = "%s  COUNT - %s" % [existing, clean_prompt]
 
 
 func crew_record_heist_event_result(result: Dictionary) -> Dictionary:

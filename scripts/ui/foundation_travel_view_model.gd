@@ -433,7 +433,7 @@ static func decision_frame_choices(source_choices: Array) -> Array:
 			var other_offer := str(other_decision.get("offer", other.get("description", ""))).strip_edges()
 			if other_offer.is_empty():
 				continue
-			forfeit_parts.append("%s — %s" % [str(other.get("label", other.get("id", "Route"))), other_offer])
+			forfeit_parts.append("%s - %s" % [str(other.get("label", other.get("id", "Route"))), other_offer])
 			if forfeit_parts.size() >= 2:
 				break
 		if forfeit_parts.is_empty():

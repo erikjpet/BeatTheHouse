@@ -1,12 +1,12 @@
-# Beat the House — Act 1 Feature-Complete Task Board
+# Beat the House - Act 1 Feature-Complete Task Board
 
-> **HISTORICAL — superseded, kept for reference.** Its implementation backlog
+> **HISTORICAL - superseded, kept for reference.** Its implementation backlog
 > is complete or superseded; current 0.4 readiness lives in
 > `docs/archive/0.4/plans/0.4_release_checklist.md`.
 
 Created: 2026-07-01
 Owner: project management
-Supersedes: `demo_release_task_board.md` (historical — its 0.2 demo scope shipped
+Supersedes: `demo_release_task_board.md` (historical - its 0.2 demo scope shipped
 as the 0.2.0 release candidate per `0.2_release_checklist.md`) as the active
 planning entry point.
 
@@ -31,7 +31,7 @@ runs and custom challenges wrap the same arc.
 
 **Act 1 is feature-complete when:**
 1. All 7 games are individually feature-complete (definition per game in
-   Epic 3) with their feature events polished — including the shipped pinball
+   Epic 3) with their feature events polished - including the shipped pinball
    feature rework (Epic 1).
 2. Skill-based cheating is a coherent cross-game pillar, not a blackjack-only
    showpiece (Epic 2).
@@ -39,7 +39,7 @@ runs and custom challenges wrap the same arc.
    supports clean/advantage/cheat/recovery strategies, and a travel graph
    worth planning around (Epic 4).
 4. Every system with a code path either ships with content or is deliberately
-   cut and hidden — no empty prestige, no dead hooks (Epic 5).
+   cut and hidden - no empty prestige, no dead hooks (Epic 5).
 5. Presentation and audio are complete across all release paths (Epic 6).
 6. QA gates pass without unexplained failures, and balance is verified by batch
    metrics (Epic 7). As of T7.3-FAST, visual QA, deterministic metrics, the
@@ -54,7 +54,7 @@ external), multiplayer/leaderboards, real-money anything.
 ### Evidence-based gap assessment (verified 2026-07-01)
 
 > **Freshness note (2026-07-02):** this table is a point-in-time snapshot
-> and now lags the work — several rows (skill cheating, music, pinball) are
+> and now lags the work - several rows (skill cheating, music, pinball) are
 > superseded. The per-task status lines and the section 13 Status Ledger
 > are the authoritative record of what is finished.
 
@@ -85,15 +85,15 @@ WORKSPACE: D:\Projects\Beat-The-House
 ENGINE: Godot 4.6-compatible, Windows/PowerShell. Run via tools/run_godot.ps1.
 
 MISSION: Implement this task completely against the CURRENT repository state.
-Read the relevant files before editing. The 0.2.0 demo shipped — verify what
+Read the relevant files before editing. The 0.2.0 demo shipped - verify what
 exists before building; extend and polish rather than rebuild unless a test
 proves specific broken behavior. Do not stop at analysis.
 
 SOURCES OF TRUTH:
 - README.md (top-level spec).
 - docs/plans/act_one_feature_complete_task_board.md (this board).
-- docs/plans/grand_casino_endgame_design.md (endgame contract — shipped).
-- docs/plans/pinball_feature_rework_plan.md (pinball feature — COMPLETE as
+- docs/plans/grand_casino_endgame_design.md (endgame contract - shipped).
+- docs/plans/pinball_feature_rework_plan.md (pinball feature - COMPLETE as
   of R2; preserve the shipped contract. If future slot work touches pinball
   internals or slot_family_pinball.gd, update this board's evidence and the
   active pinball plan/feel reference rather than deleted progress prompts.)
@@ -157,9 +157,9 @@ Priorities: **P0** blocks Act 1 feature-complete. **P1** required polish.
 
 ---
 
-## 3. Epic 0 — Program truth (run these first)
+## 3. Epic 0 - Program truth (run these first)
 
-**T0.1 — Status Truth Sweep** — P0 — deps: none — status: DONE
+**T0.1 - Status Truth Sweep** - P0 - deps: none - status: DONE
 Evidence: `validate_project.ps1` passed after documentation edits; section 13 covers every demo-board task A0-F6 and every section-1 gap row.
 
 The old demo board's statuses are stale and this board's gap table is a
@@ -186,14 +186,14 @@ Deliverables:
 3. A header note added to demo_release_task_board.md marking it historical
    and pointing here.
 
-Do not fix failures you find — file them as one-line notes on the relevant
+Do not fix failures you find - file them as one-line notes on the relevant
 task in this board. This task changes documentation only.
 
 DONE GATE: validate_project.ps1 passes after doc edits; ledger covers every
 demo-board task and every gap-table row.
 ```
 
-**T0.2 — Act 1 Scope Lock in README** — P0 — deps: T0.1 — status: DONE
+**T0.2 - Act 1 Scope Lock in README** - P0 - deps: T0.1 - status: DONE
 Evidence: `validate_project.ps1` passed after README/board edits; README Documentation now lists this board as active and the demo board as historical.
 
 ```text
@@ -215,12 +215,12 @@ active.
 
 ---
 
-## 4. Epic 1 — Pinball Feature Rework (IN PROGRESS)
+## 4. Epic 1 - Pinball Feature Rework (IN PROGRESS)
 
 Fully specified elsewhere; tracked here for program visibility. Do not
 duplicate its prompts.
 
-**T1.1 — Execute rework phases 0–6** — P0 — deps: none — status: DONE
+**T1.1 - Execute rework phases 0–6** - P0 - deps: none - status: DONE
 Evidence (verified 2026-07-02, preserved before R9 doc pruning): the retired
 pinball progress doc's FINAL ACCEPTANCE read Status: COMPLETE with 10/10
 acceptance boxes checked; phases committed 30ede0a..41ef6ee. R2 reran T1.2
@@ -228,7 +228,7 @@ independently and kept T1.1 closed. R1 partition integration commit: e430c99.
 Active pinball references are now `docs/plans/pinball_feature_rework_plan.md`
 and `docs/plans/pinball_feel_reference.md`.
 
-**T1.2 — Independent acceptance audit** — P0 — deps: T1.1 — status: DONE
+**T1.2 - Independent acceptance audit** - P0 - deps: T1.1 - status: DONE
 Evidence (R2, 2026-07-02): Prompt C independent audit PASS. `check_godot.ps1
 -RequireGodot -Suite Full -TimeoutSec 1800` PASS
 (`.tmp/test_reports/20260702_192825_full/summary.json`); fresh focused probes
@@ -244,7 +244,7 @@ PASS; all three designed layouts and named sequences PASS; nudge/tilt/flipper
 controls PASS; feel-reference targets PASS; existing/new item coverage PASS;
 feature slowdown elimination PASS.
 
-**T1.3 — Post-rework slot release audit** — P1 — deps: T1.2 — status: DONE
+**T1.3 - Post-rework slot release audit** - P1 - deps: T1.2 - status: DONE
 Evidence (R2, 2026-07-02): `check_godot.ps1 -RequireGodot -FoundationSuite
 slot -TimeoutSec 700` PASS (`.tmp/test_reports/20260702_191616_smoke/summary.json`);
 `check_godot.ps1 -RequireGodot -FoundationSuite slot_acceptance -TimeoutSec
@@ -276,7 +276,7 @@ recorded.
 
 ---
 
-## 5. Epic 2 — Skill-Based Cheating Pillar
+## 5. Epic 2 - Skill-Based Cheating Pillar
 
 Cheating is a design pillar ("Cheating is optional and should raise heat or
 risk when used") but only blackjack has a skill-based cheat (count challenge).
@@ -284,7 +284,7 @@ Other games have ad hoc cheat actions. T2.1 restored the missing design doc;
 T2.2-T2.7 implement, enforce, and item-wire it so cheating becomes a coherent,
 skill-expressive system across games.
 
-**T2.1 — Skill-Cheat Design Doc (recreate + commit)** — P0 — deps: none — status: DONE
+**T2.1 - Skill-Cheat Design Doc (recreate + commit)** - P0 - deps: none - status: DONE
 Evidence: `validate_project.ps1` passed after adding `docs/plans/skill_based_cheating_methods_plan.md`, which defines the shared contract, Phase 1 cheats, item/alcohol/staff interactions, tunables, and test matrix. Commit: 0970ab4.
 
 ```text
@@ -324,7 +324,7 @@ DONE GATE: validate_project.ps1; doc cross-checked against run_state.gd
 helpers so every referenced id/field is implementable.
 ```
 
-**T2.2 — Video Poker Holdout Skill Cheat** — P0 — deps: T2.1 — status: DONE
+**T2.2 - Video Poker Holdout Skill Cheat** - P0 - deps: T2.1 - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -351,12 +351,12 @@ DONE GATE: validate_project.ps1; check_godot.ps1 -RequireGodot
 Evidence 2026-07-01: `tools/validate_project.ps1` PASS; `tools/check_godot.ps1 -RequireGodot` PASS; `tools/check_godot.ps1 -RequireGodot -FoundationSuite video_poker` PASS; `tools/check_godot.ps1 -RequireGodot -FoundationSuite games -TimeoutSec 300` PASS (the default 120s Smoke cap timed out after Bar Dice reached 96s before Video Poker). Commit: 0970ab4.
 ```
 
-**T2.3 — Bar Dice Controlled-Roll Skill Cheat** — P0 — deps: T2.1 — status: DONE
+**T2.3 - Bar Dice Controlled-Roll Skill Cheat** - P0 - deps: T2.1 - status: DONE
 PERF NOTE (2026-07-02): the bar_dice foundation check PASSES (0 failures) but
-`bar_dice_game_suite` alone takes 145s — over the default 120s stage budget,
+`bar_dice_game_suite` alone takes 145s - over the default 120s stage budget,
 which made the games suite appear to hang/time out. Not an infinite loop;
 verified green with `-TimeoutSec 480`. The slowness is the T7.6 resolve-path
-regression class — T7.6 must bring this check back under the stage budget
+regression class - T7.6 must bring this check back under the stage budget
 (speed up the module, do NOT just raise the timeout).
 
 ```text
@@ -375,7 +375,7 @@ attention, and story context.
 
 Tests: deterministic graded outcomes from seeded timing input; patron snitch
 path raises heat; watched Grand Casino... (bar dice may not appear in Grand
-Casino — verify placement via data/games/games.json and environment pools;
+Casino - verify placement via data/games/games.json and environment pools;
 if not, the attention path must still satisfy the contract for tier-1 rooms);
 save/load mid-challenge.
 
@@ -385,7 +385,7 @@ DONE GATE: validate_project.ps1; check_godot.ps1 -RequireGodot
 Evidence 2026-07-01: `tools/check_godot.ps1 -RequireGodot -FoundationSuite bar_dice` PASS; `tools/check_godot.ps1 -RequireGodot -FoundationSuite games -TimeoutSec 300` PASS. Commit: 0970ab4.
 ```
 
-**T2.4 — Roulette Past-Post Skill Cheat** — P0 — deps: T2.1 — status: DONE
+**T2.4 - Roulette Past-Post Skill Cheat** - P0 - deps: T2.1 - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -401,7 +401,7 @@ Getting caught voids the bet and applies contract suspicion/attention;
 success pays but leaves open-cheat evidence for high-roller tracking.
 
 Tests: window opens deterministically; graded outcomes; caught-while-watched
-marks staff attention (roulette IS a Grand Casino premium game — verify it
+marks staff attention (roulette IS a Grand Casino premium game - verify it
 feeds showdown pressure per the endgame contract); clean spins leave no
 evidence; save/load around the window; existing roulette audits still pass.
 
@@ -411,7 +411,7 @@ tools/roulette_seed_audit.ps1 -RequireGodot passes.
 Evidence 2026-07-01: `tools/check_godot.ps1 -RequireGodot -FoundationSuite games -TimeoutSec 300` PASS; `tools/roulette_seed_audit.ps1 -RequireGodot` PASS; `tools/validate_project.ps1` PASS; `tools/check_godot.ps1 -RequireGodot` PASS. Commit: 0970ab4.
 ```
 
-**T2.5 — Baccarat Edge-Sort Skill Cheat** — P0 — deps: T2.1 — status: DONE
+**T2.5 - Baccarat Edge-Sort Skill Cheat** - P0 - deps: T2.1 - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -424,7 +424,7 @@ an observation-memory challenge across hands: the player marks suspected
 high-card backs over consecutive hands (memory check like the count
 challenge); enough correct reads grant a betting edge for N hands; wrong
 reads or watched scrutiny apply contract suspicion/attention. Baccarat is
-Grand Casino-only — this is the premium-floor cheat and must integrate
+Grand Casino-only - this is the premium-floor cheat and must integrate
 tightly with pit boss watch and showdown pressure.
 
 Tests: multi-hand challenge state machine is deterministic and save/loads;
@@ -438,7 +438,7 @@ tools/run_baccarat_seed_audit.ps1 -RequireGodot passes.
 
 Evidence 2026-07-01: `tools/check_godot.ps1 -RequireGodot -FoundationSuite baccarat -TimeoutSec 300` PASS; `tools/run_baccarat_seed_audit.ps1 -RequireGodot` PASS; `tools/validate_project.ps1` PASS; `tools/check_godot.ps1 -RequireGodot` PASS. Commit: 0970ab4.
 
-**T2.6 — Cross-Game Cheat Contract Enforcement** — P0 — deps: T2.2–T2.5 — status: DONE
+**T2.6 - Cross-Game Cheat Contract Enforcement** - P0 - deps: T2.2–T2.5 - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -466,7 +466,7 @@ DONE GATE: validate_project.ps1; check_godot.ps1 -RequireGodot
 
 Evidence 2026-07-01: `tools/check_godot.ps1 -RequireGodot -FoundationSuite systems` PASS with `SKILL_CHEAT_CONTRACT_MATRIX` covering pull_tabs/tab_detector_scan, slot/nudge, bar_dice/loaded_toss+palmed_swap, blackjack/peek_hole_card+count_cards, baccarat/read_baccarat_shoe+edge_sort, roulette/read_wheel_bias+past_post, video_poker/mark_holds; `tools/validate_project.ps1` PASS; `tools/blackjack_seed_audit.ps1 -RequireGodot`, `tools/roulette_seed_audit.ps1 -RequireGodot`, and `tools/run_baccarat_seed_audit.ps1 -RequireGodot` PASS. Commit: 0970ab4.
 
-**T2.7 — Contraband & Cheat-Item Integration Pass** — P1 — deps: T2.6 — status: DONE
+**T2.7 - Contraband & Cheat-Item Integration Pass** - P1 - deps: T2.6 - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -494,14 +494,14 @@ Evidence 2026-07-02: `tools/validate_project.ps1` PASS; `tools/check_godot.ps1 -
 
 ---
 
-## 6. Epic 3 — Per-Game Feature Completeness
+## 6. Epic 3 - Per-Game Feature Completeness
 
 One audit-and-close task per game. "Feature-complete" per game = the stated
 definition inside each prompt: rules complete for the sim's scope, all
 surface states readable, item/heat integration correct, deterministic audits
 green, and no dead or placeholder interactions.
 
-**T3.1 — Pull Tabs** — P1 — deps: none — status: DONE
+**T3.1 - Pull Tabs** - P1 - deps: none - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -528,7 +528,7 @@ DONE GATE: validate_project.ps1; check_godot.ps1 -RequireGodot
 
 Evidence: 2026-07-02 T3.1 added venue-varied four-window pull-tab deals, explicit top-prize/last-tickets telemetry, sold-out command gating, full-deal depletion tests, and pull-tabs audit coverage. `validate_project.ps1` PASS; `check_godot.ps1 -RequireGodot -FoundationSuite pull_tabs` PASS; `check_godot.ps1 -RequireGodot -FoundationSuite games -TimeoutSec 300` PASS; `pull_tabs_seed_audit.gd` PASS across 24 generated machines. Commit: 0970ab4.
 
-**T3.2 — Blackjack** — P1 — deps: none — status: DONE
+**T3.2 - Blackjack** - P1 - deps: none - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -537,7 +537,7 @@ TASK T3.2 - Bring Blackjack to feature-complete.
 
 Read scripts/games/blackjack.gd and tools/blackjack_seed_audit.ps1 outputs.
 Feature-complete definition: correct shoe blackjack rules for the sim's
-scope — hit/stand/double/split (verify re-split and split-aces policy is
+scope - hit/stand/double/split (verify re-split and split-aces policy is
 explicit), insurance offered on ace when appropriate OR deliberately absent
 with a documented reason, surrender decision made deliberately, dealer
 soft-17 rule explicit and consistent, side bets resolve correctly, count
@@ -555,7 +555,7 @@ tools/blackjack_seed_audit.ps1 -RequireGodot passes.
 
 Evidence: 2026-07-02 T3.2 made blackjack rule policy explicit, added rule-matrix fixtures for soft-17, split/re-split/DAS/surrender, insurance, natural/push payout copy, and added a 1000-hand headless payout drift probe. `validate_project.ps1` PASS; `check_godot.ps1 -RequireGodot -FoundationSuite blackjack` PASS; `check_godot.ps1 -RequireGodot` PASS; `blackjack_seed_audit.ps1 -RequireGodot` PASS with drift `-256 / 5420 = -0.0472`. Commit: 0970ab4.
 
-**T3.3 — Baccarat** — P1 — deps: none — status: DONE
+**T3.3 - Baccarat** - P1 - deps: none - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -563,10 +563,10 @@ Evidence: 2026-07-02 T3.2 made blackjack rule policy explicit, added rule-matrix
 TASK T3.3 - Bring Baccarat to feature-complete.
 
 Read scripts/games/baccarat.gd. Feature-complete definition: correct
-mini-baccarat drawing rules (verify the full tableau — banker draw rules
+mini-baccarat drawing rules (verify the full tableau - banker draw rules
 against player third card), commission handling explicit (5% or no-commission
 variant, chosen deliberately), pair/tie bets with standard odds, a
-scoreboard/roads display (bead plate or big road — pick one, it is the thing
+scoreboard/roads display (bead plate or big road - pick one, it is the thing
 baccarat players actually watch), shoe penetration and reshuffle visible,
 premium Grand Casino presentation (squeeze/reveal moment on close hands for
 juice). Audit and close gaps.
@@ -580,7 +580,7 @@ tools/run_baccarat_seed_audit.ps1 -RequireGodot passes.
 
 Evidence: 2026-07-02 T3.3 added bead-plate road state/rendering, visible shoe penetration state, close-hand squeeze reveal events, explicit 5% Banker commission assertions, full Banker tableau fixtures, and baccarat audit rate bounds. `validate_project.ps1` PASS; `check_godot.ps1 -RequireGodot -NoImport -FoundationSuite baccarat -TimeoutSec 300` PASS; `check_godot.ps1 -RequireGodot -TimeoutSec 300` PASS; `run_baccarat_seed_audit.ps1 -RequireGodot` PASS with 400 hands, failures 0, Banker 0.403 / Player 0.482 / Tie 0.115, flat Banker delta -801. Commit: 0970ab4.
 
-**T3.4 — Roulette** — P1 — deps: none — status: DONE
+**T3.4 - Roulette** - P1 - deps: none - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -589,9 +589,9 @@ TASK T3.4 - Bring Roulette to feature-complete.
 
 Read scripts/games/roulette.gd. Feature-complete definition: full inside/
 outside bet coverage with correct payouts (verify split/street/corner/
-six-line/dozens/columns), wheel type explicit (single vs double zero — a
+six-line/dozens/columns), wheel type explicit (single vs double zero - a
 deliberate choice, possibly per-venue), bet history/rebet convenience
-(re-place last bets — quality-of-life that defines the game feel),
+(re-place last bets - quality-of-life that defines the game feel),
 recent-numbers display, chip denomination handling at all stakes, win
 celebration proportional to hit odds. Audit and close gaps.
 
@@ -604,7 +604,7 @@ tools/roulette_seed_audit.ps1 -RequireGodot passes.
 
 Evidence: 2026-07-02 T3.4 added rendered recent-number history, explicit American double-zero surface/rule checks, proportional payout celebration metadata, rebet round-trip coverage, all-chip denomination placement checks, and full payout fixtures for straight/split/street/corner/six-line/trio/top-line/dozens/columns/even-money bets. `validate_project.ps1` PASS; `check_godot.ps1 -RequireGodot -NoImport -FoundationSuite roulette -TimeoutSec 300` PASS; `check_godot.ps1 -RequireGodot -TimeoutSec 300` PASS; `check_godot.ps1 -RequireGodot -NoImport -Suite Audit -TimeoutSec 300` PASS with `roulette_rule_audit` and `roulette_audio_audit`; `roulette_seed_audit.ps1 -RequireGodot` PASS with 120 tables/spins, failures 0, trajectory frames 96/96. Commit: 0970ab4.
 
-**T3.5 — Video Poker** — P1 — deps: none — status: DONE
+**T3.5 - Video Poker** - P1 - deps: none - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -629,7 +629,7 @@ DONE GATE: validate_project.ps1; check_godot.ps1 -RequireGodot
 
 Evidence: 2026-07-02 T3.5 audited the existing multi-variant Video Poker implementation and closed the paytable presentation gap by rendering all 1-5 coin columns with the current bet highlighted. Added fixture coverage for full hand-rank evaluation including edge cases, distinct variant payouts, legal multi-hand deck completions, deterministic double-up, and save/load-style mid-hand restore. `check_godot.ps1 -RequireGodot -NoImport -FoundationSuite video_poker -TimeoutSec 300` PASS; `validate_project.ps1` PASS; `check_godot.ps1 -RequireGodot -NoImport -FoundationSuite games -TimeoutSec 600` PASS; `check_godot.ps1 -RequireGodot -FoundationSuite games -TimeoutSec 600` PASS. Commit: 0970ab4.
 
-**T3.6 — Bar Dice** — P1 — deps: none — status: DONE
+**T3.6 - Bar Dice** - P1 - deps: none - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -653,7 +653,7 @@ DONE GATE: validate_project.ps1; check_godot.ps1 -RequireGodot
 
 Evidence: 2026-07-02 T3.6 added Knucklebones Nell as a stable memorable regular, surfaced patron personality/banter and simultaneous zero-wait opponent turns, and strengthened Bar Dice fixtures for 6-5-4 acquisition-order scoring, no cargo before Ship/Captain/Crew, patron turn determinism, exact carryover pot math, press result application, and save/load mid-round restore. `check_godot.ps1 -RequireGodot -NoImport -FoundationSuite bar_dice -TimeoutSec 360` PASS; `validate_project.ps1` PASS; `check_godot.ps1 -RequireGodot -NoImport -FoundationSuite games -TimeoutSec 720` PASS; `check_godot.ps1 -RequireGodot -FoundationSuite games -TimeoutSec 720` PASS. Commit: 0970ab4.
 
-**T3.7 — Buffalo Slot Family** — P1 — deps: T1.2 — status: BACKLOG
+**T3.7 - Buffalo Slot Family** - P1 - deps: T1.2 - status: BACKLOG
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -680,9 +680,9 @@ slot_cabinet_visual_qa.ps1 passes.
 
 ---
 
-## 7. Epic 4 — World, Progression & Content Depth
+## 7. Epic 4 - World, Progression & Content Depth
 
-**T4.1 — Tier-2 Mid-Game Venues** — P0 — deps: none — status: DONE
+**T4.1 - Tier-2 Mid-Game Venues** - P0 - deps: none - status: DONE
 
 The venue graph jumps from tier-1 dives to the tier-3 Grand Casino. Act 1
 needs a mid-game rung.
@@ -709,7 +709,7 @@ events), route hooks in/out (tier-1 -> tier-2 -> Grand Casino becomes a real
 climb; keep the existing direct underground->Grand route as a risky
 shortcut), and objective_hint copy. Add matching travel routes with costs
 that make the climb an economic decision. Update content groups so packs
-gate correctly. Reuse existing game modules — no new games.
+gate correctly. Reuse existing game modules - no new games.
 
 Tests: generation audit produces coherent tier-2 rooms across seeds; routes
 validate; travel costs/prereqs enforced; foundation_check covers tier-2 in
@@ -722,7 +722,7 @@ archetypes sampled.
 
 Evidence: 2026-07-02 T4.1 added `kitty_cat_lounge` and `delta_queen`, tier-2 routes/services, Delta Queen route schedule + travel lock save/load coverage, and procedural room visuals. `validate_project.ps1` PASS; `check_godot.ps1 -RequireGodot` PASS; `environment_generation_audit.ps1 -RequireGodot` PASS with `delta_queen=29` and `kitty_cat_lounge=32` sampled. Commit: 3695d64.
 
-**T4.2 — Jazz Club Content Completion** — P1 — deps: none — status: PARKED(0.3)
+**T4.2 - Jazz Club Content Completion** - P1 - deps: none - status: PARKED(0.3)
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -737,7 +737,7 @@ services form a coherent menu (round, tip, show with distinct effects),
 add 2-3 club-scoped events (the trio, a connected regular, an after-hours
 invitation that seeds a Grand Casino advantage), make the rare musician
 reward concrete and visible in inventory/story, and verify the room renders
-with its music profile distinctly. Small, polished scope — the club should
+with its music profile distinctly. Small, polished scope - the club should
 feel like a breather with an angle, not a content dump.
 
 Tests: club services apply documented effects; club events gate to the club;
@@ -747,7 +747,7 @@ DONE GATE: validate_project.ps1; check_godot.ps1 -RequireGodot
 -FoundationSuite contracts and systems.
 ```
 
-**T4.3 — Event Pack Expansion** — P1 — deps: T0.1 — status: DONE
+**T4.3 - Event Pack Expansion** - P1 - deps: T0.1 - status: DONE
 Evidence: `validate_project.ps1` PASS; `check_godot.ps1 -RequireGodot -FoundationSuite contracts` PASS; `environment_generation_audit.ps1 -RequireGodot` PASS after adding 16 scoped events, the Thermos active item, and random unavoidable event interruption gates. Commit: 3695d64.
 
 ```text
@@ -776,7 +776,7 @@ DONE GATE: validate_project.ps1; check_godot.ps1 -RequireGodot
 -FoundationSuite contracts; environment_generation_audit.ps1 passes.
 ```
 
-**T4.4 — Item Pack Expansion & Synergy Pass** — P1 — deps: T2.7 — status: DONE
+**T4.4 - Item Pack Expansion & Synergy Pass** - P1 - deps: T2.7 - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -784,11 +784,11 @@ DONE GATE: validate_project.ps1; check_godot.ps1 -RequireGodot
 TASK T4.4 - Expand items and give builds identity.
 
 Read data/items/items.json (49 items before this task; 59 after T4.4), scripts/core/item_effect.gd, and the
-per-game item hooks. Goal: a player can pursue an identifiable build —
+per-game item hooks. Goal: a player can pursue an identifiable build -
 clean grinder, advantage player, cheat specialist, drunk gambler, debt
 surfer. Audit current items against those five builds; fill gaps with 8-12
 new items (respecting Epic 2's cheat items and the pinball rework's item
-plans — check both docs to avoid collisions). Add at least two cross-item
+plans - check both docs to avoid collisions). Add at least two cross-item
 synergies per build (item A makes item B better) that are discoverable
 through descriptions. Verify every item's effect actually fires (audit for
 dead effect keys) and prices scale with power. Keep contraband risky per the
@@ -804,7 +804,7 @@ DONE GATE: validate_project.ps1; check_godot.ps1 -RequireGodot
 
 Evidence 2026-07-02: `tools/validate_project.ps1` PASS; `tools/check_godot.ps1 -RequireGodot -FoundationSuite contracts` PASS (`foundation_contracts` 283940ms); `tools/check_godot.ps1 -RequireGodot -FoundationSuite systems` PASS (`foundation_systems` 6916ms), with T4.4 checks covering 59 items, five build tags, ten item synergies, orphan effect-key audit, shop distribution, buy/use/sell, save/load, and debt modifiers. Commit: 3695d64.
 
-**T4.5 — Lenders & Services Expansion** — P1 — deps: none — status: DONE
+**T4.5 - Lenders & Services Expansion** - P1 - deps: none - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -821,7 +821,7 @@ Add services where venues lack purpose (tier-2 venues from T4.1 need their
 service menus). Every lender needs: availability conditions, offer scaling,
 repayment schedule visible in HUD/journal, and a consequence chain for
 default that is survivable but scarring. The 0.2 visual QA warning "lender
-not usable yet" must be resolved — lenders must be reachable and usable in
+not usable yet" must be resolved - lenders must be reachable and usable in
 normal play.
 
 Tests: each lender's full lifecycle (borrow, pay, default) deterministic in
@@ -834,7 +834,7 @@ DONE GATE: validate_project.ps1; check_godot.ps1 -RequireGodot
 
 Evidence: 2026-07-02 T4.5 added 5 total lenders and 9 total services, deterministic lender lifecycle fixtures, visible debt schedule text, and service/lender venue hooks. `validate_project.ps1` PASS; `check_godot.ps1 -RequireGodot -FoundationSuite systems` PASS; `foundation_visual_qa.ps1 -RequireGodot` PASS with `lender_card=true`, `lender_object_double_click=true`, `recovery_lender_path=true`, and no `Not usable yet` lender warning. Commit: 3695d64.
 
-**T4.6 — Travel Graph & Scouting Depth** — P2 — deps: T4.1 — status: DONE
+**T4.6 - Travel Graph & Scouting Depth** - P2 - deps: T4.1 - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -844,7 +844,7 @@ TASK T4.6 - Make travel a strategic layer.
 Read data/travel/routes.json, scripts/core/run_generator.gd next-environment
 selection, and the travel UI in foundation_main.gd. With tier-2 venues
 (T4.1) in place, deepen travel: route preview information (what a
-destination offers before paying — partial by default, full with a scouting
+destination offers before paying - partial by default, full with a scouting
 item/service), route risks (a cheap route with a chance of a shakedown
 event), and route unlock conditions surfaced clearly. Keep the graph small
 enough to learn: every route must have a reason to exist. Do not add a map
@@ -860,7 +860,7 @@ environment_generation_audit.ps1 travel transitions pass.
 
 Evidence: 2026-07-02 T4.6 added route scouting previews, surfaced unlock/risk metadata, deterministic shakedown route risk, and travel-cost-once fixture coverage. `validate_project.ps1` PASS; `check_godot.ps1 -RequireGodot` PASS; `environment_generation_audit.ps1 -RequireGodot` PASS with 600 environment samples, 500 travel transitions, and 3 `travel_shakedown` risk events. Commit: 3695d64.
 
-**T4.7 — Two-Tier Event Interaction Model** — P1 — deps: none — status: DONE
+**T4.7 - Two-Tier Event Interaction Model** - P1 - deps: none - status: DONE
 
 Split events into interactable (diegetic clickable props, ignorable) and
 triggered (unavoidable modal, no environment presence, chainable with
@@ -875,7 +875,7 @@ TASK T4.7 - Implement the two-tier event interaction model.
 
 Read first:
 - data/events/events.json (current shape: id, type, trigger, scopes, payload,
-  environment_prop, icon_key — note "type" is a semantic category, NOT an
+  environment_prop, icon_key - note "type" is a semantic category, NOT an
   interaction mode; do not overload it).
 - scripts/core/event_module.gd (condition/choice/consequence resolution).
 - scripts/core/environment_instance.gd (event object placement:
@@ -883,29 +883,29 @@ Read first:
 - scripts/ui/foundation_main.gd (event popup, choice flow, result feedback,
   bankroll HUD readout).
 - scripts/ui/pixel_scene_canvas.gd (prop drawing; _draw_travel_payphone
-  already exists — reuse/adapt for the phone prop).
+  already exists - reuse/adapt for the phone prop).
 - data/services/services.json brother-in-law phone-call service (sets
   brother_in_law_phone_ready) and data/debt/lenders.json brother_in_law
   lender (family_phone type, single_use_flag brother_in_law_loan_used).
-  These already exist from T4.5 — BUILD ON THEM, do not duplicate. The new
+  These already exist from T4.5 - BUILD ON THEM, do not duplicate. The new
   event flow replaces the plain service call as the way the phone loan is
   offered; keep the lender record as the single source of debt truth.
 - scripts/core/user_settings.gd reduce-motion setting.
 
-DESIGN — two interaction modes, one new field:
+DESIGN - two interaction modes, one new field:
 1. Add "interaction_mode": "interactable" | "triggered" to every event in
    events.json. ContentLibrary validates the field (reject unknown values,
    reject triggered events that declare environment_prop/icon_key).
 2. INTERACTABLE events:
    - Placed in the environment as clickable objects, represented by a
      DIEGETIC prop that telegraphs the event (environment_prop drives
-     pixel_scene_canvas drawing; the prop should read as the thing itself —
+     pixel_scene_canvas drawing; the prop should read as the thing itself -
      a phone on the counter, not a generic exclamation icon).
    - On click: popup with 1-3 choices from event data. The player can always
      dismiss/walk away with no consequence (an implicit "Leave it" affordance)
      unless the event data explicitly marks a choice as the dismissal with
      its own consequence.
-   - Ignoring the object entirely must remain a valid path — no nagging.
+   - Ignoring the object entirely must remain a valid path - no nagging.
 3. TRIGGERED events:
    - NEVER placed in the environment; no object, no icon, no prop. Enforce:
      environment generation must not allocate event spots for them, and the
@@ -924,7 +924,7 @@ DESIGN — two interaction modes, one new field:
    resolved with the run's event RngStream fork (deterministic per seed).
    On success, the target triggered event is enqueued and fires immediately
    after the source event's result is applied.
-5. ACCEPTANCE CONTENT — the brother-in-law chain:
+5. ACCEPTANCE CONTENT - the brother-in-law chain:
    - New interactable event "call_brother_in_law": a phone on the counter
      (motel/diner-scope per existing brother-in-law availability). Choices:
      "Make the call" / "Not tonight". Reuse/adapt the payphone prop drawing.
@@ -934,12 +934,12 @@ DESIGN — two interaction modes, one new field:
      one way to get this loan). On the 0.25 miss: a short "no answer" result
      with story log entry; the phone remains available next visit.
    - "family_loan" is confirm/deny: ACCEPT creates the brother_in_law debt
-     record through the existing lender path (same principal/terms/flags —
+     record through the existing lender path (same principal/terms/flags -
      brother_in_law_loan_used, goodwill/scar flags intact); DENY logs the
      story beat and sets no debt.
 6. CONCLUSION ANIMATIONS:
    - New optional per-choice payload field "conclusion_animation".
-   - Implement one animation now: "bankroll_transfer" — on ACCEPT of
+   - Implement one animation now: "bankroll_transfer" - on ACCEPT of
      family_loan, 5-8 small dollar-bill icons fly staggered (~600-900ms
      total) from the event popup to the bankroll HUD readout; the bankroll
      number ticks up as bills arrive.
@@ -980,7 +980,7 @@ DONE GATE:
 
 Evidence: 2026-07-02 T4.7 added `interaction_mode` validation/backfill, RunState triggered-event queue + active popup save/load, interactable dismissible event popups, triggered modal resolution, deterministic `trigger_event` chaining, brother-in-law phone -> `family_loan` lender flow, and `bankroll_transfer` conclusion animation. `validate_project.ps1` PASS; `check_godot.ps1 -RequireGodot -FoundationSuite systems` PASS (`.tmp/test_reports/20260702_101255_smoke`); `check_godot.ps1 -RequireGodot -FoundationSuite contracts` PASS (`.tmp/test_reports/20260702_100734_smoke`); `check_godot.ps1 -RequireGodot -FoundationSuite ui` PASS (`.tmp/test_reports/20260702_101350_smoke`); `foundation_visual_qa.ps1 -RequireGodot` PASS with phone prop visible and no triggered room objects. Commit: 3695d64.
 
-**T4.8 — World Map & Travel Rework** — P1 — deps: T4.6, T4.7 recommended first — status: DONE
+**T4.8 - World Map & Travel Rework** - P1 - deps: T4.6, T4.7 recommended first - status: DONE
 
 Replace per-destination travel objects with a single Leave button that opens
 a seeded geographic mini-map: persistent world graph with numeric distances,
@@ -995,9 +995,9 @@ TASK T4.8 - Rework travel into a persistent world map.
 
 Read first:
 - data/travel/routes.json (10 routes; distance is currently a coarse label
-  like "near" — this task replaces it with generated numeric distance).
+  like "near" - this task replaces it with generated numeric distance).
 - scripts/core/run_generator.gd next_environment()/preview_environment()/
-  _pick_archetype() — the world today is generated ON DEMAND per hop; there
+  _pick_archetype() - the world today is generated ON DEMAND per hop; there
   is no persistent geography. This task changes that.
 - scripts/core/run_state.gd environment_history (visited copies),
   current_environment, to_dict/from_dict.
@@ -1005,12 +1005,12 @@ Read first:
   per-destination room objects) and travel_locked_actions (riverboat-style
   locks must keep working).
 - scripts/core/run_action_service.gd travel handling incl. T4.6 scouting
-  previews, route risk (travel_shakedown), unlock conditions — all of that
+  previews, route risk (travel_shakedown), unlock conditions - all of that
   shipped and must survive on top of the new map.
 - scripts/ui/foundation_main.gd travel UI and room object rendering;
   scripts/ui/pixel_scene_canvas.gd for map/overlay drawing patterns.
 
-PHASE 1 — DESIGN LOCK (write docs/plans/world_map_design.md before code):
+PHASE 1 - DESIGN LOCK (write docs/plans/world_map_design.md before code):
 Decide and record, leaving no open questions:
 - Graph shape: node count per run (suggest 9-14: all start-capable tier-1s,
   tier-2s, jazz club, one grand_casino), how archetypes map to nodes under
@@ -1028,7 +1028,7 @@ Decide and record, leaving no open questions:
   always reachable; keep the risky-shortcut edge from underground casino).
 - Visibility/fog rule: nodes are hidden / revealed (adjacent to a visited
   node: silhouette + name + distance only) / visited (full detail). Only
-  revealed and visited nodes are ever drawn — hidden nodes do not exist
+  revealed and visited nodes are ever drawn - hidden nodes do not exist
   visually. Scouting (T4.6 rumors/previews) upgrades a revealed node's
   detail without visiting.
 - Revisit semantics: traveling to a visited node RESTORES that node's saved
@@ -1036,7 +1036,7 @@ Decide and record, leaving no open questions:
   flags) rather than regenerating. Define what refreshes on revisit (shop
   restock rules, event pool cooldowns) and what persists.
 
-PHASE 2 — WORLD GRAPH MODEL:
+PHASE 2 - WORLD GRAPH MODEL:
 - New core class (e.g. scripts/core/world_map.gd): builds the graph at run
   start from ContentLibrary + run seed; owns nodes {id, archetype_id,
   position, tier, state: hidden|revealed|visited}, edges {a, b, distance,
@@ -1053,7 +1053,7 @@ PHASE 2 — WORLD GRAPH MODEL:
   flags/items) gate edge selectability, shown as locked-with-reason when the
   node is revealed.
 
-PHASE 3 — UI: LEAVE BUTTON + MAP OVERLAY:
+PHASE 3 - UI: LEAVE BUTTON + MAP OVERLAY:
 - Remove per-destination travel objects from rooms. Replace with ONE
   diegetic exit affordance per venue (door/EXIT sign object, consistent
   placement) labeled Leave.
@@ -1071,7 +1071,7 @@ PHASE 3 — UI: LEAVE BUTTON + MAP OVERLAY:
     Selecting the current node or hidden space does nothing.
   - Cancel/close returns to the room with no cost.
 - Travel confirm routes through the existing RunActionService travel path
-  (costs, risk events, locks, story log) — the map is presentation over the
+  (costs, risk events, locks, story log) - the map is presentation over the
   same simulation.
 - If travel is currently locked (travel_lock_remaining > 0), Leave shows
   the lock state instead of the map body's travel affordances.
@@ -1106,10 +1106,10 @@ Evidence: 2026-07-02 T4.8 added `docs/plans/world_map_design.md`, a persistent s
 
 ---
 
-## 8. Epic 5 — Meta Systems: Ship or Cut
+## 8. Epic 5 - Meta Systems: Ship or Cut
 
-**T5.1 — Prestige: Populate or Gate** — P0 — deps: T0.1 — status: DONE
-Evidence: 2026-07-01 — HIDE chosen; empty prestige data prunes stale room rects and renders zero menu/HUD/environment/victory artifacts; `validate_project.ps1`, `check_godot.ps1 -RequireGodot`, `check_godot.ps1 -RequireGodot -FoundationSuite systems`, and `check_godot.ps1 -RequireGodot -FoundationSuite ui` passed. Commit: 3695d64.
+**T5.1 - Prestige: Populate or Gate** - P0 - deps: T0.1 - status: DONE
+Evidence: 2026-07-01 - HIDE chosen; empty prestige data prunes stale room rects and renders zero menu/HUD/environment/victory artifacts; `validate_project.ps1`, `check_godot.ps1 -RequireGodot`, `check_godot.ps1 -RequireGodot -FoundationSuite systems`, and `check_godot.ps1 -RequireGodot -FoundationSuite ui` passed. Commit: 3695d64.
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -1121,7 +1121,7 @@ run_action_service.gd prestige methods, run_state.gd prestige helpers, and
 foundation_main.gd prestige objects/menu. Decide with the Act 1 scope
 contract: prestige as meta-progression is Act 2+; for Act 1 either
 (a) HIDE: prestige UI/objects never appear with empty data and the code path
-is cleanly dormant — verify no HUD/menu/generation path renders a dead hook,
+is cleanly dormant - verify no HUD/menu/generation path renders a dead hook,
 or (b) TEASER: exactly one post-victory purchase ("Down Payment on Act 2")
 that is clearly a hook, not a win condition. Choose (a) unless the victory
 screen needs the teaser for Act 2 seam work (coordinate with T8.1).
@@ -1135,7 +1135,7 @@ DONE GATE: validate_project.ps1; check_godot.ps1 -RequireGodot
 -FoundationSuite systems and ui.
 ```
 
-**T5.2 — Challenges Pack & Custom Runs** — P1 — deps: T0.1 — status: DONE (2026-07-02; evidence: validate_project PASS; check_godot -RequireGodot PASS; FoundationSuite systems/ui PASS. The contracts-gate crash originally noted here was resolved by later work — contracts PASS at run 20260702_120217 per T6.7 evidence. Commit: 3695d64.)
+**T5.2 - Challenges Pack & Custom Runs** - P1 - deps: T0.1 - status: DONE (2026-07-02; evidence: validate_project PASS; check_godot -RequireGodot PASS; FoundationSuite systems/ui PASS. The contracts-gate crash originally noted here was resolved by later work - contracts PASS at run 20260702_120217 per T6.7 evidence. Commit: 3695d64.)
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -1153,7 +1153,7 @@ Machine" (slots-only content group, adjusted economy), "Heat Wave" (heat
 decays slower, bribe services cheaper). Each: id, title, description,
 modifier set consumed by challenge_config, and a completion flag recorded to
 profile. Wire the start-menu challenge selection to the pack (no dead
-buttons — if UI for selection is missing, add the minimal list UI in the
+buttons - if UI for selection is missing, add the minimal list UI in the
 existing start-screen style). ContentLibrary must validate the new pack.
 
 Tests: each challenge starts deterministically with its modifiers applied;
@@ -1164,7 +1164,7 @@ DONE GATE: validate_project.ps1; check_godot.ps1 -RequireGodot
 -FoundationSuite contracts, systems, and ui.
 ```
 
-**T5.3 — Profile & Out-of-Run Persistence Completion** — P1 — deps: T5.2 — status: PARKED(0.3)
+**T5.3 - Profile & Out-of-Run Persistence Completion** - P1 - deps: T5.2 - status: PARKED(0.3)
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -1190,9 +1190,9 @@ DONE GATE: validate_project.ps1; check_godot.ps1 -RequireGodot
 
 ---
 
-## 9. Epic 6 — Presentation & Audio Completeness
+## 9. Epic 6 - Presentation & Audio Completeness
 
-**T6.1 — Environment Visual Completeness Pass** — P1 — deps: T4.1 — status: PARKED(0.3)
+**T6.1 - Environment Visual Completeness Pass** - P1 - deps: T4.1 - status: PARKED(0.3)
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -1215,7 +1215,7 @@ DONE GATE: validate_project.ps1; check_godot.ps1 -RequireGodot
 before/after screenshots for each touched venue in the task summary.
 ```
 
-**T6.2 — SFX & Music Coverage Audit** — P1 — deps: T1.2 — status: PARKED(0.3)
+**T6.2 - SFX & Music Coverage Audit** - P1 - deps: T1.2 - status: PARKED(0.3)
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -1239,7 +1239,7 @@ DONE GATE: validate_project.ps1; check_godot.ps1 -RequireGodot;
 foundation_mouse_batch_playtest.ps1 -RunCount 20 with no missing-cue errors.
 ```
 
-**T6.3 — Full Text/Layout/Touch Collision Pass** — P1 — deps: T4.1, T5.2 — status: DONE
+**T6.3 - Full Text/Layout/Touch Collision Pass** - P1 - deps: T4.1, T5.2 - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -1269,7 +1269,7 @@ run-journal save/load comparison. `validate_project.ps1` PASS;
 `foundation_visual_qa.ps1 -RequireGodot` PASS with zero warnings. Commit:
 `d22a24d`.
 
-**T6.4 — Music DSP Chain & State-Driven FX** — P1 — deps: none — status: PARKED(0.3)
+**T6.4 - Music DSP Chain & State-Driven FX** - P1 - deps: none - status: PARKED(0.3)
 
 Evidence: `validate_project.ps1` PASS; `check_godot.ps1 -RequireGodot -FoundationSuite systems` PASS; `check_godot.ps1 -RequireGodot -FoundationSuite ui` PASS; `foundation_performance_probe.ps1 -RequireGodot` PASS. Commit: d59f93e.
 
@@ -1283,7 +1283,7 @@ re-architecture; immediate audible win.
 TASK T6.4 - Build the music DSP chain and drive it from run state.
 
 Read docs/plans/music_system_rework_plan.md sections 1, 2.3, 2.4, and 3
-(Phase 1) — it is the binding design. Then read
+(Phase 1) - it is the binding design. Then read
 scripts/ui/procedural_music_player.gd (bus usage, staging ladder, snapshot
 APIs), scripts/core/user_settings.gd audio bus creation, the call site
 foundation_main.gd:~3354 play_for_environment, run_state.gd
@@ -1307,7 +1307,7 @@ Implement:
    - venue archetype room scale -> reverb size/damping, set on entry
 3. foundation_main builds one music state snapshot dict from RunState and
    passes it on state changes (heat change, drink, watch change, showdown,
-   venue entry) — no per-frame RunState polling from the player.
+   venue entry) - no per-frame RunState polling from the player.
 4. Extend the existing snapshot-API pattern with music_fx_snapshot() so
    headless tests can assert FX parameter mapping without audio output.
 5. Respect existing audio settings; do not alter the staging ladder
@@ -1323,7 +1323,7 @@ DONE GATE: validate_project.ps1; check_godot.ps1 -RequireGodot
 -RequireGodot with no new frame-path cost flagged.
 ```
 
-**T6.5 — Music Stems, Director & Input Matrix** — P1 — deps: T6.4 — status: PARKED(0.3)
+**T6.5 - Music Stems, Director & Input Matrix** - P1 - deps: T6.4 - status: PARKED(0.3)
 
 Evidence: `validate_project.ps1` PASS; `check_godot.ps1 -RequireGodot -FoundationSuite systems` PASS; `check_godot.ps1 -RequireGodot -FoundationSuite ui` PASS; `foundation_performance_probe.ps1 -RequireGodot` PASS; broad `check_godot.ps1 -RequireGodot` PASS. Commit: d59f93e.
 
@@ -1337,11 +1337,11 @@ cache.
 TASK T6.5 - Split music into stems with a live-mix MusicDirector.
 
 Read docs/plans/music_system_rework_plan.md sections 2.1-2.3, 2.7 (authored
-music contract — REQUIRED), 2.8, 3 (Phases 2-3) and section 4 constraints —
+music contract - REQUIRED), 2.8, 3 (Phases 2-3) and section 4 constraints -
 binding design. Then read
 procedural_music_player.gd fully: _ambient_generation_context,
 _write_ambient_frame (the per-voice sum to split), the generation
-thread/token machinery, cache keys (_ambient_cache_key includes heat_band —
+thread/token machinery, cache keys (_ambient_cache_key includes heat_band -
 this task removes that), and the staging ladder.
 
 Implement:
@@ -1351,7 +1351,7 @@ Implement:
    at bake time). One generation job produces the whole stem set (no partial
    sets); reuse the existing thread + token cancellation.
 2. Also bake per-set variants where the plan requires them: dark bass
-   B-stem, double-time drums_high (the tempo-feel substitute — baked stems
+   B-stem, double-time drums_high (the tempo-feel substitute - baked stems
    never change pitch/tempo live, per plan §4).
 3. Sample-synced playback: parallel AudioStreamPlayers on child buses under
    Music, started on the same mix frame; foundation check asserts stem
@@ -1361,7 +1361,7 @@ Implement:
    variant swaps to the next bar using playback position and step_period.
    CRITICAL INTERFACE RULE (plan §2.7): the director consumes ONLY the
    stem-set contract {source, stems (sparse allowed), bpm, bars,
-   loop_frames, palette_id, stingers} — it must never call the procedural
+   loop_frames, palette_id, stingers} - it must never call the procedural
    baker directly. The baker is provider one behind that contract.
 5. Authored-music provider (plan §2.7): loads OGG/WAV stems from
    assets/audio/music/<track_id>/ per a new data/audio/music_manifest.json
@@ -1377,7 +1377,7 @@ Implement:
    pressure/overdue debt -> dark bass variant + pad thins; showdown ->
    percussion+heartbeat mix state. Consumes the same snapshot dict from
    T6.4.
-7. Cache economics: cache key becomes (archetype, theme, palette) — heat
+7. Cache economics: cache key becomes (archetype, theme, palette) - heat
    band OUT of the key. Keep instant-bed and primer staging per stem set;
    venue entry still sounds within ~1.25s.
 8. Extend snapshots: music_mix_snapshot() (per-stem gains + pending
@@ -1399,7 +1399,7 @@ DONE GATE: validate_project.ps1; check_godot.ps1 -RequireGodot
 -RequireGodot pass.
 ```
 
-**T6.6 — Feature Music Unification & Composition Pass** — P1 — deps: T6.5 — status: PARKED(0.3)
+**T6.6 - Feature Music Unification & Composition Pass** - P1 - deps: T6.5 - status: PARKED(0.3)
 
 Historical evidence before parking (2026-07-02): validate_project PASS; check_godot systems/ui/slot/default smoke PASS; mouse batch 20 completed with zero audio errors; performance probe PASS. Commit: d59f93e.
 
@@ -1414,7 +1414,7 @@ TASK T6.6 - Unify feature music into the director and raise composition
 quality.
 
 Read docs/plans/music_system_rework_plan.md sections 2.5, 2.6, 3
-(Phases 4-6) — binding design. Then read sfx_player.gd bonus music paths
+(Phases 4-6) - binding design. Then read sfx_player.gd bonus music paths
 (_sample_bonus_music_buffalo/_sample_bonus_music_pinball, loop-mode list,
 cue routing ~line 866), game_surface_canvas.gd audio cue handling, the slot
 modules' surface_audio cue ids (bonus_music_pinball, pinball_feature_intro,
@@ -1471,14 +1471,14 @@ DONE GATE: validate_project.ps1; check_godot.ps1 -RequireGodot
 foundation_performance_probe.ps1 -RequireGodot pass.
 ```
 
-**T6.7 — Object Visibility & Event Pacing Pass** — P1 — deps: none — status: DONE — evidence: validate_project PASS; check_godot -RequireGodot PASS; FoundationSuite systems PASS (20260702_113457), ui PASS (20260702_113543), contracts PASS (20260702_120217); visual QA PASS with T6.7 fixture/hidden/cadence coverage true; mouse batch 20/20 completed with no dead-click/missing-object/event-spam failures (17/20 playable, 18/20 R100). Commit: 3695d64.
-(Candidate for the 0.3 cut line — UX correctness + live pacing bug, not new
+**T6.7 - Object Visibility & Event Pacing Pass** - P1 - deps: none - status: DONE - evidence: validate_project PASS; check_godot -RequireGodot PASS; FoundationSuite systems PASS (20260702_113457), ui PASS (20260702_113543), contracts PASS (20260702_120217); visual QA PASS with T6.7 fixture/hidden/cadence coverage true; mouse batch 20/20 completed with no dead-click/missing-object/event-spam failures (17/20 playable, 18/20 R100). Commit: 3695d64.
+(Candidate for the 0.3 cut line - UX correctness + live pacing bug, not new
 feature. R3 decides placement.)
 
 Two coupled fixes: (a) objects that cannot be interacted with should not
-exist in the room — EXCEPT permanent fixtures (sale counter, bar, cage)
+exist in the room - EXCEPT permanent fixtures (sale counter, bar, cage)
 which always render and merely lose interactivity; (b) events currently fire
-too often and back-to-back — deployment/timing must become a rare,
+too often and back-to-back - deployment/timing must become a rare,
 seed-deterministic "shake things up" cadence.
 
 ```text
@@ -1487,29 +1487,29 @@ seed-deterministic "shake things up" cadence.
 TASK T6.7 - Object visibility rules and event pacing rework.
 
 Read first:
-- scripts/ui/foundation_main.gd:1448, 1505, 1549 and 4254-4268 — the current
+- scripts/ui/foundation_main.gd:1448, 1505, 1549 and 4254-4268 - the current
   behavior: unusable services/lenders/contacts stay visible and clicking
   them shows "Not usable yet." messages / muted card labels.
-- scripts/core/run_action_service.gd:~477 and ~1184 — where usability is
+- scripts/core/run_action_service.gd:~477 and ~1184 - where usability is
   actually decided (availability conditions, requires_flags, single_use
   flags, status strings).
 - scripts/core/environment_instance.gd object placement
   (_assign_string_object_rects, _first_available_object_rect, object pools,
   event_pool/event_count picking).
 - scripts/core/event_module.gd + data/events/events.json trigger/scope
-  conditions and weights (T4.3 expanded the pack — the current
+  conditions and weights (T4.3 expanded the pack - the current
   bombardment likely comes from expanded pools with no cadence governor).
 - The T5.1 prestige pruning as the pattern to generalize for hiding.
-- tools/foundation_visual_qa.gd — coverage currently expects not-usable
+- tools/foundation_visual_qa.gd - coverage currently expects not-usable
   objects to exist; update with the rules below, not weakened.
 
-PART 1 — OBJECT VISIBILITY: three classes, exactly these:
+PART 1 - OBJECT VISIBILITY: three classes, exactly these:
 - FIXTURE -> ALWAYS PRESENT. Structural venue anatomy renders regardless of
   interactivity: the sale/shop counter, the bar, the cashier cage, game
   tables that define the room. Declared in archetype data (new
   "presence": "fixture" on object pool entries or an archetype fixture
   list). When its interaction is unavailable, the fixture still draws but
-  registers no interactive hit region (a neutral flavor click at most —
+  registers no interactive hit region (a neutral flavor click at most -
   "The counter's unattended."). The sale counter is the canonical example:
   ALWAYS visible, even when nothing is purchasable.
 - CATEGORICALLY unavailable (non-fixture) -> HIDDEN. Availability conditions
@@ -1518,18 +1518,18 @@ PART 1 — OBJECT VISIBILITY: three classes, exactly these:
 - TRANSIENTLY blocked -> VISIBLE with state. Blocked by something the player
   can change or must know (cannot afford, per-visit cooldown, travel lock):
   stays visible with existing status copy. Hiding a shop because the player
-  is broke hides information — do not.
+  is broke hides information - do not.
 Classify every object kind: games, services, lenders, items/shop, events,
 travel/exit, prestige (T5.1 handled), contacts/specials. Coordinate with
 T4.7 if landed (triggered events are never placed).
 
-PART 2 — EVENT CADENCE GOVERNOR (fixes the live bombardment):
+PART 2 - EVENT CADENCE GOVERNOR (fixes the live bombardment):
 Events currently fire too often and back-to-back. Rebuild deployment/timing
 so events are occasional punctuation, not a stream:
 1. Seed-deterministic schedule: fork a dedicated "event_cadence" RngStream
    from the run seed at run start. All cadence decisions (which venue visits
    get an event, at what action count it may fire, selection tiebreaks) draw
-   ONLY from this stream — so a given seed produces the same events at the
+   ONLY from this stream - so a given seed produces the same events at the
    same timing run over run, given the same player action sequence (the
    project's standard determinism contract; document this in the code).
 2. Pacing rules (data-tuned constants, suggested starting values, marked
@@ -1537,17 +1537,17 @@ so events are occasional punctuation, not a stream:
    - Global gap: no world-initiated event within 6 player actions of the
      previous one, across venue boundaries.
    - Per-visit budget: at most 1 world-initiated event per venue visit;
-     roughly 40-60% of visits should have ZERO events — quiet visits are
+     roughly 40-60% of visits should have ZERO events - quiet visits are
      the norm that makes events land.
    - Escalation exception: direct consequences of the player's own actions
      (chained trigger_event outcomes per T4.7, collector visits on overdue
-     debt, showdown flow) bypass the cadence budget — the player earned
-     those — but still respect a 1-action breather between modals: never
+     debt, showdown flow) bypass the cadence budget - the player earned
+     those - but still respect a 1-action breather between modals: never
      open a second forced popup on the same action that closed one.
    - Repeat suppression: an event id seen this run gets a heavy weight
      penalty; same event never twice in one venue visit.
 3. Apply the governor at the existing selection points (environment event
-   picking + any auto-fire trigger path) — one choke point, not per-event
+   picking + any auto-fire trigger path) - one choke point, not per-event
    hacks. Retune data weights from the T4.3 expansion where they fight the
    governor.
 4. Save/load: cadence stream state and gap/budget counters round-trip so a
@@ -1585,9 +1585,9 @@ DONE GATE:
 
 ---
 
-## 10. Epic 7 — QA, Balance & Release Infrastructure
+## 10. Epic 7 - QA, Balance & Release Infrastructure
 
-**T7.1 — Performance Probe Coverage & Baseline Fix** — P0 — deps: none — status: DONE
+**T7.1 - Performance Probe Coverage & Baseline Fix** - P0 - deps: none - status: DONE
 
 Evidence (R2, 2026-07-02): `foundation_performance_probe.ps1 -RequireGodot`
 PASS with `game_surface_coverage` across all 7 games, renderer coverage across
@@ -1607,9 +1607,9 @@ TASK T7.1 - Fix the two known QA coverage holes.
 
 Read tools/foundation_performance_probe.gd/.ps1 and the 0.2 checklist notes:
 (1) the probe's sampled seeds generated shop-only rooms, so it recorded no
-game renderer coverage — make seed/room selection coverage-aware so every
+game renderer coverage - make seed/room selection coverage-aware so every
 game surface gets sampled per run (deterministically); (2) the pre-existing
-slot-autoplay failures (memory: baseline, not regression) — root-cause them
+slot-autoplay failures (memory: baseline, not regression) - root-cause them
 now: reproduce, diagnose, and either fix the underlying issue or convert to
 an explicit documented exclusion with a tracking note in this board. A
 baseline failure that nobody understands is not an acceptable release
@@ -1621,7 +1621,7 @@ DONE GATE: validate_project.ps1; foundation_performance_probe.ps1
 unexplained failures.
 ```
 
-**T7.6 — Table-Game Resolve Performance Regression** — P0 — deps: none — status: DONE
+**T7.6 - Table-Game Resolve Performance Regression** - P0 - deps: none - status: DONE
 
 Found 2026-07-02 investigating user-reported game-wide slowdown. The
 FRAME-PATH half is already fixed in-tree (2026-07-02): zero-copy
@@ -1648,7 +1648,7 @@ TASK T7.6 - Fix the table-game resolve-path performance regression.
 
 MEASURED EVIDENCE (2026-07-02): baccarat max hand resolve was 9.693 ms at
 the 0.2 gate (docs/archive/0.2/plans/0.2_release_checklist.md) and now measures
-18.366 ms (tools/run_baccarat_seed_audit.ps1) — ~2x. The regression window
+18.366 ms (tools/run_baccarat_seed_audit.ps1) - ~2x. The regression window
 contains the skill-cheat work (T2.2-T2.5): baccarat edge-sort added ~32
 dictionary-copy calls; roulette/video poker/bar dice received the same
 pattern. Known hot spots: _normalize_table_state runs
@@ -1677,7 +1677,7 @@ game seed audits with a before/after timing table recorded in this task's
 evidence line; foundation_mouse_batch_playtest.ps1 -RunCount 20 clean.
 ```
 
-**T7.2 — Visual QA Optional-Route Warnings Elimination** — P1 — deps: T4.5 — status: DONE
+**T7.2 - Visual QA Optional-Route Warnings Elimination** - P1 - deps: T4.5 - status: DONE
 
 Evidence 2026-07-02: `tools/foundation_visual_qa.gd` now steers deterministic fixtures for visible cheat/risky play, event, item, service, lender/economy pressure, and route-dependent demo-objective coverage. `powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1` PASS; `powershell -ExecutionPolicy Bypass -File tools/foundation_visual_qa.ps1 -RequireGodot` PASS with `warnings=[]`, `event_card=true`, `item_card=true`, `service_card=true`, `lender_card=true`, `recovery_lender_path=true`, `economy_pressure_shift=true`, `demo_victory=true`, `grand_casino_high_roller_cashout=true`, `grand_casino_showdown_event=true`, and `terminal_victory_summary=true`.
 
@@ -1709,7 +1709,7 @@ DONE GATE: validate_project.ps1; foundation_visual_qa.ps1 -RequireGodot
 passes with zero optional-route warnings.
 ```
 
-**T7.3 — Act 1 Balance Gauntlet** — P0 — deps: T2.6, T4.1, T4.3, T4.4, T4.5 — status: DONE
+**T7.3 - Act 1 Balance Gauntlet** - P0 - deps: T2.6, T4.1, T4.3, T4.4, T4.5 - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -1764,7 +1764,7 @@ evidence: `check_godot.ps1 -RequireGodot` PASS
 `9a171d4` (gameplay, tools, data tuning) and `d22a24d` (UI/regression
 coverage). R11 audit-harness follow-up commit: `944f0f7`.
 
-**T7.4 — Itch Publish Pipeline** — P1 — deps: T7.3 — status: DONE
+**T7.4 - Itch Publish Pipeline** - P1 - deps: T7.3 - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -1772,8 +1772,8 @@ coverage). R11 audit-harness follow-up commit: `944f0f7`.
 TASK T7.4 - Complete the itch.io publish path.
 
 FIRST: bump release identity to 0.3.0 everywhere the 0.2 checklist lists it
-— project.godot application config/version, Windows preset file_version and
-product_version, Android version/name, iOS short_version and version — and
+- project.godot application config/version, Windows preset file_version and
+product_version, Android version/name, iOS short_version and version - and
 verify README/start-screen version strings match. Then:
 
 Read tools/export_itch.ps1 and the 0.2 checklist export evidence (web +
@@ -1804,7 +1804,7 @@ butler dry-run printed `--userversion 0.3.0` commands for `html` and
 (`.tmp/t74_web_smoke.png`); Windows exe stayed alive for 6s and was stopped.
 Publish remains a user action. Commit: `c3b89ed`.
 
-**T7.5 — Mobile Export Runbook** — P2 — deps: none — status: PARKED(0.3)
+**T7.5 - Mobile Export Runbook** - P2 - deps: none - status: PARKED(0.3)
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -1824,9 +1824,9 @@ coherent.
 
 ---
 
-## 11. Epic 8 — Act 2 Seam
+## 11. Epic 8 - Act 2 Seam
 
-**T8.1 — Act Transition Contract** — P1 — deps: T5.1 — status: DONE
+**T8.1 - Act Transition Contract** - P1 - deps: T5.1 - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -1855,14 +1855,14 @@ Evidence 2026-07-07: commit `e5efadf` added `docs/plans/act_two_seam.md`, save/p
 
 ---
 
-## 11b. Epic 9 — Release Direction Passes (added 2026-07-02 scope review)
+## 11b. Epic 9 - Release Direction Passes (added 2026-07-02 scope review)
 
 A full repo review found three drifts: (1) ~96 uncommitted files spanning
-~14 completed tasks with zero commits since the pinball rework — no
+~14 completed tasks with zero commits since the pinball rework - no
 bisectability, DONE evidence living only in the working tree; (2) buried red
-gates — at review time T5.2 was marked DONE with a contracts-suite crash in
+gates - at review time T5.2 was marked DONE with a contracts-suite crash in
 its own evidence line, slot_acceptance/cabinet QA were red, and P0s T7.1/T7.3
-were idle while P1/P2 work landed; (3) scope growth — 5 new feature tasks queued while
+were idle while P1/P2 work landed; (3) scope growth - 5 new feature tasks queued while
 release gates idle, and recurring process regressions (7 more icons bypassed
 the art generator; tools/__pycache__ untracked). R1-R4 correct course.
 R2 update: contracts, slot_acceptance/cabinet QA, and T7.1 perf coverage are
@@ -1870,7 +1870,7 @@ now green; the remaining direction passes build from that corrected baseline.
 **Run R1 → R2 → R3; R4 after R1. No new feature tasks start until R3's cut
 line is set.**
 
-**R1 — Integration & Commit Partition Pass** — P0 — deps: none — status: DONE
+**R1 - Integration & Commit Partition Pass** - P0 - deps: none - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -1880,7 +1880,7 @@ TASK R1 - Partition the uncommitted working tree into auditable commits.
 Read git status fully. The tree holds ~96 changed/untracked files spanning
 completed tasks T2.1-T2.7, T3.1-T3.6, T4.1, T4.3-T4.6, T5.1, T5.2, icon-art
 fixes, README/board/docs updates, and branding refreshes. Zero of it is
-committed. Your job is commits, not code changes — the ONLY code changes
+committed. Your job is commits, not code changes - the ONLY code changes
 allowed are those needed to make a partitioned commit pass its gate.
 
 Rules:
@@ -1890,7 +1890,7 @@ Rules:
   T5.2) -> icon-art fixes -> docs/board -> branding.
 - Before the first commit: run validate_project.ps1 + check_godot.ps1
   -RequireGodot on the full tree and record the baseline (known failures:
-  the T5.2 contracts crash and any slot acceptance failures are documented —
+  the T5.2 contracts crash and any slot acceptance failures are documented -
   do not let them silently grow).
 - After each commit: validate_project.ps1 minimum; after each SUITE-affecting
   commit: the owning task's DONE gate. A commit may not make any gate worse
@@ -1910,7 +1910,7 @@ baseline gate report attached to the summary.
 
 Evidence 2026-07-02: baseline `validate_project.ps1` PASS and `check_godot.ps1 -RequireGodot` PASS (`.tmp/test_reports/20260702_152250_smoke`). Partition commits: hygiene d44582a, pinball e430c99, T2/T3 casino games 0970ab4, T4/T5 world/challenges 3695d64, T6 music d59f93e, icon pipeline 889f956, docs/board 205dade, branding a7a3a7f. Post-commit gates stayed no worse than baseline; final status was clean.
 
-**R2 — Gate Truth / Red-Bar-Zero Pass** — P0 — deps: R1 — status: DONE
+**R2 - Gate Truth / Red-Bar-Zero Pass** - P0 - deps: R1 - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -1926,13 +1926,13 @@ Work items, in order:
    the contracts suite completes and passes.
 2. Slot gates: run -FoundationSuite slot and slot_acceptance plus
    tools/slot_cabinet_visual_qa.ps1. Fix the acceptance/cabinet failures
-   recorded by the T0.1 truth sweep. This effectively executes T1.3 —
+   recorded by the T0.1 truth sweep. This effectively executes T1.3 -
    update its status with evidence.
 3. Pinball closure: T1.1 shows IN PROGRESS but its Phase 6 + acceptance
    commits exist. Verify against the copied T1.1 evidence and active pinball
    plan/feel reference; if complete, mark T1.1 DONE with evidence, then run
    T1.2 as its own fresh independent follow-up.
-4. T7.1 (P0, untouched): execute it now — perf probe game-surface coverage
+4. T7.1 (P0, untouched): execute it now - perf probe game-surface coverage
    + root-cause the slot-autoplay baseline failures. It is the oldest open
    P0 on the board.
 5. Board rule going forward (add to section 2 shared guideline): a task may
@@ -1954,7 +1954,7 @@ Evidence (completed 2026-07-02): contracts PASS
 statuses are truthful with evidence, and section 2 now has the no-red-DONE
 rule.
 
-**R3 — Scope Freeze & Release Cut Line** — P0 — deps: R1, R2 — status: DONE
+**R3 - Scope Freeze & Release Cut Line** - P0 - deps: R1, R2 - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -1965,7 +1965,7 @@ This is a planning/documentation task; no gameplay code.
 
 1. Add a "Release 0.3 Cut Line" section to this board declaring:
    - IN (ship blockers): all Epic 9 passes, T7.3 balance gauntlet (its deps
-     are all DONE — schedule it immediately), T7.2 visual QA warnings,
+     are all DONE - schedule it immediately), T7.2 visual QA warnings,
      T6.3 layout/touch pass, T7.4 itch pipeline, F-style release checklist
      update (mirror docs/archive/0.2/plans/0.2_release_checklist.md as
      0.3_release_checklist.md with fresh evidence).
@@ -1976,7 +1976,7 @@ This is a planning/documentation task; no gameplay code.
 2. Reconcile section 12 execution order with reality (T4.6 done, new tasks
    parked) so the board's "Now" lanes list only cut-line work.
 3. Add two standing rules to the section 2 shared guideline:
-   - New item icons MUST be draw functions in tools/generate_icon_art.py —
+   - New item icons MUST be draw functions in tools/generate_icon_art.py -
      never hand-placed or copied PNGs (this failed three times; R4 fixes the
      current 7 offenders).
    - Each completed task commits its own work before the board status flips
@@ -2022,7 +2022,7 @@ their status is PARKED(0.3) so they are not picked up by accident.
 | T7.5 Mobile Export Runbook | Parked mobile credentials/runbook work; 0.3 ships web/Windows/itch path first. |
 | T8.1 Act Transition Contract | Parked Act 2 seam; 0.3 release does not expand the Act 2 handoff. |
 
-**R4 — Repo Cleanup for Release** — P1 — deps: R1 — status: DONE (folded into R9)
+**R4 - Repo Cleanup for Release** - P1 - deps: R1 - status: DONE (folded into R9)
 Evidence 2026-07-03: R9 executed the nine R4 cleanup classes in the working
 tree; final class-separated commits/full-suite cleanliness are tracked under
 R9. Commit: `e01aef7`.
@@ -2074,7 +2074,7 @@ gate after each, per the audit's sequencing:
 
 DO NOT touch anything on the audit's section 4 protect list (dynamically
 loaded game modules, live trajectory renderer paths, manually-run probes,
-platform_services, table_game_visuals). Prestige code stays — T5.1 chose
+platform_services, table_game_visuals). Prestige code stays - T5.1 chose
 HIDE and the code path is the seam for Act 2.
 
 DONE: all nine items committed in class-separated commits with gate output
@@ -2093,9 +2093,9 @@ R6 (map) → R7 (nudge) → R9 (cleanup) → R10 (docs). R9/R10 always last.
 R1 (commit partition) should land before this series so each task commits
 its own work cleanly.
 
-**R5 — 60 FPS & Locked Logic Rate Pass** — P0 — status: DONE
+**R5 - 60 FPS & Locked Logic Rate Pass** - P0 - status: DONE
 
-Evidence: 2026-07-02 — before/after timing table: baccarat max resolve
+Evidence: 2026-07-02 - before/after timing table: baccarat max resolve
 18.4 ms -> 7.319 ms (avg/p95 2.130/3.169 ms), bar_dice suite
 147900 ms/internal 142370 ms -> 39476 ms, blackjack resolve avg/p95/max
 1.696/3.198/7.569 ms, roulette resolve avg/p95/max
@@ -2132,7 +2132,7 @@ Implement:
    sampled, add a casino room with active slot previews, and add a per-surface
    frame budget assert of 16.0ms p95 on the min-spec assumption.
 3. Locked logic rate audit: enumerate every realtime simulation/timer path
-   (pinball sim accumulator — already fixed-dt 1/120 with render
+   (pinball sim accumulator - already fixed-dt 1/120 with render
    interpolation, use it as the reference pattern; table round timers;
    cheat timing meters; autoplay pacing; alcohol absorption). Verify each
    derives from time (msec) not from frame count, so logic speed is
@@ -2148,9 +2148,9 @@ budget); upgraded perf probe passes with game-surface coverage and 16ms
 p95; before/after timing table recorded in the board evidence line.
 ```
 
-**R6 — World Map Rework: Fog, Icons, Selection, Return Travel** — P0 — status: DONE
+**R6 - World Map Rework: Fog, Icons, Selection, Return Travel** - P0 - status: DONE
 
-Evidence: 2026-07-02 — R6 plus capped-route follow-up complete: `tools/validate_project.ps1` PASS; `tools/check_godot.ps1 -RequireGodot -FoundationSuite systems` PASS (`.tmp/test_reports/20260702_204737_smoke/summary.json`); `tools/check_godot.ps1 -RequireGodot -FoundationSuite ui` PASS (`.tmp/test_reports/20260702_204955_smoke/summary.json`); `tools/check_godot.ps1 -RequireGodot` PASS (`.tmp/test_reports/20260702_204012_smoke/summary.json`); `tools/foundation_visual_qa.ps1 -RequireGodot` PASS with world-map background/icons/info/highlight coverage; `tools/foundation_mouse_batch_playtest.ps1 -RunCount 20 -RequireGodot -OutputRoot .tmp\foundation_mouse_batch_r6_followup3` PASS, 20/20 playable, 20/20 R100, 20 victories, 0 true failures. R11 commit: `d22a24d`.
+Evidence: 2026-07-02 - R6 plus capped-route follow-up complete: `tools/validate_project.ps1` PASS; `tools/check_godot.ps1 -RequireGodot -FoundationSuite systems` PASS (`.tmp/test_reports/20260702_204737_smoke/summary.json`); `tools/check_godot.ps1 -RequireGodot -FoundationSuite ui` PASS (`.tmp/test_reports/20260702_204955_smoke/summary.json`); `tools/check_godot.ps1 -RequireGodot` PASS (`.tmp/test_reports/20260702_204012_smoke/summary.json`); `tools/foundation_visual_qa.ps1 -RequireGodot` PASS with world-map background/icons/info/highlight coverage; `tools/foundation_mouse_batch_playtest.ps1 -RunCount 20 -RequireGodot -OutputRoot .tmp\foundation_mouse_batch_r6_followup3` PASS, 20/20 playable, 20/20 R100, 20 victories, 0 true failures. R11 commit: `d22a24d`.
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -2163,16 +2163,16 @@ travel, _world_map_snapshot) but ships defects:
 
 1. FOG LEAK (the core defect): the map currently shows information about
    locations that are not unlocked/discovered. Enforce strictly: a node is
-   VISIBLE only when (a) already visited, or (b) unlocked — via an event
+   VISIBLE only when (a) already visited, or (b) unlocked - via an event
    grant, or marked discovered-at-spawn by the seeded generation roll.
    Everything else does not render AT ALL (no marker, no silhouette, no
-   label, no hit region, nothing in the snapshot payload — filter in
+   label, no hit region, nothing in the snapshot payload - filter in
    _world_map_snapshot so leaked data never reaches the canvas/buttons).
 2. ICONS: each environment archetype gets a small map icon (pixel-art,
-   generated via tools/generate_icon_art.py in the house style — NEVER
+   generated via tools/generate_icon_art.py in the house style - NEVER
    hand-placed PNGs, per standing rule). Icon placement must use the
    node's generated map position EXACTLY (same normalized coordinates the
-   generator produced — no re-layout, no grid snapping that moves nodes).
+   generator produced - no re-layout, no grid snapping that moves nodes).
 3. SELECTION: tapping a visible node highlights it (marker state) and
    opens an info panel: name, archetype flavor line, travel method,
    distance band, cost, risk, and any scouting intel already earned.
@@ -2183,9 +2183,9 @@ travel, _world_map_snapshot) but ships defects:
    Returning restores the node's saved environment state per the persistent
    node-identity contract.
 5. Determinism: discovery-at-spawn rolls come from the run's world-map
-   RngStream fork — same seed, same initially-discovered set.
+   RngStream fork - same seed, same initially-discovered set.
 
-Tests: snapshot leak test — undiscovered nodes absent from
+Tests: snapshot leak test - undiscovered nodes absent from
 _world_map_snapshot payload across a 20-seed sweep; event unlock makes a
 node appear without re-entering the map; icon positions equal generated
 node positions; return travel charges the edge cost and restores state
@@ -2197,7 +2197,7 @@ foundation_visual_qa (map coverage markers); foundation_mouse_batch_
 playtest -RunCount 20 traveling via the map with 0 failures.
 ```
 
-**R7 — Slot Nudge Rework: Real Symbol Placement** — P1 — status: DONE
+**R7 - Slot Nudge Rework: Real Symbol Placement** - P1 - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -2208,7 +2208,7 @@ Current behavior: winning the coin-chain nudge pays a small synthetic
 bonus (and slot_family_pinball.apply_nudge_to_grid can convert a cell for
 the bonus trigger). Required behavior: a successful nudge SHIFTS the
 target reel so the needed symbol actually lands, and the result then
-resolves through the NORMAL pay evaluation — real line pays, real feature
+resolves through the NORMAL pay evaluation - real line pays, real feature
 triggers, no synthetic awards.
 
 Read: scripts/games/slot.gd nudge routing, scripts/games/slots/
@@ -2235,7 +2235,7 @@ Implement:
    deltas flow through the existing resolver bookkeeping.
 4. Math guard: nudge frequency/eligibility is unchanged; run
    slot_machine_deep_audit 10000 spins with nudges scripted to confirm RTP
-   stays inside audit bounds — retune nudge-offer weights if the stronger
+   stays inside audit bounds - retune nudge-offer weights if the stronger
    effect pushes RTP out.
 5. Visual: the reel visibly bumps one step (reuse reel-motion rendering),
    and a triggered feature enters through its normal transition.
@@ -2252,7 +2252,7 @@ slot_cabinet_visual_qa passes.
 
 Evidence 2026-07-02: `tools/validate_project.ps1` PASS; `tools/check_godot.ps1 -RequireGodot -NoImport -FoundationSuite slot -TimeoutSec 600` PASS; `tools/check_godot.ps1 -RequireGodot -NoImport -FoundationSuite slot_acceptance -TimeoutSec 1200` PASS; `Godot_v4.6-stable_win64_console.exe --headless --path . --script res://tools/slot_machine_deep_audit.gd -- 10000 --script-nudges` PASS (scripted nudges 794/798/808/806/800/789; all RTP bands); `tools/slot_cabinet_visual_qa.ps1 -RequireGodot` PASS. Reel-shift nudge targets now resolve through normal line/feature evaluation with perfect/good/miss/blown fixtures.
 
-**R8 — Slot Bonus Stuck-State Bug** — P0 — status: DONE
+**R8 - Slot Bonus Stuck-State Bug** - P0 - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -2284,7 +2284,7 @@ Investigate before fixing:
    depth: if a feature reports no live entities/steps remaining and no
    pending award animation for N surface seconds, the module force-
    completes the feature through the normal completion path (awards
-   preserved, story-logged) — never a silent state reset.
+   preserved, story-logged) - never a silent state reset.
 4. Regression tests: every reproduction case from step 1 becomes a
    permanent foundation_check fixture; add a save/load-mid-feature
    round-trip for both families.
@@ -2306,7 +2306,7 @@ completed but still report unrelated/pre-existing pinball acceptance and
 general mouse-playtest failures; no R8 stuck-surface or bonus-stuck failures
 were observed.
 
-**R9 — Extensive Repo & Document Cleanup** — P1 — deps: R1 — status: DONE
+**R9 - Extensive Repo & Document Cleanup** - P1 - deps: R1 - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -2314,7 +2314,7 @@ were observed.
 TASK R9 - Extensive pre-release cleanup of code, tests, docs, and
 committed cruft.
 
-Supersedes/extends R4 — execute R4's nine items first if not yet done
+Supersedes/extends R4 - execute R4's nine items first if not yet done
 (dead script, ghost art, orphan tools, tracked .import files, icon
 pipeline compliance, dead data keys, docs pruning, .tmp purge, validator
 hardening), then this broader pass. PRESERVE: assets/, builds outputs,
@@ -2325,19 +2325,19 @@ audit's protect list (docs/plans/dead_code_audit_report.md section 4).
    assert behavior that no longer exists (grep each check's target
    symbols; a check referencing deleted systems or permanently-skipped
    paths is dead). Delete with per-check evidence. Do NOT delete slow or
-   inconvenient tests — only provably orphaned ones.
+   inconvenient tests - only provably orphaned ones.
 2. Deprecated plan/prompt docs: docs/plans/ currently mixes active,
    historical, and superseded documents. Classify every file: ACTIVE
    (board, current plans/specs), HISTORICAL-KEEP (release evidence:
    0.2_release_checklist), DELETE (superseded working docs whose surviving
-   truth is already folded into the board or README — e.g. old prompt
+   truth is already folded into the board or README - e.g. old prompt
    boards, completed rework progress docs after their evidence is copied
    into the board ledger). Record the classification table in the commit
    message; git history preserves deleted docs.
 3. Temp/untracked hygiene: tools/__pycache__ (ignore), stray one-off
    files, generated reports; extend .gitignore accordingly; verify
    nothing under .tmp/, builds/, or user:// is tracked.
-4. Repo-size audit: git ls-files | largest 20 files — flag anything
+4. Repo-size audit: git ls-files | largest 20 files - flag anything
    committed that should not be (large binaries outside assets/branding).
 5. One commit per cleanup class, gate after each (R4 discipline).
 
@@ -2389,7 +2389,7 @@ plus `.import` sidecars; deprecated docs listed DELETE above; local generated
 `.tmp/` and `tools/__pycache__/`; 11 tracked `assets/art/items/*.png.import`
 files removed from the index while left ignored on disk.
 
-**R10 — Documentation Truth Pass for 0.3** — P1 — deps: R5–R9 — status: DONE
+**R10 - Documentation Truth Pass for 0.3** - P1 - deps: R5–R9 - status: DONE
 
 ```text
 [PREPEND SHARED GUIDELINE]
@@ -2418,7 +2418,7 @@ event cadence/interaction changes, and the performance fixes.
    corrected.
 4. Update the Act 1 scope contract section if any 0.3 decision changed it
    (e.g., parked features), and memory-facing docs stay consistent.
-5. Copy rule: docs describe what IS, not what is planned — anything
+5. Copy rule: docs describe what IS, not what is planned - anything
    unshipped moves to a clearly-marked backlog section.
 
 DONE GATE: validate_project after every doc change; every command shown
@@ -2442,7 +2442,7 @@ green with `warnings=[]`. Commit: `f9e9b9e`.
 
 ---
 
-## 12. Execution order — v0.3 release queue (rewritten by R3)
+## 12. Execution order - v0.3 release queue (rewritten by R3)
 
 State (R11 evidence closure): the original build lanes are complete. T4.6, R1, R2,
 R5, R6, R7, R8, T1.2, T1.3, and T7.1 are DONE with evidence. R4's cleanup
@@ -2452,30 +2452,30 @@ and R10 are DONE with commit-backed evidence.
 
 **Done lanes:**
 
-1. **R1 — Integration & Commit Partition. DONE.**
-2. **R8 — Slot Bonus Stuck-State Bug. DONE.**
-3. **R2 — Gate Truth / Red-Bar-Zero. DONE.**
-4. **R5 — 60 FPS & Locked Logic Rate. DONE.**
-5. **R6 — World Map Rework. DONE.**
-6. **R7 — Slot Nudge Rework. DONE.**
-7. **R3 — Scope Freeze & Release Cut Line. DONE.** This docs pass freezes the cut
+1. **R1 - Integration & Commit Partition. DONE.**
+2. **R8 - Slot Bonus Stuck-State Bug. DONE.**
+3. **R2 - Gate Truth / Red-Bar-Zero. DONE.**
+4. **R5 - 60 FPS & Locked Logic Rate. DONE.**
+5. **R6 - World Map Rework. DONE.**
+6. **R7 - Slot Nudge Rework. DONE.**
+7. **R3 - Scope Freeze & Release Cut Line. DONE.** This docs pass freezes the cut
    line, parks out-of-scope prompts, updates README status, and adds the
    icon-generator / commit-before-DONE standing rules.
 
-**Now lanes — cut-line work only, run strictly in this order:**
+**Now lanes - cut-line work only, run strictly in this order:**
 
-1. **T7.2 — Visual QA zero warnings. DONE.** T7.2-FIX gate is green with
+1. **T7.2 - Visual QA zero warnings. DONE.** T7.2-FIX gate is green with
    zero visual QA warnings.
-2. **T7.3 — Act 1 Balance Gauntlet. DONE.** Metrics pass deterministically;
+2. **T7.3 - Act 1 Balance Gauntlet. DONE.** Metrics pass deterministically;
    the accepted T7.3-FAST 3-run mouse balance smoke passes with `0` true
    failures and supersedes the original 60-run statistical batch for 0.3.
-3. **T6.3 — Full Text/Layout/Touch Collision Pass. DONE.** Layout/touch
+3. **T6.3 - Full Text/Layout/Touch Collision Pass. DONE.** Layout/touch
    sweep is green.
-4. **R9 — Extensive Repo & Document Cleanup. DONE.** Cleanup is committed and
+4. **R9 - Extensive Repo & Document Cleanup. DONE.** Cleanup is committed and
    generated metadata is untracked.
-5. **R10 — Documentation Truth Pass. DONE.** README/checklist truthing is
+5. **R10 - Documentation Truth Pass. DONE.** README/checklist truthing is
    committed through the R11 evidence closure.
-6. **T7.4 — Itch Publish Pipeline. DONE.** Fresh packages, checksums,
+6. **T7.4 - Itch Publish Pipeline. DONE.** Fresh packages, checksums,
    butler dry-run, and Web/Windows smoke checks pass; publish remains a user
    action.
 

@@ -1,6 +1,6 @@
 # playtest06_2 Final Evidence and Owner-Build Custody
 
-Status: **TOOLING READY — do not run until env06_8, integ06_1, the balance
+Status: **TOOLING READY - do not run until env06_8, integ06_1, the balance
 follow-on, and perf06_1 share one frozen product candidate**
 
 This is test and handoff custody, not release work. It performs no version bump,

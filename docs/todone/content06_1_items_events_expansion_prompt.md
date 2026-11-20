@@ -8,7 +8,7 @@ Board row: `content06_1` in `docs/todo/README_0_6_board.md`
 - **Verification:** PM verbatim scope/design review and production-path manual smoke; combined Systems, Contracts, UI, 10-seed determinism, and canonical visual QA PASS on the integrated tree. All scenario souvenirs reach within-run inventory/shelf/sale presentation, and all five Mags outputs have real consumers.
 - **Deviations:** Owner ruled souvenir collection integration is within-run only; no new cross-run collection persistence was authorized. Economy audit values remain playtest inputs and were not tuned.
 
-# Agent Prompt — 0.6 content06_1: Items, Services, Events Depth Pass
+# Agent Prompt - 0.6 content06_1: Items, Services, Events Depth Pass
 
 Copy everything below this line into the agent.
 
@@ -16,7 +16,7 @@ Copy everything below this line into the agent.
 
 You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript
 casino roguelike (Web/itch.io + Windows, 1280×720). Binding design
-contract: `docs/plans/0.6_living_world_roadmap.md` — Pillar 6. This is
+contract: `docs/plans/0.6_living_world_roadmap.md` - Pillar 6. This is
 the depth-and-connective-tissue content pass over the landed 0.6
 systems. Voice: both voice bibles. This prompt is self-contained for
 rules and scope.
@@ -36,7 +36,7 @@ rules and scope.
 
 `env06_2`, `env06_3`, `crew06_6` DONE (scenario + crew surfaces to
 fill). Audit every seam earlier prompts logged as "content06_1 fills"
-on the board's Discovery Log before starting — that list is part of
+on the board's Discovery Log before starting - that list is part of
 your scope; code reality wins.
 
 ## Task
@@ -45,7 +45,7 @@ your scope; code reality wins.
 
 - Author ~12–16 scenario-keyed items in `data/items/items.json`:
   wedding favor, wake matchbook, fight-night betting slip, festival
-  trinkets, estate-lot one-offs (the Sal-chain item among them —
+  trinkets, estate-lot one-offs (the Sal-chain item among them -
   verify chain06_1's hook if landed), convoy/tour-bus finds. Each:
   a small real effect or collection value (never dead flavor), scenario
   acquisition path, collections-shelf integration per the shipped
@@ -54,10 +54,10 @@ your scope; code reality wins.
 ### 2. Crew gear tier (Mags' bench catalog)
 
 - Fill crew06_6's bench seam: 4–6 Mags-crafted upgrades of shipped
-  cheat items — loaded dice (craps06_1's data hook), tuned loupe,
-  nudge dampener (push06_2's hook), lined sleeve — each crew-gated
+  cheat items - loaded dice (craps06_1's data hook), tuned loupe,
+  nudge dampener (push06_2's hook), lined sleeve - each crew-gated
   (rank + cash + sometimes a component), each with documented risk
-  deltas in the cheat systems they feed. No new cheat mechanics —
+  deltas in the cheat systems they feed. No new cheat mechanics -
   power flows through existing hooks.
 
 ### 3. Event + service fill
@@ -66,7 +66,7 @@ your scope; code reality wins.
   fill gaps so no ★ scenario ships thin (coordinate against env06_2/3
   landed data).
 - Scenario services promised by data but unbuilt (open bar, cover
-  charge, private table, two-drink minimum variants) — implement via
+  charge, private table, two-drink minimum variants) - implement via
   the existing services schema.
 - L3 services completeness: Rook's ride tiers, bench UI polish, job
   board flavor rotation.
@@ -77,7 +77,7 @@ your scope; code reality wins.
   cuts, heist bands, souvenirs) against the run economy: document the
   intended earn/spend curves in the data files; flag imbalances as
   board Discoveries with proposed tunings (release06_1 does final
-  balance — you provide the map).
+  balance - you provide the map).
 - Collections: every new collectible registered; shelf presentation
   verified.
 

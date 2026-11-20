@@ -45,7 +45,7 @@ Deviations:
 - Task A was not reimplemented because commit `8eefdc5` already landed it; this run verified it and completed the remaining spike/verdict.
 - No retirement prompt was authored because the verdict is keep bridge.
 - Temporary spike edits were restored before final validation.
-# Agent Prompt — Web Audio Bridge Modernization (eval → get_interface, native-audio spike)
+# Agent Prompt - Web Audio Bridge Modernization (eval → get_interface, native-audio spike)
 
 Copy everything below this line into the agent.
 
@@ -74,7 +74,7 @@ gain, 38 Hz highpass, dynamics compressor (−6 dB threshold, 3:1 ratio, 180 ms
 release), SFX gain clamp 1.25, pitch clamp 0.35–2.5, music-mix updates
 throttled to ≥140 ms apart and smoothed with `setTargetAtTime` τ=0.08 s. These
 values are asserted by `mix_contract_snapshot()` (web_audio_bridge.gd:534) and
-covered by foundation checks — they are intentional product decisions, not
+covered by foundation checks - they are intentional product decisions, not
 accidents.
 
 ## The structural defect you are fixing (Task A, mandatory)
@@ -97,13 +97,13 @@ source**:
 Godot documents that `eval` "performs poorly and is also very limited" and
 provides `JavaScriptBridge.get_interface()`, which wraps a global JS object as
 a `JavaScriptObject` whose methods you call directly with auto-converted
-primitive arguments (int/float/String/bool) — no source parsing per call.
+primitive arguments (int/float/String/bool) - no source parsing per call.
 References:
 - https://docs.godotengine.org/en/stable/classes/class_javascriptbridge.html
 - https://docs.godotengine.org/en/stable/tutorials/platform/web/javascript_bridge.html
 - https://godotengine.org/article/godot-web-progress-report-9/
 
-**Required change:** keep exactly one `eval` — the one-time installation of
+**Required change:** keep exactly one `eval` - the one-time installation of
 `WEB_AUDIO_SCRIPT` in `ensure()` (this is a legitimate use; the script defines
 `window.BTHWebAudio`). After installation, acquire the interface once
 (`JavaScriptBridge.get_interface("BTHWebAudio")`), cache it, and convert every
@@ -112,7 +112,7 @@ other call site to direct method calls. Payloads that are currently
 `String` argument and `JSON.parse`-d inside the bridge methods (add that
 parsing to the JS side, bump `WEB_AUDIO_VERSION`/`BRIDGE_VERSION` to 4 so the
 version guard replaces stale bridges). Base64 PCM still crosses as a string
-argument — that is fine; the win is eliminating per-call JS parsing of source
+argument - that is fine; the win is eliminating per-call JS parsing of source
 that *contains* the data, not eliminating marshalling.
 
 Constraints for Task A:
@@ -124,11 +124,11 @@ Constraints for Task A:
    call-site change is strictly required.
 2. Keep the telemetry contract: `debug_stats()` must still report call counts
    and payload bytes (rename fields honestly if they no longer measure eval
-   bytes — e.g. `call_counts`/`payload_bytes` — and update
+   bytes - e.g. `call_counts`/`payload_bytes` - and update
    `perf_telemetry_overlay.gd` and any foundation check that reads them).
 3. `mix_contract_snapshot()` asserts substrings of `WEB_AUDIO_SCRIPT`
    (web_audio_bridge.gd:549-559). If you touch the script text, update these
-   assertions to match the new intended text — do not weaken them to always
+   assertions to match the new intended text - do not weaken them to always
    true.
 4. `get_interface` returns a `JavaScriptObject` only on web; all new code
    must stay behind `available()` so desktop/headless paths are untouched.
@@ -137,7 +137,7 @@ Constraints for Task A:
    silent stem) is a full scan of the WAV on the main thread. Make the scan
    cheap (e.g. stride-sample the buffer, or check a bounded prefix/suffix plus
    strided interior). It must stay allocation-free.
-6. Per-frame paths must stay zero-copy — no `duplicate(true)` of live state
+6. Per-frame paths must stay zero-copy - no `duplicate(true)` of live state
    per frame (this codebase shipped a 32.6 ms/frame regression from exactly
    that; see slot.gd watchdog history).
 
@@ -157,13 +157,13 @@ the verdict. Research facts to verify against, not assume:
 - The threads variant uses an AudioWorklet driver with the full mixer, but
   requires a cross-origin-isolated host. itch.io's "SharedArrayBuffer
   support" embed option uses `COEP: credentialless`, which is Chrome-centric
-  (not Safari; historically not Firefox for Android) — a real product
+  (not Safari; historically not Firefox for Android) - a real product
   constraint for a web release. Sources:
   https://itch.io/blog/456223/godot-cross-origin-isolation-and-sharedarraybuffers ,
   https://itch.io/t/2025776/experimental-sharedarraybuffer-support ,
   https://www.rafa.ee/articles/deploying-godot-4-html-exports/
-- This project's music/SFX are runtime-generated `AudioStreamWAV` — samples,
-  not `AudioStreamGenerator` — so Sample mode *may* now handle them; whether
+- This project's music/SFX are runtime-generated `AudioStreamWAV` - samples,
+  not `AudioStreamGenerator` - so Sample mode *may* now handle them; whether
   runtime-registered samples work reliably in 4.6 is exactly what the spike
   must establish.
 
@@ -173,7 +173,7 @@ Spike protocol:
    (web_audio_bridge.gd:20) so the players fall back to native Godot audio
    paths. Verify first in code that a native fallback actually exists in
    `sfx_player.gd`/`procedural_music_player.gd` when the bridge reports
-   unavailable — if audio is bridge-only on web, note that as a finding and
+   unavailable - if audio is bridge-only on web, note that as a finding and
    test what actually happens.
 2. Test matrix: (a) single-threaded export in Sample playback mode,
    (b) threads export served with cross-origin-isolation headers
@@ -198,7 +198,7 @@ Spike protocol:
    plus any foundation check you had to update for the telemetry/contract
    renames (grep `mix_contract_snapshot` and `la6_web_audio_bridge_stats` in
    scripts/tests/foundation_check.gd first so you know what is asserted).
-3. `powershell -ExecutionPolicy Bypass -File tools\web_perf_smoke.ps1` — the
+3. `powershell -ExecutionPolicy Bypass -File tools\web_perf_smoke.ps1` - the
    LD.1/LD.2 budgets must still pass; compare the bridge call/byte telemetry
    before and after Task A and record the delta as evidence.
 4. Match existing code style: tab indentation, typed GDScript, sparse

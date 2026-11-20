@@ -8,7 +8,7 @@ Board row: `town06_1` in `docs/todo/README_0_6_board.md`
 - **Verification:** PM scope/design review; integrated `validate_project`, systems, UI, all-foundation, 10-seed determinism (`38535979`), visual QA, and Wave A coexistence probe all PASS.
 - **Deviations:** `conditions.json` uses the repository-required one-object root array while the loaded service exposes the inner schema-v1 dictionary; behavior and API are unchanged.
 
-# Agent Prompt — 0.6 town06_1: Town State Core (One Town, One Night)
+# Agent Prompt - 0.6 town06_1: Town State Core (One Town, One Night)
 
 Copy everything below this line into the agent.
 
@@ -18,7 +18,7 @@ You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript
 casino roguelike (Web/itch.io + Windows, 1280×720). Data-driven content
 in `data/*.json`; run logic in `scripts/core/run_state.gd`; travel and
 the world map per `docs/plans/world_map_design.md`. Binding design
-contract: `docs/plans/0.6_living_world_roadmap.md` — read Pillar 2 and
+contract: `docs/plans/0.6_living_world_roadmap.md` - read Pillar 2 and
 Guardrails first. This prompt is self-contained for rules and scope.
 
 ## Board protocol
@@ -56,7 +56,7 @@ builds the framework the sweep plugs into.
     each a data definition with id, duration window, and modifier
     hooks. Ship `fight_night`, `festival_weekend`, and
     `rolling_blackout` as data (blackout generalizes the intent of the
-    existing `lights_out` event — leave that event untouched; the
+    existing `lights_out` event - leave that event untouched; the
     happening only sets town flags this slice).
 - Public read API (pure, allocation-free per call):
   `weather_now()`, `day_type()`, `active_happenings()`,
@@ -67,7 +67,7 @@ builds the framework the sweep plugs into.
 - **Scenario weighting**: expose town-state weight modifiers that
   env06_1's selection consumes if present (e.g. storm boosts
   weather-tagged scenarios). Define the seam even if env06_1 lands in
-  parallel — coordinate via the board if the API shape needs agreement.
+  parallel - coordinate via the board if the API shape needs agreement.
 - **Travel**: weather adjusts travel risk/cost band presentation and
   the risk roll inputs (small, data-tuned multipliers; document values
   in `conditions.json`).
@@ -84,7 +84,7 @@ builds the framework the sweep plugs into.
 
 - Full serialization in run saves; schema-versioned; pre-0.6 saves
   load with a freshly generated (seed-derived) town state and a log
-  note — never a crash.
+  note - never a crash.
 - Same seed + config → identical weather schedule, calendar, and
   happening selection every run.
 

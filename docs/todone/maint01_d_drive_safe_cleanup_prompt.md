@@ -1,6 +1,6 @@
-Status: DONE — superseded and completed by the 2026-09-14 two-branch custody consolidation
+Status: DONE - superseded and completed by the 2026-09-14 two-branch custody consolidation
 
-# Agent Prompt — Maintenance 01: Safe D: Drive Cleanup (no work lost)
+# Agent Prompt - Maintenance 01: Safe D: Drive Cleanup (no work lost)
 
 Copy everything below this line into the agent.
 
@@ -14,7 +14,7 @@ git worktrees created by other agents, and a few unrelated folders.
 provably redundant**. After you finish, every commit, every uncommitted change,
 every piece of evidence a document points to, and every file that exists
 nowhere else must still exist. If you cannot prove an item is redundant, **do
-not delete it** — report it for the owner instead.
+not delete it** - report it for the owner instead.
 
 This prompt is self-contained. Read it fully before running anything.
 
@@ -62,7 +62,7 @@ This prompt is self-contained. Read it fully before running anything.
    expect, a patch fails to verify, a path is referenced in a doc. Do not
    improvise a workaround.
 
-## 1. Known state (verify — do not trust)
+## 1. Known state (verify - do not trust)
 
 An earlier pass on 2026-09-12 already:
 
@@ -93,7 +93,7 @@ The pass left these behind:
   `integ-composition-soak`, `teach06-closeout`,
   `D:\Projects\Beat-The-House-world-9eb-audit`,
   `D:\Projects\Beat-The-House-world-closeout`.
-- **Active — minimum keep set (you may find more with rule 5):**
+- **Active - minimum keep set (you may find more with rule 5):**
   - main checkout `D:\Projects\Beat-The-House`;
   - `agent-playtest` (its `.tmp` evidence is referenced by
     `docs/plans/agent_playtest/`);
@@ -108,7 +108,7 @@ Main repo: `D:\Projects\Beat-The-House`. Use `git -C` against it. Enable long
 paths per command with `git -c core.longpaths=true …`; do not change global git
 config.
 
-1. `Get-PSDrive D` — record free space before.
+1. `Get-PSDrive D` - record free space before.
 2. Top-level sizes of every folder in `D:\` and `D:\Projects`. For large trees,
    use `robocopy <dir> NUL /L /S /NJH /NFL /NDL /BYTES` or
    `Get-ChildItem -Recurse -File | Measure-Object Length -Sum`. `du` is too slow
@@ -267,7 +267,7 @@ Write `D:\Projects\Beat-The-House\docs\plans\maintenance\d_drive_cleanup_<YYYY-M
    results.
 4. **Kept because active:** each worktree with the reason (process, recent write,
    uncommitted work, keep set).
-5. **Report-only — owner decisions:** biggest remaining space users with sizes,
+5. **Report-only - owner decisions:** biggest remaining space users with sizes,
    and what deleting each would lose. Include the main `.tmp` breakdown, old
    release zips, the Recycle Bin, non-project folders, and the unmerged
    worktrees you couldn't archive cleanly.

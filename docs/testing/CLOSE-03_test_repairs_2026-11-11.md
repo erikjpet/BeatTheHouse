@@ -1,4 +1,4 @@
-# CLOSE-03 — faithful test fixtures and exact save values
+# CLOSE-03 - faithful test fixtures and exact save values
 
 Registered in both ledger views before changes. Source11cb06d8 includes the
 locally passing CLOSE-02 labels; NEXT is still f00 while the exact CLOSE-01

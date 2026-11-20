@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-16
 - **Completion/implementation commits:** `1bce4d3c`
-- **Verification:** PASS — tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_visual_qa.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_visual_qa.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — 0.5 Slice 2: Chips Economy + the Cage Window (Linda)
+# Agent Prompt - 0.5 Slice 2: Chips Economy + the Cage Window (Linda)
 
 Copy everything below this line into the agent.
 
@@ -16,7 +16,7 @@ roguelike (Web/itch.io + Windows, 1280×720). Data-driven content in
 `data/*.json`; run logic in `scripts/core/run_state.gd`; UI via extracted
 controllers + pure view models (foundation_main gains wiring only). This
 file is self-contained; the binding design contract is
-`docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` section 2 — read it first.
+`docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` section 2 - read it first.
 Requires slice 1 (three casino rooms) already landed; re-verify its actual
 code, code reality wins.
 
@@ -33,7 +33,7 @@ code, code reality wins.
   top-up prompt when chips are short) and at the Cage. Conversion is
   1:1, no fee *(tunable data)*.
 - Find the money seam precisely: `GameModule.apply_result()` /
-  `empty_result_deltas` route `bankroll_delta` — add a chips routing
+  `empty_result_deltas` route `bankroll_delta` - add a chips routing
   path that is ONLY active for table-game results inside Grand Casino
   archetypes (use slice 1's `is_grand_casino_environment()` helper +
   game family). Every other environment and game is byte-identical.
@@ -45,17 +45,17 @@ code, code reality wins.
 - Clean-route criteria: `grand_casino_net_winnings` must now count
   chips + cash gained since entry (the canonical formula in
   `docs/plans/grand_casino_endgame_design.md` updates from pure
-  bankroll delta — update that doc's field meaning in this slice's
+  bankroll delta - update that doc's field meaning in this slice's
   commit).
 
 ### 2. The Cage window
 
 - The Main Floor cage interactable (stubbed in slice 1) opens a modal
   window component (`CageWindow` + pure view model, RunInventoryScreen
-  extraction pattern) — one screen, efficient, no scrolling:
+  extraction pattern) - one screen, efficient, no scrolling:
   - **Linda**, the cage host, present as a portrait + one contextual
     dialogue line (talk-dock portrait pipeline reuse; Linda is a named
-    recurring character — her full dialogue arc arrives in slice 5).
+    recurring character - her full dialogue arc arrives in slice 5).
   - Chip balance + Cash Out action (chips → bankroll).
   - Players Card status block: tier/progress placeholder this slice
     (slice 5 fills it), review-ready state, and the dirty-money /
@@ -63,7 +63,7 @@ code, code reality wins.
     `grand_casino_attention_high_roller_review` routing now shows its
     reason here instead of being implied).
   - Promotions/comps list (empty-state ready; slice 5 populates).
-- The clean-route Players Card review (`high_roller_cashout` — id
+- The clean-route Players Card review (`high_roller_cashout` - id
   preserved) becomes a Cage window action when ready, replacing its
   current event-surface presentation. Same state transitions, same
   flags, same victory route.

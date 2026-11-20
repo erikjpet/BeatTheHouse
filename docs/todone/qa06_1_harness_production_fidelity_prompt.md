@@ -1,9 +1,9 @@
-Status: DONE — completed 2026-09-07; archived after main integration reconciliation
-Priority: P1 test-infrastructure defect class — five recorded incidents, each of which reported working gameplay as broken
+Status: DONE - completed 2026-09-07; archived after main integration reconciliation
+Priority: P1 test-infrastructure defect class - five recorded incidents, each of which reported working gameplay as broken
 Board row: `qa06_1` in `docs/todo/README_0_6_board.md`
 Opened: 2026-09-07 by owner decision after the fifth incident
 
-# Refinement Row — qa06_1: Harness/Production Fidelity
+# Refinement Row - qa06_1: Harness/Production Fidelity
 
 ## 1. The pattern
 
@@ -16,8 +16,8 @@ wrong. In two cases the false evidence reached official reports and the board.
 | 1 | `scripts/tests/foundation/env06_8_environment_readability_contract.gd` | 220 failures across ~every scenario: "scenario causal journal and pending fact capacity is invalid" | `_seeded_description_observer` travelled without finalizing, so it called `apply_reentry({})` on an empty state | Fixed `4ed1d1d6` |
 | 2 | `scripts/tests/foundation/world_sequence_delivery_proof_contract.gd` | Contract FAIL: "P1 travel/revisit return remained at back_alley" | `_travel_away_and_revisit` never finalized the *away* room, so the return leg was refused | Fixed `4ed1d1d6` |
 | 3 | `tools/wave_b_composition_probe.gd` (rumor venue, rumor target) | Composition matrix FAIL, misattributed to `env06_8` as a "Jazz Club scenario finalization" defect in `docs/plans/integ06_1_composition_migration_soak_report.md` | Two arrival sites never finalized | Fixed `4ed1d1d6` |
-| 4 | `tools/wave_b_composition_probe.gd` (Punchline L1) | Four failures — L2 transition refused, L3 "no door that way", save/load L3, revisit L3 — recorded in the `integ06_1` report **and the board** as "pre-existing production defects owned by the Punchline/Crew rows" | The L1 club room was never finalized before the layer transition; the other three were cascades | Fixed; landed on `main` |
-| 5 | `tools/foundation_visual_qa.gd` | "Opening the world map should not mutate serialized RunState"; "Double-clicking Leave did not open the world map overlay"; plus 20 cascading failures | `_try_travel_object_flow()` reacquires its target with `_first_clickable_canvas_object_type_enabled(canvas, "travel", true)`, which returns `travel:motel_room` ("Room Door") by render order instead of `travel:leave` | **Historical pre-fix finding** — root-caused in `docs/todone/playtest06_current_source_bug_investigation_2026-09-07.md` and subsequently fixed by this completed row |
+| 4 | `tools/wave_b_composition_probe.gd` (Punchline L1) | Four failures - L2 transition refused, L3 "no door that way", save/load L3, revisit L3 - recorded in the `integ06_1` report **and the board** as "pre-existing production defects owned by the Punchline/Crew rows" | The L1 club room was never finalized before the layer transition; the other three were cascades | Fixed; landed on `main` |
+| 5 | `tools/foundation_visual_qa.gd` | "Opening the world map should not mutate serialized RunState"; "Double-clicking Leave did not open the world map overlay"; plus 20 cascading failures | `_try_travel_object_flow()` reacquires its target with `_first_clickable_canvas_object_type_enabled(canvas, "travel", true)`, which returns `travel:motel_room` ("Room Door") by render order instead of `travel:leave` | **Historical pre-fix finding** - root-caused in `docs/todone/playtest06_current_source_bug_investigation_2026-09-07.md` and subsequently fixed by this completed row |
 
 **Incident 4 is the one that shows the real cost.** It very nearly caused the
 flagship three-layer Punchline venue to be declared broken. Adding one
@@ -32,7 +32,7 @@ and Crew Draw Poker.
 shared test-support module; each harness open-codes its own approximation of what
 `foundation_main.gd` does. Two failure modes follow:
 
-**Mode A — skipping a mandatory host step.** Incidents 1–4.
+**Mode A - skipping a mandatory host step.** Incidents 1–4.
 `RunState.scenario_preflight_environment_change()` (`scripts/core/run_state.gd:1578`,
 `:1605`) is fail-closed: departure is refused unless `scenario_semantic_ready` is
 true, which only `RunState.scenario_finalize_installed_environment()` sets. In
@@ -41,7 +41,7 @@ production, `EnvironmentInteractionController.interactable_object_view_list()`
 the room's object list. A harness that travels and then reads or departs without
 finalizing is testing a state the player never sees.
 
-**Mode B — selecting targets by broad type or render order rather than exact
+**Mode B - selecting targets by broad type or render order rather than exact
 semantic identity.** Incident 5. A helper that returns "the first enabled object
 of type `travel`" is not the object a player would deliberately click. Any room
 exposing two objects of one type makes such a harness nondeterministic with
@@ -49,8 +49,8 @@ respect to authoring and render order.
 
 Measured exposure on `main` at `152db3c7`: **36 harnesses travel between rooms;
 25 of them never call `scenario_finalize_installed_environment`.** Not all 25 are
-defective — a harness that arrives once and never departs will not trip the guard
-— but every one of them is a candidate, and none of them is protected against
+defective - a harness that arrives once and never departs will not trip the guard
+- but every one of them is a candidate, and none of them is protected against
 becoming defective later.
 
 ## 3. Required work
@@ -74,8 +74,8 @@ becoming defective later.
    Record the ones that genuinely do not need it and why.
 4. **Make Mode A self-diagnosing.** When a departure is refused for
    `Dynamic room sequence semantic records are not finalized for departure.`,
-   the failure text a harness surfaces must name the likely cause — the arrived
-   room was never finalized — so the next occurrence costs minutes, not a review
+   the failure text a harness surfaces must name the likely cause - the arrived
+   room was never finalized - so the next occurrence costs minutes, not a review
    cycle. This is a diagnostic improvement, not a relaxation: the guard itself
    must stay fail-closed.
 5. **Correct the historical record.** `docs/plans/integ06_1_composition_migration_soak_report.md`

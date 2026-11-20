@@ -1,6 +1,6 @@
-# game06_1 Ritual Vocabulary Contract — Pre-implementation Acceptance Checklist
+# game06_1 Ritual Vocabulary Contract - Pre-implementation Acceptance Checklist
 
-Status: CLOSED — historical pre-implementation checklist; final product acceptance is recorded in `game06_1_final_closeout.md`
+Status: CLOSED - historical pre-implementation checklist; final product acceptance is recorded in `game06_1_final_closeout.md`
 Owner: `/root/contract_author_game`  
 Independent reviewer: pending Review Pool assignment  
 Product implementation: not started and not owned by this package
@@ -182,32 +182,32 @@ Normative source: commit `749390ce`,
 `D:\bth-env6\docs\todo\env06_6_runtime_vocabulary_and_delivery_handoff.md`.
 The reviewer must verify all fourteen mappings against that exact source:
 
-1. `ENV-VOCAB-01` — closed command, result, rejection, fact, operation, and
+1. `ENV-VOCAB-01` - closed command, result, rejection, fact, operation, and
    receipt envelopes: contract §3.2;
-2. `ENV-VOCAB-02` — local/qualified id grammar, namespace ownership, sealed
+2. `ENV-VOCAB-02` - local/qualified id grammar, namespace ownership, sealed
    host references, and collision rejection: contract §3.1;
-3. `ENV-VOCAB-03` — durable boundary/cause vocabulary and exactly-once
+3. `ENV-VOCAB-03` - durable boundary/cause vocabulary and exactly-once
    semantics: contract §3.3;
-4. `ENV-VOCAB-04` — closed condition kinds and the four generic operation
+4. `ENV-VOCAB-04` - closed condition kinds and the four generic operation
    families/verb allowlists: contract §3.4;
-5. `ENV-VOCAB-05` — bounded actor/object/interaction states, owned creation,
+5. `ENV-VOCAB-05` - bounded actor/object/interaction states, owned creation,
    sealed host authority, and tombstones: contract §3.5;
-6. `ENV-VOCAB-06` — semantic anchors/zones, design-space rectangles, layout,
+6. `ENV-VOCAB-06` - semantic anchors/zones, design-space rectangles, layout,
    reachability, z-order, text safety, and fail-closed projection: contract §3.6;
-7. `ENV-VOCAB-07` — receipts, canonical fingerprints, replay conflict, atomic
+7. `ENV-VOCAB-07` - receipts, canonical fingerprints, replay conflict, atomic
    failure, and persistence: contract §3.3/12;
-8. `ENV-VOCAB-08` — public typed versioned action-boundary facts: contract §3.7;
-9. `ENV-VOCAB-09` — closed handler I/O, authority, persistence, RNG, emissions,
+8. `ENV-VOCAB-08` - public typed versioned action-boundary facts: contract §3.7;
+9. `ENV-VOCAB-09` - closed handler I/O, authority, persistence, RNG, emissions,
    and transactional behavior: contract §3.7;
-10. `ENV-VOCAB-10` — closed rejection/error taxonomy and side-effect-free
+10. `ENV-VOCAB-10` - closed rejection/error taxonomy and side-effect-free
     records: contract §3.8;
-11. `ENV-VOCAB-11` — strict versions, unknown-field rejection, authenticated
+11. `ENV-VOCAB-11` - strict versions, unknown-field rejection, authenticated
     migration, and invalid-restore behavior: contract §3.9;
-12. `ENV-VOCAB-12` — facts/operations-only cross-runtime mapping with no import
+12. `ENV-VOCAB-12` - facts/operations-only cross-runtime mapping with no import
     of scenario lifecycle: contract §13;
-13. `ENV-VOCAB-13` — keyboard/controller/reduced-motion equivalent-action
+13. `ENV-VOCAB-13` - keyboard/controller/reduced-motion equivalent-action
     shapes and invariant outcomes: contract §3.8;
-14. `ENV-VOCAB-14` — private-by-default authority, reveal boundaries, closed
+14. `ENV-VOCAB-14` - private-by-default authority, reveal boundaries, closed
     public projections, and authenticated actions: contract §3.9.
 
 No value in this ledger was harvested from product implementation. Independent

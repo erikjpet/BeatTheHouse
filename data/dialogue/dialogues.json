@@ -1079,7 +1079,7 @@
         "choices": [{"id": "continue", "label": "Let's play it clean", "effects": {}, "end": true}]
       },
       "blackjack_finish": {
-        "text": "You have the idea. Play this hand out at your pace—Hit if you want another card, or Stand when you are ready to compare with the dealer.",
+        "text": "You have the idea. Play this hand out at your pace-Hit if you want another card, or Stand when you are ready to compare with the dealer.",
         "choices": [{"id": "continue", "label": "I'll finish the hand", "effects": {}, "end": true}]
       },
       "blackjack_raise": {
@@ -1103,7 +1103,7 @@
         "choices": [{"id": "continue", "label": "Take the Peek", "effects": {}, "end": true}]
       },
       "blackjack_peek_finish": {
-        "text": "Now use what you saw. Finish this Peek hand before we move on—Hit if you need another card, or Stand when you are ready for the dealer.",
+        "text": "Now use what you saw. Finish this Peek hand before we move on-Hit if you need another card, or Stand when you are ready for the dealer.",
         "choices": [{"id": "continue", "label": "Finish the Peek hand", "effects": {}, "end": true}]
       },
       "blackjack_count_start": {
@@ -1263,7 +1263,7 @@
         "choices": [{"id": "continue", "label": "Return to the Main Floor", "effects": {}, "end": true}]
       },
       "table_play": {
-        "text": "That highlighted table is blackjack. Finish two hands with chips—wins or losses both count. Bronze becomes ready only after the second hand settles.",
+        "text": "That highlighted table is blackjack. Finish two hands with chips-wins or losses both count. Bronze becomes ready only after the second hand settles.",
         "choices": [{"id": "continue", "label": "Play two blackjack hands", "effects": {}, "end": true}]
       },
       "table_progress": {

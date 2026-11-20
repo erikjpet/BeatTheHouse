@@ -1,6 +1,6 @@
-# Agent Prompt — Reconcile Current Worktree and Restore Green Gates
+# Agent Prompt - Reconcile Current Worktree and Restore Green Gates
 
-# Execution record — 2026-08-03
+# Execution record - 2026-08-03
 
 - Preserved base: `d83020843f9e2053ab00dbfecbfb4ba173d540d5` on `agent/v05-pre-rework-baseline`.
 - Working branch: `agent/v05-pre-human-playtest-rework`.

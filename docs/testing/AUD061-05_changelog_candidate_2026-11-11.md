@@ -1,4 +1,4 @@
-# AUD061-05 — Changelog and proposed candidate
+# AUD061-05 - Changelog and proposed candidate
 
 Started from cf4a5ffdf975f6f3f404af770951664fa48638fd. Specification: docs/todo/BTH_0.6.1_audit_work_orders.md.
 

@@ -1,29 +1,29 @@
-# Agent Prompt — Tutorial Playtest Fix Pass (Mike's playthrough)
+# Agent Prompt - Tutorial Playtest Fix Pass (Mike's playthrough)
 
 Copy everything below the line into the worker agent. This is a follow-up
 polish pass on the guided first-run tutorial, driven by a real playtest. It
 builds on the in-flight tutorial rework (`tutorial_guided_run_rework_prompt.md`,
 `tutorial_verify_and_complete_prompt.md`) and the selection-stability fix
-(`tutorial_selection_flash_and_object_teleport_fix_prompt.md`) — do NOT
+(`tutorial_selection_flash_and_object_teleport_fix_prompt.md`) - do NOT
 re-solve the flash/teleport bug here; assume that lands separately.
 
 Every fix below has a stable ID, the observed symptom, the change, the system
 to touch, and an acceptance check. A traceability table at the end maps all 28
-playtest notes — 25 handled here, 3 split into two sibling feature prompts
+playtest notes - 25 handled here, 3 split into two sibling feature prompts
 (`tutorial_inventory_rework_prompt.md`, `tutorial_meaningful_decisions_prompt.md`).
 
 ## Fundamental-fix standard (read first)
 
-Each item is one of three kinds — treat it accordingly, never with a bandaid:
+Each item is one of three kinds - treat it accordingly, never with a bandaid:
 
 - **Bug (has a root cause):** find and fix the cause; a symptom patch is a
-  fail. Several root causes are already confirmed below — do not re-diagnose
+  fail. Several root causes are already confirmed below - do not re-diagnose
   them away:
   - **B-4 soft-lock:** `scripts/core/tutorial_flow.gd` has NO caught/fail/abort
     branch (only a `tutorial_completed` check). The flow literally has no next
     state after a caught outcome. The fix ADDS a caught→continue transition to
     the flow state machine; do not just suppress the caught event.
-  - **E-1 risk in overlay:** "risk" is a real registry entry — the `risk_tier`
+  - **E-1 risk in overlay:** "risk" is a real registry entry - the `risk_tier`
     glyph in `data/art/attribute_glyphs.json`, selected by
     `attribute_badge_row.gd`. Remove it from the object-overlay attribute set
     at the registry/selection level, not by masking a string.
@@ -32,7 +32,7 @@ Each item is one of three kinds — treat it accordingly, never with a bandaid:
     exist in `attribute_glyphs.json`) plus `events.json` copy. Reframe at the
     data level (badge/class + copy together), not wording alone.
   - **H-2 / H-3 map:** `scripts/core/world_map.gd` already models node state
-    (seen / visited / reachable — see `world_map_canvas_route_visibility_check`).
+    (seen / visited / reachable - see `world_map_canvas_route_visibility_check`).
     Extend that STATE MODEL (persist "seen", allow travel to visited nodes with
     a live route); do not fake persistence in `world_map_canvas.gd` drawing.
   - **D-5 tooltip repeats:** find WHY text duplicates (a tooltip composed from
@@ -41,9 +41,9 @@ Each item is one of three kinds — treat it accordingly, never with a bandaid:
   - **D-3 first-click focus:** the missed first-click focus lives in the
     interaction-focus path (`environment_interaction_view_model.gd` /
     `foundation_main.gd`) and is likely the same seam as the deferred
-    selection-stability fix — coordinate, fix the focus contract, don't add a
+    selection-stability fix - coordinate, fix the focus contract, don't add a
     priming double-click.
-- **Design decisions handled in separate prompts — NOT in scope here:** the
+- **Design decisions handled in separate prompts - NOT in scope here:** the
   inventory rework and the meaningful-destination-decision feature (the
   gas-station-vs-underground branch plus making the route choice matter) need
   their own depth and are split into `tutorial_inventory_rework_prompt.md` and
@@ -68,7 +68,7 @@ blackjack `scripts/games/blackjack.gd` / `table_game_visuals.gd` /
 `foundation_travel_view_model.gd`; collection feedback `pull_tabs.gd` /
 `scratch_tickets.gd`.
 
-## Workstream A — Coach overlay presentation
+## Workstream A - Coach overlay presentation
 
 - **A-1 · Highlight must not dim the rest of the screen.** *Symptom:* the
   highlight darkens everything else. *Fix:* in `coach_overlay.gd` remove/replace
@@ -84,7 +84,7 @@ blackjack `scripts/games/blackjack.gd` / `table_game_visuals.gd` /
   visually separated. *Accept:* every coach step shows description-above /
   action-below with comfortable spacing; nothing overlaps.
 
-## Workstream B — Tutorial flow & pacing (`tutorial_flow.gd`, `lessons.json`)
+## Workstream B - Tutorial flow & pacing (`tutorial_flow.gd`, `lessons.json`)
 
 - **B-1 · Do not close venues/locations during the tutorial.** *Symptom:*
   locations close mid-tutorial. *Fix:* while the tutorial is active, force all
@@ -110,18 +110,18 @@ blackjack `scripts/games/blackjack.gd` / `table_game_visuals.gd` /
   pull-tab/scratch step directing the player to collect tickets from the tray.
   *Accept:* the instruction appears at the right step.
 
-## Workstream C — Conversation system (`talk_dock.gd`)
+## Workstream C - Conversation system (`talk_dock.gd`)
 
 - **C-1 · The phone call must be back-and-forth dialogue.** *Symptom:* the call
-  is one-directional. *Fix:* make the call a real exchange — alternating
-  caller/player lines with player responses — using the talk-dock multi-line
+  is one-directional. *Fix:* make the call a real exchange - alternating
+  caller/player lines with player responses - using the talk-dock multi-line
   system, not a single block. *Accept:* the call plays as a turn-taking
   conversation.
 - (B-3 pause is enforced here too.)
 
-## Workstream D — Inventory & item interaction
+## Workstream D - Inventory & item interaction
 
-(The full inventory-screen rework + description redo is its own feature —
+(The full inventory-screen rework + description redo is its own feature -
 `tutorial_inventory_rework_prompt.md`. The items below are the contained
 interaction/tooltip bugs only.)
 
@@ -141,7 +141,7 @@ interaction/tooltip bugs only.)
   same text. *Fix:* de-duplicate tooltip/popup content so a line never appears
   twice in the same popup. *Accept:* no popup shows duplicated text.
 
-## Workstream E — Attribute overlay & event-risk copy
+## Workstream E - Attribute overlay & event-risk copy
 
 - **E-1 · Do not show the "risk" attribute in the object overlay.** *Symptom:*
   risk attribute is shown in the overlay. *Fix:* hide the risk attribute from
@@ -153,7 +153,7 @@ interaction/tooltip bugs only.)
   rewrite the descriptions and in-box text accordingly (voice bible). *Accept:*
   event boxes present discovery/progression language, not raw "risk."
 
-## Workstream F — Blackjack (`blackjack.gd`, `table_game_visuals.gd`,
+## Workstream F - Blackjack (`blackjack.gd`, `table_game_visuals.gd`,
 ## `playing_card_renderer.gd`)
 
 - **F-1 · Show animated patrons and dealer during the tutorial before the
@@ -175,7 +175,7 @@ interaction/tooltip bugs only.)
   reporting a loss/closing. *Accept:* on a losing hand the dealer completes
   before the result shows.
 
-## Workstream G — Collection / winnings feedback
+## Workstream G - Collection / winnings feedback
 
 - **G-1 · "Cashes" → "Cash In".** *Symptom:* label reads "Cashes." *Fix:* find
   the collect/cash label (pull-tab/scratch flow) and change it to "Cash In".
@@ -185,7 +185,7 @@ interaction/tooltip bugs only.)
   the winners pile shows its count.
 - (F-facing collect instruction is B-6.)
 
-## Workstream H — World map & travel (`world_map_canvas.gd`,
+## Workstream H - World map & travel (`world_map_canvas.gd`,
 ## `world_map_overlay_controller.gd`, `foundation_travel_view_model.gd`)
 
 - **H-1 · Hovering a map location focuses it.** *Symptom:* hover does nothing.
@@ -203,14 +203,14 @@ interaction/tooltip bugs only.)
   add scroll navigation (pan) so the whole map (including off-frame nodes like
   the pawn shop) is reachable. *Accept:* the map scrolls to reveal all nodes.
 
-(Making the destination choice itself more impactful is its own feature —
-`tutorial_meaningful_decisions_prompt.md` — not part of this pass.)
+(Making the destination choice itself more impactful is its own feature -
+`tutorial_meaningful_decisions_prompt.md` - not part of this pass.)
 
 ## Hard rules
 
 - Root cause, not symptom. Determinism preserved (seeded; freeze/pause at
   action boundaries, never wall-clock). Zero-copy per-frame; idle-liveness never
-  gamed (F-1 especially — no accepting a 0.000 idle). Tabs, typed GDScript,
+  gamed (F-1 especially - no accepting a 0.000 idle). Tabs, typed GDScript,
   sparse comments. Player-facing copy follows `docs/archive/0.5/plans/0.5_voice_bible.md`.
   Captures under `.tmp/`. Never revert or stage unrelated user-owned work.
 - Commit in logical units per workstream with clear messages. Keep the
@@ -221,7 +221,7 @@ interaction/tooltip bugs only.)
 - `tools\validate_project.ps1`
 - every supported `-FoundationSuite` (systems + ui)
 - `tools\foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10`
-- `tools\foundation_mouse_batch_playtest.ps1` (strict — no soft-locks)
+- `tools\foundation_mouse_batch_playtest.ps1` (strict - no soft-locks)
 - `tools\foundation_visual_qa.ps1`
 
 ## On completion
@@ -233,7 +233,7 @@ hashes, per-fix proof captures, gate results), and report. If any item can't be
 completed, stop at the last green commit, do NOT push, and report exactly which
 IDs remain and why.
 
-## Traceability — all 28 playtest notes → fix ID
+## Traceability - all 28 playtest notes → fix ID
 
 1. inventory screen rework + descriptions redo → **split → `tutorial_inventory_rework_prompt.md`**
 2. highlight both items in tutorial shelf → **D-2**
@@ -267,7 +267,7 @@ IDs remain and why.
 
 ---
 
-## Execution record — 2026-08-05
+## Execution record - 2026-08-05
 
 Status: **complete**. All 25 in-scope fix IDs were implemented at their owning
 state/data/interaction seam. The three split notes remain in their named sibling
@@ -275,11 +275,11 @@ prompts and were not folded into this pass.
 
 ### Workstream commits
 
-- `36e00fe6864118246a086d657bdd3ad20fe47632` — coach presentation, tutorial
+- `36e00fe6864118246a086d657bdd3ad20fe47632` - coach presentation, tutorial
   flow/pacing, conversation, item interaction, and discovery feedback (A–E).
-- `78d94e1094384b2d2dcab34ac55bd6696672f1b4` — blackjack completion and
+- `78d94e1094384b2d2dcab34ac55bd6696672f1b4` - blackjack completion and
   collection/winnings feedback (F–G).
-- `b8a10fef0165519205324ceec6afe548f19447df` — persisted map knowledge,
+- `b8a10fef0165519205324ceec6afe548f19447df` - persisted map knowledge,
   route-connected backtracking, hover focus, and scroll navigation (H).
 - Archive and this execution record are committed by the enclosing archival
   commit.
@@ -319,22 +319,22 @@ proof is in the final Systems/UI reports and guided audit listed below.
 
 ### Gate results
 
-- `tools/validate_project.ps1` — **PASS** (final standalone run).
-- `-FoundationSuite systems` — **PASS**:
+- `tools/validate_project.ps1` - **PASS** (final standalone run).
+- `-FoundationSuite systems` - **PASS**:
   `.tmp/test_reports/20260805_002117_smoke/summary.json`.
-- `-FoundationSuite ui` — **PASS**:
+- `-FoundationSuite ui` - **PASS**:
   `.tmp/test_reports/20260805_002328_smoke/summary.json`.
-- `tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` —
+- `tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` -
   **PASS**, 10 seeds, 320 checkpoints, matching hash `578175084` in
   `.tmp/foundation_determinism_probe/run_a.json` and `run_b.json`.
-- `tools/foundation_mouse_batch_playtest.ps1` (strict) — **PASS**, 2/2
+- `tools/foundation_mouse_batch_playtest.ps1` (strict) - **PASS**, 2/2
   playable loops, 2/2 victories, zero true failures:
   `.tmp/tutorial_playtest_fixes/mouse_batch/aggregate_summary.json`.
-- `tools/foundation_visual_qa.ps1 -RequireGodot` — **PASS**.
-- `scripts/tests/world_map_canvas_route_visibility_check.gd` — **PASS**.
-- Full guided tutorial audit — **PASS**: Path A and Path B reached Bronze and
+- `tools/foundation_visual_qa.ps1 -RequireGodot` - **PASS**.
+- `scripts/tests/world_map_canvas_route_visibility_check.gd` - **PASS**.
+- Full guided tutorial audit - **PASS**: Path A and Path B reached Bronze and
   ended; 100-state stuck sweep and lesson-boundary save/load checks passed:
   `.tmp/tutorial_playtest_fixes/guided_audit/tutorial_guided_run_audit.json`.
-- Windowed guided proof capture — **PASS**, 23 authoritative PNGs emitted by
+- Windowed guided proof capture - **PASS**, 23 authoritative PNGs emitted by
   the final run under `.tmp/tutorial_playtest_fixes/captures/`; only the
   filenames listed above are used as proof.

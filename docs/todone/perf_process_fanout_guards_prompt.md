@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-12
 - **Completion/implementation commits:** `4c4a97aa`
-- **Verification:** PASS — powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/foundation_performance_probe.ps1 -RequireGodot; powershell -ExecutionPolicy Bypass -File tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/foundation_performance_probe.ps1 -RequireGodot; powershell -ExecutionPolicy Bypass -File tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — Guard the `_process` Subsystem Fan-Out (Perf-Only, No Behavior Change)
+# Agent Prompt - Guard the `_process` Subsystem Fan-Out (Perf-Only, No Behavior Change)
 
 Copy everything below this line into the agent.
 
@@ -20,7 +20,7 @@ file is fully self-contained.
 ## The problem (verified; re-verify line numbers before editing)
 
 `FoundationMain._process` (`foundation_main.gd:394-402`) fans out to eight
-subsystem calls every frame on EVERY screen — main menu, meta home,
+subsystem calls every frame on EVERY screen - main menu, meta home,
 environment room, and game screens alike:
 `_apply_run_screen_layout`, `_advance_run_game_clock`,
 `_advance_game_surface_automation`, `_advance_game_surface_realtime_state`,
@@ -32,7 +32,7 @@ work before bailing:
 
 - `_advance_environment_game_runtime` (`:910-928`) copies the environment's
   `game_ids` array via `_string_array(...)` every frame and calls
-  `environment_runtime_needs_tick` per game — on screens where no
+  `environment_runtime_needs_tick` per game - on screens where no
   environment game can possibly be running (menus, meta sessions).
 - `_apply_run_screen_layout` (`:5576+`) runs its guard chain every frame;
   layout only changes on resize (`_notification` already calls it,
@@ -42,7 +42,7 @@ work before bailing:
 
 Related dead scaffolding (`_advance_run_game_clock`,
 `_run_clock_should_tick`) is handled by the separate time-system audit
-task — if that task has already landed, do not resurrect it; work with
+task - if that task has already landed, do not resurrect it; work with
 whatever `_process` currently contains.
 
 ## The task

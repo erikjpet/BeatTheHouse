@@ -26,12 +26,12 @@ response.
 
 ## Commits
 
-1. `3d4a41da0b2caf72324c29bcc2a3a8b9314ce3ea` — existing Wave 1 row claim; this
+1. `3d4a41da0b2caf72324c29bcc2a3a8b9314ce3ea` - existing Wave 1 row claim; this
    is the handoff base, not implementation work.
-2. `e74a57cebbda198cda9c1a95ada1c2081f1bb7c6` — adds the opt-in seeded economy
+2. `e74a57cebbda198cda9c1a95ada1c2081f1bb7c6` - adds the opt-in seeded economy
    audit prototype and its PowerShell launcher, unchanged from the measured
    precommit worktree blobs.
-3. The branch-tip handoff commit — tracks 61 of the 65 artifacts named by the
+3. The branch-tip handoff commit - tracks 61 of the 65 artifacts named by the
    source manifest and adds the honest partial report, evidence provenance, and
    this status map. The four `foundation_systems.systems_*.godot.log` files
    remained ignored and source-worktree-only.
@@ -97,9 +97,9 @@ The exact measurement commands are in
 ## Artifact map
 
 - Immutable source head `1c0dec3b...` and the preserved source-worktree
-  `.tmp/balance06_1/` — smoke, determinism first, and byte-identical determinism
+  `.tmp/balance06_1/` - smoke, determinism first, and byte-identical determinism
   repeat JSON. The clean landing omits these three large supersedable blobs.
-- `docs/plans/evidence/balance06_1/validation/foundation_systems_retry1/` — all
+- `docs/plans/evidence/balance06_1/validation/foundation_systems_retry1/` - all
   23 tracked root reports/logs plus 25 isolated user-data files from the passing
   systems run (48 tracked files total). The four manifest-named
   `foundation_systems.systems_activation.godot.log`,
@@ -107,15 +107,15 @@ The exact measurement commands are in
   `foundation_systems.systems_events_saves.godot.log`, and
   `foundation_systems.systems_world_release.godot.log` files remained ignored
   and source-worktree-only.
-- `docs/plans/evidence/balance06_1/validation/foundation_contracts_1/` — all ten
+- `docs/plans/evidence/balance06_1/validation/foundation_contracts_1/` - all ten
   files from the blocked contracts run, including the diagnostic stderr.
-- `docs/plans/evidence/balance06_1/SHA256SUMS.txt` — preserves hashes for the
+- `docs/plans/evidence/balance06_1/SHA256SUMS.txt` - preserves hashes for the
   complete 65-file `.tmp` source artifact set, including omitted raw
   measurements. Eight JSON checkout byte streams differ from those raw hashes
   because the source commit itself applied Git text normalization; the clean
   landing preserves the source Git blobs exactly and the evidence README names
   that inherited boundary.
-- `.tmp/balance06_1/` in the retained source worktree — the original ignored
+- `.tmp/balance06_1/` in the retained source worktree - the original ignored
   files are intentionally preserved in place. No owner/source artifact was
   deleted or rewritten during collection.
 

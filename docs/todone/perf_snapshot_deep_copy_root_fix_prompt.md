@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-12
 - **Completion/implementation commits:** `885ace55`
-- **Verification:** PASS — powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/foundation_performance_probe.ps1 -RequireGodot; powershell -ExecutionPolicy Bypass -File tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; powershell -ExecutionPolicy Bypass -File tools/foundation_visual_qa.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/foundation_performance_probe.ps1 -RequireGodot; powershell -ExecutionPolicy Bypass -File tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; powershell -ExecutionPolicy Bypass -File tools/foundation_visual_qa.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — Root Fix: Per-Frame Deep-Copy Elimination in the Game Surface Pipeline
+# Agent Prompt - Root Fix: Per-Frame Deep-Copy Elimination in the Game Surface Pipeline
 
 Copy everything below this line into the agent.
 
@@ -14,7 +14,7 @@ Copy everything below this line into the agent.
 You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript casino
 roguelike shipping 0.4.0 to Web/itch.io and Windows desktop. 0.4.0 is still
 IN DEVELOPMENT: the release candidate was tested, bugs were found, and this
-task is part of the 0.4.0 polish line — not a post-release change. All game
+task is part of the 0.4.0 polish line - not a post-release change. All game
 rendering is immediate-mode GDScript drawing on a 900×430 board; per-game
 modules under `scripts/games/` talk to the host
 (`scripts/ui/foundation_main.gd`) through dictionary "surface commands" and
@@ -29,7 +29,7 @@ The game-screen hot loop deep-copies dictionaries every frame:
    `_current_game_surface_ui_state()` (`:8905-8912`), which does
    `game_surface_ui_state.duplicate(true)` plus
    `_focused_talk_speaker_snapshot()` (`:8915-8924`, another
-   `duplicate(true)`), plus `_current_game_surface_status()` — all before
+   `duplicate(true)`), plus `_current_game_surface_status()` - all before
    `surface_needs_auto_tick` even decides whether anything needs to happen.
    Result: at least one deep copy per frame on every game screen, even
    fully idle ones.
@@ -38,7 +38,7 @@ The game-screen hot loop deep-copies dictionaries every frame:
    (`GAME_SURFACE_REALTIME_REFRESH_INTERVAL_MSEC := 16`, `:46`) via
    `_game_view_snapshot()` (`:8791+`), which calls the module's
    `surface_state(...)` and then `module_surface_state.duplicate(true)`
-   (`:8812`) — for slots/blackjack that is a large nested dict, 60×/sec.
+   (`:8812`) - for slots/blackjack that is a large nested dict, 60×/sec.
 3. This is the exact "per-tick deep-copy round-tripping" pattern this
    repo's pinball post-mortem identified as its perf root cause, and the
    repo separately shipped a measured 32.6 ms/frame regression from a
@@ -65,13 +65,13 @@ other instance of the pattern.
    - A game screen with no active presentation and no state change since
      the last snapshot performs ZERO dictionary deep copies per frame.
    - `surface_needs_auto_tick` (or an equivalent cheap pre-check) must be
-     answerable without building the full ui_state — e.g. a monotonic
+     answerable without building the full ui_state - e.g. a monotonic
      state-version/dirty counter bumped by the ~30 mutation sites of
      `game_surface_ui_state`, checked before any copy happens.
    - During presentations, snapshot rebuilds happen only when the module's
      surface state can actually have changed (module-declared dirty flag,
      animation channels driven by canvas-side elapsed time, or an
-     explicitly documented cheaper cadence) — not unconditionally at
+     explicitly documented cheaper cadence) - not unconditionally at
      60 Hz. Animation smoothness must NOT regress: canvas-side animation
      (`SURFACE_ANIMATION_FPS`, flicker, channel timing) already runs
      independently of snapshot rebuilds; keep presentation motion at
@@ -82,7 +82,7 @@ other instance of the pattern.
 3. **Codebase sweep.** Audit every `duplicate(` call reachable from
    `_process`, `_physics_process`, `_draw`, or anything they call each
    frame, across `scripts/ui/` and `scripts/games/` (410 occurrences exist
-   repo-wide; most are action-boundary and fine — only per-frame paths are
+   repo-wide; most are action-boundary and fine - only per-frame paths are
    in scope). Known suspects to check explicitly:
    `procedural_music_player.gd` (75 duplicate calls; verify which run in
    `_process` at `:178`), `pixel_scene_canvas.gd`, `talk_dock.gd`,
@@ -118,12 +118,12 @@ other instance of the pattern.
    confirm all route checks pass; manually drive one full presentation in
    each game (pull tabs, slots incl. a bonus, bar dice, blackjack deal,
    baccarat deal, roulette spin, video poker draw) and confirm motion is
-   smooth and complete — no frozen mid-presentation states, no skipped
+   smooth and complete - no frozen mid-presentation states, no skipped
    result reveals.
 3. Liveness: with the game idle on each surface, confirm idle animation
    still visibly runs and liveness counters advance.
 4. Determinism: `tools/foundation_determinism_probe.ps1 -RequireGodot
-   -SeedCount 10` — hashes self-consistent.
+   -SeedCount 10` - hashes self-consistent.
 5. Full behavior suites: `tools/check_godot.ps1 -RequireGodot
    -FoundationSuite systems -TimeoutSec 300` and `-FoundationSuite ui`.
 6. Add regression tests to the foundation test suite that assert the

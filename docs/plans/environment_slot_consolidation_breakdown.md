@@ -1,6 +1,6 @@
 # Environment slot consolidation: complete placement breakdown
 
-Status: **HISTORICAL PRE-PRERELEASE-3 MIGRATION SNAPSHOT — DO NOT USE FOR THE
+Status: **HISTORICAL PRE-PRERELEASE-3 MIGRATION SNAPSHOT - DO NOT USE FOR THE
 MANUAL PLACEMENT PASS.**
 
 > **Supersession note (scenario placement):** This document remains the raw

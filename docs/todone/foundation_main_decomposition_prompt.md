@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-12
 - **Completion/implementation commits:** `ae0aa4c0`
-- **Verification:** PASS — powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/foundation_visual_qa.ps1; powershell -ExecutionPolicy Bypass -File tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/foundation_visual_qa.ps1; powershell -ExecutionPolicy Bypass -File tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — Decompose foundation_main.gd for Long-Term Maintainability
+# Agent Prompt - Decompose foundation_main.gd for Long-Term Maintainability
 
 Copy everything below this line into the agent.
 
@@ -19,7 +19,7 @@ post-release change. This file is fully self-contained.
 ## The problem (verified)
 
 `scripts/ui/foundation_main.gd` is ~13,700 lines and absorbs every new
-feature. It is the single most merge-collided file in the repo — recent
+feature. It is the single most merge-collided file in the repo - recent
 release work repeatedly ended in worktrees where task-only commits could
 not be partitioned because unrelated changes all landed in this one file.
 Every future task pays this tax. The repo already proved the extraction
@@ -38,15 +38,15 @@ explicit view-model dictionaries; no back-references into host internals).
 
 **Required extractions (in this order, one commit each):**
 
-1. **Meta-session controller** — the meta home/pawn-shop session code
+1. **Meta-session controller** - the meta home/pawn-shop session code
    (~`foundation_main.gd:10100-10850` today: `_build_meta_pawn_environment`,
    `_meta_pawn_interactable_objects`, meta world-map nodes, meta travel,
    meta popup flows). This is the largest coherent cluster and the newest,
    so it moves cleanly.
-2. **World-map overlay controller** — the run world-map overlay open/
+2. **World-map overlay controller** - the run world-map overlay open/
    close/selection/travel-confirm flow (search `_world_map_overlay`,
    `selected_world_map_node_id`, prewarm path).
-3. **Wager-confirmation + result popup flows** — the confirmation popup
+3. **Wager-confirmation + result popup flows** - the confirmation popup
    state machine (`_show_wager_confirmation_popup`,
    `_wager_needs_final_bankroll_confirmation`, pending-terminal-check
    state) and the event-choice popup if it shares the pattern.
@@ -54,7 +54,7 @@ explicit view-model dictionaries; no back-references into host internals).
 **Explicitly out of scope:** game-surface command routing, the action
 pipeline, `_refresh`/render-environment internals, and anything the
 perf-fix tasks in this queue touched (`_process` fan-out, snapshot
-pipeline) — do not churn those again; build on their current state.
+pipeline) - do not churn those again; build on their current state.
 
 **Rules of extraction:**
 
@@ -80,7 +80,7 @@ pipeline) — do not churn those again; build on their current state.
 - This is 0.4.0 in-development polish; do not bump versions or touch
   release packaging.
 
-## QA (extensive — this is an architecture rework; all required per extraction)
+## QA (extensive - this is an architecture rework; all required per extraction)
 
 1. Full behavior suites: `FoundationSuite systems` and `ui`.
 2. `tools/foundation_visual_qa.ps1` full route pass.

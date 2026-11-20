@@ -1,6 +1,6 @@
-Status: DONE — merged to `main` in `d2594eb3`; retained by the 2026-09-14 integration audit
+Status: DONE - merged to `main` in `d2594eb3`; retained by the 2026-09-14 integration audit
 
-# Agent Prompt — Game Props 01: Room Object Art for Coin Pushers, Scratch Tickets, Craps, and Bar Dice
+# Agent Prompt - Game Props 01: Room Object Art for Coin Pushers, Scratch Tickets, Craps, and Bar Dice
 
 Copy everything below this line into the agent.
 
@@ -8,7 +8,7 @@ Copy everything below this line into the agent.
 
 You are working on **Beat The House**, a Godot 4.6 GDScript roguelite. This
 prompt is self-contained: every rule you need is below. Read the named code
-before editing — do not plan from this prompt alone.
+before editing - do not plan from this prompt alone.
 
 ## Goal
 
@@ -40,7 +40,7 @@ Each new object must:
   area, controls, lights with a gentle idle pulse, base shadow, and
   selected/disabled states. Use the same drawing vocabulary as the references.
 
-## What exists today (verified on main — re-read, line numbers will move)
+## What exists today (verified on main - re-read, line numbers will move)
 
 All room game objects are drawn in `scripts/ui/pixel_scene_canvas.gd`:
 
@@ -61,7 +61,7 @@ All room game objects are drawn in `scripts/ui/pixel_scene_canvas.gd`:
     card table.
 - `_draw_low_detail_game_prop` is the simplified path used by the Grand Casino
   web low-detail mode (`_grand_casino_web_low_detail()`).
-- **References (the quality bar — study them closely):**
+- **References (the quality bar - study them closely):**
   - `_draw_slot_cabinet_prop` (≈6254). It reads `object_data.visual_state`
     (cabinet identity, format, reel/row count, live `slot_preview`) produced by
     `scripts/games/slot.gd` `environment_object_state` /
@@ -72,7 +72,7 @@ All room game objects are drawn in `scripts/ui/pixel_scene_canvas.gd`:
 - **Current weak versions:** `_draw_scratch_ticket_machine_prop` (≈6138),
   `_draw_coin_pusher_room_prop` (≈6158, identical for all three machines), and
   the `dice_table` fallback.
-- In-game surfaces (what "opening it" looks like — your source of truth for
+- In-game surfaces (what "opening it" looks like - your source of truth for
   each miniature):
   - Coin pusher: `scripts/games/coin_pusher.gd` + `scripts/games/coin_pusher/`.
     Per-cabinet identity data lives in `data/games/games.json` under the coin
@@ -96,7 +96,7 @@ All room game objects are drawn in `scripts/ui/pixel_scene_canvas.gd`:
     `tools/archive/game06_6/game06_6_bar_dice_web_capture.mjs`;
   - real rooms: `tools/environment_layout_screenshots.gd` (run windowed);
   - production room receipts: `tools/archive/env06_8/env06_8_unlabeled_contact_sheet_probe.gd`
-    (it already renders rooms with text removed — a useful model for the "no
+    (it already renders rooms with text removed - a useful model for the "no
     label" check).
 
 ## Parallel-work setup (do this first)
@@ -154,7 +154,7 @@ Examples of the kind of list expected (verify against the code):
 - **Craps:** oval/rounded casino rail, felt with the pass line, don't pass, come,
   field and place boxes in recognizable positions, a pair of dice, stickman's
   stick, chip racks, the ON/OFF point puck. **Street craps:** chalk-on-pavement
-  layout or wall backstop, loose dice, cash on the ground — whatever the in-game
+  layout or wall backstop, loose dice, cash on the ground - whatever the in-game
   street surface actually draws.
 - **Bar dice:** bar-top segment, leather dice cup, five dice with visible pips,
   the pot/glass, a coaster or bar mat, the ritual's signature objects.
@@ -238,7 +238,7 @@ Extend existing tests. Do not create a parallel suite.
   data.
 - The Grand Casino low-detail path and reduce-motion path render all four games.
 
-### 5. Visual review — the acceptance authority
+### 5. Visual review - the acceptance authority
 
 Produce under `.tmp/game_props01/review/`:
 
@@ -318,7 +318,7 @@ unrelated failures.
   - paths to the review boards;
   - owner decisions needed.
 
-  Change `Status: READY` to `Status: DONE — uncommitted in worktree, awaiting
+  Change `Status: READY` to `Status: DONE - uncommitted in worktree, awaiting
   owner review`. Do not move the file.
 
 On gate failure you cannot resolve: leave the work uncommitted, set
@@ -327,7 +327,7 @@ record.
 
 ---
 
-## Execution record — 2026-09-13
+## Execution record - 2026-09-13
 
 - Base commit: `56de66598a2bcdbc3f171f090b48c361daf35563`
 - Worktree: `D:\Projects\Beat-The-House-worktrees\game-prop-art`

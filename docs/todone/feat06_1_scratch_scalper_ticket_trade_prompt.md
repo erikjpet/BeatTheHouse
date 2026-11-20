@@ -1,5 +1,5 @@
-Status: DONE — owner-directed mechanic shipped and verified
-Priority: P2 — additive content, not a defect; must not destabilize the playtest build
+Status: DONE - owner-directed mechanic shipped and verified
+Priority: P2 - additive content, not a defect; must not destabilize the playtest build
 Board row: `feat06_1` in `docs/todo/README_0_6_board.md` (Defects table, marked as an owner-directed addition)
 Opened: 2026-09-11 from owner direction
 Owner's words, verbatim:
@@ -27,7 +27,7 @@ checkpoints and identical hash `1742659726`; idle/active transit averages
 composition deviation are recorded in
 `docs/plans/feat06_1_scratch_scalper_trade_closeout.md`.
 
-# Agent Prompt — feat06_1: Give the Scratch Scalper a Ticket
+# Agent Prompt - feat06_1: Give the Scratch Scalper a Ticket
 
 Copy everything below this line into one agent. It may spawn sub-agents freely.
 
@@ -36,7 +36,7 @@ Copy everything below this line into one agent. It may spawn sub-agents freely.
 You are working in `D:\Projects\Beat-The-House` on `main` at `c570f2ce` or later.
 This prompt is complete on its own.
 
-## 0. What already exists — read this before designing anything
+## 0. What already exists - read this before designing anything
 
 **The scalper is already in the game.** Do not build a new character, a new hook
 or a new dialogue system. You are adding one conversation option and one arrival
@@ -97,7 +97,7 @@ ticket, his conversation gains one additional choice: give him a ticket.
    its own cue id, so it lands in heat history and the heat-changed signal like
    every other heat movement. Heat is tracked per location; the reduction applies
    to the current location. If the owner meant 8% of current heat instead, that
-   is a one-line change — record the reading you shipped in the board note so it
+   is a one-line change - record the reading you shipped in the board note so it
    can be corrected without an archaeology session.
 2. **A 33% chance of a low-tier item**, rolled from run RNG at the action
    boundary, never from wall-clock and never from a fresh unseeded generator.
@@ -107,7 +107,7 @@ ticket, his conversation gains one additional choice: give him a ticket.
    arrive or sees him pocket the ticket and give nothing back. A silent state
    flip is a defect in this project; `fix06_28` exists because of it.
 
-### 1.3 One gift per encounter — do not skip this
+### 1.3 One gift per encounter - do not skip this
 
 Without a limit, this is a heat-laundering exploit: buy cheap tickets, hand them
 over one at a time, walk away at zero heat. **Allow at most one gift per scalper
@@ -115,11 +115,11 @@ encounter**, keyed to the existing `machine["scalper_visit_token"]`, and persist
 that so it survives save, reload, revisit and travel. After the gift, the option
 is gone for that encounter and the conversation says why.
 
-If you believe a different bound is better — per day, per machine, a diminishing
-return — implement the per-encounter bound anyway and raise the alternative as a
+If you believe a different bound is better - per day, per machine, a diminishing
+return - implement the per-encounter bound anyway and raise the alternative as a
 finding with numbers. Do not quietly ship a looser rule.
 
-### 1.4 "Low tier item" — define it, because the data does not
+### 1.4 "Low tier item" - define it, because the data does not
 
 `data/items/items.json` has 88 items and **no tier or rarity field** on all but
 two of them. There is no existing low-tier pool to draw from. Item tiers exist
@@ -129,9 +129,9 @@ only in the cross-run meta-collection system.
   **It must not be a meta-collection drop.** Owner ruling `content06_1`:
   within-run inventory, shelf and sale presentation only; no new cross-run
   progress in 0.6. Granting a collection item here would break that.
-- Define "low tier" by an explicit, checked-in rule over existing item data —
+- Define "low tier" by an explicit, checked-in rule over existing item data -
   the cheap end of `sale_price` / `price_min` / `price_max` is the obvious
-  candidate — and write the rule and the resulting item list into the report.
+  candidate - and write the rule and the resulting item list into the report.
   The pool must be stable, deterministic and in fiction for a street reseller:
   what he hands over should read like something from his pocket.
 - The draw is seeded from run RNG so the same seed yields the same item.
@@ -149,7 +149,7 @@ owner wants him to sometimes turn up **at the restock boundary itself**.
 - **Decide and record one thing:** does a scalper who arrives *at* a boundary
   intercept that same restock, or only later ones? The default this prompt asks
   for is that the restock he arrives for lands in the machine and he intercepts
-  from the next boundary onward — a player who never saw that stock should not
+  from the next boundary onward - a player who never saw that stock should not
   be silently robbed of it. Implement that, and if you disagree, say so with
   reasoning rather than changing it.
 - Tutorial and practice suppression still apply. A tutorial run must never get a
@@ -157,7 +157,7 @@ owner wants him to sometimes turn up **at the restock boundary itself**.
 - The existing interception behavior for an already-present scalper does not
   change.
 
-### 1.6 People walk in and walk out — they never pop
+### 1.6 People walk in and walk out - they never pop
 
 Owner direction: "make it so when someone comes in they move from the exit to
 their location or, if they are leaving move from their location to the exit,
@@ -167,7 +167,7 @@ This is a general presentation rule for environment people, not a scalper-only
 effect. The scalper is simply its first and most visible consumer: he arrives at
 a restock boundary, and he leaves when the encounter ends.
 
-**The machinery already exists — reuse it, do not build a second one.**
+**The machinery already exists - reuse it, do not build a second one.**
 `ScenarioLayoutResolver._resolve_visual()` already produces `route_points` and a
 `route_stage` carrying `mode` (`to_endpoint` / `ping_pong`), `duration_sec`
 (distance / 82.0, clamped 0.75–8.0 s), `reduced_motion_endpoint` and
@@ -193,9 +193,9 @@ Rules:
 - **Arrival:** the person appears at the doorway and walks to their settled
   position. **Departure:** they walk from their settled position to the doorway
   and are gone on arrival there.
-- **The walk is presentation only.** The object's settled geometry — the rect the
+- **The walk is presentation only.** The object's settled geometry - the rect the
   layout authority sealed, and everything the placement, label, hit-authority,
-  walk-lane and finalization validators inspect — stays the settled position
+  walk-lane and finalization validators inspect - stays the settled position
   throughout. A transit must not change what `fix06_27`'s 8 seed families × 55
   scenarios finalization gate sees. If it does, you have built it wrong.
 - **Transits are not click targets.** `_board_rect_for_object()` currently moves
@@ -211,12 +211,12 @@ Rules:
 - **Save and reload settle instantly.** A transit is never persisted mid-walk.
   On load, revisit or travel-in, everyone is at their settled position.
 - **Reduced motion keeps semantic parity.** The existing route code returns the
-  endpoint immediately under reduced motion; arrivals and departures do the same —
+  endpoint immediately under reduced motion; arrivals and departures do the same -
   the person is simply there, or simply gone. No information is carried only by
   the movement.
 - **Paths stay on the floor.** Walk inside the room's `floor.bands`, never
-  through a counter, a wall band or a `void` region. A simple two-segment path —
-  doorway to the floor lane, then along it to the settled x — is enough; this is
+  through a counter, a wall band or a `void` region. A simple two-segment path -
+  doorway to the floor lane, then along it to the settled x - is enough; this is
   pixel-art staging, not navigation mesh work.
 - **Cost is bounded.** This adds per-frame motion to rooms while `perf06_1` is
   measuring them. No per-frame allocation, no per-frame deep copies, and a cap on
@@ -237,15 +237,15 @@ follow-up rather than duplicating that row's files.
 
 ## 2. Where the work goes
 
-- **Game logic:** `scripts/games/scratch_tickets.gd` — eligibility, the gift
+- **Game logic:** `scripts/games/scratch_tickets.gd` - eligibility, the gift
   command, ticket consumption, the per-encounter bound, restock arrival.
-- **Dialogue:** `data/dialogue/dialogues.json` — a new choice on **both**
+- **Dialogue:** `data/dialogue/dialogues.json` - a new choice on **both**
   `scratch_ticket_scalper_knows` and `scratch_ticket_scalper_oblivious`. The
   option and its outcome text must read identically in both branches. If the
   gift's wording differs between the informed and oblivious scalper, it leaks
   hidden state and is an automatic P0.
 - **Host seam:** `scripts/ui/foundation_main.gd`. `_dialogue_choice_requirement()`
-  (~line 5011) supports `requires` on bankroll, heat and story flags — it has no
+  (~line 5011) supports `requires` on bankroll, heat and story flags - it has no
   concept of "carrying an unscratched ticket", and the dialogue data cannot see
   machine state. `_resolve_dialogue_choice()` (~line 5048) already special-cases
   dialogues that need game state, for `linda_cage_services` and
@@ -269,8 +269,8 @@ follow-up rather than duplicating that row's files.
 - **Exactly once.** The heat drop, the item grant and the ticket consumption fire
   once across save, reload, travel, revisit, abort and expiry. This project has
   repeatedly shipped consequences that re-fired on revisit.
-- **Hidden state is absolute.** Nothing about the gift — availability, text,
-  odds, reward, timing — may differ by whether the scalper knows the restock
+- **Hidden state is absolute.** Nothing about the gift - availability, text,
+  odds, reward, timing - may differ by whether the scalper knows the restock
   schedule. Prove it with paired observers: two runs identical but for
   `scalper_knows_schedule` must produce identical gift surfaces.
 - **No economy drift beyond the mechanic.** Do not change ticket prices, ticket
@@ -281,7 +281,7 @@ follow-up rather than duplicating that row's files.
   assertions stay exactly as strict; you are adding cases, not editing old ones.
 - **Save compatibility.** New machine-state fields must default safely on a save
   written before this change. A 0.6 save mid-run must load and behave. No save
-  schema bump and no migration without the owner — if one looks unavoidable,
+  schema bump and no migration without the owner - if one looks unavoidable,
   stop and ask.
 - **File ownership.** `fix06_31` owns `scripts/core/environment_*`,
   `scenario_layout_resolver.gd`, `pixel_scene_canvas.gd`,
@@ -289,7 +289,7 @@ follow-up rather than duplicating that row's files.
   1.1–1.5 must not touch any of them; if the scalper needs a placement change,
   route it to that row. Section 1.6 necessarily touches
   `pixel_scene_canvas.gd` and reads `placement_surfaces.json`, and is therefore
-  gated on `fix06_31` having merged — see the sequencing note at the end of 1.6.
+  gated on `fix06_31` having merged - see the sequencing note at the end of 1.6.
   Take that work on top of its landed result, never in parallel with it.
 - If you add a suite stage, coordinate with `fix06_32`, which is also wiring
   gates into `tools/check_godot.ps1` and `tools/validate_project.ps1`. Nothing
@@ -323,7 +323,7 @@ follow-up rather than duplicating that row's files.
     from a doorway to their place, and a person who leaves walks out to a
     doorway. Nobody pops in or out mid-visit, and nobody parades in on room
     entry. Shown with captures or a recording, not asserted in prose.
-12. Section 1.6: settled geometry is unchanged during transit — `fix06_27`'s 8
+12. Section 1.6: settled geometry is unchanged during transit - `fix06_27`'s 8
     seed families × 55 scenarios finalization gate stays green, transits are not
     click targets, reduced motion keeps semantic parity, save/reload settles
     instantly, and the measured frame cost of a room with a transit is reported

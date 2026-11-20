@@ -29,7 +29,7 @@ The current source is broadly functional under the foundation suites: validation
 
 ## Todo list
 
-### P0 — Fix web boot readiness regression
+### P0 - Fix web boot readiness regression
 
 **Finding:** Both web perf plans fail the 20s ready budget even though scenario frame budgets pass.
 
@@ -46,7 +46,7 @@ The current source is broadly functional under the foundation suites: validation
 - The report keeps all scenario frame p95 budgets green.
 - README / release checklist record the current passing web evidence after the fix.
 
-### P0 — Repair soak probe lifetime cleanup and retained-state coverage
+### P0 - Repair soak probe lifetime cleanup and retained-state coverage
 
 **Finding:** The long soak did not finish inside the audit's 10-minute outer window and left orphaned Godot processes. A shorter 30-minute run failed because retained-state sampling missed required paths and an orphan node existed in every sample.
 
@@ -68,7 +68,7 @@ Failure output included:
 - Orphan count is 0 for live and retained samples.
 - Coverage assertions still require back-to-back runs, slot autoplay blocks, and pinball cache stress.
 
-### P0 — Resolve recurring Godot shutdown leak warnings
+### P0 - Resolve recurring Godot shutdown leak warnings
 
 **Finding:** Multiple headless Godot probes pass but emit cleanup warnings/errors on exit:
 
@@ -86,7 +86,7 @@ This appeared after `foundation_performance_probe.ps1` and `foundation_visual_qa
 - Performance probe, visual QA, and soak probe exit without RID/ObjectDB leak warnings.
 - Existing liveness checks remain active; do not remove animated redraw paths just to make teardown easier.
 
-### P1 — Register distinct Scratch Tickets game art instead of Pull Tabs art
+### P1 - Register distinct Scratch Tickets game art instead of Pull Tabs art
 
 **Finding:** `data/games/games.json` registers `scratch_tickets` with Pull Tabs art:
 
@@ -103,7 +103,7 @@ The art manifest also has a `pull_tabs` game entry but no equivalent `scratch_ti
 - Pull Tabs still uses its own existing art.
 - `tools/archive/ui05/ui05_asset_pipeline_check.ps1`, `tools/validate_project.ps1`, and `FoundationSuite scratch_tickets` pass.
 
-### P1 — Update README to the actual 0.5 implementation
+### P1 - Update README to the actual 0.5 implementation
 
 **Finding:** `README.md` is no longer the current top-level implementation spec despite saying it is. Examples:
 
@@ -122,7 +122,7 @@ The art manifest also has a `pull_tabs` game entry but no equivalent `scratch_ti
 - README validation commands include every current release gate that the project expects to trust.
 - No current section directs future agents to 0.4 evidence as the active release path.
 
-### P1 — Retire or archive stale queue/planning documents that still claim open resolved work
+### P1 - Retire or archive stale queue/planning documents that still claim open resolved work
 
 **Finding:** `docs/todo/README_0_5_release_queue.md` is still present under `docs/todo` and describes a queue with `p0_0`, `p0_2`, `p1_2`, `p1_1`, `p2_3`, `p2_1`, and `p2_2` as pending, even though those prompts have been archived and later audit work verified the queue. `docs/archive/0.5/plans/0.5_ui_overhaul_brief.md` still says `Status: PLANNED, runs LAST in 0.5`, while the release checklist claims the full UI redesign is included.
 
@@ -134,7 +134,7 @@ The art manifest also has a `pull_tabs` game entry but no equivalent `scratch_ti
 - No file in `docs/todo/` describes already-archived prompts as the active queue.
 - The UI overhaul brief cannot be read as an unstarted owner-locked task.
 
-### P1 — Bring 0.5 release paperwork up to current audit reality
+### P1 - Bring 0.5 release paperwork up to current audit reality
 
 **Finding:** `docs/archive/0.5/plans/0.5_release_checklist.md` is useful but stale in important places:
 
@@ -151,7 +151,7 @@ The art manifest also has a `pull_tabs` game entry but no equivalent `scratch_ti
 - It does not claim release readiness while web perf and soak are red.
 - Manual owner-only steps are separated from code/test blockers.
 
-### P2 — Reduce architecture concentration in oversized scripts
+### P2 - Reduce architecture concentration in oversized scripts
 
 **Finding:** Several core/runtime/UI scripts remain very large, which raises merge risk and makes performance/functionality audits harder:
 
@@ -171,7 +171,7 @@ The old decomposition prompt says `foundation_main.gd` should have shrunk substa
 - No gameplay/state behavior changes are bundled with extraction.
 - `foundation_main.gd` and other target scripts have measurable line-count reductions and clearer ownership.
 
-### P2 — Convert slot autoplay/pinball performance waiver into a real budget
+### P2 - Convert slot autoplay/pinball performance waiver into a real budget
 
 **Finding:** The native performance probe passes, but its own `budget_headroom_checks` still waive `slot_autoplay_draw_p95` against the low-end scaled budget and defer trust to web smoke. Web scenario budgets passed this audit, but the measured web reports still show heavy slot/pinball surfaces:
 
@@ -186,7 +186,7 @@ The old decomposition prompt says `foundation_main.gd` should have shrunk substa
 - Web smoke remains green for slot autoplay and pinball.
 - Any renderer optimization preserves visual clarity and feature determinism.
 
-### P2 — Improve performance probe seed coverage
+### P2 - Improve performance probe seed coverage
 
 **Finding:** `foundation_performance_probe.ps1` passed but warned that all eight `FOUNDATION-PERF-01..08` seeds generated no normal games, forcing practice/synthetic coverage to carry the game surface checks. That keeps the gate useful, but weakens confidence that naturally generated early-run environments exercise the same paths.
 
@@ -197,7 +197,7 @@ The old decomposition prompt says `foundation_main.gd` should have shrunk substa
 - Performance probe has zero "did not generate any games" warnings for its normal seed pass, or documents why those seeds are intentionally shop-only.
 - At least one naturally generated environment game surface is sampled in addition to practice fixtures.
 
-### P3 — Decide collection schema `draft` flag before any public release
+### P3 - Decide collection schema `draft` flag before any public release
 
 **Finding:** `data/collections/collections.json` still has `"draft": true`. Prior release paperwork called this out as requiring a shipping decision. Collection meta tests pass, so this is not a functional failure, but it is a release semantics/documentation decision.
 

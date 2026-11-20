@@ -1,4 +1,4 @@
-# Extensive playtest bug report — 2026-10-16
+# Extensive playtest bug report - 2026-10-16
 
 ## Executive summary
 
@@ -40,7 +40,7 @@ Final independent verification on 2026-10-16: the repository validator passed in
 
 ## Confirmed player-facing defects
 
-### BTH-PT-001 — Scenario objects block mandatory room access
+### BTH-PT-001 - Scenario objects block mandatory room access
 
 - **Severity:** P1 / release blocker
 - **Confidence:** Confirmed across the full environment contracts and eight independent scenario seed groups.
@@ -61,7 +61,7 @@ Final independent verification on 2026-10-16: the repository validator passed in
 - **Reproduction:** Generate each named scenario, perform the normal room-arrival/finalization step at 1280×720 and the expanded small-screen layout, then validate reachability from the player access lane. The listed object intersects the mandatory route or leaves the required interaction unreachable.
 - **Likely ownership:** Scenario-authored rectangles/anchors in environment placement data, plus small-screen expansion rules for Delta Queen.
 
-### BTH-PT-002 — Base environment objects overlap and create ambiguous visuals/hit targets
+### BTH-PT-002 - Base environment objects overlap and create ambiguous visuals/hit targets
 
 - **Severity:** P2
 - **Confidence:** Confirmed by production-order layout checks.
@@ -70,7 +70,7 @@ Final independent verification on 2026-10-16: the repository validator passed in
 - **Kitty Cat Lounge:** Fifteen overlaps involve Dot, merchant/host, the Grand Casino invitation, rowdy regular, house drink, Jackpot Magnet, Bar Dice, Video Poker, Leave, and the side door. Particularly risky pairs are Bar Dice/Video Poker and Leave/side door because both sides are interactive.
 - **Reproduction:** Generate the affected base environment in production order and compare the final interaction rectangles rather than only checking slot ownership.
 
-### BTH-PT-003 — Sal's Pawn Shop shelf fixtures overlap
+### BTH-PT-003 - Sal's Pawn Shop shelf fixtures overlap
 
 - **Severity:** P2
 - **Confidence:** Confirmed by the fully derived run-menu/game-flow scene check.
@@ -78,7 +78,7 @@ Final independent verification on 2026-10-16: the repository validator passed in
 - **Evidence:** Intersections were reported for shelf pairs 0/1, 0/2, 0/3, 1/2, 1/3, 5/4, and 2/3; the largest measured intersection was about 792 px².
 - **Reproduction:** Open the Pawn Shop from the production run-menu flow and evaluate the authored `meta_sal_shelf` rectangles after layout scaling.
 
-### BTH-PT-004 — Bishop's fallback recruitment placement is unavailable
+### BTH-PT-004 - Bishop's fallback recruitment placement is unavailable
 
 - **Severity:** P2
 - **Confidence:** Confirmed production-path contract failure; the failing path currently returns no useful installation diagnostic.
@@ -86,14 +86,14 @@ Final independent verification on 2026-10-16: the repository validator passed in
 - **Reproduction:** Start the marked recruitment fixture, enter Grand Casino, enter `grand_casino_cage`, finalize base semantics, and query Bishop's generated fallback placement. Room generation completes far enough to return an empty error array, but the fallback is absent.
 - **Follow-up:** Improve the failed-finalization diagnostic while fixing the placement; the empty error array currently obscures the exact rejected semantic.
 
-### BTH-PT-005 — Routed actor is not drawn/hittable at the authored-lane midpoint
+### BTH-PT-005 - Routed actor is not drawn/hittable at the authored-lane midpoint
 
 - **Severity:** P2
 - **Confidence:** Confirmed by the public, non-reduced-motion canvas contract.
 - **Impact:** An actor routed through a valid authored lane can be visually absent or unselectable at its expected midpoint.
 - **Reproduction:** Use the normal public canvas, non-reduced motion, advance the routed actor to the authored-lane midpoint, then compare draw coverage and hit testing at that point. Both expected signals were absent.
 
-### BTH-PT-006 — Back Alley actor route backtracks at both ends
+### BTH-PT-006 - Back Alley actor route backtracks at both ends
 
 - **Severity:** P2
 - **Confidence:** Confirmed by the grounding contract.
@@ -101,7 +101,7 @@ Final independent verification on 2026-10-16: the repository validator passed in
 - **Observed route:** `(350,308) → (350,318) → (450,318) → (580,318) → (580,307)`.
 - **Reproduction:** Generate the Back Alley actor route and inspect the ordered path. The first and last vertical segments reverse the lane direction.
 
-### BTH-PT-007 — Late-run Bar Dice settlement exceeds the frame-time budget
+### BTH-PT-007 - Late-run Bar Dice settlement exceeds the frame-time budget
 
 - **Severity:** P2 performance
 - **Confidence:** Confirmed on the real Bar Dice scene and production sealed-action host.
@@ -113,7 +113,7 @@ Final independent verification on 2026-10-16: the repository validator passed in
 
 ## Content pipeline and release-gate defects
 
-### BTH-PT-008 — Environment placement data no longer agrees with its validator/schema
+### BTH-PT-008 - Environment placement data no longer agrees with its validator/schema
 
 - **Severity:** P1 release blocker; not independently confirmed as a runtime player defect
 - **Impact:** The repository validator and reviewed-recipe regeneration fail, so placement changes cannot be reliably certified or regenerated.
@@ -128,7 +128,7 @@ Final independent verification on 2026-10-16: the repository validator passed in
 
 - **Resolution requirement:** Decide whether the manual placement format or the validator is authoritative, update the other side, regenerate the breakdown, and rerun the fresh-conversion/idempotence proof.
 
-### BTH-PT-009 — Bar Dice's isolated contract adapter is stale
+### BTH-PT-009 - Bar Dice's isolated contract adapter is stale
 
 - **Severity:** P1 test/release-gate integrity; not a production gameplay failure
 - **Impact:** The foundation suite emits 140 misleading failures, hiding real regressions and preventing a trustworthy release signal.
@@ -136,7 +136,7 @@ Final independent verification on 2026-10-16: the repository validator passed in
 - **Evidence:** The isolated suite failed resolution/outcome/cheat/press-offer assertions, while the dedicated production-scene probe completed all 12 settlements successfully. Only the late-run timing budget failed.
 - **Resolution requirement:** Update the helper to mirror the production host interface, then reassess any remaining Bar Dice assertions.
 
-### BTH-PT-010 — Deterministic golden snapshots are stale
+### BTH-PT-010 - Deterministic golden snapshots are stale
 
 - **Severity:** P2 test maintenance
 - **Impact:** Valid structural checks are obscured by checksum noise.
@@ -144,7 +144,7 @@ Final independent verification on 2026-10-16: the repository validator passed in
 - **Evidence of likely baseline drift:** Scenario uniqueness still produced the expected 1,485 pairs with no semantic failures/warnings; crew deltas were consistent byte growth across both seeds and boundaries.
 - **Resolution requirement:** Review the serialized field additions, then deliberately refresh accepted goldens only after confirming the new fields are intended.
 
-### BTH-PT-011 — Performance seed setup falls back to practice fixtures
+### BTH-PT-011 - Performance seed setup falls back to practice fixtures
 
 - **Severity:** P2 test coverage
 - **Impact:** The main performance matrix can pass without measuring generated in-run game rooms.
@@ -180,14 +180,14 @@ Final independent verification on 2026-10-16: the repository validator passed in
 
 Raw logs and machine-readable summaries are under `.tmp/playtest_2026-10-16/`:
 
-- `full/` — full-suite orchestration, parser, validator, and standalone logs.
-- `foundation_all/foundation_all.json` — all 24 unified foundation groups and assertion text.
-- `game_suites/summary.json` — per-game execution result and duration.
-- `performance/foundation_performance.json` — cross-game timing and redraw matrix.
-- `performance/dedicated/` — foreground Slot, Blackjack, Video Poker, profile/history, and late-run Bar Dice probes.
-- `performance/soak/` — 180-minute soak and extreme-state reports.
-- `release_audits/` — terminal resume, tutorial, pinball, Slot, Roulette, grounding, and multi-seed finalization.
-- `ui_liveness/` — launcher, scene-flow, and no-pointer animation-liveness checks.
+- `full/` - full-suite orchestration, parser, validator, and standalone logs.
+- `foundation_all/foundation_all.json` - all 24 unified foundation groups and assertion text.
+- `game_suites/summary.json` - per-game execution result and duration.
+- `performance/foundation_performance.json` - cross-game timing and redraw matrix.
+- `performance/dedicated/` - foreground Slot, Blackjack, Video Poker, profile/history, and late-run Bar Dice probes.
+- `performance/soak/` - 180-minute soak and extreme-state reports.
+- `release_audits/` - terminal resume, tutorial, pinball, Slot, Roulette, grounding, and multi-seed finalization.
+- `ui_liveness/` - launcher, scene-flow, and no-pointer animation-liveness checks.
 
 ## Completed fix order
 

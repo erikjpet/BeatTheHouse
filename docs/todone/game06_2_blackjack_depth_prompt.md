@@ -1,7 +1,7 @@
-Status: DONE — exact Blackjack and Family 1 release gates passed on `af48b531`
+Status: DONE - exact Blackjack and Family 1 release gates passed on `af48b531`
 Board row: `game06_2` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — 0.6 game06_2: Blackjack Table Depth
+# Agent Prompt - 0.6 game06_2: Blackjack Table Depth
 
 Copy everything below this line into the agent.
 
@@ -27,7 +27,7 @@ exist, and the pit's attention is something you can see arriving.
 Follow the active board protocol. Claim `game06_2`. `game06_1` must be landed
 and reviewed; build only on its accepted head. You own `scripts/games/blackjack.gd`
 and its tests exclusively. You may not edit `game_module.gd`,
-`table_game_visuals.gd` or `game_surface_canvas.gd` — if you need a change
+`table_game_visuals.gd` or `game_surface_canvas.gd` - if you need a change
 there, file a runtime request with exact evidence and let the integrator decide.
 
 ## 1. Consumer audit before any edit
@@ -47,7 +47,7 @@ landed together with every consumer and proven by their tests.
 ## 2. Money as a placed thing
 
 - Chip denomination selection, place, add, remove one wager, undo, clear, repeat
-  last and rebet resolved — over a pending set, per the `game06_1` staged
+  last and rebet resolved - over a pending set, per the `game06_1` staged
   commitment vocabulary. Correcting one mistake must never require clearing all.
 - Show available cash and chips, total new stake, at-risk stake, payout, returned
   stake and per-hand resolution with no accounting ambiguity. Split and double
@@ -65,8 +65,8 @@ landed together with every consumer and proven by their tests.
   order around the table, the hole card, the check, hits drawn one at a time,
   the sweep and the pay. Settlement must be readable before the next action
   without becoming slow on repeated play; allow safe acceleration.
-- Card handling gets a tactile verb where it belongs — cut the shoe, wave a
-  stand, tap a hit — with keyboard, controller and reduced-motion equivalents
+- Card handling gets a tactile verb where it belongs - cut the shoe, wave a
+  stand, tap a hit - with keyboard, controller and reduced-motion equivalents
   producing identical outcomes.
 - Reject incomplete or invalid input gently, returning to the same phase without
   charging or advancing.
@@ -81,7 +81,7 @@ landed together with every consumer and proven by their tests.
   bust, pay, sweep, shift change, suspicion and idle.
 - Pit and heat presence becomes visible: attention arriving, someone watching a
   shoe, the pit standing closer as the count challenge escalates. Heat must
-  remain the same number underneath — this changes how it is shown, not what it
+  remain the same number underneath - this changes how it is shown, not what it
   is.
 - Table energy must change actors, objects or interactables. Music and a patron
   line alone are a validation failure.

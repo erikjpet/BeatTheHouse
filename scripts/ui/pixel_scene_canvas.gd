@@ -6778,7 +6778,7 @@ func _hover_object_info_lines(object_data: Dictionary) -> Array:
 		var fallback := _fallback_object_description(object_data).strip_edges()
 		if not fallback.is_empty():
 			lines.append(fallback)
-	lines.append("Interactive — click for details." if _object_info_is_actionable(object_data) else "View only — click for details.")
+	lines.append("Interactive - click for details." if _object_info_is_actionable(object_data) else "View only - click for details.")
 	return lines
 
 

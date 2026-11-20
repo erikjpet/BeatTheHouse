@@ -1,12 +1,12 @@
 Execution record (2026-09-11): DONE on `codex/fix06_32`. All 40 reachable Craps bets are documented and measured at least 1,000,000 physical rolls each; no payout changed. Seven deterministic game-rework probes plus the full Craps RTP audit are permanent Audit/Full gates with hostile-fixture proof. Hold'em production-host, migration, determinism, save/reload, surface identity, short regression, project validation, and final Audit evidence are recorded in `docs/plans/fix06_32_unreviewed_game_rework_verification_report.md`.
 
-Status: TODO — verification row for a week of unreviewed game changes
+Status: TODO - verification row for a week of unreviewed game changes
 Priority: P0 for section 2.1 (unverified wager math in a gambling game), P1 for the rest
 Board row: fix06_32 in docs/todo/README_0_6_board.md (Defects table)
 Opened: 2026-09-11 by PM audit of commits f870dd21..c570f2ce
 Scope note: this row verifies and protects the 2026-09-09/09-10 game work. It does not redo it.
 
-# Agent Prompt — fix06_32: Verify and Regression-Protect the Unreviewed Game Rework
+# Agent Prompt - fix06_32: Verify and Regression-Protect the Unreviewed Game Rework
 
 You are working in D:\Projects\Beat-The-House on main at c570f2ce or later. This prompt is complete on its own.
 
@@ -26,7 +26,7 @@ Between 2026-09-09 02:10 and 2026-09-10 17:33, roughly 6,000 inserted lines of g
   c97aa8b0  feat: rebuild craps as a living full-table game   1,565
   541f4568  test: complete craps playtest and visual audit      736
   28568d12  Fix venue game placement and tier two travel        185
-  f8a1fe35  Scope street craps to alley scenario                  —
+  f8a1fe35  Scope street craps to alley scenario                  -
 
 It touched core systems, not only presentation: craps_rules.gd, crew_poker_model.gd, blackjack_action_authority.gd, coin_pusher_solver.gd, slot.gd, run_state.gd, save_service.gd, scenario_sequence_schema.gd, world_map.gd, content_library.gd, environment_instance.gd, data/games/games.json and data/crew/poker.json.
 
@@ -40,9 +40,9 @@ Your job is to check this week's work independently, close the specific gaps bel
 
 The craps rebuild, the Hold'em table and the coin pusher fixes are the owner's directed work and are presumed wanted. You are not re-designing them. If you find a defect, fix the defect. Do not rewrite a working system because you would have built it differently, and do not revert any of these commits.
 
-## 2. Confirmed findings — fix these
+## 2. Confirmed findings - fix these
 
-### 2.1 Craps: 31 live wager types with no documented and no measured house edge — P0
+### 2.1 Craps: 31 live wager types with no documented and no measured house edge - P0
 
 This is the serious one, and it is arithmetic, not taste.
 
@@ -56,12 +56,12 @@ So the game currently pays out on hardways, propositions, buy and lay bets whose
 
 Required:
 
-1. Author the documentation. Extend house_edge_documentation to cover every bet in every variant's allowed list. Derive each value from standard craps mathematics for the payout the table actually offers, and show the derivation in the report — the odds, the payout, the resulting return. Do not copy numbers from a web search without deriving them against this table's own payout entries and its commission_percent handling for buy and lay.
+1. Author the documentation. Extend house_edge_documentation to cover every bet in every variant's allowed list. Derive each value from standard craps mathematics for the payout the table actually offers, and show the derivation in the report - the odds, the payout, the resulting return. Do not copy numbers from a web search without deriving them against this table's own payout entries and its commission_percent handling for buy and lay.
 2. Measure every bet. Extend tools/craps_rtp_audit.gd so every documented bet gets a real _audit_line/_rtp_row measurement at the existing 1,000,000-roll-per-bet floor, against the existing tolerance. The required_full_table_bets structural check stays; it is not a substitute. Cover both variants where their rules differ, and cover the vig path explicitly: buy and lay returns depend on when the commission is charged.
 3. Report every disagreement. Where a measured return does not match the correct value for the payout offered, that is a defect. State the bet, the measured RTP, the correct RTP, the offending payout entry and the one-line correction.
 4. Do not change a payout on your own authority. Correcting a payout table changes player money. Author the documentation and the measurement yourself, then bring any payout correction to the owner with the numbers and wait. Fixing the audit is yours; changing what the game pays is the owner's.
 
-### 2.2 Eight verification tools wired into nothing — P1
+### 2.2 Eight verification tools wired into nothing - P1
 
 Every probe written to verify this week's work is a one-shot script that no suite runs. Verified: craps_extensive_playtest, craps_rtp_audit, craps_review_capture, crew_holdem_gameplay_audit, crew_holdem_dynamic_table_audit, slot_autoplay_cadence_probe, slot_foreground_autoplay_performance_probe and blackjack_counter_surveillance_probe each return zero matches in both tools/check_godot.ps1 and tools/validate_project.ps1.
 
@@ -69,7 +69,7 @@ A regression in craps settlement, Hold'em betting, slot autoplay cadence or blac
 
 Required: register the deterministic, headless-capable ones in the Audit/Full suites of tools/check_godot.ps1, following the scenario_room_multiseed_finalization precedent, and add a Require-Text assertion in tools/validate_project.ps1 so the wiring cannot be silently dropped. Respect two limits: nothing heavy goes into Smoke/contracts, which measured 227.786 s against a 230.391 s budget at fix06_30 and whose budget needs owner sign-off to raise; and a long RTP audit belongs in Audit/Full, with a reduced-roll variant only if you can show the reduced run still fails on a seeded wrong payout. Prove each newly wired gate fails on a deliberately broken fixture before you call it a gate.
 
-### 2.3 A content depth gate learned to skip itself — P1
+### 2.3 A content depth gate learned to skip itself - P1
 
 3f31bf10 ("fix: close Punchline route and contract runner gaps") changed scripts/core/scenario_sequence_schema.gd so that _validate_phase_graph and _validate_aftermath now skip their requirements when the scenario declares a matching owner_exceptions row:
 
@@ -80,7 +80,7 @@ A recursive scan of data/**/*.json finds 10 non-empty owner_exceptions rows, all
 
 Required: find out why it was added. Either (a) name the content that needs it and record the owner's approval for that specific waiver, or (b) revert the two new exception paths and keep the gate absolute. Do not leave an unused bypass in a validator. Whichever you choose, record it in the decision log.
 
-### 2.4 The Hold'em rebuild is unverified by anyone but its author — P1
+### 2.4 The Hold'em rebuild is unverified by anyone but its author - P1
 
 crew_draw_poker.gd still exists and is still referenced by career_stats_view_model.gd, run_report_view_model.gd, performance_fixture_setup.gd and perf_telemetry_overlay.gd, while the back-room table is now Hold'em. Three mid_0_6 custody fixtures also reference crew_draw_poker.
 
@@ -89,10 +89,10 @@ Required, through the production host, not a unit harness:
 1. Play the back-room table end to end on at least three seeds: blinds, button movement, hole cards, all four streets, the variable no-limit raises added in 5f185f2c, showdown and payout. Verify the pot arithmetic by hand on at least one full hand and show the arithmetic in the report.
 2. Verify save and continue mid-hand and mid-session, and verify that the three mid_0_6 fixtures and the 37 v0_5_1 fixtures still load and round trip. A saved run that was inside the old draw-poker table must not fail to load.
 3. Verify determinism: identical seed, identical hands, identical outcomes, across save/reload.
-4. Decide what crew_draw_poker.gd is now — live game, dead code, or a compatibility shim — and say so. If it is dead, that is a finding to route, not something to delete in this row.
+4. Decide what crew_draw_poker.gd is now - live game, dead code, or a compatibility shim - and say so. If it is dead, that is a finding to route, not something to delete in this row.
 5. Confirm the career-stats and run-report surfaces report the Hold'em table correctly rather than under a stale draw-poker identity.
 
-### 2.5 The week is missing from the record — P2
+### 2.5 The week is missing from the record - P2
 
 No board rows, no work-log lines, no archived prompts exist for any of the commits in section 0.
 
@@ -141,6 +141,6 @@ Required: add a single retrospective board row for the 09-09/09-10 game work und
 
 ## 7. Reporting
 
-Report in this order, because the first item is the one that can cost the owner money: the craps wager table — every bet, its documented edge, its measured RTP, and every disagreement. Then the wired gates and their broken-fixture proofs. Then the Hold'em verification with the hand you checked by hand. Then the exception decision, the section 3 notes, and anything you routed onward.
+Report in this order, because the first item is the one that can cost the owner money: the craps wager table - every bet, its documented edge, its measured RTP, and every disagreement. Then the wired gates and their broken-fixture proofs. Then the Hold'em verification with the hand you checked by hand. Then the exception decision, the section 3 notes, and anything you routed onward.
 
 Your terminal condition is that a second party can state, with numbers, that everything this game pays out is what it is documented to pay out, and that a regression in any of it would fail a suite rather than reach a player.

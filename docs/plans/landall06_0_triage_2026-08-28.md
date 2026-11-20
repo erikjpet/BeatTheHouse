@@ -1,4 +1,4 @@
-# landall06_0 landing triage — 2026-08-28
+# landall06_0 landing triage - 2026-08-28
 
 Base: green `main` at `00ee744fa6269e8a7eb34f67b2659f32d55febaa`.
 
@@ -94,7 +94,7 @@ are classified SUPERSEDED below instead of being landed twice.
   `codex/world06_7-intake-prestage`
 - `codex/crew06_10-integration-replay-manifest`
 
-### BLOCKED — parked, never gating other landable slices
+### BLOCKED - parked, never gating other landable slices
 
 - `codex/env06_6b-save-byte-owner-decision` and
   `codex/env06_6b-second-rejection-owner-decision`: select a complete

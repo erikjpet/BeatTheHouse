@@ -1,4 +1,4 @@
-# CARD-INTEREST-DISPLAY-001 — recovered fix and acceptance
+# CARD-INTEREST-DISPLAY-001 - recovered fix and acceptance
 
 Status: Complete within the original Card-page display scope. Reconciliation
 owner: task-14. No new product code or financial action was needed.

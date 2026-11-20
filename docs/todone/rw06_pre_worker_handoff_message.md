@@ -1,4 +1,4 @@
-# rw06_pre — Worker steer: finish on a branch, merge to main, delete the branch
+# rw06_pre - Worker steer: finish on a branch, merge to main, delete the branch
 
 Status: DONE. The owner sent the block below to the running postfix06_2 worker
 at the same moment the execution agent is launched

@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-13
 - **Completion/implementation commits:** `c507475d`
-- **Verification:** PASS — powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1; -FoundationSuite; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite <name> -TimeoutSec 300. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1; -FoundationSuite; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite <name> -TimeoutSec 300. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — Split the Test Monoliths into Per-System Suite Files
+# Agent Prompt - Split the Test Monoliths into Per-System Suite Files
 
 Copy everything below this line into the agent.
 
@@ -25,13 +25,13 @@ post-release change. This file is fully self-contained.
   `foundation_main.gd`: every feature task appends tests to the same file.
 - `tools/check_godot.ps1` already supports named `-FoundationSuite`
   groups (`systems`, `ui`, ...), so the runner architecture for splitting
-  exists — the monolith is just history, not design.
+  exists - the monolith is just history, not design.
 
 ## The task
 
 1. **Map the current suites.** Read `tools/check_godot.ps1` and both test
    files to understand how suites select tests today (function-name
-   prefixes, registration lists, or switch blocks — verify, don't guess).
+   prefixes, registration lists, or switch blocks - verify, don't guess).
 2. **Split `foundation_check.gd` into per-system files** under
    `scripts/tests/foundation/` (e.g. `check_run_state.gd`,
    `check_world_map.gd`, `check_events.gd`, `check_debt_lenders.gd`,
@@ -46,7 +46,7 @@ post-release change. This file is fully self-contained.
    sections and justify what stayed.
 4. **Keep the runners working.** `check_godot.ps1 -FoundationSuite
    systems|ui|...` must keep working with the same suite names (extend
-   with finer-grained names if cheap, but never break existing ones —
+   with finer-grained names if cheap, but never break existing ones -
    other prompts and release evidence cite them). `validate_project.ps1`
    must keep passing.
 5. **Test-count parity is the acceptance bar.** Before splitting, capture
@@ -61,7 +61,7 @@ post-release change. This file is fully self-contained.
 ## Hard rules (binding)
 
 - Zero production-code changes. If a test needs a production change to
-  survive relocation, something is wrong — stop and report instead.
+  survive relocation, something is wrong - stop and report instead.
 - Suite wall-time must not regress by more than noise; report before/after
   timings per suite.
 - Match existing style: tab indentation, typed GDScript, sparse comments.

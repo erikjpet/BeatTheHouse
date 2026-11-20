@@ -35,13 +35,13 @@ not permission to alter those values on this branch.
 
 The BAR-DICE presentation has exactly seven ordered phases:
 
-1. `agree_wager` — show both parties' available cash and a proposed cash stake.
-2. `cover` — stage only an authoritative accepted, partial, or refused cover.
-3. `shake` — bounded cup motion; no dice authority is consumed yet.
-4. `throw` — submit one accepted throw action and bind its result receipt.
-5. `reveal` — lift the cup over the already-authoritative visible dice.
-6. `call` — project qualification, cargo, winner, and bounded readable tells.
-7. `settle` — animate the exact cash delta, return, rake, or carry receipt once.
+1. `agree_wager` - show both parties' available cash and a proposed cash stake.
+2. `cover` - stage only an authoritative accepted, partial, or refused cover.
+3. `shake` - bounded cup motion; no dice authority is consumed yet.
+4. `throw` - submit one accepted throw action and bind its result receipt.
+5. `reveal` - lift the cup over the already-authoritative visible dice.
+6. `call` - project qualification, cargo, winner, and bounded readable tells.
+7. `settle` - animate the exact cash delta, return, rake, or carry receipt once.
 
 A rejected verb returns to a legal pre-commit phase without charge or progress.
 Every pointer verb has keyboard, controller, and reduced-motion equivalents

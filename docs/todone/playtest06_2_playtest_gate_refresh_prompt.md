@@ -1,9 +1,9 @@
 Superseded 2026-09-22 by rw06_2 and rw06_4.
 
-Status: PARKED — intake prestage landed; the full seed verification and gate refresh wait for accepted placement and the binding performance pass
+Status: PARKED - intake prestage landed; the full seed verification and gate refresh wait for accepted placement and the binding performance pass
 Board row: `playtest06_2` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — 0.6 playtest06_2: Playtest Gate Refresh
+# Agent Prompt - 0.6 playtest06_2: Playtest Gate Refresh
 
 Copy everything below this line into the agent.
 
@@ -25,7 +25,7 @@ no longer identifies a specific set. Its scope describes verifying a version of
 
 It also lacks the things a playtest handoff most needs: a seed list, a route
 through the content, and a format for capturing what the owner finds. The board
-says the owner's findings become `fix06_*` rows and owner decisions — but nothing
+says the owner's findings become `fix06_*` rows and owner decisions - but nothing
 defines how a note becomes a row without an agent guessing at intent.
 
 ## Board and dependencies
@@ -70,7 +70,7 @@ final balance tuning. That is `release06_1`'s alone and it stays parked.
 - A route through the game the owner can follow, in sessions, that reaches the
   content worth judging without requiring them to grind for it.
 - Say explicitly what is finished, what is known-rough, and what is deliberately
-  absent — production music above all, since its absence will otherwise dominate
+  absent - production music above all, since its absence will otherwise dominate
   every impression.
 - Include the known findings from `balance06_1`, `integ06_1`, `perf06_1` and
   `pusherv3_11` as context, so the owner is not rediscovering things the agents
@@ -84,7 +84,7 @@ final balance tuning. That is `release06_1`'s alone and it stays parked.
   badly it matters, and whether it is a defect or a design objection.
 - Define the split explicitly: defects become `fix06_*` rows; design objections
   become owner decisions recorded in the roadmap. An agent may never redirect
-  locked design on its own reading of a playtest note — that rule already exists
+  locked design on its own reading of a playtest note - that rule already exists
   on the board and this format must enforce it structurally.
 - Provide the triage protocol that `polish06_0` will consume: severity, routing,
   and what makes a finding blocking versus deferred.

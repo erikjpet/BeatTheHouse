@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-13
 - **Completion/implementation commits:** `d2482f55`
-- **Verification:** PASS — powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/foundation_performance_probe.ps1 -RequireGodot; powershell -ExecutionPolicy Bypass -File tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/foundation_performance_probe.ps1 -RequireGodot; powershell -ExecutionPolicy Bypass -File tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — Permanent Performance + Liveness Release Guard (High Priority)
+# Agent Prompt - Permanent Performance + Liveness Release Guard (High Priority)
 
 Copy everything below this line into the agent.
 
@@ -17,13 +17,13 @@ IN DEVELOPMENT: this task is part of the 0.4.0 polish line, not a
 post-release change. This file is fully self-contained. It runs AFTER the
 perf-fix tasks in this queue (snapshot deep-copy root fix, broke-state
 evaluator fix, `_process` fan-out guards) so the guard locks in their final
-state — build on the tree as you find it.
+state - build on the tree as you find it.
 
 ## Background (verified)
 
 This repo has a RECURRING regression pattern, observed four separate
 times: a performance pass reduces idle redraw work, the idle-draw numbers
-hit 0.000, and idle table/scene animations silently freeze — because the
+hit 0.000, and idle table/scene animations silently freeze - because the
 perf gates reward low draw counts and nothing asserts that animation is
 still alive. Counter-infrastructure already exists but is not enforced as
 a gate:
@@ -53,7 +53,7 @@ needed) so that EVERY measured idle scenario asserts BOTH:
   liveness counter advanced by at least the expected minimum for that
   surface (scene idle ticks for environment rooms; surface animation
   channel activity for game surfaces with idle animation; explicitly
-  document surfaces that legitimately have zero idle animation — that
+  document surfaces that legitimately have zero idle animation - that
   list must be written in the probe as data, not implied by a zero
   threshold everywhere).
 
@@ -69,10 +69,10 @@ of `foundation_main` (snapshot builds, environment runtime, autosave
 flush, layout) and canvas draw times (already sampled). Requirements:
 
 - Attribution instrumentation must be ZERO-COST when the overlay is
-  disabled (guard with the existing `runtime_enabled()` pattern — no
+  disabled (guard with the existing `runtime_enabled()` pattern - no
   dictionary building, no timing calls on the disabled path).
 - The overlay itself must obey the zero-copy per-frame rule (it currently
-  has 3 `duplicate(true)` calls — audit them; fix any that run per frame
+  has 3 `duplicate(true)` calls - audit them; fix any that run per frame
   while enabled).
 - Counters exposed by the overlay must be the SAME counters the probe
   asserts, so what the developer sees is what the gate measures.

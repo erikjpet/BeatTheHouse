@@ -97,7 +97,7 @@ the determinism probe must keep hash-matching):
    anywhere, whenever the player can afford it (and it is open â€” see below).
    Extend the world map candidate logic (world_map.gd:381-383) so revisit
    candidates are not limited to adjacency; compute their cost from the
-   full path/geometry distance (`distance_blocks` Ã— the existing band
+   full path/geometry distance (`distance_blocks` Ã- the existing band
    multipliers). Price correlates with distance â€” farther = costlier.
 2. Closed destinations remain visible on the map but disabled with the
    "opens at <time>" reason. Because back_alley, motel, underground casino,

@@ -1,4 +1,4 @@
-# Audit continuation014 — checkpoint draft
+# Audit continuation014 - checkpoint draft
 
 Root-reviewed checkpoint at helper commit `5e9e06bd32452758dbc4d3a4a01f77be23b76244`. The whole audit, content timeout, maintained Systems acceptance, schema repair, memo type safety and persistence reduction remain **Open**. No fresh full Systems or whole-content pass is claimed.
 

@@ -1,9 +1,9 @@
-Status: DONE — executed as qa06_1/fix06_27 and landed on main; retained as the historical combined prompt
+Status: DONE - executed as qa06_1/fix06_27 and landed on main; retained as the historical combined prompt
 Board rows: `qa06_1` and `fix06_27` in `docs/todo/README_0_6_board.md`
 Opened: 2026-09-07 by owner decision
 Runs against: `main` at `152db3c7` or later
 
-# Agent Prompt — refine06_1: Harness Fidelity and Seed-Dependent Room Finalization
+# Agent Prompt - refine06_1: Harness Fidelity and Seed-Dependent Room Finalization
 
 Copy everything below this line into one agent. It may spawn sub-agents freely.
 
@@ -17,11 +17,11 @@ own. Do not wait on any other document, queue, or ceremony.
 You are executing **two related rows in one pass**, because they share a root
 cause and a fix surface:
 
-- **Part A — `qa06_1`:** harnesses reimplement the production host's sequence
+- **Part A - `qa06_1`:** harnesses reimplement the production host's sequence
   instead of driving it, which has produced five false "production is broken"
   reports.
-- **Part B — `fix06_27`:** room finalization fails on a minority of seeds,
-  producing dead rooms — unpopulated object panels plus refused travel.
+- **Part B - `fix06_27`:** room finalization fails on a minority of seeds,
+  producing dead rooms - unpopulated object panels plus refused travel.
 
 They belong together because **Part B's headline evidence was produced by a
 Part A defect**: the `playtest06_1` handoff reports 55/55 rooms finalizing, which
@@ -30,7 +30,7 @@ was true only for the single seed family its harness used.
 **The owner is playtesting the 0.6 build while you work.** Neither row blocks
 that. Do not produce a new owner build, and do not perform release activity.
 
-## 1. Background you need — the fail-closed guard
+## 1. Background you need - the fail-closed guard
 
 `RunState.scenario_preflight_environment_change()` (`scripts/core/run_state.gd:1578`
 and `:1605`) refuses departure from a room with
@@ -45,9 +45,9 @@ In production, `EnvironmentInteractionController.interactable_object_view_list()
 the room's object list. **If finalization fails, the controller returns the
 degraded `trusted_base_result` fallback and the flag stays false.** The player
 then gets a room whose objects have dead panels *and* cannot travel out. That was
-the owner's original reported bug, and it is still reachable — see Part B.
+the owner's original reported bug, and it is still reachable - see Part B.
 
-## 2. Part A — qa06_1: harness/production fidelity
+## 2. Part A - qa06_1: harness/production fidelity
 
 ### The five incidents
 
@@ -67,17 +67,17 @@ and Crew Draw Poker.
 
 ### Two failure modes
 
-- **Mode A — skipping a mandatory host step.** Incidents 1–4. A harness that
+- **Mode A - skipping a mandatory host step.** Incidents 1–4. A harness that
   travels and then reads state or departs without finalizing is testing a state
   no player ever sees.
-- **Mode B — selecting targets by broad type or render order rather than exact
+- **Mode B - selecting targets by broad type or render order rather than exact
   semantic identity.** Incident 5. "The first enabled object of type `travel`" is
   not what a player deliberately clicks, and it is nondeterministic with respect
   to authoring and render order.
 
 Measured exposure on `main` `152db3c7`: **36 harnesses travel between rooms; 25
 never call `scenario_finalize_installed_environment`.** Not all 25 are defective
-— a harness that arrives once and never departs will not trip the guard — but
+- a harness that arrives once and never departs will not trip the guard - but
 each is a candidate and none is protected against becoming one. There is no
 shared test-support module, which is why every harness open-codes its own
 approximation of the host.
@@ -95,7 +95,7 @@ The 25: `back_alley_fence_night_install_contract.gd`, `check_coin_pusher.gd`,
 `environment_generation_audit.gd`, `foundation_determinism_probe.gd`,
 `perf06_deferred_validation_contract.gd`, `playtest06_2_seed_catalog_probe.gd`.
 
-Note `punchline_layer_contract.gd` — a Punchline contract that travels and never
+Note `punchline_layer_contract.gd` - a Punchline contract that travels and never
 finalizes, the exact class that produced incident 4.
 
 ### Part A work
@@ -118,7 +118,7 @@ finalizes, the exact class that produced incident 4.
    Convert every one that does onto the shared helpers. Record which are left
    unconverted and why.
 4. **Make Mode A self-diagnosing.** A departure refused for missing finalization
-   must surface a message naming the likely cause — the arrived room was never
+   must surface a message naming the likely cause - the arrived room was never
    finalized. This is a diagnostic improvement; **the guard itself stays
    fail-closed.**
 5. **Correct the historical record.** `docs/plans/integ06_1_composition_migration_soak_report.md`
@@ -128,13 +128,13 @@ finalizes, the exact class that produced incident 4.
 **Part A changes no production behavior.** If the audit uncovers a real
 production defect, file it as its own `fix06_*` row instead of fixing it here.
 
-## 3. Part B — fix06_27: seed-dependent room finalization
+## 3. Part B - fix06_27: seed-dependent room finalization
 
 ### What is wrong
 
 The `playtest06_1` handoff records 55/55 rooms finalizing. That is real but
 **seed-specific**. Independent verification on `main` `152db3c7` swept five seed
-families across all 55 sequence scenarios — 275 room instantiations:
+families across all 55 sequence scenarios - 275 room instantiations:
 
 | Seed family | Result |
 | --- | --- |
@@ -194,8 +194,8 @@ one more room has the same problem.
      scenario object label rects, so a seeded event never lands on an authored
      label;
    - or reserve authored label bands that event placement may not occupy;
-   - or let finalization degrade gracefully for a *label* collision — keeping the
-     room live and readable — while still failing closed for genuine access and
+   - or let finalization degrade gracefully for a *label* collision - keeping the
+     room live and readable - while still failing closed for genuine access and
      hit-authority defects.
    The third is smallest but weakens a guarantee, so it requires an explicit
    recorded decision. **Do not simply relax the validator to make the failure
@@ -206,7 +206,7 @@ one more room has the same problem.
 
 ## 4. Order of work
 
-Part A item 2 (the shared helpers) first — Part B's new multi-seed gate is itself
+Part A item 2 (the shared helpers) first - Part B's new multi-seed gate is itself
 a harness and must be built on them, or it will reproduce the very defect class
 this row exists to end. Then Part A 1/3/4/5, then Part B.
 
@@ -247,7 +247,7 @@ this row exists to end. Then Part A 1/3/4/5, then Part B.
 - **Never refresh a golden** without proving the content legitimately changed.
 - **No release activity.** No version bump, tag, packaging, publish, Web export,
   or new owner build. The owner is playing the existing build.
-- **Delete nothing** — no branch, worktree, or stash. No `gc`, `reset --hard`,
+- **Delete nothing** - no branch, worktree, or stash. No `gc`, `reset --hard`,
   `clean`.
 - **Never stage owner property**: `.tmp/`, `.tools/`, `review_artifacts/`,
   `builds/`.
@@ -265,10 +265,10 @@ this row exists to end. Then Part A 1/3/4/5, then Part B.
 - **Hidden state is absolute.** A leak is an automatic P0.
 - **The crew-ignoring run is a true no-op.**
 - **Any harness that travels between rooms must finalize on arrival** exactly as
-  the production host does. Five recorded incidents — that is what Part A exists
+  the production host does. Five recorded incidents - that is what Part A exists
   to make structurally impossible.
 
-## 8. Parked — do not start
+## 8. Parked - do not start
 
 `env06_9` (visual consequence and object identity) is parked pending the owner's
 acceptance bar. `perf06_1`, the `balance06_1` follow-on, the `integ06_1` full

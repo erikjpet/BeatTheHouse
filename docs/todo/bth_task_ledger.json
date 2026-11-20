@@ -38618,7 +38618,7 @@
       ],
       "group": "current",
       "objective": {
-        "text": "Pass an explicit save failure field to the HUD model; show a distinct danger/alert save icon with Not saving — open Run Menu to retry tooltip, one-time first-block message, and clear on successful save. No modal or save scheduling change.",
+        "text": "Pass an explicit save failure field to the HUD model; show a distinct danger/alert save icon with Not saving - open Run Menu to retry tooltip, one-time first-block message, and clear on successful save. No modal or save scheduling change.",
         "source": "docs/todo/BTH_0.6.1_audit_work_orders.md",
         "scope_confirmed": true,
         "acceptance": [
@@ -38711,7 +38711,7 @@
         "evidence": []
       },
       "planned_app_changes": [
-        "Pass an explicit save failure field to the HUD model; show a distinct danger/alert save icon with Not saving — open Run Menu to retry tooltip, one-time first-block message, and clear on successful save. No modal or save scheduling change."
+        "Pass an explicit save failure field to the HUD model; show a distinct danger/alert save icon with Not saving - open Run Menu to retry tooltip, one-time first-block message, and clear on successful save. No modal or save scheduling change."
       ],
       "updated_at": "2026-11-11T04:23:16.824645+00:00"
     },
@@ -47601,6 +47601,116 @@
         "acceptance_unchanged": true,
         "work_authorization_unchanged": true
       }
+    },
+    {
+      "id": "BTH061-EMDASH-CLEANUP-001",
+      "name": "Replace authored em dashes with ASCII hyphens",
+      "aliases": [],
+      "group": "current",
+      "state": "open",
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": "",
+        "evidence": []
+      },
+      "objective": {
+        "text": "Replace literal U+2014 with ASCII hyphen in eligible tracked authored text, preserving protected historical/authenticated fixtures, semantic IDs and save contracts. Preserve original execution runbook and all existing task records.",
+        "source": "Explicit coordinator delegation for Erik requested BTH em dash cleanup, pinned4e4fcfd source; exact transformer and independently reproduced inventory are acceptance inputs.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "inventory-and-exceptions",
+            "description": "Reproduce dry5626 substitutions469 files and review protected/encoded/semantic exceptions; hold on semantic ID or authenticated/save-contract risk.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/EMDASH_cleanup_20261120.md"
+            ]
+          },
+          {
+            "id": "replacement-only-bytes",
+            "description": "For every changed existing file prove only exact encoded U+2014-to-hyphen bytes changed, retaining encoding/BOM/newlines and parsed shape.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/EMDASH_cleanup_20261120.md"
+            ]
+          },
+          {
+            "id": "runbook-preserved",
+            "description": "Freeze untouched original execution prompt/specification bytes and raw hashes separately; never edit the user checkout or the original QA runbook.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/EMDASH_cleanup_20261120.md"
+            ]
+          },
+          {
+            "id": "focused-runtime-and-delivery",
+            "description": "Representative launch/layout and string/JSON/template integrity plus save compatibility where needed, followed by exact existing main/NEXT identity and zero-process release.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": true,
+          "complete": true,
+          "areas": [
+            {
+              "name": "Eligible tracked authored text and preserved encodings",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/EMDASH_cleanup_20261120.md"
+              ]
+            },
+            {
+              "name": "Protected history, Git-text fixtures and encoded/mixed-encoding residuals",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/EMDASH_cleanup_20261120.md"
+              ]
+            },
+            {
+              "name": "Runtime/data semantic IDs, save contracts and representative native layout",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/EMDASH_cleanup_20261120.md"
+              ]
+            }
+          ]
+        }
+      },
+      "status": "SOURCE_QUALIFIED_NEXT_PENDING",
+      "owner": {
+        "name": "BTH punctuation cleanup",
+        "task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-cleanup:/root",
+        "assignment_state": "assigned"
+      },
+      "evidence": [
+        {
+          "kind": "qualification",
+          "reference": "docs/testing/EMDASH_cleanup_20261120.md",
+          "summary": "Exact5626/469 replacement proof and49protected-path equality passed; original execution runbook retained. Native24 and limited-worker import passed. Five inherited Markdown hard breaks preserved; no new whitespace errors. Save durability is outside this punctuation scope."
+        }
+      ],
+      "next_action": "Commit the replacement-only qualified scope, register exact cold-import inputs, then verify served NEXT identity and short Web startup/layout smoke.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-20T04:23:54.890383+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-20T04:32:17.837128+00:00",
+      "kind": "objective",
+      "parent_ids": [],
+      "implementation_batches": [
+        "BTH061-EMDASH-CLEANUP-001-BATCH-001"
+      ]
     }
   ],
   "batches": [
@@ -49597,7 +49707,7 @@
       "state": "complete",
       "status": "VERIFIED_NATIVE_31_PASS_AND_EXACT_NEXT_VISIBLE_UI",
       "scope": [
-        "Pass an explicit save failure field to the HUD model; show a distinct danger/alert save icon with Not saving — open Run Menu to retry tooltip, one-time first-block message, and clear on successful save. No modal or save scheduling change."
+        "Pass an explicit save failure field to the HUD model; show a distinct danger/alert save icon with Not saving - open Run Menu to retry tooltip, one-time first-block message, and clear on successful save. No modal or save scheduling change."
       ],
       "owner": {
         "name": "Execute 0.6.1 audit work orders",
@@ -53721,6 +53831,48 @@
         "evidence": []
       },
       "updated_at": "2026-11-19T23:58:44.379147+00:00"
+    },
+    {
+      "id": "BTH061-EMDASH-CLEANUP-001-BATCH-001",
+      "name": "Apply reviewed literal em dash substitutions",
+      "aliases": [],
+      "group": "current",
+      "parent_id": "BTH061-EMDASH-CLEANUP-001",
+      "state": "open",
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": "",
+        "evidence": []
+      },
+      "scope": [
+        "Exact reviewed transformer output on verified4e4fcfd candidate plus only this paired task tracking and factual evidence."
+      ],
+      "acceptance_scope": "Independent dry inventory, reviewed exceptions and replacement-only byte/shape proof; representative focused runtime and exact served NEXT.",
+      "status": "SOURCE_QUALIFIED_NEXT_PENDING",
+      "owner": {
+        "name": "BTH punctuation cleanup",
+        "task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-cleanup:/root",
+        "assignment_state": "assigned"
+      },
+      "evidence": [
+        {
+          "kind": "qualification",
+          "reference": "docs/testing/EMDASH_cleanup_20261120.md",
+          "summary": "Exact5626/469 replacement proof and49protected-path equality passed; original execution runbook retained. Native24 and limited-worker import passed. Five inherited Markdown hard breaks preserved; no new whitespace errors. Save durability is outside this punctuation scope."
+        }
+      ],
+      "next_action": "Commit the replacement-only qualified scope, register exact cold-import inputs, then verify served NEXT identity and short Web startup/layout smoke.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "",
+        "requires_user_input": false,
+        "observed_at": "2026-11-20T04:23:54.890383+00:00",
+        "evidence": []
+      },
+      "updated_at": "2026-11-20T04:32:17.837128+00:00"
     }
   ]
 }

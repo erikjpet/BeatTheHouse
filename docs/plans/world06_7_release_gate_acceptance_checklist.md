@@ -1,6 +1,6 @@
-# world06_7 Crew and World Depth — Release-Gate Acceptance Checklist
+# world06_7 Crew and World Depth - Release-Gate Acceptance Checklist
 
-Status: COMPLETE — accepted on remediation `57b01ed40cf9fdabf2de016d9df6ef2e8db42019`
+Status: COMPLETE - accepted on remediation `57b01ed40cf9fdabf2de016d9df6ef2e8db42019`
 Scope: release-gate audit of landed `world06_1` through `world06_6`; this
 document performs no release activity and changes no product/runtime/value or
 budget.  
@@ -144,7 +144,7 @@ Apply every case to every `world06_2`–`world06_6` seam listed below:
 - [ ] Cross-version restore retains only authority reconstructible from sealed
   durable host records; otherwise it fails closed without partial presentation.
 - [ ] Renderer or projection failure returns empty public presentation
-  collections and safe typed errors only—no partial object, route, actor,
+  collections and safe typed errors only-no partial object, route, actor,
   service, game, interaction, or stage payload.
 - [ ] Rejected restores/transplants preserve RNG, economy, state, receipts,
   cleanup, logs, captures, timing, allocations, and work counters.

@@ -1,14 +1,14 @@
-# Art Rework Test 03 — Environment Direction
+# Art Rework Test 03 - Environment Direction
 
 This pass contains three game-ready environment candidates built around an original retro coastal-city direction: deep blue architecture, coral sunset light, distant urban detail, reflected color, and quieter foreground shapes.
 
 ## Files
 
-- `environments/beach.png` — 900 × 430 RGB PNG
-- `environments/jazz_club.png` — 900 × 430 RGB PNG
-- `environments/grand_casino.png` — 900 × 430 RGB PNG
-- `in_game_previews/` — captures of each candidate inside the current game with live object overlays
-- `prompts.md` — the generation and integration brief
+- `environments/beach.png` - 900 × 430 RGB PNG
+- `environments/jazz_club.png` - 900 × 430 RGB PNG
+- `environments/grand_casino.png` - 900 × 430 RGB PNG
+- `in_game_previews/` - captures of each candidate inside the current game with live object overlays
+- `prompts.md` - the generation and integration brief
 
 ## Integration contract
 

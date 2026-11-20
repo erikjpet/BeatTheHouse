@@ -6,10 +6,10 @@ Delivery work uses the run's generated world map and the ordinary travel pipelin
 
 `RunState` exposes four entry points:
 
-- `delivery_begin_package(spec)` — one real target.
-- `delivery_begin_multi_stop(spec)` — several real targets, completed in any order.
-- `delivery_begin_hold(spec)` — one real venue held across action boundaries.
-- `delivery_begin_getaway(spec)` — one real exit target, gated by `enabled` or `delivery_getaway_enabled`.
+- `delivery_begin_package(spec)` - one real target.
+- `delivery_begin_multi_stop(spec)` - several real targets, completed in any order.
+- `delivery_begin_hold(spec)` - one real venue held across action boundaries.
+- `delivery_begin_getaway(spec)` - one real exit target, gated by `enabled` or `delivery_getaway_enabled`.
 
 Targets may be explicit (`targets: [{node_id, label}]`) or selected deterministically from the generated graph with `target_count`. Explicit targets are validated by the same rules. Each selected node must exist, have an archetype and kind, and be reachable through actual graph edges. The job reveals the actual path to an unseen target.
 

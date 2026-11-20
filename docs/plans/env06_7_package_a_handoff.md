@@ -1,4 +1,4 @@
-# env06_7 Package A — Implementation Handoff
+# env06_7 Package A - Implementation Handoff
 
 > Historical payload handoff. The `040c0603` production recovery supersedes
 > its validation status; see `env06_7_package_a_production_recovery.md`.

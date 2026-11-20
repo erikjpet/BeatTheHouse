@@ -1,4 +1,4 @@
-# Art Rework Test 02 — Production-Scale Pass
+# Art Rework Test 02 - Production-Scale Pass
 
 This pass is built against the real Beat The House art contracts and scene layouts. The current production files remain untouched.
 

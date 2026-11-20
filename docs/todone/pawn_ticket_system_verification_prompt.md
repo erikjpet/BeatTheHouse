@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-17
 - **Completion/implementation commits:** `a3bd0d1b`
-- **Verification:** PASS — tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_visual_qa.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_visual_qa.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — Pawn Ticket System: Verify the Full Spec Landed, Close Any Gaps
+# Agent Prompt - Pawn Ticket System: Verify the Full Spec Landed, Close Any Gaps
 
 Copy everything below this line into the agent.
 
@@ -21,7 +21,7 @@ tools/check_godot.ps1 × 1.5)).
 ## Background
 
 The run-side Sal's Pawn Shop shipped during 0.4 polish (tier-1 archetype
-with a discounted item shop pool and the `sals_pawn_counter` lender —
+with a discounted item shop pool and the `sals_pawn_counter` lender -
 verified present). What was SPECCED alongside it has never been verified
 against the shipped code. The original spec, restated in full (this is
 the contract to audit against):
@@ -33,7 +33,7 @@ the contract to audit against):
    every sellable inventory item with a deterministic loan quote
    (sale_price × the lender's `loan_to_sale_price_multiplier`, clamped
    by the debt profile). The player chooses WHICH items to pawn, any
-   number of them, one ticket each — replacing the old auto-pick of the
+   number of them, one ticket each - replacing the old auto-pick of the
    first sellable item.
 3. **Ticket ledger with selective redemption**: a Redeem view listing
    every active pawn ticket (item, buy-back price, turns remaining);
@@ -51,20 +51,20 @@ the contract to audit against):
 
 ## Task
 
-### Phase 1 — Audit (evidence first)
+### Phase 1 - Audit (evidence first)
 
 For each numbered spec item: find it in the shipped code (cite
-file/function) or mark it MISSING/PARTIAL. Check tests too — coverage
+file/function) or mark it MISSING/PARTIAL. Check tests too - coverage
 may exist without UI, or UI without tests. Produce the audit table
 before writing any fix. If everything shipped: report the table, run
-the gates, delete this prompt, done — do not invent work.
+the gates, delete this prompt, done - do not invent work.
 
-### Phase 2 — Close the gaps (only what the audit found)
+### Phase 2 - Close the gaps (only what the audit found)
 
 Implement missing/partial items to the spec above. Established
 patterns to follow: RunInventoryScreen-style extracted component for
 the counter/ledger UI; deterministic quotes (no RNG); tickets as
-per-item debt entries (`debt_kind == "pawn"` with per-item ids — the
+per-item debt entries (`debt_kind == "pawn"` with per-item ids - the
 settle path already returns collateral); forfeited-item injection at
 environment entry/refresh. Sal's counter hook in OTHER environments
 uses the same flow (one code path).
@@ -75,13 +75,13 @@ uses the same flow (one code path).
 - Determinism: quotes, fees, forfeit prices contain no RNG; probe stays
   self-consistent.
 - Meta gold economy and run cash economy stay fully separate (the meta
-  pawn shop's gold counter is a different system — do not touch it).
+  pawn shop's gold counter is a different system - do not touch it).
 - Do not rebalance lenders/items beyond the spec. Idle liveness
   untouched. Style: tabs, typed GDScript, sparse comments; `.tmp/`
   reports only.
 - SCHEDULING GUARD: if the gc05 Grand Casino queue is still running on
   this machine (gc05_*_prompt.md files present in docs/todo), do NOT
-  start — this task shares run_state/run_action_service with it. Report
+  start - this task shares run_state/run_action_service with it. Report
   and stop instead.
 
 ## QA / Tests (for whatever Phase 2 implements; regression for the rest)

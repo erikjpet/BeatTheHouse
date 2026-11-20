@@ -1,4 +1,4 @@
-# CLOSE-LEDGER — accepted audit dispositions
+# CLOSE-LEDGER - accepted audit dispositions
 
 Source: docs/todo/BTH_0.6.1_closeout_plan.md. Initial up-to-date main4cb86ee3fd9b04733a794af2289ab8fce0132443; unchanged plan committed first.
 

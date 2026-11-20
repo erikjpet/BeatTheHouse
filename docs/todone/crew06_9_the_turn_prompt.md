@@ -8,7 +8,7 @@ Board row: `crew06_9` in `docs/todo/README_0_6_board.md`
 - **Verification:** PM line-by-line scope/design/privacy review; `crew_turn_contract` and owning heist contracts PASS on the integrated tree; combined Systems, Contracts, and UI suites PASS; two-process 10-seed/510-checkpoint determinism PASS (`3528944666`); canonical visual QA PASS.
 - **Deviations:** None. Hidden state remains under neutral compact save keys, legacy saves remain accepted, and no player-visible surface names the system outside its authored ending copy.
 
-# Agent Prompt — 0.6 crew06_9: The Turn (Hidden Betrayal System)
+# Agent Prompt - 0.6 crew06_9: The Turn (Hidden Betrayal System)
 
 Copy everything below this line into the agent.
 
@@ -16,8 +16,8 @@ Copy everything below this line into the agent.
 
 You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript
 casino roguelike (Web/itch.io + Windows, 1280×720). Binding design
-contract: `docs/plans/0.6_living_world_roadmap.md` — Pillar 3 "The
-Turn — full design v2" (owner-approved round 4, including the pool
+contract: `docs/plans/0.6_living_world_roadmap.md` - Pillar 3 "The
+Turn - full design v2" (owner-approved round 4, including the pool
 ruling and both hidden guarantees). crew06_8 left the
 traitor-resolution seam and the ladder's fourth outcome as a stub;
 crew06_1 owns the grievance ledger; crew06_2 owns tells;
@@ -41,7 +41,7 @@ exists.** This prompt is self-contained for rules and scope.
 
 `crew06_8`, `crew06_2`, `town06_2`, `crew06_3` DONE. Audit the
 grievance writers that exist across landed prompts (crew06_1/3/6/7)
-before building — the ledger is your input surface; code reality wins.
+before building - the ledger is your input surface; code reality wins.
 
 ## Task
 
@@ -65,7 +65,7 @@ logged for the player:
 1. **The wrong tell** (crew06_2 seam): during L3 planning-phase
    scenes, the traitor's authored tell misfires (fires during heist
    table-talk, not cards). Witnessing it counts **only if**
-   `tell_learned(traitor)` is true — the skill gate. Non-learned
+   `tell_learned(traitor)` is true - the skill gate. Non-learned
    players see nothing distinguishable.
 2. **The itinerary lie** (town06_2 seam): the traitor states a
    whereabouts claim (planning dialogue) contradicted by the
@@ -76,7 +76,7 @@ logged for the player:
    the traitor comes up short in a checkable way (the shortfall
    references a figure verifiable at the job board/Numbers desk).
 - Witnessing sets hidden per-clue flags. No journal, no counter, no
-  UI acknowledgment — ever.
+  UI acknowledgment - ever.
 
 ### 3. The confrontation + the hedge
 
@@ -91,18 +91,18 @@ logged for the player:
     crew-wide trust hit, traitor odds re-resolve upward (documented
     curve), darkened table mood line.
 - **The hedge**: with exactly 1 witnessed clue, a different unmarked
-  option: quietly restructure your role — if the Turn fires, the
+  option: quietly restructure your role - if the Turn fires, the
   outcome upgrades from full Turn collapse to *Out Hot* with a
   partial-haul band; if no traitor, a small cost (crew reads it as
   cold feet: minor trust hit). Insurance, not immunity.
 
 ### 4. Turn execution (plan-specific beats)
 
-- Fill the ladder's fourth outcome for both plans: A — the corridor
-  doesn't hold (beat + collapse consequences); B — the rig gets
+- Fill the ladder's fourth outcome for both plans: A - the corridor
+  doesn't hold (beat + collapse consequences); B - the rig gets
   pointed at you mid-game (beat + exposure consequences). Each is a
   dramatic failure ending with unique copy and a story-scar flag in
-  the run record/act seam (banded, per crew06_8's seam style) — never
+  the run record/act seam (banded, per crew06_8's seam style) - never
   a save wipe, never a soft-lock.
 
 ### 5. Discipline audit
@@ -115,13 +115,13 @@ logged for the player:
 
 ## Hard rules
 
-- Determinism: resolution, emissions, and re-resolution — seeded,
+- Determinism: resolution, emissions, and re-resolution - seeded,
   reproducible per seed + action sequence.
 - The two guarantees are absolute and covered by tests: clean-hands
   zero; correct two-clue confrontation always cancels.
 - Emission honesty: every emitted clue is genuinely witnessable in
   that run's state (no lie without a contradicting record; no
-  envelope without a checkable figure) — assert in debug.
+  envelope without a checkable figure) - assert in debug.
 - Perf/save/style/voice as other prompts; mid-heist saves preserve
   hidden state under neutral keys.
 - Suite timeout = max(300s, baseline×1.5).
@@ -133,7 +133,7 @@ logged for the player:
 2. Clean-hands: zero-ledger runs never produce a traitor (property
    test, wide seed sweep).
 3. Weighting: ledger fixtures shift selection odds per curve.
-4. Skill gate: identical scenes with/without `tell_learned` — clue
+4. Skill gate: identical scenes with/without `tell_learned` - clue
    witnessable only with it.
 5. Lie emission always contradictable by run records (debug assert +
    fixture sweep); envelope always checkable.

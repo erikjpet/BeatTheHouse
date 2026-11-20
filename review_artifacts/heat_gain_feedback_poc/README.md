@@ -1,4 +1,4 @@
-# Heat Gain Feedback — Research and Proof of Concept
+# Heat Gain Feedback - Research and Proof of Concept
 
 Research-only review artifact. No game code or production assets were changed for this pass.
 
@@ -10,7 +10,7 @@ Use a three-part, non-directional "damage" response whenever the player's curren
 2. The existing Heat icon, value, and segmented meter receive a bright outline/glow pulse.
 3. A small `+N HEAT` badge appears directly beneath the Heat meter.
 
-The second and third parts are important. A red edge effect alone can be missed, can blend into the nighttime palette, and communicates only that something bad happened—not what changed or by how much. Heat is not directional, so shooter-style directional wedges or arrows would communicate information the game does not have.
+The second and third parts are important. A red edge effect alone can be missed, can blend into the nighttime palette, and communicates only that something bad happened-not what changed or by how much. Heat is not directional, so shooter-style directional wedges or arrows would communicate information the game does not have.
 
 The recommended target is shown in the day and night screenshots:
 

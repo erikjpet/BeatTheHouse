@@ -8,7 +8,7 @@ Board row: `fix06_2` in `docs/todo/README_0_6_board.md`
 - **Verification:** Street and Grand Casino Craps focused parity/save tests green; seven-hook cold JSON-restored activation guard green across all generated contexts and non-default keys; saved-Slot focused Slot 2/2 and Games 10/10; integrated Systems 49/49 in 39.895 s / 43.712 s; UI 0 failures with `ui_scene_compile` 57.828 s / 124.851 s; 10-seed determinism 590/590 checkpoints with identical combined hash `3567232055`; 75-state visual QA, 0 warnings/overlaps/stderr.
 - **Deviations:** The earlier closeout was reopened when the stronger guard reproduced seven passive Grand Casino dealer-day mutations, then widened once more when a cold saved-Slot animation checkpoint exposed the same activation-class defect. The repair stayed generic and observational; no test, assertion, budget, feature, or serialized field was waived.
 
-# Agent Prompt — fix06_2: Street Craps Mutates RunState on Activation
+# Agent Prompt - fix06_2: Street Craps Mutates RunState on Activation
 
 Copy everything below this line into the agent.
 
@@ -16,7 +16,7 @@ Copy everything below this line into the agent.
 
 You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript
 casino roguelike. This is a **shipped defect in landed code**, found
-by `env06_5`'s UI gate — not a defect in `env06_5`.
+by `env06_5`'s UI gate - not a defect in `env06_5`.
 
 ## The defect
 
@@ -29,7 +29,7 @@ The contract: clicking an info-card action button to **open** a game
 must not mutate serialized `RunState`. Opening a game is navigation,
 not play. The surrounding assertions (focus at 3506, hover at 3543,
 clear-focus at 3562) enforce the same rule for the other interaction
-verbs — this is a deliberate, longstanding invariant.
+verbs - this is a deliberate, longstanding invariant.
 
 Street Craps violates it: activating it from the info card mutates
 serialized state before the player does anything.
@@ -61,7 +61,7 @@ invariant. This one must too.
 
 1. **Reproduce first.** Drive the failing assertion and capture the
    exact mutation: which keys of serialized `RunState` change on
-   activation, and from what call path. Record it in the board log —
+   activation, and from what call path. Record it in the board log -
    the diff is the diagnosis.
 2. **Find the root cause in Street Craps' activation path.** Likely
    candidates (verify, do not assume): eager environment-state
@@ -87,7 +87,7 @@ invariant. This one must too.
 - Never weaken or skip the M1.6 assertions.
 - Street Craps' shipped gameplay, RTP parity with the core rules,
   cash-only routing, teaching beats, dispersal/settlement rule, and
-  training-progress grants must all survive unchanged — regression
+  training-progress grants must all survive unchanged - regression
   them explicitly.
 - Determinism: the fix must not change seeded outcomes for a player
   who opens and then plays; prove identical play sequences still
@@ -101,7 +101,7 @@ invariant. This one must too.
 2. Street Craps gameplay regression: rules, RTP parity, cash routing,
    dispersal, training grants unchanged.
 3. `craps06_1` activation checked (and fixed if implicated).
-4. Save/load: open a game, save, reload — state identical to
+4. Save/load: open a game, save, reload - state identical to
    never having opened it.
 5. Determinism probe unchanged.
 6. Class guard extended and proven in both directions.

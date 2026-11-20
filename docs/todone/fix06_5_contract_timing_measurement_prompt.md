@@ -1,7 +1,7 @@
-Status: DONE — INCONCLUSIVE result independently accepted, landed and post-land verified
+Status: DONE - INCONCLUSIVE result independently accepted, landed and post-land verified
 Board row: `fix06_5` in `docs/todo/README_0_6_board.md`
 
-# fix06_5 — Contract Suite Timing Measurement
+# fix06_5 - Contract Suite Timing Measurement
 
 ## Purpose
 
@@ -152,7 +152,7 @@ payload, repeat a proportionate post-land documentation/evidence check and then
 update the board and ledger. The row remains IN_PROGRESS until those steps are
 complete.
 
-## Execution result — 2026-08-26
+## Execution result - 2026-08-26
 
 The accepted native addon was copied without rebuild into a detached clean
 worktree at exact source `e75f2c3d` / tree `099eeb0`. On host

@@ -1,4 +1,4 @@
-# Agent Prompt — Playtest Polish Batch (Root-Caused Fixes)
+# Agent Prompt - Playtest Polish Batch (Root-Caused Fixes)
 
 Copy everything below this line into the worker agent.
 
@@ -8,14 +8,14 @@ You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript casino
 roguelike (900×430 board, immediate-mode canvas, foundation_main host,
 per-game modules, data-driven `data/*.json`). This is a STRUCTURED WORK
 ORDER of owner playtest findings. Each item below has a symptom, a
-root-cause hypothesis with file anchors (CONFIRM against current code —
+root-cause hypothesis with file anchors (CONFIRM against current code -
 line numbers may have drifted; code reality wins), a resolution, and an
-acceptance bar. Fix each from the ground up, cleanly and completely — not
+acceptance bar. Fix each from the ground up, cleanly and completely - not
 a surface patch. Commit each item (or tight group) as its own logical
 unit so partial progress is preserved.
 
 Video poker cheating is handled by a SEPARATE prompt
-(`video_poker_cheat_minigame_rework_prompt.md`) — do not touch the video
+(`video_poker_cheat_minigame_rework_prompt.md`) - do not touch the video
 poker cheat here.
 
 ## Hard rules (apply to every item)
@@ -37,7 +37,7 @@ poker cheat here.
 new travel destination; the player isn't told.
 
 **Root cause:** events that apply `add_next_archetypes` in their choice
-consequences (`data/events/events.json` — `parking_lot_tip` ~:93 sets
+consequences (`data/events/events.json` - `parking_lot_tip` ~:93 sets
 `underground_tip` + `add_next_archetypes`, and several other events use
 `add_next_archetypes` at ~:120,:168,:374,:442,:545,:782,:3116) do not
 state in their player-facing summary/choice text that a new route opens.
@@ -57,7 +57,7 @@ opened; a data test guards it.
 **Symptom:** the player can't tell which node is their current location.
 
 **Root cause:** `scripts/ui/world_map_canvas.gd` (~:384-428) computes
-`is_current` but only nudges alpha/color slightly — no distinct marker or
+`is_current` but only nudges alpha/color slightly - no distinct marker or
 label.
 
 **Fix:** render a clear current-location indicator on the current node: a
@@ -84,10 +84,10 @@ so an item that affects a specific game (blackjack, video poker, bar dice,
 roulette, baccarat, slots, scratch, pull tabs) shows that game's symbol on
 its card; global items show a global glyph. Derive affinity from the
 item's effect keys (many effect keys are game-scoped, e.g.
-`video_poker_*`, `blackjack_*`) — map effect-key prefixes to games in
+`video_poker_*`, `blackjack_*`) - map effect-key prefixes to games in
 data, don't hardcode in UI. (b) After a purchase whose item has a game
 affinity, surface a brief nudge ("Try it at the blackjack table") using
-the existing message/coach affordance — and, where that game is present in
+the existing message/coach affordance - and, where that game is present in
 the current environment, a light highlight on that game object.
 
 **Acceptance:** every game-scoped item shows its game glyph; buying one
@@ -99,8 +99,8 @@ points the player at the right game.
 
 **Root cause:** `scripts/ui/coach_overlay.gd` only shows its "Got it"
 button when `completion_type == "explicit_ok"` (~:203-236). A lesson whose
-completion is an anchored/any action — but whose anchor is unreachable, or
-which gates input such that the completing action can't be taken — leaves
+completion is an anchored/any action - but whose anchor is unreachable, or
+which gates input such that the completing action can't be taken - leaves
 NO dismiss path.
 
 **Fix:** guarantee every coach bubble is dismissible from the ground up:
@@ -123,7 +123,7 @@ surface region without excluding text/dialog rects. Protected-rect
 machinery exists for some elements but text boxes aren't protected.
 
 **Fix:** exclude text-bearing rects (result text, dialog/explainer panels,
-prize/rule legends, HUD readouts) from the drunk distortion — either by
+prize/rule legends, HUD readouts) from the drunk distortion - either by
 registering them as protected rects or by drawing text ABOVE the
 distortion layer. The world may wobble; the words must stay crisp.
 
@@ -152,8 +152,8 @@ without external help.
 
 **Symptom:** betting in bar dice does not work correctly.
 
-**Root cause (confirm precisely — this is a real bug, root-cause it):**
-trace the bar dice stake/pot flow — `_active_stake_from_context`, the
+**Root cause (confirm precisely - this is a real bug, root-cause it):**
+trace the bar dice stake/pot flow - `_active_stake_from_context`, the
 stake ladder (`_generated_stake_ladder`), `_working_pot`, rake, and the
 payout at settle (`hosted_payout_percent`, `EDGE_PAYOUT_PERCENT`), plus
 `wager_cost_for_context` (~:204) and `surface_stake_controls_required:
@@ -190,7 +190,7 @@ a test asserts no duplicate choice ids are rendered.
 **Symptom:** doubling during the Rourke duel ends the run.
 
 **Root cause:** the duel (`scripts/games/grand_casino_duel_model.gd`,
-built on blackjack — `blackjack.gd` `blackjack_double` ~:882 →
+built on blackjack - `blackjack.gd` `blackjack_double` ~:882 →
 `_settle_completed_round_command`) treats a double as a terminal settle
 that resolves the duel/run instead of a normal in-hand action within the
 duel's own win/lose ladder.
@@ -258,22 +258,22 @@ green commit, do NOT push, and report verbatim.
 
 ---
 
-## Execution record — 2026-07-27 22:59 -05:00
+## Execution record - 2026-07-27 22:59 -05:00
 
 Implemented top to bottom and confirmed in the running Godot gates. No items were left unresolved and no follow-up prompt was needed.
 
 Per-item commits:
 
-- `178c1c50` — Clarify travel unlock event copy.
-- `3df8fee7` — Mark current location on world map.
-- `d760ac35` — Add item game affinity nudges.
-- `9c096a2d` — Make coach tips always dismissible.
-- `cf41a21e` — Protect surface text from drunk distortion.
-- `fead0ff9` — Guard bar dice stake lifecycle.
-- `99dba1ec` — Collapse Rourke choices to one surface.
-- `02bdc9e9` — Guard Rourke duel double settlement.
-- `f53ae092` — Rebuild run report path from visits.
-- `3ce8675c` — Stabilize visual QA interaction paths.
+- `178c1c50` - Clarify travel unlock event copy.
+- `3df8fee7` - Mark current location on world map.
+- `d760ac35` - Add item game affinity nudges.
+- `9c096a2d` - Make coach tips always dismissible.
+- `cf41a21e` - Protect surface text from drunk distortion.
+- `fead0ff9` - Guard bar dice stake lifecycle.
+- `99dba1ec` - Collapse Rourke choices to one surface.
+- `02bdc9e9` - Guard Rourke duel double settlement.
+- `f53ae092` - Rebuild run report path from visits.
+- `3ce8675c` - Stabilize visual QA interaction paths.
 
 Reconciliation / deviations:
 
@@ -283,23 +283,23 @@ Reconciliation / deviations:
 
 Final gate results on the committed tree:
 
-- `tools\validate_project.ps1` — PASS.
-- `tools\check_godot.ps1 -FoundationSuite smoke -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_220843_smoke/summary.json`).
-- `tools\check_godot.ps1 -FoundationSuite contracts -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_221011_smoke/summary.json`).
-- `tools\check_godot.ps1 -FoundationSuite games -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_221326_smoke/summary.json`).
-- `tools\check_godot.ps1 -FoundationSuite systems -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_221643_smoke/summary.json`).
-- `tools\check_godot.ps1 -FoundationSuite ui -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_221814_smoke/summary.json`).
-- `tools\check_godot.ps1 -FoundationSuite slot -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_222055_smoke/summary.json`).
-- `tools\check_godot.ps1 -FoundationSuite blackjack -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_222218_smoke/summary.json`).
-- `tools\check_godot.ps1 -FoundationSuite roulette -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_222327_smoke/summary.json`).
-- `tools\check_godot.ps1 -FoundationSuite baccarat -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_222438_smoke/summary.json`).
-- `tools\check_godot.ps1 -FoundationSuite video_poker -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_222547_smoke/summary.json`).
-- `tools\check_godot.ps1 -FoundationSuite bar_dice -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_222758_smoke/summary.json`).
-- `tools\check_godot.ps1 -FoundationSuite pull_tabs -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_222939_smoke/summary.json`).
-- `tools\check_godot.ps1 -FoundationSuite scratch_tickets -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_223048_smoke/summary.json`).
-- `tools\check_godot.ps1 -FoundationSuite slot_acceptance -TimeoutSec 959` — PASS (`.tmp/test_reports/20260727_223158_smoke/summary.json`).
-- `tools\check_godot.ps1 -FoundationSuite audit -TimeoutSec 971` — PASS (`.tmp/test_reports/20260727_224251_smoke/summary.json`).
-- `tools\check_godot.ps1 -FoundationSuite all -TimeoutSec 300` — PASS (`.tmp/test_reports/20260727_225341_smoke/summary.json`).
-- `tools\foundation_visual_qa.ps1` — PASS.
-- `tools\foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` — PASS, 10 seeds, 320 checkpoints, combined hash `2238995931`.
-- `tools\foundation_performance_probe.ps1 -RequireGodot` — PASS, 62 observations across 8 seeds; idle liveness guard proof passed and no 0.000 idle-draw was accepted without the liveness check.
+- `tools\validate_project.ps1` - PASS.
+- `tools\check_godot.ps1 -FoundationSuite smoke -TimeoutSec 300` - PASS (`.tmp/test_reports/20260727_220843_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite contracts -TimeoutSec 300` - PASS (`.tmp/test_reports/20260727_221011_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite games -TimeoutSec 300` - PASS (`.tmp/test_reports/20260727_221326_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite systems -TimeoutSec 300` - PASS (`.tmp/test_reports/20260727_221643_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite ui -TimeoutSec 300` - PASS (`.tmp/test_reports/20260727_221814_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite slot -TimeoutSec 300` - PASS (`.tmp/test_reports/20260727_222055_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite blackjack -TimeoutSec 300` - PASS (`.tmp/test_reports/20260727_222218_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite roulette -TimeoutSec 300` - PASS (`.tmp/test_reports/20260727_222327_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite baccarat -TimeoutSec 300` - PASS (`.tmp/test_reports/20260727_222438_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite video_poker -TimeoutSec 300` - PASS (`.tmp/test_reports/20260727_222547_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite bar_dice -TimeoutSec 300` - PASS (`.tmp/test_reports/20260727_222758_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite pull_tabs -TimeoutSec 300` - PASS (`.tmp/test_reports/20260727_222939_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite scratch_tickets -TimeoutSec 300` - PASS (`.tmp/test_reports/20260727_223048_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite slot_acceptance -TimeoutSec 959` - PASS (`.tmp/test_reports/20260727_223158_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite audit -TimeoutSec 971` - PASS (`.tmp/test_reports/20260727_224251_smoke/summary.json`).
+- `tools\check_godot.ps1 -FoundationSuite all -TimeoutSec 300` - PASS (`.tmp/test_reports/20260727_225341_smoke/summary.json`).
+- `tools\foundation_visual_qa.ps1` - PASS.
+- `tools\foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` - PASS, 10 seeds, 320 checkpoints, combined hash `2238995931`.
+- `tools\foundation_performance_probe.ps1 -RequireGodot` - PASS, 62 observations across 8 seeds; idle liveness guard proof passed and no 0.000 idle-draw was accepted without the liveness check.

@@ -1,8 +1,8 @@
-Status: SUPERSEDED — historical closeout prompt archived during two-branch consolidation
+Status: SUPERSEDED - historical closeout prompt archived during two-branch consolidation
 Board rows: `env06_8`, `integ06_1`, `perf06_1`, `playtest06_2`, `playtest06_1` in `docs/todo/README_0_6_board.md`
 Supersedes: `closeout06_0_remaining_work_prompt.md` (its ordering is still correct; this prompt replaces its starting state)
 
-# Agent Prompt — closeout06_1: Land env06_8 and Finish the 0.6 Board
+# Agent Prompt - closeout06_1: Land env06_8 and Finish the 0.6 Board
 
 Copy everything below this line into one agent. It may spawn sub-agents freely.
 
@@ -30,7 +30,7 @@ not wait on any other document, queue, or ceremony.
 - `project.godot` still reports `config/version="0.5.1"`. That is correct. Do not
   change it.
 
-## 2. The five uncommitted changes — review them, then commit them
+## 2. The five uncommitted changes - review them, then commit them
 
 All five are test/tool harness changes. **No product/runtime code was modified.**
 Verify each against the reasoning below before you commit; if you disagree with
@@ -57,7 +57,7 @@ one, say so in your report rather than silently reverting it.
    The PASS banner no longer prints `scenarios=55 objects=1108 actions=673`.
    **Why:** those are the *pre-rework* baseline figures. The current catalog is
    1,437 objects and 729 actions. The `env06_8` review prompt instructs the
-   reviewer to re-derive the baseline and not trust the implementer's table — a
+   reviewer to re-derive the baseline and not trust the implementer's table - a
    PASS banner asserting the old numbers actively works against that.
 
 4. `scripts/tests/foundation/world_sequence_delivery_proof_contract.gd`
@@ -93,7 +93,7 @@ player then sees a room whose objects have dead panels *and* cannot travel out.
 That is exactly the owner's reported bug: "bugs with selecting things and travel
 that don't allow actions to go through."
 
-Three separate test harnesses had the same defect — they travelled without
+Three separate test harnesses had the same defect - they travelled without
 finalizing, so they were testing an empty sequence state. That produced 220
 false failures in the `env06_8` contract, a false FAIL in the delivery proof, and
 a false Jazz Club failure in the composition probe that was wrongly attributed to
@@ -109,7 +109,7 @@ Measured finalization health across all 55 sequence scenarios:
 
 `env06_8` fixes seven of the eight. Preserve that result.
 
-## 4. The one remaining dead room — fix it inside `env06_8`
+## 4. The one remaining dead room - fix it inside `env06_8`
 
 `motel_conventioneers` fails finalization in every layout context (empty,
 1280x720, and zero viewport) with:
@@ -138,11 +138,11 @@ The authored arrival description says the cart "blocks the lobby's front lane",
 so the narrative intent is genuinely obstructive. **Keep `role: obstacle`** and
 relocate it out of the mandatory entry lane rather than deleting it, downgrading
 its role, or weakening the validator. Then confirm
-`_room_path_reachable()` still passes — the room must remain enterable.
+`_room_path_reachable()` still passes - the room must remain enterable.
 
 Acceptance for this fix: the health check in section 6 reports **55/55**.
 
-## 5. Branch and worktree inventory — already audited, do not re-derive
+## 5. Branch and worktree inventory - already audited, do not re-derive
 
 40 worktrees exist. Classified by ahead/behind and by whether each unique blob
 ever existed in `main`'s history:
@@ -163,7 +163,7 @@ recover): `v051-fixtures`, `perf06-platform`, `perf06-aggregate-candidate`,
 
 **All remaining worktrees are 100–235 commits behind `main`** and their content
 landed and was superseded. This was verified by blob history, not by commit
-subject — e.g. `world-closeout` has 0/10 subjects on `main` but every product
+subject - e.g. `world-closeout` has 0/10 subjects on `main` but every product
 file traces to landed-then-superseded; only the board file differs, which is
 expected because it is edited constantly.
 
@@ -177,7 +177,7 @@ codex/env06_8-clean  ->  codex/integ06-final-run  ->  codex/playtest06-final-cus
 Zero conflicts at every step. Use that order.
 
 **Six files exist nowhere on `main` or on the four live branches.** They live
-only on stale branches and are safe there — retiring a *worktree* never touches
+only on stale branches and are safe there - retiring a *worktree* never touches
 its *branch*. Do not import any of them into `scripts/tests/foundation/` without
 first reconciling their API; four of them call contract functions that no longer
 exist and would break the 177-file load gate:
@@ -190,7 +190,7 @@ exist and would break the 177-file load gate:
   `tools/blackjack_authority_fingerprint_equivalence.gd` (their rows are closed)
 
 **Open decision for the owner, do not guess:** `codex/closeout06-final` holds a
-*different* `env06_8` contract (815 lines) from the clean branch's (1,057 lines) —
+*different* `env06_8` contract (815 lines) from the clean branch's (1,057 lines) -
 not an older revision, a different one. The clean rebuild dropped
 `check_geometry`, `_check_production_hidden_state_boundary`,
 `_check_exactly_once_consequence`, and `_check_reachable_presentation_and_hidden_state`.
@@ -198,7 +198,7 @@ Exactly-once and reachability are named items on the acceptance bar in section 8
 Record this as an owner question, take the default of **not** porting them, and
 keep moving.
 
-## 6. Gate results already recorded — re-run on your exact head, do not trust these
+## 6. Gate results already recorded - re-run on your exact head, do not trust these
 
 Run every one of these again on whatever head you produce. They are listed so you
 know what was true at `3621a696` + the uncommitted changes, not as evidence you
@@ -212,7 +212,7 @@ Green:
 - `scripts/tests/foundation/world_sequence_delivery_proof_contract.gd` → PASS (was FAIL)
 - `env06_7_package_b_contract.gd`, `_c_`, `_d_`, `_e_` → all four PASS
 
-Never confirmed — **you must run these**:
+Never confirmed - **you must run these**:
 
 - `scripts/tests/foundation/scenario_semantic_presentation_contract.gd`
 - `scripts/tests/foundation/content_depth_contract.gd`
@@ -220,7 +220,7 @@ Never confirmed — **you must run these**:
   (a batched run of all six contracts died at exit 4 after reporting the four
   package contracts; these two never reported.)
 
-Known red, and **not** `env06_8`'s to fix — reproduced identically on `main` with
+Known red, and **not** `env06_8`'s to fix - reproduced identically on `main` with
 the same harness fixes applied:
 
 - `tools/wave_b_composition_probe.gd` still fails five checks: Punchline L2
@@ -230,7 +230,7 @@ the same harness fixes applied:
   do not block `env06_8` on them, and do not fix them inside `env06_8`.
 
 Useful measurement command for section 4 (write it as a throwaway probe under
-`tools/`, run it, then delete it — do not leave diagnostics in the tree): for
+`tools/`, run it, then delete it - do not leave diagnostics in the tree): for
 each of the 55 sequence scenarios, pin the archetype pool to that scenario,
 `start_new`, `next_environment`, `travel_environment_result` to its node, then
 call `scenario_finalize_installed_environment` and count `ok && !inactive`.
@@ -249,14 +249,14 @@ call `scenario_finalize_installed_environment` and count `ok && !inactive`.
    to the owner instead of starting a third round.
 5. **Merge to `main` in the proven order** (section 5) and push. This is the
    source freeze that everything else waits on.
-6. **`integ06_1`** — run `docs/plans/integ06_1_final_execution_ledger.md` against
+6. **`integ06_1`** - run `docs/plans/integ06_1_final_execution_ledger.md` against
    the frozen candidate. Correct the Jazz Club attribution (section 3). Expect
    roughly 15 min for contracts, 1–4 h for composition plus lifecycle rows, up to
    3 h for the native/Web terminal soak.
-7. **`perf06_1`** — run `docs/plans/perf06_1_final_runtime_runbook.md`. It
+7. **`perf06_1`** - run `docs/plans/perf06_1_final_runtime_runbook.md`. It
    requires `HEAD == origin/main`, a clean tracked tree, a quiescent host, and
    distinct `BTH_PERF_WORKER_WITNESS` / `BTH_PERF_DIRECTOR_WITNESS` values.
-8. **`balance06_1` follow-on** — the binding final-tree distributions and the
+8. **`balance06_1` follow-on** - the binding final-tree distributions and the
    600k-drop pusher EV, which were always gated on this source freeze.
 9. **`playtest06_2`**, then **`playtest06_1`**. Hand the owner an exact build and
    an honest report. That ends your program.
@@ -270,7 +270,7 @@ On the exact current head:
 
 - each of the prompt's requirements maps to landed code, data or tests, recorded;
 - its focused suite is green on that exact head, with the command and result;
-- the row's own named evidence exists — visual, reachability, platform, determinism;
+- the row's own named evidence exists - visual, reachability, platform, determinism;
 - exactly-once holds for every consequence it touches;
 - no hidden-state leak, and nothing trusts a caller-supplied capability;
 - no change to money, RNG, RTP, payouts, odds, schema or migration.
@@ -287,7 +287,7 @@ untested edge cases are **follow-on items, not blockers**. Record and close.
 - **No release activity.** No version bump, no tag, no packaging, no publish.
   `release06_1` stays parked. A local build for the owner is allowed and is
   `playtest06_1`'s deliverable.
-- **Delete nothing** — no branch, worktree, or stash. No `gc`, `reset --hard`,
+- **Delete nothing** - no branch, worktree, or stash. No `gc`, `reset --hard`,
   `clean`. Retiring a worktree directory is a separate owner decision; the branch
   always stays.
 - **Never stage owner property**: `.tmp/`, `.tools/`, `review_artifacts/`,
@@ -320,13 +320,13 @@ untested edge cases are **follow-on items, not blockers**. Record and close.
 - **Two rejections on a row escalate to the owner, never a third round.**
 - **Never idle.** A parked row means take the next one immediately.
 
-## 12. Parked — do not start
+## 12. Parked - do not start
 
 `triage06_1`, `balance06_2`, `voice06_1`, `cleanup06_1`, `release06_1`, and the
 seven `release06_1_*_template.md` companions. Their inputs are the strings,
 numbers and direction decisions the owner's playtest is expected to change.
 Tutorial `TUT-N17` needs five cold-player human sessions and cannot be done by an
-agent — record it as owner-dependent.
+agent - record it as owner-dependent.
 
 ## 13. Reporting
 

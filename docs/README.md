@@ -7,20 +7,20 @@ current game.
 
 ## Current authority
 
-- `../README.md` — public project overview, setup, architecture, exports,
+- `../README.md` - public project overview, setup, architecture, exports,
   validation, and current limitations.
-- `current_game_state.md` — maintained internal summary of current `main`, its
+- `current_game_state.md` - maintained internal summary of current `main`, its
   content inventory, implemented systems, verification state, and remaining
   release procedure.
-- `game_reference.md` — source-backed authority for the 11-game roster, current
+- `game_reference.md` - source-backed authority for the 11-game roster, current
   behavior, catalog actions, and all 47 scripts under `scripts/games/`.
-- `code_reference.md` — maintained runtime ownership, source navigation, and
+- `code_reference.md` - maintained runtime ownership, source navigation, and
   production code-comment contract.
-- `plans/release_0_6_0_copy.md` — maintained draft of public 0.6 release copy;
+- `plans/release_0_6_0_copy.md` - maintained draft of public 0.6 release copy;
   it remains owner-gated and must not be posted before approval.
-- `plans/0.6_living_world_roadmap.md` — owner-approved 0.6 design intent.
+- `plans/0.6_living_world_roadmap.md` - owner-approved 0.6 design intent.
 - `plans/content_style_guide.md`, `archive/0.5/plans/0.5_voice_bible.md`, and
-  `plans/0.6_voice_bible_world_register.md` — current player-facing copy and
+  `plans/0.6_voice_bible_world_register.md` - current player-facing copy and
   voice rules.
 
 When these disagree about implemented behavior, current code/data and passing
@@ -29,41 +29,41 @@ recorded source boundary.
 
 ## Maintained feature references
 
-- `code_reference.md` — architecture boundaries, common change traces, and the
+- `code_reference.md` - architecture boundaries, common change traces, and the
   standard enforced for module/function context comments.
-- `game_reference.md` — complete 0.6 game roster, mechanics, actions, source
+- `game_reference.md` - complete 0.6 game roster, mechanics, actions, source
   modules, supporting scripts, and data inventory.
-- `character_authoring.md` — reusable character and encounter authoring.
-- `todo/environment_scenario_slot_instance_rework.md` — implemented
+- `character_authoring.md` - reusable character and encounter authoring.
+- `todo/environment_scenario_slot_instance_rework.md` - implemented
   four-family/scenario-instance placement contract and current owner handoff.
-- `todo/environment_slot_placement_mode.md` — implemented placement-tool,
+- `todo/environment_slot_placement_mode.md` - implemented placement-tool,
   persistence, report, and promotion workflow.
-- `plans/environment_scenario_layout_breakdown.md` — generated 75-context
+- `plans/environment_scenario_layout_breakdown.md` - generated 75-context
   placement checklist; regenerate it whenever either placement authority
   changes and require its `--check` mode before committing.
-- `plans/world_map_design.md` — seeded persistent travel graph contract.
-- `plans/grand_casino_endgame_design.md` — Act 1 Grand Casino ending contract.
-- `plans/coin_pusher_v3_machine_rework_plan.md` — implemented binding design
+- `plans/world_map_design.md` - seeded persistent travel graph contract.
+- `plans/grand_casino_endgame_design.md` - Act 1 Grand Casino ending contract.
+- `plans/coin_pusher_v3_machine_rework_plan.md` - implemented binding design
   for the three deterministic Coin Pusher cabinets.
-- `plans/item_collection_meta_system_plan.md` — implemented local collection,
+- `plans/item_collection_meta_system_plan.md` - implemented local collection,
   housing, loadout, bag, trade-up, and pawn systems plus explicitly deferred
   external inventory work.
-- `plans/skill_based_cheating_methods_plan.md` — shared cheat/advantage action
+- `plans/skill_based_cheating_methods_plan.md` - shared cheat/advantage action
   vocabulary and per-game methods.
-- `plans/video_poker_reference.md` — current video-poker machine rules and UI
+- `plans/video_poker_reference.md` - current video-poker machine rules and UI
   rhythm.
 - `plans/pinball_feature_rework_plan.md` and
-  `plans/pinball_feel_reference.md` — current pinball feature architecture and
+  `plans/pinball_feel_reference.md` - current pinball feature architecture and
   feel contract; their pre-rework sections are retained as rationale.
 - `plans/music_system_rework_plan.md`, `plans/music_listening_pass.md`, and the
-  audio engineer documents — current adaptive-music architecture, listening
+  audio engineer documents - current adaptive-music architecture, listening
   reference, and external delivery contract.
-- `plans/tutorial_completion_report.md` — original tutorial evidence with 0.6
+- `plans/tutorial_completion_report.md` - original tutorial evidence with 0.6
   addenda and the remaining human-only gate.
-- `plans/perf06_1_performance_platform_report.md` — historical non-binding
+- `plans/perf06_1_performance_platform_report.md` - historical non-binding
   Phase 3 ledger. It is retained as measured evidence, not the current release
   boundary or a description of the later accepted performance work.
-- `plans/code_deprecation_unused_audit_2026-10-08.md` — current source-backed
+- `plans/code_deprecation_unused_audit_2026-10-08.md` - current source-backed
   record of the completed unreachable/unused-code cleanup, its verification,
   and the compatibility seams deliberately retained.
 

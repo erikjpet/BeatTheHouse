@@ -1,16 +1,16 @@
-Status: SUPERSEDED — do not claim. The V3 machine rework
+Status: SUPERSEDED - do not claim. The V3 machine rework
 (docs/plans/coin_pusher_v3_machine_rework_plan.md, owner round-6 design session
 2026-08-17) replaces this work. See the pusherv3_* rows on the board.
 Board row: `pusher06_3` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record (fill on completion)
 
-- **Completed:** —
-- **Completion/implementation commits:** —
-- **Verification:** —
-- **Deviations:** —
+- **Completed:** -
+- **Completion/implementation commits:** -
+- **Verification:** -
+- **Deviations:** -
 
-# Agent Prompt — pusher06_3: Jackpot Ridge + The Vault Drop
+# Agent Prompt - pusher06_3: Jackpot Ridge + The Vault Drop
 
 Copy everything below this line into the agent.
 
@@ -26,7 +26,7 @@ Coin Pusher section of `docs/plans/0.6_living_world_roadmap.md`.
 Quarter Falls plays on the real solver. This task builds the other
 two machines. The owner's standing requirement (round-2 decision 5,
 reaffirmed in the rework): the three variations implement
-**completely unique mechanics, bonuses, and strategies** — not one
+**completely unique mechanics, bonuses, and strategies** - not one
 system with three number sets.
 
 The acceptance bar is blunt: **a player must describe these as three
@@ -54,45 +54,45 @@ a pile that does not know about it.
 ## Dependencies
 
 `pusher06_1` and `pusher06_2` DONE. Both variations run on the same
-solver and publish through the same snapshot/event boundary — extend
+solver and publish through the same snapshot/event boundary - extend
 those, never fork them. Verify by code.
 
 ## Task
 
-### 1. Jackpot Ridge — the sequencing pusher
+### 1. Jackpot Ridge - the sequencing pusher
 
 **Feature pucks are physical bodies in the pile**, with their own
 mass and footprint, distinct from coins:
 
-- **Multiplier pucks** — banked by physically pushing them off the
+- **Multiplier pucks** - banked by physically pushing them off the
   ledge; arm ×2/×3/×5 for a defined window.
-- **Lock pucks** — freeze a shelf for a cycle when banked.
-- **Dud pucks** — jam a lane physically until worked loose, changing
+- **Lock pucks** - freeze a shelf for a cycle when banked.
+- **Dud pucks** - jam a lane physically until worked loose, changing
   how the pile builds around them.
-- **Ridge Run** — banking three multipliers within one sweep cycle
+- **Ridge Run** - banking three multipliers within one sweep cycle
   triggers a cascade (back wall double-push for M cycles).
 
 The sub-game is a **physics puzzle**: which puck to free first, what
 the pile does when you free it, and whether a nudge that loosens one
 puck buries another. Ridge is where nudge mastery pays most and where
-the alarm line gets walked closest — its deeper nudge affordance
+the alarm line gets walked closest - its deeper nudge affordance
 (larger tolerance pool, finer force granularity) carries over from
 the shipped design.
 
 Cheat hooks: `weighted_keyring` (heavier nudge within tolerance), the
 Mags dampener (tolerance band up one).
 
-### 2. The Vault Drop — the progressive pusher
+### 2. The Vault Drop - the progressive pusher
 
 **Key fragments are physical objects in the pile.** Fragments pushed
 off the ledge bank toward the machine's vault:
 
-- **The vault round** — a pick-and-reveal bonus behind a door on the
+- **The vault round** - a pick-and-reveal bonus behind a door on the
   playfield. Spend banked fragments on cells holding cash, items,
   fragment refunds, and a **RESET** cell that slams the progressive
   down. Stop anytime; greed is the boss. Cell odds are documented in
-  data and honest — never tuned below the documented floor.
-- **The town-fed progressive** — the meter is TownState-driven,
+  data and honest - never tuned below the documented floor.
+- **The town-fed progressive** - the meter is TownState-driven,
   growing on action boundaries, faster in crowded scenarios at its
   venue, per-machine and persisted with the node. Register it as a
   rumor fact class so the town can talk about a fat vault ("the vault
@@ -107,7 +107,7 @@ Cheat hook: `xray_glasses` peeks exactly one cell, truthfully.
 
 - One solver, one snapshot/event boundary, one nudge system, one
   alarm contract across all three machines. Variation logic is
-  additive modules over the shared core — enforce by structure, and
+  additive modules over the shared core - enforce by structure, and
   say so in your report.
 - The alarm contract is unchanged in all variations: hard alarm locks
   that machine for the night, heat spike, node memory, and **never a
@@ -128,7 +128,7 @@ is meter-dependent and must be documented as such.
 
 - Three genuinely different sub-games. Shared logic with different
   numbers is a failure condition.
-- Bonus pieces are physical and obey the solver — no overlay
+- Bonus pieces are physical and obey the solver - no overlay
   minigames.
 - Authoritative simulation preserved: what physically crosses the
   payout edge is what pays. The `pusher06_1` authority test stays
@@ -152,7 +152,7 @@ is meter-dependent and must be documented as such.
    and faster under a crowded-scenario fixture; meter persists per
    machine.
 3. Distinctness evidence: a written comparison of the three machines'
-   verbs, decisions, and failure modes — plus captures of each — that
+   verbs, decisions, and failure modes - plus captures of each - that
    an outside reader could use to tell them apart.
 4. Determinism across runs, processes, Windows vs Web for both new
    variations.

@@ -1,4 +1,4 @@
-# Art Rework Test 10 — Calibration-Led Daylight
+# Art Rework Test 10 - Calibration-Led Daylight
 
 This pass corrects the daytime direction. The three approved calibration references now define the noon appearance:
 
@@ -19,14 +19,14 @@ The daytime palette additionally preserves strong brightness steps between neigh
 
 ## Files
 
-- `noon/` — 18 calibration-led daylight endpoints.
-- `midnight/` — 18 byte-identical Test 04 neon night masters.
-- `day_night_contact_sheet.png` — paired review sheet.
-- `noon_contact_sheet.png` and `midnight_contact_sheet.png` — phase overviews.
-- `calibration_refs/` — the approved daytime appearance targets.
-- `palette_maps.json` — reversible environment-specific lookup tables.
-- `validation_report.json` — alignment and contrast results.
-- `transition_plan.md` — drift-free animation plan.
-- `build_geometry_locked_day.py` — reproducible daylight build.
+- `noon/` - 18 calibration-led daylight endpoints.
+- `midnight/` - 18 byte-identical Test 04 neon night masters.
+- `day_night_contact_sheet.png` - paired review sheet.
+- `noon_contact_sheet.png` and `midnight_contact_sheet.png` - phase overviews.
+- `calibration_refs/` - the approved daytime appearance targets.
+- `palette_maps.json` - reversible environment-specific lookup tables.
+- `validation_report.json` - alignment and contrast results.
+- `transition_plan.md` - drift-free animation plan.
+- `build_geometry_locked_day.py` - reproducible daylight build.
 
 These are review assets. Production game files have not been overwritten.

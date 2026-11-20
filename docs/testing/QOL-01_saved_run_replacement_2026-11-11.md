@@ -1,4 +1,4 @@
-# QOL-01 — Confirm saved-run replacement
+# QOL-01 - Confirm saved-run replacement
 
 Accepted NEXT **054ab4a0d63cf1399180ebbc087097484637ece1**, containing final code **412cd9a3690fcd678b54a44c9ae191da5fdac1fe**, tree af4d7804414052263712d1ea77baa41af6eab6f2, archive6e7f5ae584e2ae5af757aebc4f58ccffba106adb65fec9f41f9f386045757c74. Final native83/0; final Smoke4pass7fail versus baseline4/7 with no new categories; exact assets10/10 and rendered browser acceptance PASS. Prior two promoted candidates below are retained failed visual attempts, not accepted delivery.
 

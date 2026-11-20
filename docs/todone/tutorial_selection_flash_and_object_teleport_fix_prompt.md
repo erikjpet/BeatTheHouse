@@ -1,7 +1,7 @@
-# Agent Prompt — Fix Selection Flashing + Environment Object Teleporting (do this as part of your current tutorial work)
+# Agent Prompt - Fix Selection Flashing + Environment Object Teleporting (do this as part of your current tutorial work)
 
 Copy everything below this line into the worker agent. This is a follow-up
-to the guided-tutorial rework you are executing — fix these two bugs while
+to the guided-tutorial rework you are executing - fix these two bugs while
 completing that work, since they are most visible during the tutorial's
 highlight-and-select flow.
 
@@ -11,7 +11,7 @@ Two player-visible bugs in the current build, both around highlighting and
 selecting environment objects. Root-cause them precisely (do not guess-patch),
 then fix them cleanly. They are probably the SAME underlying cause.
 
-## Bug 1 — Environment objects change position when selected (the beer
+## Bug 1 - Environment objects change position when selected (the beer
 ## "teleports across the environment")
 
 Selecting/highlighting an object causes environment objects to MOVE to new
@@ -29,7 +29,7 @@ Where to look:
 - The environment generator RANDOMIZES some spot fields with
   `rng.pick_many(...)` (see `environment_instance.gd` `_generated_layout_
   variant` / `ensure_generated_layout`). That randomization is meant to run
-  ONCE at environment generation — NOT on every refresh.
+  ONCE at environment generation - NOT on every refresh.
 - Trace what happens on `focus_interactable_object(...)` and the action-panel
   / world-header refresh path in `scripts/ui/foundation_main.gd`
   (`_refresh_world_header`, `_render_action_panel`, `_rebuild_actions`, the
@@ -44,16 +44,16 @@ subsequent refresh, selection, and focus. Selecting an object must never
 re-run `pick_many`, re-order a spot field, or re-derive a different
 object→spot index. Determinism unchanged.
 
-## Bug 2 — Selection/highlight glitches and flashes
+## Bug 2 - Selection/highlight glitches and flashes
 
 When an object is highlighted/selected, the highlight flashes/glitches. The
-coach/interaction highlight (`scripts/ui/coach_overlay.gd` — `live_anchor_
+coach/interaction highlight (`scripts/ui/coach_overlay.gd` - `live_anchor_
 rect`, `set_live_anchor_rect`, and its `queue_redraw`; dim alpha flips
 between 0.10 and 0.40 on `highlight_emphasis`) is being driven unstably.
 
 Likely causes to confirm:
 - The anchor rect is recomputed repeatedly (every frame or every refresh) and
-  chases a MOVING target (Bug 1) — fixing Bug 1 may remove most of the flash.
+  chases a MOVING target (Bug 1) - fixing Bug 1 may remove most of the flash.
 - The selection state oscillates (select → refresh → re-layout → re-select),
   each cycle firing `queue_redraw` with a changed rect/alpha.
 - The highlight is rebuilt per frame rather than on actual selection change.
@@ -71,16 +71,16 @@ idle-liveness rules apply.
    NO object changes position at any point, and the highlight is steady with
    no flash/flicker. Capture before/after.
 2. Repeat across several environments and both screen sizes; repeat with the
-   tutorial's scripted highlight sequence — nothing teleports, nothing
+   tutorial's scripted highlight sequence - nothing teleports, nothing
    flashes.
-3. Determinism unchanged (object layout is still seeded and reproducible —
+3. Determinism unchanged (object layout is still seeded and reproducible -
    the same seed yields the same fixed positions); no per-frame allocation
    introduced; idle-liveness untouched.
 
 ## Hard rules
 
 - Root cause, not symptom; do not "fix" the flash by hiding the highlight or
-  the teleport by pinning one object — fix the layout-stability and
+  the teleport by pinning one object - fix the layout-stability and
   highlight-update seams properly. Determinism preserved (seeded layout, same
   positions per seed). Zero-copy per-frame; idle-liveness untouched. Tabs,
   typed GDScript, sparse comments; captures under `.tmp/`. Never revert or

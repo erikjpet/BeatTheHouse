@@ -2,7 +2,7 @@
 
 - **Completed:** 2026-07-25
 - **Completion/implementation commits:** `96f08533`, `3d4d5959`, `0b2da530`, `1261de4e`
-- **Verification:** PASS — project validation; all supported FoundationSuite routes; visual QA; performance/liveness; spatial inventory UI and main-integration checks — PASS. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - project validation; all supported FoundationSuite routes; visual QA; performance/liveness; spatial inventory UI and main-integration checks - PASS. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
 # Agent Prompt - Renovate Inventory, Bags, and Item Interaction UI

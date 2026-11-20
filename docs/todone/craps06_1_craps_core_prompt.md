@@ -8,7 +8,7 @@ Board row: `craps06_1` in `docs/todo/README_0_6_board.md`
 - **Verification:** PM line-by-line scope/design review; project validation; dedicated Craps, systems, and UI suites; 10-seed determinism (370 checkpoints, hash `2195661966`); million-roll RTP/fairness harness; canonical visual QA; and five-image focused table/liveness/reduced-motion review all PASS on the integrated tree.
 - **Deviations:** None. The scenario modifier seam is consumed through the shipped environment API; `craps06_2`, crew practice, and heist consumers remain intentionally downstream.
 
-# Agent Prompt — 0.6 craps06_1: Craps Core (Grand Casino Table Game)
+# Agent Prompt - 0.6 craps06_1: Craps Core (Grand Casino Table Game)
 
 Copy everything below this line into the agent.
 
@@ -22,7 +22,7 @@ through `GameModule.apply_result()`; Grand Casino table games pay in
 CHIPS via the gc05_2 money seam (`is_grand_casino_environment()` +
 game family). Study `scripts/games/blackjack.gd` and baccarat as the
 table-game reference. Binding design contract:
-`docs/plans/0.6_living_world_roadmap.md` — Pillar 4 "Craps". This is
+`docs/plans/0.6_living_world_roadmap.md` - Pillar 4 "Craps". This is
 the largest single game build of 0.6. This prompt is self-contained
 for rules and scope.
 
@@ -51,11 +51,11 @@ env06_1 has landed; otherwise leave the seam and log it.
   craps. Bets: pass/don't pass (with come-out flow), come/don't come,
   free odds behind pass/come (data-tuned max odds multiple), place
   bets (4,5,6,8,9,10), field as the single side-bet concession.
-  **No** hardways/props beyond field in this slice — the bet surface
+  **No** hardways/props beyond field in this slice - the bet surface
   must stay readable at 1280×720.
 - Multi-roll point flow with a persistent table state (point, working
   bets, odds) across rolls; the shooter is the player (NPC shooters
-  are future space — leave no half-built stubs).
+  are future space - leave no half-built stubs).
 - Payouts at true odds for odds bets, standard for the rest; all
   numbers in `data/games/games.json` config, never hardcoded. House
   edge documented per bet in the data file comments.
@@ -78,7 +78,7 @@ env06_1 has landed; otherwise leave the seam and log it.
 ### 3. Cheat line
 
 - **Dice setting**: a skill-window mechanic (timing meter on the
-  throw) that biases — never fixes — the distribution, gated by a
+  throw) that biases - never fixes - the distribution, gated by a
   practice flag (`craps_setting_trained`, granted by the Practice Rig
   in crew06_6; until then obtainable via a data-flagged item route so
   the mechanic is testable). Suspicion cost per use scales with
@@ -87,7 +87,7 @@ env06_1 has landed; otherwise leave the seam and log it.
   (both shipped items) through the existing skill-cheat pattern
   (blackjack count-challenge is the model): a challenge window, heat
   on detection, confiscation on failure. Loaded-dice item tier itself
-  arrives via content06_1/Mags — wire the item hooks data-driven.
+  arrives via content06_1/Mags - wire the item hooks data-driven.
 
 ### 4. Fairness + RTP harness
 
@@ -113,7 +113,7 @@ env06_1 has landed; otherwise leave the seam and log it.
 ## QA / Tests
 
 1. Rules matrix: come-out naturals/craps, point make/seven-out,
-   come-bet lifecycle, odds on/off, place-bet payouts — table-driven
+   come-bet lifecycle, odds on/off, place-bet payouts - table-driven
    unit tests per bet type.
 2. RTP harness within documented tolerance per bet over ≥1M seeded
    rolls (headless).

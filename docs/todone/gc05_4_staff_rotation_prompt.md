@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-16
 - **Completion/implementation commits:** `3889b4ba`
-- **Verification:** PASS — tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_visual_qa.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_visual_qa.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — 0.5 Slice 4: Casino Memory + Daily Staff Rotation
+# Agent Prompt - 0.5 Slice 4: Casino Memory + Daily Staff Rotation
 
 Copy everything below this line into the agent.
 
@@ -16,7 +16,7 @@ roguelike (Web/itch.io + Windows, 1280×720). Data-driven content; seeded
 RNG via `RngStream` forks; day rollover already exists in the clock
 system (`run_state.gd` day rollover helpers). This file is
 self-contained; the binding design contract is
-`docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` section 4 — read it first.
+`docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` section 4 - read it first.
 Requires slices 1-3 landed; re-verify their actual code.
 
 ## Task
@@ -24,19 +24,19 @@ Requires slices 1-3 landed; re-verify their actual code.
 1. **Within-run memory, surfaced.** The casino already persists
    attention/evidence/counters across visits. Surface it: on re-entry,
    a short authored line reflects what the staff remembers (e.g. a
-   pending review, prior showdown pressure, high prior heat) — pick
+   pending review, prior showdown pressure, high prior heat) - pick
    from a small data-authored line table keyed by the dominant
    remembered state. No new state; presentation of existing flags.
 2. **Daily soft reset (seeded).** On in-run day rollover, roll a seeded
    per-day staff assignment for the Grand Casino:
    - Dealer identity per table MAY change (visual identity + name line;
      a fresh dealer resets any per-table familiarity/tell state that
-     exists — audit what per-dealer state the table games actually
+     exists - audit what per-dealer state the table games actually
      track and reset exactly that; do not invent new familiarity
      mechanics in this slice).
    - The bartender MAY change (resets bar comp state if any exists).
    - The rival-cheater cast rerolls (slice 3's daily cast already keys
-     by day — verify and align).
+     by day - verify and align).
    - "Or not": each rotation is an independent seeded chance *(tunable,
      propose 50%)*; some days nothing changes.
    - **Rourke and Linda NEVER rotate.**

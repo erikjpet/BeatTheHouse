@@ -1,7 +1,7 @@
-Status: DONE — accepted by the exact-tree Family 2 closeout on 2026-09-03
+Status: DONE - accepted by the exact-tree Family 2 closeout on 2026-09-03
 Board row: `world06_5` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — 0.6 world06_5: Coordinated Plays and Police Sweep Encounters
+# Agent Prompt - 0.6 world06_5: Coordinated Plays and Police Sweep Encounters
 
 Copy everything below this line into the agent.
 
@@ -19,7 +19,7 @@ the `world06_1` adapter contract and the `game06_1` ritual contract.
 
 ## Why this rework exists
 
-The five plays — spotter, distraction, big player, chip dump, table flood — are
+The five plays - spotter, distraction, big player, chip dump, table flood - are
 the moment the crew is physically in the room with you, and they currently
 present as an action that applies a modifier and prints a voice line. The Police
 Sweep walks the whole map with a hidden deterministic track and a costed
@@ -45,7 +45,7 @@ that ordering with the integrator. You own `crew_play_model.gd`,
   `cash_cost`, `cooldown_boundaries`, `window_boundaries`,
   `detection_chance_percent`, `detection_heat`, the effect payloads, the
   `active_window_cap` and the `pairing_exceptions`.
-- The chip dump ships as a player-funded transfer — `transfer_amount` 40,
+- The chip dump ships as a player-funded transfer - `transfer_amount` 40,
   `transfer_fee` 6, direction `cash_to_chips`. That is the binding funding model;
   the old open question is answered by shipped data. Stage it as money physically
   changing hands and never let it create value.
@@ -62,7 +62,7 @@ that ordering with the integrator. You own `crew_play_model.gd`,
   row changes the encounter, not the track.
 - An encounter becomes a staged street moment with real positions, real exits, a
   readable officer presence and consequences that follow from where you are and
-  what you are carrying — including delivery cargo from `world06_2`.
+  what you are carrying - including delivery cargo from `world06_2`.
 - The costed ladder keeps its landed costs and outcomes. Each rung must be
   distinguishable in play, not only in the resulting number.
 - Swept-window looseness keeps its contract, and the aftermath of a sweep
@@ -80,7 +80,7 @@ that ordering with the integrator. You own `crew_play_model.gd`,
 
 ## 4. Persistence and honesty
 
-- Every effect fires exactly once across save, exit, travel, revisit and expiry —
+- Every effect fires exactly once across save, exit, travel, revisit and expiry -
   play uses, costs, detection, heat, sweep encounter costs and aftermath.
 - Save and revisit mid-play-window and mid-encounter must restore a legal state
   with no replayed reward, dialogue, audio or one-shot effect.

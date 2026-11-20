@@ -641,7 +641,7 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 			"short_description": "A reseller camps beside the empty scratch-ticket machine.",
 			"enabled": true,
 			"action_summary": "Ask about the machine's restock.",
-			"effect_summary": "He may know the next release time—or pretend he does not.",
+			"effect_summary": "He may know the next release time-or pretend he does not.",
 			"risk_summary": "Every slot is empty while he is watching it.",
 			"cost_summary": "",
 			"dialogue_id": dialogue_id,

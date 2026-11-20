@@ -1,4 +1,4 @@
-# Art Rework Test 04 — Complete Environment Pass
+# Art Rework Test 04 - Complete Environment Pass
 
 This review set contains a unique candidate background for every one of the game's 18 environment archetypes. The direction combines a restrained city-pop landscape grammar with a brighter Miami-night/vaporwave palette while keeping the current gameplay coordinates and animated overlay system intact.
 
@@ -36,8 +36,8 @@ This review set contains a unique candidate background for every one of the game
 
 ## Review materials
 
-- `environments/` — the 18 candidate backgrounds
-- `in_game_previews/` — each candidate rendered in the current game with live overlays
-- `reference_capture/` — the previous runtime layouts used for the placement audit
-- `art_direction_deep_dive.md` — research findings and the translated visual rules
-- `prompts.md` — the shared generation brief and environment prompt set
+- `environments/` - the 18 candidate backgrounds
+- `in_game_previews/` - each candidate rendered in the current game with live overlays
+- `reference_capture/` - the previous runtime layouts used for the placement audit
+- `art_direction_deep_dive.md` - research findings and the translated visual rules
+- `prompts.md` - the shared generation brief and environment prompt set

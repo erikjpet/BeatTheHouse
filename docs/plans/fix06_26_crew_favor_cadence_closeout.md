@@ -1,4 +1,4 @@
-# fix06_26 — Crew favor cadence closeout
+# fix06_26 - Crew favor cadence closeout
 
 Status: **DONE (timeboxed contained wiring fix)**
 

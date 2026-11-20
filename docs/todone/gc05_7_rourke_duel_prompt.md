@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-16
 - **Completion/implementation commits:** `d10efea3`
-- **Verification:** PASS — tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_performance_probe.ps1 -RequireGodot; tools/foundation_visual_qa.ps1; tools/foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100; tools/foundation_mouse_playtest.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_performance_probe.ps1 -RequireGodot; tools/foundation_visual_qa.ps1; tools/foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100; tools/foundation_mouse_playtest.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — 0.5 Slice 7: The Rourke Duel — Playable Boss Finale + Outcome Ladder
+# Agent Prompt - 0.5 Slice 7: The Rourke Duel - Playable Boss Finale + Outcome Ladder
 
 Copy everything below this line into the agent.
 
@@ -18,8 +18,8 @@ system); seeded RNG only; boss endgame contract in
 `docs/plans/grand_casino_endgame_design.md` (ids binding). This file is
 self-contained; the design contract is
 `docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` section 7 (phase 4 +
-outcomes) — read both first. Requires slices 1-6 landed; consumes
-slice 6's `grand_casino_duel_terms`. This is the LARGEST slice — a
+outcomes) - read both first. Requires slices 1-6 landed; consumes
+slice 6's `grand_casino_duel_terms`. This is the LARGEST slice - a
 first-class gameplay element, owner-designated.
 
 ## Task
@@ -32,41 +32,41 @@ while active (existing `grand_casino_showdown_active` semantics).
 
 ### 2. Heads-up blackjack against Rourke (owner-locked game choice)
 
-Build the duel as a BOSS VARIANT of the blackjack module — no new game
+Build the duel as a BOSS VARIANT of the blackjack module - no new game
 module; a data-driven boss configuration plus a boss layer:
-- **Rourke deals and plays across the table** — rendered character,
+- **Rourke deals and plays across the table** - rendered character,
   authored dialogue barks tied to game states (his reads, his
   needling), reusing the table-character pipeline.
 - **Count-challenge foundation**: the duel builds on blackjack's
-  existing count-challenge/skill-cheat infrastructure — the count, the
+  existing count-challenge/skill-cheat infrastructure - the count, the
   skill timings, and the player's cheat toolkit all function here.
-- **Rourke cheats too**: authored dealer-side edges (data-driven set —
+- **Rourke cheats too**: authored dealer-side edges (data-driven set -
   e.g. deck stacking on a seeded schedule, a hole-card swap tell) that
   the player can CATCH AND CALL OUT via a challenge action; a correct
   call strips the edge and swings momentum; a false accusation costs.
-- **The player's skill-cheats are available** — but detection
+- **The player's skill-cheats are available** - but detection
   sensitivity here is the toughest in the game, scaled by
   `duel_terms` (phase 2 handicaps, phase 3 performance).
-- **Stakes structure**: chip-stack duel — starting stacks, forced
+- **Stakes structure**: chip-stack duel - starting stacks, forced
   antes, and win condition (take Rourke's stack / survive N hands
-  above a floor — pick the cleanest, justify) all from `duel_terms`
+  above a floor - pick the cleanest, justify) all from `duel_terms`
   *(tunable data)*. Deterministic seeded forks for every draw.
 
 ### 3. The outcome ladder (owner-locked)
 
 Replace the slice 6 stand-in resolution entirely. Duel result + margin
 maps to exactly three endings:
-1. **Walk out clean** — decisive win: the player may exit AND cash out
+1. **Walk out clean** - decisive win: the player may exit AND cash out
    at the Cage; run ends as victory,
    `demo_victory_route = "pit_boss_showdown"` (id preserved).
-2. **Shown the door** — narrow result: allowed to LEAVE but the Cage is
-   closed to them — the run ends SUCCESSFULLY with chips UNCASHED.
+2. **Shown the door** - narrow result: allowed to LEAVE but the Cage is
+   closed to them - the run ends SUCCESSFULLY with chips UNCASHED.
    Record a distinct sub-route (`demo_victory_route =
    "pit_boss_showdown"` preserved for compatibility + new flag
    `grand_casino_walked_with_chips = true` and the uncashed chip amount)
-   — slice 8 converts those chips to a meta item. Score treats uncashed
+   - slice 8 converts those chips to a meta item. Score treats uncashed
    chips at reduced value *(tunable)*.
-3. **Taken out back** — loss: `fail_run("casino_taken_out_back", ...)`
+3. **Taken out back** - loss: `fail_run("casino_taken_out_back", ...)`
    (id preserved).
 Margin thresholds live in `duel_terms`/objective data. Record the
 ladder outcome in the existing showdown margin/outcome flags for the
@@ -84,15 +84,15 @@ lost with the run (slice 8 may revisit).
   identical. No wall-clock in simulation.
 - Zero-copy per-frame; surface snapshots follow the allocation-free
   idle contract; idle liveness untouched. The duel surface must pass
-  the performance probe — add it as a measured surface with a budget.
+  the performance probe - add it as a measured surface with a budget.
 - Canonical ids preserved; every new flag serializes; save mid-duel
   restores the hand state faithfully (blackjack session state already
-  serializes — extend, don't fork).
+  serializes - extend, don't fork).
 - Style: tabs, typed GDScript, sparse comments; barks per
   `docs/plans/content_style_guide.md`; `.tmp/` reports. Suite timeout =
   max(300s, baseline×1.5).
 
-## QA / Tests (extensive — boss finale)
+## QA / Tests (extensive - boss finale)
 
 1. Duel determinism: same seed + same choices → identical hands, edges,
    and outcome across replays and across save/load mid-duel.
@@ -110,7 +110,7 @@ lost with the run (slice 8 may revisit).
    duel) for each ending; clean route regression untouched.
 7. Perf probe green with the duel surface budgeted; strict mouse
    playtest run passes.
-8. Manual playtest: win decisively, scrape the door ending, and lose —
+8. Manual playtest: win decisively, scrape the door ending, and lose -
    each must FEEL like the plan's fantasy (report impressions).
 
 ## Gates

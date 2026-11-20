@@ -85,7 +85,7 @@ func set_report(model: Dictionary) -> void:
 	outcome_where.text = str(outcome.get("where", "Unknown room"))
 	var meta_reward := _dict(model.get("meta_reward", {}))
 	outcome_meta_reward.visible = bool(meta_reward.get("visible", false))
-	outcome_meta_reward.text = "%s — %s" % [str(meta_reward.get("title", "")), str(meta_reward.get("detail", ""))]
+	outcome_meta_reward.text = "%s - %s" % [str(meta_reward.get("title", "")), str(meta_reward.get("detail", ""))]
 	outcome_meta_reward.tooltip_text = outcome_meta_reward.text
 	_set_icon(outcome_icon, str(outcome.get("icon_path", "")))
 	var score := _dict(model.get("score", {}))

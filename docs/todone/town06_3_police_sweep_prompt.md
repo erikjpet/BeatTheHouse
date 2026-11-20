@@ -8,7 +8,7 @@ Board row: `town06_3` in `docs/todo/README_0_6_board.md`
 - **Verification:** PM scope/design review PASS; integrated validation, Foundation systems + UI, 10-seed/320-checkpoint determinism (`1234044898`), visual QA, Police Sweep contract suite, and the one-run Wave B production composition probe PASS.
 - **Deviations:** None. The player-facing, source-owned `Wait out the sweep` action is the production proof for bounded worst-case escape; it cannot bypass foreign travel locks.
 
-# Agent Prompt — 0.6 town06_3: The Police Sweep (Full Feature)
+# Agent Prompt - 0.6 town06_3: The Police Sweep (Full Feature)
 
 Copy everything below this line into the agent.
 
@@ -16,7 +16,7 @@ Copy everything below this line into the agent.
 
 You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript
 casino roguelike (Web/itch.io + Windows, 1280×720). Binding design
-contract: `docs/plans/0.6_living_world_roadmap.md` — Pillar 2 "The
+contract: `docs/plans/0.6_living_world_roadmap.md` - Pillar 2 "The
 Police Sweep" (owner-locked: ships fully fleshed in 0.6.0). The sweep
 is a first-class system, not an event. This prompt is self-contained
 for rules and scope.
@@ -36,14 +36,14 @@ for rules and scope.
 ## Dependencies
 
 `town06_1` (happenings framework) + `town06_2` (rumor registry, map
-heard-tier) DONE — verify landed APIs by code.
+heard-tier) DONE - verify landed APIs by code.
 
 ## Task
 
 ### 1. The track
 
 - The sweep is a happenings-framework citizen: seeded per run (not
-  every run — data-tuned probability), spawning a sweep unit that
+  every run - data-tuned probability), spawning a sweep unit that
   walks a deterministic path across the world graph, one node per N
   action boundaries (data-tuned dwell). Path preference: tier-1 →
   tier-2 order with seeded variation; **never enters `grand_casino`**;
@@ -65,13 +65,13 @@ heard-tier) DONE — verify landed APIs by code.
   live-update).
 - **Crew intel seam**: expose `sweep_status()` (current node, heading)
   behind a capability flag that crew06_5 wires to Switch at
-  `associate+` — API only this slice.
+  `associate+` - API only this slice.
 
 ### 3. Being caught in it
 
 - Sweep entering the player's node triggers the sweep encounter:
   severity scales with heat band, carried contraband (cheat-flagged
-  items; the item schema's risk flags exist — extend with a
+  items; the item schema's risk flags exist - extend with a
   `contraband` marker where missing; Numbers slips get theirs in
   crew06_3), and active street debts. Outcome ladder (data-tuned):
   pass-over → shakedown fee → contraband confiscation → short
@@ -86,7 +86,7 @@ heard-tier) DONE — verify landed APIs by code.
   window (security strictness −1 band, cheat windows open, pusher
   alarm tolerance +1 band via the security-override channel).
 - Punchline: the sweep sees only layer 1 unless town heat exceeds a
-  data threshold (then a tense L2 near-miss event fires — content
+  data threshold (then a tense L2 near-miss event fires - content
   included).
 - Seams left registered but inert until their owners land: Knuckles
   stash (crew06_5/6), Numbers pause (crew06_3), Streets patrol
@@ -94,7 +94,7 @@ heard-tier) DONE — verify landed APIs by code.
 
 ## Hard rules
 
-- Determinism: spawn, path, dwell, encounters — all seeded, all
+- Determinism: spawn, path, dwell, encounters - all seeded, all
   boundary-driven; the map marker's staleness counts boundaries.
 - The sweep must be worth reading: swept-window and adjacency pressure
   are real, tested effects, not flavor.

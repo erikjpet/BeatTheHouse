@@ -1,6 +1,6 @@
 # teach06_2 dependency-complete lesson classification
 
-Status: **FINAL — accepted before lesson authoring**
+Status: **FINAL - accepted before lesson authoring**
 
 Exact classification root: `039e3326d7f09ab911f8903adc03b94c2cc12e4f`
 
@@ -49,14 +49,14 @@ Three other contextual tips are also stale on the dependency-complete root:
 
 ## Evidence key
 
-- **CAT** — exact entry in `data/tutorial/lessons.json`, at the line shown.
-- **GUIDED** — one of the frozen 56 guided IDs in
+- **CAT** - exact entry in `data/tutorial/lessons.json`, at the line shown.
+- **GUIDED** - one of the frozen 56 guided IDs in
   `scripts/tests/foundation/onboarding_06_contract.gd`; its target/action is also
   traversed by the existing tutorial defect checks.
-- **PUBLIC** — normal-run trigger is derived only from the public coach context in
+- **PUBLIC** - normal-run trigger is derived only from the public coach context in
   `scripts/ui/coach_overlay.gd` and is covered by the positive/negative matrix.
-- **LIVE** — named anchor/action remains present on the exact classification root.
-- **GAP** — current lesson remains correct but does not satisfy all new section 2
+- **LIVE** - named anchor/action remains present on the exact classification root.
+- **GAP** - current lesson remains correct but does not satisfy all new section 2
   teaching requirements; implementation must extend or add a lesson after this
   classification commit.
 

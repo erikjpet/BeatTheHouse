@@ -1,7 +1,7 @@
 Status: DONE
 Board row: `fix06_14` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — fix06_14: Coin Pusher COLLECT/reinstall production-clock evidence
+# Agent Prompt - fix06_14: Coin Pusher COLLECT/reinstall production-clock evidence
 
 Work from exact current `main` only after `fix06_13` lands or parks with its
 retained shipped-Web evidence. This row owns the production-clock/evidence
@@ -50,7 +50,7 @@ window and leave two new tray bodies. A fresh reinstall likewise advances to
   migration change.
 - Preserve all red and green results and exact build identity.
 
-## Current-main qualification closeout — 2026-08-27
+## Current-main qualification closeout - 2026-08-27
 
 Exact candidate `dba07c1a5c675e07cb9a3dc2956889d67086df2a` consumed one
 fresh-export Chrome 151 CPU-4 qualification on `DESKTOP-1950ULQ`; no same-head
@@ -92,7 +92,7 @@ At that stage fix06_14 was row-owned green but remained IN PROGRESS pending
 independent documentation review, main landing and proportionate post-land
 verification. The completed results follow.
 
-## Main landing and post-land verification — 2026-08-27
+## Main landing and post-land verification - 2026-08-27
 
 Main merge `616b5a76eceaf0133e4ac70b34ca5b13e39b30df` has parents
 `7cd6a5cb7a7c6c20875587bb6dade08bf221cbdc` and

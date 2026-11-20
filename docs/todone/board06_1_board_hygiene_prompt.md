@@ -11,7 +11,7 @@ Board row: `board06_1` in `docs/todo/README_0_6_board.md`
 - **Preservation:** 170/170 Discovery & Decision entries and 124/124 historical Work entries were preserved. `scripts/core/streets_run_model.gd.uid` was not deleted: it is ignored owner state present only in the primary worktree. `review_artifacts/` and every other owner-authored or untracked path were untouched. Evidence-preserving cleanup remains pending.
 - **Deviations:** The prompt requested deletion of the ignored orphan UID, but landing intentionally preserved the owner's ignored primary-worktree file under the landing program's stronger owner-artifact custody rule. No product or data file landed.
 
-# Agent Prompt — 0.6 board06_1: Board and Repository Hygiene
+# Agent Prompt - 0.6 board06_1: Board and Repository Hygiene
 
 Copy everything below this line into the agent.
 
@@ -60,7 +60,7 @@ close the ones where the code is unambiguous.
 - The `pusher06_0`, `pusher06_1`, `pusher06_3` and `pusher06_4` rows are
   superseded by the V3 machine rework and marked "Do not claim". Move them into
   an explicit archived section so the live table contains only claimable work.
-- `art06_1` is CLOSED — FALSE PREMISE. Keep its finding, which is genuinely
+- `art06_1` is CLOSED - FALSE PREMISE. Keep its finding, which is genuinely
   useful (every environment is procedurally drawn; `visual_context.asset_path`
   is metadata the canvas never consumes), but move it out of the live table.
 - Do not delete any row, any note or any log entry. Everything moves, nothing
@@ -77,13 +77,13 @@ close the ones where the code is unambiguous.
   index at the top of each companion so a reader can find a row's history
   without reading the whole file.
 - Update the board protocol section so future agents know where to append. The
-  protocol must stay binding and must still be read in full by every agent —
+  protocol must stay binding and must still be read in full by every agent -
   splitting the file must not become an excuse to skip it.
 
 ## 4. Reconcile the new program sections
 
-The three new program sections — Family 1 (`game06_*`), Family 2 (`world06_*`)
-and Family 3 — were added to the board when the program was authored. Reconcile
+The three new program sections - Family 1 (`game06_*`), Family 2 (`world06_*`)
+and Family 3 - were added to the board when the program was authored. Reconcile
 rather than recreate them:
 
 - Verify every row's id, prompt filename, dependencies and unblocks against

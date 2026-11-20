@@ -1,6 +1,6 @@
-# rw06_2 Crew heist ending route — first-pass replay
+# rw06_2 Crew heist ending route - first-pass replay
 
-> **Historical verification notes — not the player walkthrough.** This file
+> **Historical verification notes - not the player walkthrough.** This file
 > contains obsolete Crew-rank/setup assumptions. For the current,
 > seed-independent route and recovery policy, use
 > [0.6.0 Random-Seed Player and Agent Runbook](../0.6.0_ending_walkthrough.md).

@@ -1,4 +1,4 @@
-# BTH-SCENARIO-WEDDING-001 — remaining visible acceptance
+# BTH-SCENARIO-WEDDING-001 - remaining visible acceptance
 
 Date: 2026-11-12. Source starting head `114aa355853ff37a7f2c86b61ebacb2c41298e08`.
 Existing fix: `1c201c9e341ac6f3e068c4d498fd00bf7298880e`.

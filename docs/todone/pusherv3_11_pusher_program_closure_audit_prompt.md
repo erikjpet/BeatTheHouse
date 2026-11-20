@@ -1,7 +1,7 @@
-Status: DONE — complete V3 program audit accepted and archived 2026-09-02
+Status: DONE - complete V3 program audit accepted and archived 2026-09-02
 Board row: `pusherv3_11` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — 0.6 pusherv3_11: Coin Pusher V3 Program Closure Audit
+# Agent Prompt - 0.6 pusherv3_11: Coin Pusher V3 Program Closure Audit
 
 Copy everything below this line into the agent.
 
@@ -24,9 +24,9 @@ runner, and `scripts/tests/foundation/check_coin_pusher.gd`.
 ## Why this row exists
 
 `pusherv3_4` was accepted as "coin pusher closure". Six further rows were then
-appended — contact piles and visible exits, plinko bounce and entry boards,
+appended - contact piles and visible exits, plinko bounce and entry boards,
 played-in opening stock, coin scale and edge ramp, contact bed and opaque edge,
-and opening plinko nozzles and stack physics — each responding to an owner
+and opening plinko nozzles and stack physics - each responding to an owner
 observation and each verified on its own. No row has ever audited the V3 machine
 as a whole program against its binding contracts.
 
@@ -37,17 +37,17 @@ owned.
 
 ## 1. Contract fidelity
 
-- Map every requirement in the V3 machine rework plan and its amendments —
+- Map every requirement in the V3 machine rework plan and its amendments -
   including Amendment 6.1's corrected `FACE_EXTENDED_Y` / `FACE_RETRACTED_Y`
-  geometry and Amendment 6.2's rear-fed entry rule — to the shipped
+  geometry and Amendment 6.2's rear-fed entry rule - to the shipped
   implementation. Report any requirement that is unimplemented, partially
   implemented, or implemented differently from the amended contract.
 - Map roadmap Pillar 4 the same way, with particular attention to the universal
   nudge system: force, aim and timing; the tell ladder; alarm leading to machine
   lockdown, a heat spike and node memory; and no forced exit. The nudge and alarm
-  vocabulary is present in the shipped solver — confirm it is complete, reachable
+  vocabulary is present in the shipped solver - confirm it is complete, reachable
   in play, and behaving as the roadmap describes, not merely present as symbols.
-- Confirm all three variations — Quarter Falls, Jackpot Ridge, The Vault Drop —
+- Confirm all three variations - Quarter Falls, Jackpot Ridge, The Vault Drop -
   ship their documented mechanics, including the owner rulings that a banked lock
   puck preserves the armed multiplier against expiry for one full 240-tick stroke
   without steering the motor, and that Vault Drop's physical coin-to-tray EV band
@@ -88,7 +88,7 @@ owned.
 
 - State which parts of `pusher06_2`'s presentation and audio contract still bind
   after V3, and which were superseded. The board currently leaves this ambiguous.
-- Confirm the superseded `pusher06_0/1/3/4` rows are correctly retired — coordinate
+- Confirm the superseded `pusher06_0/1/3/4` rows are correctly retired - coordinate
   with `board06_1` rather than editing the board structure yourself.
 - List every owner ruling recorded for the pusher and confirm each is implemented
   as ruled.
@@ -101,7 +101,7 @@ per requirement, the full economics and parity table, the code-health findings,
 and the board reconciliation.
 
 Findings are routed as `fix06_*` rows or returned to the owning row. Do not fix
-gameplay inside this audit branch — an audit that rewrites the thing it is
+gameplay inside this audit branch - an audit that rewrites the thing it is
 auditing has destroyed its own evidence.
 
 This row remains TODO or BLOCKED if any documented EV band is missed, if parity
@@ -123,7 +123,7 @@ and exact commit on the board.
   exact-head owner-directed technical acceptance at implementation commit
   `6af645b56108a758df2cb0264bbbb10ecd3b624e`; this dependent audit is DONE.
 
-## Final process disposition — 2026-09-02
+## Final process disposition - 2026-09-02
 
 The owner directed this single session to complete both rows. Codex therefore
 performed the exact-head self-review and maintained gates in lieu of a separate

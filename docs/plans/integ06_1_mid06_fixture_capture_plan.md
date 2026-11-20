@@ -1,6 +1,6 @@
 # integ06_1 mid-0.6 historical fixture capture plan
 
-Status: **READY TO RUN — no owner-authored mid-0.6 saves were found**
+Status: **READY TO RUN - no owner-authored mid-0.6 saves were found**
 
 This plan closes the constructible half of the mid-0.6 migration requirement
 without relabeling generated validation output as player evidence. The fixtures

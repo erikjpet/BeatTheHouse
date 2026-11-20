@@ -1,6 +1,6 @@
-# rw06_2 clean ending route — first-pass replay
+# rw06_2 clean ending route - first-pass replay
 
-> **Historical verification notes — not the player walkthrough.** For the
+> **Historical verification notes - not the player walkthrough.** For the
 > current, seed-independent route and recovery policy, use
 > [0.6.0 Random-Seed Player and Agent Runbook](../0.6.0_ending_walkthrough.md).
 

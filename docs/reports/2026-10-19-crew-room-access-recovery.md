@@ -1,4 +1,4 @@
-# Crew Back Room access and recovery — 2026-10-19
+# Crew Back Room access and recovery - 2026-10-19
 
 User report: entered Crew Back Room without credentials, then saw an empty room
 with no objects or exit. No user save was read, modified, or reset for this fix.

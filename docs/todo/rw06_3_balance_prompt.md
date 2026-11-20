@@ -1,6 +1,6 @@
-# rw06_3 — Balance on the three ending routes
+# rw06_3 - Balance on the three ending routes
 
-Status: **HISTORICAL / IMPLEMENTED — DO NOT LAUNCH.** The three ending routes
+Status: **HISTORICAL / IMPLEMENTED - DO NOT LAUNCH.** The three ending routes
 and their accepted 0.6 balance are incorporated into current `main`; later
 tuning ideas are preserved in `../plans/0.6.1_backlog.md`.
 

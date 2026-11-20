@@ -63,10 +63,10 @@ Their colors can respond to `night_weight`, but their locations and animation cl
 
 After endpoint approval, create four additional aligned states from the same noon master:
 
-1. `dawn` — cool navy shadows, pale cyan sky, warm practical lights still active
-2. `morning` — softer daylight and longer shadows
-3. `golden_hour` — coral/amber directional light with reduced neon
-4. `dusk` — cobalt sky, magenta horizon, practical lights activating
+1. `dawn` - cool navy shadows, pale cyan sky, warm practical lights still active
+2. `morning` - softer daylight and longer shadows
+3. `golden_hour` - coral/amber directional light with reduced neon
+4. `dusk` - cobalt sky, magenta horizon, practical lights activating
 
 These must be palette-and-lighting edits of the approved master, never independent architectural redraws. A later timeline can blend noon → golden hour → dusk → midnight and midnight → dawn → morning → noon.
 

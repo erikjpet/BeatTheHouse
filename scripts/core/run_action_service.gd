@@ -692,14 +692,14 @@ func _inventory_behavior_summary(item_class: String, is_active: bool, selected: 
 	if not is_active:
 		match item_class.strip_edges().to_lower():
 			"permanent":
-				return "Permanent passive — works while carried and does not use the active-item slot."
+				return "Permanent passive - works while carried and does not use the active-item slot."
 			"container":
-				return "Storage — place it at home to add inventory spaces."
+				return "Storage - place it at home to add inventory spaces."
 			_:
-				return "Passive — works while carried and does not use the active-item slot."
+				return "Passive - works while carried and does not use the active-item slot."
 	if item_class.strip_edges().to_lower() == "consumable":
-		return "Active consumable — its effect is spent when used."
-	return "Active item — equipped in the one active-item slot." if selected else "Active item — select Equip to place it in the one active-item slot."
+		return "Active consumable - its effect is spent when used."
+	return "Active item - equipped in the one active-item slot." if selected else "Active item - select Equip to place it in the one active-item slot."
 
 
 func portable_ticket_cash_options(lender_id: String = SALS_PAWN_COUNTER_ID) -> Array:

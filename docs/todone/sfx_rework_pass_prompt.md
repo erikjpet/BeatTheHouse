@@ -1,4 +1,4 @@
-# Agent Prompt — Full SFX Rework Pass (Casino-Smooth, Procedural)
+# Agent Prompt - Full SFX Rework Pass (Casino-Smooth, Procedural)
 
 Copy everything below this line into the worker agent.
 
@@ -15,13 +15,13 @@ in this pass (the audio engineer is on hold; new music is separate).
 
 ## The problem
 
-The synthesized SFX read as harsh/beepy — thin, ringy, metallic edges,
+The synthesized SFX read as harsh/beepy - thin, ringy, metallic edges,
 rough envelopes. A casino floor should sound satisfying: warm chip clacks,
 soft card riffles, pleasant win chimes, tactile button presses, smooth
-reel motion — sounds you enjoy hearing hundreds of times a run. Right now
+reel motion - sounds you enjoy hearing hundreds of times a run. Right now
 they grate.
 
-## Scope — every SFX family, re-synthesized
+## Scope - every SFX family, re-synthesized
 
 Audit EVERY family event and `_sample_*` synth function in
 `sfx_player.gd`. The families include (confirm the full list from code):
@@ -32,17 +32,17 @@ peek, drink, and the per-family variants (`*_buffalo`, `*_digital`,
 `*_pinball`, `*_event`). Rework each toward the casino-smooth target below.
 Nothing metallic or beepy should survive.
 
-## The sonic target (design philosophy — apply consistently)
+## The sonic target (design philosophy - apply consistently)
 
 - **Warm, not ringy.** Replace thin ringing tones and harsh partials with
   rounded, band-limited timbres; soften attack transients; roll off harsh
   high partials; add gentle body. No raw square/harsh-saw beeps as the
   lead character of a cue.
 - **Tactile, not clicky-cheap.** Chips, cards, and buttons should feel
-  physical — a chip clack has weight and a short warm decay; a card riffle
+  physical - a chip clack has weight and a short warm decay; a card riffle
   is soft and papery; a button is a satisfying muted press.
 - **Pleasant repetition.** These play constantly; every cue must be
-  enjoyable on the hundredth hear — no fatiguing ring, no piercing
+  enjoyable on the hundredth hear - no fatiguing ring, no piercing
   frequency. Add subtle seeded variation (pitch/timbre micro-variation)
   where a cue repeats rapidly (deals, chips, reel ticks) so it doesn't
   machine-gun the same sample.
@@ -53,31 +53,31 @@ Nothing metallic or beepy should survive.
 - **Clean levels.** Consistent loudness across cues (no cue far louder/
   harsher than its siblings); no clipping; headroom preserved through the
   web bridge's gain/compressor chain (`WEB_MASTER_GAIN`, compressor
-  settings) — verify nothing distorts on web.
+  settings) - verify nothing distorts on web.
 - **Keep the meaning.** Each cue must still clearly signal its event (a
-  win still reads as a win, a loss as a loss, a cheat as tension) — improve
+  win still reads as a win, a loss as a loss, a cheat as tension) - improve
   the FEEL, not the semantics or the timing hooks games rely on.
 
 ## Hard rules
 
-- Procedural only — stay in `sfx_player.gd`'s synthesis; no external audio
+- Procedural only - stay in `sfx_player.gd`'s synthesis; no external audio
   assets, no asset pipeline. Determinism preserved (seeded variation uses
   named streams / stable hashes, never wall-clock-random in a way that
   breaks the determinism probe).
-- The music system is OUT OF SCOPE — do not modify music synthesis,
+- The music system is OUT OF SCOPE - do not modify music synthesis,
   arrangement, or the procedural music player.
 - Web-safe: verify on the web audio bridge path; no cue clips or dropouts;
   the synthesis stays within its performance budget (audio generation must
-  not spike frame time — measure). Zero-copy per-frame rules apply to any
+  not spike frame time - measure). Zero-copy per-frame rules apply to any
   per-frame audio scheduling.
 - Timing/event contracts unchanged: family event names, loop points
   (`reel_loop`, `roulette_ball_loop`, `scratch_scrape_loop`), and the hooks
-  games call stay intact — games must not need edits.
+  games call stay intact - games must not need edits.
 - Style: tabs, typed GDScript, sparse comments; reports under `.tmp/`.
   Suite timeout = max(300s, ceil(recorded baseline × 1.5)).
 - Coordination: if the video poker machine rework lands custom cabinet
   sounds, they follow THIS pass's casino-smooth palette and reuse its synth
-  helpers — leave the synthesis helpers clean and reusable.
+  helpers - leave the synthesis helpers clean and reusable.
 
 ## QA
 
@@ -92,8 +92,8 @@ Nothing metallic or beepy should survive.
 4. Determinism + performance: `foundation_determinism_probe` self-
    consistent; `foundation_performance_probe` shows no audio-driven frame
    regression; web smoke passes with audio.
-5. Manual: play a session across all eight games — deals, chips, wins,
-   losses, buttons, reels, bonuses, dice, scratch, roulette — and confirm
+5. Manual: play a session across all eight games - deals, chips, wins,
+   losses, buttons, reels, bonuses, dice, scratch, roulette - and confirm
    the whole game sounds like a pleasant casino, cohesive and smooth.
 
 ## Gates
@@ -123,12 +123,12 @@ report verbatim.
 
 ---
 
-## Execution record — 2026-07-28
+## Execution record - 2026-07-28
 
 ### Commits
 
-- Preflight reconciliation already completed from prior owner request: `a8f06da7` — inventory popup fit and ticket-pile state summaries.
-- SFX implementation: `c1a34d9b` — full procedural SFX resynthesis in `scripts/ui/sfx_player.gd`.
+- Preflight reconciliation already completed from prior owner request: `a8f06da7` - inventory popup fit and ticket-pile state summaries.
+- SFX implementation: `c1a34d9b` - full procedural SFX resynthesis in `scripts/ui/sfx_player.gd`.
 - Archive record: this commit.
 
 ### Scope confirmation
@@ -186,9 +186,9 @@ report verbatim.
 | `tools/check_godot.ps1 -FoundationSuite slot_acceptance` | PASS |
 | `tools/check_godot.ps1 -FoundationSuite audit` | PASS |
 | `tools/check_godot.ps1 -FoundationSuite all` | PASS |
-| `tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` | PASS — seeds `10`, checkpoints `320`, hash `300794035` |
+| `tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` | PASS - seeds `10`, checkpoints `320`, hash `300794035` |
 | `tools/foundation_performance_probe.ps1 -RequireGodot` | PASS |
-| `tools/web_perf_smoke.ps1` | PASS — ready `16099ms`, telemetry avg `0.017751ms`, corner store open `487.865ms` |
+| `tools/web_perf_smoke.ps1` | PASS - ready `16099ms`, telemetry avg `0.017751ms`, corner store open `487.865ms` |
 
 ### Performance notes
 

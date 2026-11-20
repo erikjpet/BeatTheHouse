@@ -1,7 +1,7 @@
-Status: DONE — 2026-08-25
+Status: DONE - 2026-08-25
 Board row: `pusherv3_8` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — pusherv3_8: Coin Scale, Lower Bed, and Edge Ramp
+# Agent Prompt - pusherv3_8: Coin Scale, Lower Bed, and Edge Ramp
 
 Follow-up to archived
 `docs/todone/pusherv3_7_played_in_opening_stock_prompt.md`.

@@ -1,4 +1,4 @@
-# Beat the House — Current In-Game Music Playlist
+# Beat the House - Current In-Game Music Playlist
 
 This folder contains a listening export of every current in-game music source:
 

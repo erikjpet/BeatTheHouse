@@ -1,6 +1,6 @@
 # playtest06_2 Intake Prestage
 
-Status: **UNREVIEWED PRESTAGE — no seed or readiness claim**
+Status: **UNREVIEWED PRESTAGE - no seed or readiness claim**
 
 Snapshot source: `00ee744f` (the 2026-08-28 fifth-landing quiesced checkpoint).
 
@@ -36,7 +36,7 @@ not acceptance judgments by this prestage.
 | 11 | `game06_6` | TODO | Depends on `game06_1` and `craps06_3`. |
 | 12 | `game06_7` | TODO | Depends on `game06_1` and `game06_2`. |
 | 13 | `game06_8` | TODO | Depends on `game06_2..7` and `depth06_1`; Family 1 closure. |
-| 14 | `world06_1` | TODO — CLAIM AUTHORIZED BY OTHER LANE | May implement against frozen `env06_6` head `855a2961`; rebase if rejected. |
+| 14 | `world06_1` | TODO - CLAIM AUTHORIZED BY OTHER LANE | May implement against frozen `env06_6` head `855a2961`; rebase if rejected. |
 | 15 | `world06_2` | TODO | Depends on `world06_1`; feeds `world06_6`. |
 | 16 | `world06_3` | TODO | Depends on `world06_1` and `world06_2`. |
 | 17 | `world06_4` | TODO | Depends on `world06_1`. |
@@ -131,9 +131,9 @@ restricted diagnostic evidence.
 `polish06_0` consumes the disposition and severity fields only after the owner
 opens that parked program. Intake must not schedule polish or release activity.
 
-## Seed coverage plan — all values unverified
+## Seed coverage plan - all values unverified
 
-Every value remains `TBD — UNVERIFIED`. Labels below are coverage slots, not
+Every value remains `TBD - UNVERIFIED`. Labels below are coverage slots, not
 claims that a seed exists or that one seed must cover only one slot. The final
 seed list must be verified on the exact build the owner will play and retain
 evidence for every claimed route.
@@ -223,7 +223,7 @@ tree.
 `playtest06_2` may amend `playtest06_1` only after the dependency set is
 reconciled against the then-current board and the required integration,
 performance, balance-follow-on, and pusher contexts exist. At that time it must
-replace every `TBD — UNVERIFIED` seed with current-build evidence or leave the
+replace every `TBD - UNVERIFIED` seed with current-build evidence or leave the
 readiness work blocked. This prestage authorizes no playtest build and no
 release activity.
 

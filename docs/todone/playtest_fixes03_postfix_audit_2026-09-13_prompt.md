@@ -1,8 +1,8 @@
-Status: DONE — fixes merged to `main` in `429079bb`; regression group and merged player path pass on 2026-09-14
+Status: DONE - fixes merged to `main` in `429079bb`; regression group and merged player path pass on 2026-09-14
 Source report: `docs/plans/agent_playtest/agent_playtest_postfix_06_claim_audit_2026-09-13.md` (9 failed fixes, 1 unverified, BUG-32 … BUG-37)
 Predecessors: `docs/todo/playtest_fixes01_agent_sweep_2026-09-12_prompt.md`, `docs/todo/playtest_fixes02_continuation_2026-09-12_prompt.md` (both DONE, uncommitted)
 
-# Agent Prompt — Playtest Fixes 03: Finish the Fixes That Failed Player Replay
+# Agent Prompt - Playtest Fixes 03: Finish the Fixes That Failed Player Replay
 
 Copy everything below this line into the agent.
 
@@ -10,7 +10,7 @@ Copy everything below this line into the agent.
 
 You are working on **Beat The House**, a Godot 4.6 GDScript roguelite. This
 prompt is self-contained: every rule you need is below. Read the named code
-before editing — do not plan from this prompt alone.
+before editing - do not plan from this prompt alone.
 
 ## Why this task exists
 
@@ -38,9 +38,9 @@ Fix in the existing fix worktree (13 items):
 | F3 Selection and modal UI | BUG-12, BUG-19, BUG-23 | Double-click purchase card, fixed-seed explanation, Settings focus scroll |
 | F4 Dialogue copy | BUG-30, BUG-31 | Chained "Unknown Caller" nameplate, Lucky loan confirmation terms |
 | F5 New game/run bugs | BUG-32, BUG-33, BUG-35, BUG-36 | Blackjack post-HIT pulse, Run Content home, Pinball zero-ball settle, Craps refund wallet |
-| F6 Re-verify only | BUG-26 | Duplicate scenario instruction — route was not reached by the audit |
+| F6 Re-verify only | BUG-26 | Duplicate scenario instruction - route was not reached by the audit |
 
-**Out of scope — do not touch (held for the environment spawn-slot work):**
+**Out of scope - do not touch (held for the environment spawn-slot work):**
 BUG-10 (Vic not hittable), BUG-34 (Gas Station Numbers Book label clipped),
 BUG-37 (both Tier-2 destinations reject Travel on scenario-label vs exit
 conflicts). All three live in the room placement / scenario layout path that
@@ -53,7 +53,7 @@ for these three, record it in the report; do not edit for them.
 ## Hard rules
 
 - **No commits, pushes, merges, stashes, resets, rebases, checkouts, or
-  staging** — anywhere. Leave all changes uncommitted.
+  staging** - anywhere. Leave all changes uncommitted.
 - **Work only in the existing fix worktree:**
   `C:\Users\theep\.codex\worktrees\Beat-The-House-playtest-fixes`
   (also reachable through the junction
@@ -94,7 +94,7 @@ for these three, record it in the report; do not edit for them.
   and its own isolated persistence directory.
 - Host memory: only launch game sessions while free physical memory is above
   8 GB, run at most three sessions at once, and quit each session explicitly.
-  After every quit, confirm the wrapper PowerShell process also exited — a
+  After every quit, confirm the wrapper PowerShell process also exited - a
   stale wrapper in the audit grew to ~42 GB. Kill only processes whose command
   line you have verified belongs to a session you started.
 
@@ -117,7 +117,7 @@ for these three, record it in the report; do not edit for them.
    staging rect, late Crew dialogue perf probe) stay classified as inherited.
    A timeout is never a pass.
 
-## 2. Validation protocol — every bug
+## 2. Validation protocol - every bug
 
 1. **Reproduce through visible input** on the current worktree, in a fresh
    session, following the audit session's command files up to the failing step.
@@ -145,7 +145,7 @@ for these three, record it in the report; do not edit for them.
 
 Line numbers are hints; re-locate every symbol.
 
-### F1 — BUG-07 tutorial input regression (do this first)
+### F1 - BUG-07 tutorial input regression (do this first)
 
 - Original bug: clicking Pal's "Skip tip" over the Numbers Book also toggled
   the native Straight/Box `OptionButton` underneath.
@@ -171,7 +171,7 @@ Line numbers are hints; re-locate every symbol.
   relaunch → Continue with the tutorial stack active and confirm the dock still
   accepts input (this is what blocked Street Craps in `claim06_b6`).
 
-### F2 — BUG-08 and BUG-09 visible wallet
+### F2 - BUG-08 and BUG-09 visible wallet
 
 - Both now charge correctly and publish a Result, but the **visible HUD wallet
   stays stale** (`verify31_c5/0044`: internal $87, HUD $88 with old `+30`;
@@ -185,29 +185,29 @@ Line numbers are hints; re-locate every symbol.
   badge equal canonical bankroll and this action's delta.
 - Keep BUG-09's inherited one-time purchase guard and disabled option.
 
-### F3 — selection and modal UI
+### F3 - selection and modal UI
 
-**BUG-12 — double-click purchase keeps the old card.**
+**BUG-12 - double-click purchase keeps the old card.**
 - Still reproduces (`verify31_c1/0016`): double-click Ledger Pencil while
   Instant Coffee is inspected → pencil bought for $14, but the selected card
   still shows Instant Coffee and its Buy button.
 - Fixes 01 reordered affinity refocus vs. result presentation. Find what still
   re-selects or re-renders the previously inspected offer after the purchase
-  (double-click event order: first click selects, second applies — check
+  (double-click event order: first click selects, second applies - check
   whether the stale selection is restored from a cached selection id).
 - Outcome: after purchase the card shows the purchased item's result or
   clears; the sold offer cannot be bought again from a stale card.
 
-**BUG-19 — fixed tutorial seed unexplained.**
+**BUG-19 - fixed tutorial seed unexplained.**
 - The seed field is now disabled for the mandatory First Night, but nothing on
   the setup screen says why (`verify31_d3/0003`–`0005`); there is no tooltip
   and focus/hover shows nothing.
 - Outcome: a visible, always-shown status line next to the disabled field,
   e.g. that the first night uses a fixed lesson seed and later runs use the
-  typed seed. Tooltip alone is not enough — disabled controls often do not
+  typed seed. Tooltip alone is not enough - disabled controls often do not
   show tooltips. Use existing setup-screen label styling; keep copy short.
 
-**BUG-23 — Settings focus does not scroll into view.**
+**BUG-23 - Settings focus does not scroll into view.**
 - Focus now stays inside Settings, but Tab reaches the off-screen Text Size
   control without scrolling to it, and Enter opens its popup below the viewport
   over the fixed footer (`verify31_d2/0024`–`0026`).
@@ -217,9 +217,9 @@ Line numbers are hints; re-locate every symbol.
   screen. Check every focusable Settings control at 1280×720 and small-screen
   mode.
 
-### F4 — dialogue copy
+### F4 - dialogue copy
 
-**BUG-30 — chained nameplate still "Unknown".**
+**BUG-30 - chained nameplate still "Unknown".**
 - Fixes 02 hydrated the chained entry and its test passes, but the real
   Counter Phone → family-loan chain still renders "Unknown"
   (`verify31_c3/0036`). The test likely exercised a different enqueue path
@@ -229,21 +229,21 @@ Line numbers are hints; re-locate every symbol.
   rendered nameplate, and fix at the general boundary (no event-ID or string
   special case). Assert the rendered nameplate text.
 
-**BUG-31 — Lucky loan confirmation omits terms.**
+**BUG-31 - Lucky loan confirmation omits terms.**
 - Fixes 02 covered the four lenders (Vic etc.), but Lucky's "Accept Offer"
   confirmation shows only generic voice and "Confirm: Accept Offer"
   (`verify31_c2/0078`); the $45 principal, two-favor repayment, 0% interest,
   and two-turn deadline are missing.
-- Lucky's loan is an event-chain choice, not a lender record — a different
+- Lucky's loan is an event-chain choice, not a lender record - a different
   path. Audit **every** path that creates debt or a repayment obligation
   (lenders, event choices, family loans, favors) and make offer, confirmation,
   and result show the real terms sourced from the same data that creates the
   obligation. Non-cash repayment (favors) must read naturally, not as "$0".
   Preserve authored voice beside the terms; change no terms.
 
-### F5 — new bugs
+### F5 - new bugs
 
-**BUG-32 — Blackjack post-HIT count pulse not clickable.** (Major)
+**BUG-32 - Blackjack post-HIT count pulse not clickable.** (Major)
 - Seed `CLAIM06-B2-FLAT-FINAL`: all 8 opening pulses hit correctly; a legal
   HIT draws a King; target becomes +1 but the new −1 pulse reuses resolved ID
   `blackjack:count:1121148:8` and has no registered `blackjack_count_icon`
@@ -256,7 +256,7 @@ Line numbers are hints; re-locate every symbol.
   mid-hand keeps the IDs stable. Do not change surveillance Heat rules.
 - Regression includes the exact seed path plus a split-hand case.
 
-**BUG-33 — Run Content home overwritten.** (Major)
+**BUG-33 - Run Content home overwritten.** (Major)
 - Standard Run + Home: Motel Room → starts in Back Alley
   (`claim06_d2/0062`–`0064`, reproduced twice).
 - Code confirms: `_challenge_with_home_selection()` sets `home_archetype_id`,
@@ -269,7 +269,7 @@ Line numbers are hints; re-locate every symbol.
 - Regression through the real Start button path; replay Motel Room and one
   other home, and confirm Motel tenure objects exist on arrival.
 
-**BUG-35 — Pinball needs a zero-ball LAUNCH to settle.** (Major)
+**BUG-35 - Pinball needs a zero-ball LAUNCH to settle.** (Major)
 - After the final bonus ball drains: `LEFT 0 LIVE 0`, feature still active,
   LAUNCH enabled; clicking LAUNCH settles and pays $22 (`claim06_b4/0049`–
   `0050`). Completion is only evaluated inside the next action step
@@ -277,11 +277,11 @@ Line numbers are hints; re-locate every symbol.
 - Outcome: the feature settles on the simulation tick that drains the last
   ball; LAUNCH is disabled/hidden at zero balls; payout happens exactly once
   across tick/action/leave/save boundaries.
-- Hot-path rule: the completion check in the tick must be zero-copy — no
+- Hot-path rule: the completion check in the tick must be zero-copy - no
   `duplicate()` or collection rebuild per frame (a prior slot watchdog
   deep-copying per frame cost 32 ms/frame).
 
-**BUG-36 — Casino Craps take-down refunds cash as chips.** (Major)
+**BUG-36 - Casino Craps take-down refunds cash as chips.** (Major)
 - Bankroll $100000, chips 0: stage $15, point 6, take down $5 Place 6 →
   "5 returned", bankroll unchanged, chips 0 → 5 (`claim06_b5/0020`–`0021`).
 - Code confirms: `_resolve_take_down()` in `scripts/games/craps.gd` (~758–812)
@@ -295,7 +295,7 @@ Line numbers are hints; re-locate every symbol.
 - Regression: cash-funded casino, chip-funded casino (Grand Casino), and
   street take-downs; interruption refund; save/Continue with a working bet.
 
-### F6 — BUG-26 re-verify only
+### F6 - BUG-26 re-verify only
 
 - The audit's command replay diverged before reaching the Back Alley
   `scenario::goods_lot` "Resolve the contested lot" panel. Reach it by any
@@ -303,7 +303,7 @@ Line numbers are hints; re-locate every symbol.
   instruction appears once. Classify PASS or FAIL with evidence. If it fails,
   fix it only if the cause is in `environment_interaction_view_model.gd`
   copy de-duplication (Fixes 02's hunk); anything in placement/rendering
-  geometry is out of scope — record it.
+  geometry is out of scope - record it.
 
 ## 4. Engineering constraints
 
@@ -328,7 +328,7 @@ Line numbers are hints; re-locate every symbol.
    (same flags as the predecessors; compare against their recorded inherited
    failures).
 4. `playtest_fixes01_regressions`, `playtest_fixes02_regressions`, and your new
-   Fixes 03 regressions — all green; Fixes 03 assertions red before / green
+   Fixes 03 regressions - all green; Fixes 03 assertions red before / green
    after, both logs kept.
 5. Targeted suites for Blackjack, Craps, Pinball/slots, Numbers, events/dialogue,
    lenders/debt, tutorial/coach, settings, run setup. Discover real suite names
@@ -359,7 +359,7 @@ Do not edit the audit report or the Fixes 01/02 reports. Structure:
 
 1. **Header:** worktree, branch, HEAD, inherited fingerprint, final
    fingerprint, baseline gate results.
-2. **Summary table:** one row per bug (13) — class, root cause
+2. **Summary table:** one row per bug (13) - class, root cause
    `file:function:line`, fixed?, regression test, visible replay result
    (2/2), files changed, before/after PNG links.
 3. **Why the prior fixes missed:** the one-line miss explanation for BUG-07,
@@ -368,7 +368,7 @@ Do not edit the audit report or the Fixes 01/02 reports. Structure:
 4. **Per-bug records:** replay, trace, red test, fix, green test, after
    evidence, deviations.
 5. **Not fixed / owner decisions:** every non-VALID class with evidence.
-6. **Held for spawn-slot work:** BUG-10, 34, 37 — unchanged, plus any new
+6. **Held for spawn-slot work:** BUG-10, 34, 37 - unchanged, plus any new
    evidence you incidentally observed.
 7. **Overlap notes:** functions changed in files already changed by Fixes
    01/02, with inherited vs Fixes 03 lines separated.
@@ -376,7 +376,7 @@ Do not edit the audit report or the Fixes 01/02 reports. Structure:
    inherited vs new.
 9. **Changed files:** grouped by bug; harness/tooling separate.
 
-Keep bug text plain and short — the owner reads this to decide, not to debug.
+Keep bug text plain and short - the owner reads this to decide, not to debug.
 Long logs go in `.tmp/playtest_fixes03/` and are linked.
 
 ## 7. Completion
@@ -392,15 +392,15 @@ Long logs go in `.tmp/playtest_fixes03/` and are linked.
    count with visible-replay confirmation, gates/perf, inherited failures,
    remaining owner decisions.
 5. Change the top line to
-   `Status: DONE — fixes uncommitted in shared fix worktree, awaiting independent re-audit`.
+   `Status: DONE - fixes uncommitted in shared fix worktree, awaiting independent re-audit`.
 
 If BUG-07 cannot be fixed without breaking its original click-through
-protection, stop after F1, set `Status: BLOCKED — BUG-07 needs owner decision`,
+protection, stop after F1, set `Status: BLOCKED - BUG-07 needs owner decision`,
 and document both behaviors with evidence. If a new gate failure cannot be
 resolved in scope, leave everything uncommitted, set `Status: BLOCKED`, and
 paste the failing output verbatim into the execution record.
 
-## Execution record — 2026-09-13
+## Execution record - 2026-09-13
 
 - HEAD: `56de66598a2bcdbc3f171f090b48c361daf35563`
 - Inherited fingerprint: `45add38e02d9de93e2ecae3f2092f32714ab5431`

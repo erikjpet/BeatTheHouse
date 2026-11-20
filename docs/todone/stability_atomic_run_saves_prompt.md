@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-12
 - **Completion/implementation commits:** `7f5f482b`
-- **Verification:** PASS — powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — Atomic Run-Save Writes with Backup Rotation and Recovery
+# Agent Prompt - Atomic Run-Save Writes with Backup Rotation and Recovery
 
 Copy everything below this line into the agent.
 
@@ -20,8 +20,8 @@ post-release change. This file is fully self-contained.
 
 `SaveService.save_run` (`scripts/core/save_service.gd:17-32`) opens the
 FINAL save path with `FileAccess.WRITE` and writes the JSON directly. If
-the process dies mid-write — browser tab closed on itch.io, crash, power
-loss — the autosave is truncated/corrupt. `load_run` (`:36-49`) then
+the process dies mid-write - browser tab closed on itch.io, crash, power
+loss - the autosave is truncated/corrupt. `load_run` (`:36-49`) then
 silently returns `null` and the player's run is gone with no explanation.
 Autosaves happen after every action, so the write window is hit constantly.
 
@@ -47,14 +47,14 @@ that hardening and never got it.
 4. **Player-facing surfacing:** when the host loads a backup or finds a
    corrupt unrecoverable save, show a clear one-line message via the
    existing status/message path in `foundation_main.gd` (find how
-   Continue/load surfaces status today and extend it — do not build new
+   Continue/load surfaces status today and extend it - do not build new
    UI). Silent data loss is the bug; silence is not acceptable in the fix.
 5. **has_run:** `has_run` (`:12-13`) must count a slot as present if
    either primary or backup is loadable, so Continue does not vanish when
    only the backup survived.
 6. Keep `SAVE_SCHEMA`/`SAVE_VERSION` and the legacy raw-payload acceptance
    (`_run_data_from_payload`, `_looks_like_run_state`) exactly as they
-   are. No migration system — explicitly out of scope per owner decision.
+   are. No migration system - explicitly out of scope per owner decision.
 
 ## Hard rules (binding)
 
@@ -62,7 +62,7 @@ that hardening and never got it.
   only the write/read mechanics and failure handling change.
 - Web export caveat: `user://` on web is IndexedDB-backed; verify
   `DirAccess.rename_absolute` works there (the profile system already
-  relies on it in production — confirm and cite that precedent in your
+  relies on it in production - confirm and cite that precedent in your
   report rather than assuming).
 - Zero-copy per-frame and idle-liveness rules are unaffected but remain
   binding; autosave stays action-boundary/deferred-frame driven exactly as

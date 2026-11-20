@@ -1,4 +1,4 @@
-# Agent Prompt — Guided First-Run Tutorial: Complete Rework (Dialogue-Guided)
+# Agent Prompt - Guided First-Run Tutorial: Complete Rework (Dialogue-Guided)
 
 Copy everything below this line into the worker agent. Use a capable model.
 
@@ -21,7 +21,7 @@ engine + dialogue/talk system, do not invent a parallel one.
 - Keep the existing coach HIGHLIGHT anchors to point at the subject on screen
   ("look here"), driven alongside the dialogue.
 - **Remove the 8 ambient first-time tips** (`tip_first_*` and the
-  `tip_starter_card_home` beat) — the guide covers everything; no
+  `tip_starter_card_home` beat) - the guide covers everything; no
   double-teaching. (Replace the starter-card-home beat with a guide line if
   needed.)
 - Gating never soft-locks: the guide restricts input to the intended action,
@@ -30,21 +30,21 @@ engine + dialogue/talk system, do not invent a parallel one.
 
 ## New characters (define both; add to `docs/archive/0.5/plans/0.5_voice_bible.md`)
 
-- **Pal — the early-run guide (apartment → underground casino).** A NEW
+- **Pal - the early-run guide (apartment → underground casino).** A NEW
   character: warm, friendly, encouraging, streetwise; on your side. Speaks in
-  first person and refers to themselves as "your pal" ("Hey — think of me as
+  first person and refers to themselves as "your pal" ("Hey - think of me as
   your pal on this one"). Upbeat, plain-spoken, roots for you. This is the
   voice for the whole first half of the tutorial.
-- **The Host — the Grand Casino hostess (name her; e.g. "Vivienne / Viv" —
+- **The Host - the Grand Casino hostess (name her; e.g. "Vivienne / Viv" -
   owner-tunable).** A NEW named character who is the game's existing casino
   "Host" role given an identity: polished, velvet-gloved, warmly professional
   with a hook under the charm. She becomes the guide once the player reaches
-  the Grand Casino. She is DISTINCT from Linda (the cage) — she works the
+  the Grand Casino. She is DISTINCT from Linda (the cage) - she works the
   floor and sends the player to Linda. ALSO wire her a short GREETING when the
   player enters the Grand Casino in NORMAL (non-tutorial) runs, not just the
   tutorial.
 
-## The guided run — full order of operations (rebuild the sequence)
+## The guided run - full order of operations (rebuild the sequence)
 
 Runs on a FIXED tutorial seed with tutorial-scoped scripting; normal runs are
 unaffected by any of the forcing below.
@@ -55,10 +55,10 @@ unaffected by any of the forcing below.
   the **X-ray Glasses** (override the apartment's normal starting item for the
   tutorial only).
 - Pal introduces themselves ("your pal"). Pal tells the player a home that
-  isn't the back alley gives you a starting item — there's one waiting in your
+  isn't the back alley gives you a starting item - there's one waiting in your
   place. PICK IT UP.
 - Pal has them OPEN THE INVENTORY and confirm the X-ray Glasses are there.
-  (Do NOT teach the meta-home "open the bag" flow — that's out-of-run and not
+  (Do NOT teach the meta-home "open the bag" flow - that's out-of-run and not
   relevant here.)
 - Pal shows how to leave: open the TRAVEL MAP.
 
@@ -71,12 +71,12 @@ unaffected by any of the forcing below.
 
 - Pal teaches PURCHASING: investigate each available item, then buy one.
 - DEBT SOURCES: **The Crew is present at the corner store.** Pal warns the
-  player about them — a last resort only. Then Pal points at the **counter
+  player about them - a last resort only. Then Pal points at the **counter
   phone**: the player MAKES THE FAMILY CALL and TAKES the family loan (the
   existing phone-loan event) so they learn firsthand what taking a loan does
   (real debt follows them).
 - EVENTS: a **parking lot tip** event is present. Pal has them investigate it;
-  when it opens, Pal tells them to pick **"Follow the tip"** — it may lead
+  when it opens, Pal tells them to pick **"Follow the tip"** - it may lead
   somewhere useful later.
 - Pal prompts travel again. The map now offers the **gas station casino
   (Path A)** OR the **underground casino (Path B)**, and Pal explicitly tells
@@ -84,13 +84,13 @@ unaffected by any of the forcing below.
   pointing them to these places. Pal STRONGLY STEERS the player toward Path A
   (the gas casino) but the player CAN skip it and go straight to Path B.
 
-### PATH A — Gas station casino (optional detour: item-cheating + funds)
+### PATH A - Gas station casino (optional detour: item-cheating + funds)
 
 - Pal directs the player to the **pull tab machine**.
 - Because the player owns the **X-ray Glasses**, they can spot a WINNING pull
   tab. SCRIPT the machine's generation so one of the X-ray-revealed winners
   sits near the BOTTOM of one of the stacks (this uses the existing, working
-  X-ray-on-pull-tabs reveal — do not change the mechanic, just script the
+  X-ray-on-pull-tabs reveal - do not change the mechanic, just script the
   tutorial machine's stock). Pal has them buy that ticket and peel it.
 - After the win, leaving the machine, Pal directs them to the CLERK to cash
   their tickets.
@@ -98,28 +98,28 @@ unaffected by any of the forcing below.
   underground casino). Path A taught item-based cheating and handed the player
   extra funds.
 
-### PATH B — Underground casino (blackjack + skill-cheats)
+### PATH B - Underground casino (blackjack + skill-cheats)
 
 - Pal has the player ENTER the blackjack table and PLAY A HAND normally.
 - Then Pal teaches changing the BET using the on-screen chips; the player
   raises their bet and a hand is dealt.
 - **Peeking the dealer's card:** Pal teaches that you can peek at the dealer's
   hole card ONLY WHEN THE DEALER IS LOOKING AWAY, and that you have LOOKAWAY
-  events you can trigger — e.g. spilling a drink makes the dealer look away for
-  a few seconds, opening a peek window. This mechanic ALREADY EXISTS — AUDIT
+  events you can trigger - e.g. spilling a drink makes the dealer look away for
+  a few seconds, opening a peek window. This mechanic ALREADY EXISTS - AUDIT
   THE CODE to see exactly how the lookaway/peek works and have Pal explain it
   accurately; do not build a new system. Pal notes this is the easiest way to
   cheat here, but getting caught has consequences.
-- **Counting cards:** Pal runs the count tutorial — the player must select ALL
+- **Counting cards:** Pal runs the count tutorial - the player must select ALL
   the count bubbles, or they gain heat "tripping over the count."
 - **Heat:** whenever the player gains heat, Pal flags it and explains you don't
-  want your heat to hit the top or the police come — or worse.
+  want your heat to hit the top or the police come - or worse.
 - After play, leaving the table, a **high roller invitation** event is present.
   Pal points it out and tells the player to always keep an eye on their
   environment. Pal has them look at and ACCEPT the invitation.
 - Pal prompts travel to the **Grand Casino**. Pal tells the player they
   themselves have been "banned from the Grand Casino" (this is just Pal's
-  in-character reason for not coming along — NOT a real player state), and to
+  in-character reason for not coming along - NOT a real player state), and to
   be very careful cheating there or Rourke will be on top of them. Pal says
   goodbye and wishes them luck.
 
@@ -137,19 +137,19 @@ unaffected by any of the forcing below.
   how debt is settled during cashout.
 - The player BUYS CHIPS from Linda. The Host/Linda points at the SHOP and
   notes chips buy anything there.
-- The player is then FREE to play — steer them to the TABLE GAMES (which use
-  the chips they just bought) — until they've gambled enough to earn the FIRST
+- The player is then FREE to play - steer them to the TABLE GAMES (which use
+  the chips they just bought) - until they've gambled enough to earn the FIRST
   (Bronze) Players Card tier. Use a COMPRESSED Bronze threshold for the
   tutorial so it's reachable quickly.
 - The Host then prompts the player to RETURN to Linda. Back at the Cage, Linda
   explains the Players Card system and that the goal is the GOLDEN Players
   Card. **The guided tutorial ends here.**
 
-### 5. After the tutorial (scripted Rourke warning — NOT an escalation system)
+### 5. After the tutorial (scripted Rourke warning - NOT an escalation system)
 
 - If, after the tutorial, the player cheats and gains heat, Rourke may deliver
-  a warning popup ("I've got my eye on you — I know what you're up to"). This
-  is a possible Rourke warning that can occur in normal runs — do NOT build a
+  a warning popup ("I've got my eye on you - I know what you're up to"). This
+  is a possible Rourke warning that can occur in normal runs - do NOT build a
   fixed every-20-heat escalation ladder. Use/keep Rourke's existing appearance
   and warning hooks; the tutorial simply includes one scripted Rourke warning
   beat.
@@ -181,7 +181,7 @@ unaffected by any of the forcing below.
 ## QA / Tests
 
 1. Full guided playthrough via BOTH routes: (a) Path A then Path B, (b) skip
-   Path A straight to Path B — both reach the Bronze card and the tutorial end
+   Path A straight to Path B - both reach the Bronze card and the tutorial end
    with no soft-lock; capture key beats.
 2. Forced beats fire: apartment start + X-ray in inventory; family loan taken
    (debt appears); parking-tip "Follow the tip" opens gas+underground; scripted
@@ -226,12 +226,12 @@ commit, do NOT push, and report exactly what is unmet.
 
 ---
 
-## Execution record — 2026-08-01
+## Execution record - 2026-08-01
 
 ### Implementation commits
 
-- `55f73f07` — Rework first run as guided dialogue.
-- `02433b0e` — Script deterministic tutorial routes.
+- `55f73f07` - Rework first run as guided dialogue.
+- `02433b0e` - Script deterministic tutorial routes.
 
 ### Pre-edit system map
 

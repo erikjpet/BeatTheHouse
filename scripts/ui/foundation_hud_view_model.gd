@@ -363,7 +363,7 @@ static func save_status_icon(failed: bool, tooltip: String) -> Dictionary:
 
 static func hud_save_text(has_save: bool, status: String, player_facing_text: Callable, failed: bool = false) -> String:
 	if failed:
-		return "Not saving — open Run Menu to retry"
+		return "Not saving - open Run Menu to retry"
 	if has_save and status == "Autosave pending.":
 		return "Resume ready · New changes pending."
 	return "Autosave %s · %s" % [("on" if has_save else "pending").capitalize(), hud_short("current run" if status.is_empty() else status, 24, player_facing_text)]

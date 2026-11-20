@@ -7390,7 +7390,7 @@ func _record_autosave_failure(error: Error, error_code: String, failed_generatio
 
 	if autosave_retry_blocked and not autosave_blocked_notice_shown:
 		autosave_blocked_notice_shown = true
-		var notice_text := "Not saving — open Run Menu to retry."
+		var notice_text := "Not saving - open Run Menu to retry."
 		_show_message(notice_text)
 		if structured_hud != null:
 			structured_hud.show_save_warning_notice(notice_text)
@@ -7445,7 +7445,7 @@ func _game_surface_autosave_blocked() -> bool:
 	# Autosave needs only the finite transition bit. Building the diagnostic
 	# runtime-status projection here copied geometry, effect state, every channel,
 	# and the drunk-overlay snapshot on every animated frame while a save was
-	# pending—the exact sustained Slot-autoplay path where it hurts most.
+	# pending-the exact sustained Slot-autoplay path where it hurts most.
 	return game_surface_canvas.surface_transition_animation_active()
 
 
@@ -11879,7 +11879,7 @@ func _environment_test_friendly_layout_name(layout_id: String) -> String:
 	if environment_name.is_empty():
 		environment_name = archetype_id.replace("_", " ").capitalize()
 	if not layer_id.is_empty():
-		environment_name += " — %s" % _environment_test_layer_name(archetype_id, layer_id)
+		environment_name += " - %s" % _environment_test_layer_name(archetype_id, layer_id)
 	var context_name := "Base / No Scenario" if scenario_id == DeveloperPlacementStoreScript.BASE_LAYOUT_ID else _environment_test_scenario_name(scenario_id)
 	return "%s / %s" % [environment_name, context_name]
 
@@ -12408,7 +12408,7 @@ func start_environment_test_session() -> Dictionary:
 	var warnings := JsonCoerceScript._copy_array(result.get("warnings", []))
 	var practice_message := "Environment practice: %s" % str(run_state.current_environment.get("display_name", archetype_id.replace("_", " ").capitalize()))
 	if not warnings.is_empty():
-		practice_message += " — loaded for repair with placement warning: %s" % str(warnings[0])
+		practice_message += " - loaded for repair with placement warning: %s" % str(warnings[0])
 	_show_message(practice_message)
 	return {"ok": true, "errors": [], "warnings": warnings, "environment": run_state.current_environment.duplicate(true)}
 
@@ -23525,10 +23525,10 @@ func _build_numbers_slip_controls(venue: Dictionary) -> void:
 
 
 func _build_numbers_silas_controls(silas: Dictionary) -> void:
-	var tip_button := _add_card_button(event_choice_popup_choices_list, "Buy a quiet route tip — $12", Callable(self, "_buy_numbers_silas_tip").bind(false), run_state.bankroll < 12 or not bool(silas.get("tip_available", true)), true)
+	var tip_button := _add_card_button(event_choice_popup_choices_list, "Buy a quiet route tip - $12", Callable(self, "_buy_numbers_silas_tip").bind(false), run_state.bankroll < 12 or not bool(silas.get("tip_available", true)), true)
 	tip_button.name = "NumbersSilasTip"
 	if bool(silas.get("handle_available", false)):
-		var handle_button := _add_card_button(event_choice_popup_choices_list, "Buy today's handle — $24", Callable(self, "_buy_numbers_silas_tip").bind(true), run_state.bankroll < 24)
+		var handle_button := _add_card_button(event_choice_popup_choices_list, "Buy today's handle - $24", Callable(self, "_buy_numbers_silas_tip").bind(true), run_state.bankroll < 24)
 		handle_button.name = "NumbersSilasHandle"
 
 

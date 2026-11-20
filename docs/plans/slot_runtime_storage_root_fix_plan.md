@@ -274,7 +274,7 @@ or timing is rejected even if it is faster.
 
 ## Phased implementation and gates
 
-### Phase 0 — Freeze the accepted presentation and add instrumentation
+### Phase 0 - Freeze the accepted presentation and add instrumentation
 
 Create deterministic golden fixtures for classic pinball, five-by-three
 Buffalo, video-feature pinball, ordinary win/loss, near miss, nudge success and
@@ -298,7 +298,7 @@ draw. No optimization begins until the baseline is reproducible twice.
 Gate: current behavior is captured, all required active animations meet their
 liveness floors, and a deliberately removed animation/icon makes the gate fail.
 
-### Phase 1 — Immutable definitions and mutable state v2
+### Phase 1 - Immutable definitions and mutable state v2
 
 Introduce the definition cache and shadow it against legacy in-machine strips.
 Migrate resolver and presentation reads one family at a time. Keep legacy fields
@@ -311,7 +311,7 @@ Gate:
 - current slot resolve remains at or below the existing 6/8/10 ms budget; and
 - all golden visual/audio/liveness checks pass unchanged.
 
-### Phase 2 — Presentation lifetime and compact result receipts
+### Phase 2 - Presentation lifetime and compact result receipts
 
 Add active/settled checkpoints, clear only expired transient data, and stop
 retaining rich background results after presentation handoff. Add compact story
@@ -327,7 +327,7 @@ Gate:
 - settled per-cabinet persistent state is at most 4 KB, with separately reported
   bounds for genuinely active complex features.
 
-### Phase 3 — Deterministic runtime scheduler
+### Phase 3 - Deterministic runtime scheduler
 
 Replace the per-frame fixture scan with the due-time queue. Run the old scanner
 in diagnostic shadow mode during tests and compare selected fixture/action/order
@@ -342,7 +342,7 @@ Gate:
   linearly with fixture count; and
 - due lateness is no worse than the existing one-result-per-frame behavior.
 
-### Phase 4 — Save v2 projection and migration
+### Phase 4 - Save v2 projection and migration
 
 Add environment references, compact machine state, and compact story receipts.
 Load every existing save fixture, including active autoplay and active bonus
@@ -358,7 +358,7 @@ Gate:
   completed animation timeline; and
 - current save corruption/recovery tests stay green.
 
-### Phase 5 — Asynchronous/incremental save coordinator
+### Phase 5 - Asynchronous/incremental save coordinator
 
 Move detached serialization and file work away from gameplay frames, preserve
 generation ordering, and coalesce redundant pending snapshots.
@@ -376,7 +376,7 @@ Gate:
 - rapid spins followed by quit/load reproduce the committed bankroll, RNG,
   feature, and machine states.
 
-### Phase 6 — Fidelity-preserving renderer caches
+### Phase 6 - Fidelity-preserving renderer caches
 
 Cache symbol and cabinet source artwork and convert repeated full snapshot work
 to bounded realtime patches. Exercise foreground surfaces and multiple visible
@@ -392,7 +392,7 @@ Gate:
 - cache memory reaches a stable bound under room churn, viewport changes, and
   all machine variants.
 
-### Phase 7 — Long-run integration and release decision
+### Phase 7 - Long-run integration and release decision
 
 Run two clean passes of determinism, slot acceptance/deep audit, save migration,
 FoundationSuite all, native performance/liveness, visual QA, strict rendered
@@ -457,18 +457,18 @@ These are additive gates. Existing stricter subsystem budgets continue to win.
   record lists commits, reports, migrations exercised, exact budgets, and any
   remaining known limits.
 
-## Execution record — 2026-08-05
+## Execution record - 2026-08-05
 
 Implementation commits:
 
-- `9fa3d541` — immutable slot definitions, compact schema-v2 cabinet state,
+- `9fa3d541` - immutable slot definitions, compact schema-v2 cabinet state,
   active/settled presentation lifetime, compact receipts, and bounded pinball
   board templates;
-- `9b4f3643` — deterministic due-time scheduler, v2 environment-reference save
+- `9b4f3643` - deterministic due-time scheduler, v2 environment-reference save
   codec, shallow detached save snapshots, generation-coalesced async writes,
   atomic file-I/O synchronization, and lifecycle flushes; and
-- `5a1ee569` — bounded renderer symbol/label metadata caches; and
-- `7ebc7000` — real multi-cabinet timing/storage gates, the uninterrupted
+- `5a1ee569` - bounded renderer symbol/label metadata caches; and
+- `7ebc7000` - real multi-cabinet timing/storage gates, the uninterrupted
   same-run soak, and expanded performance/visual diagnostics.
 
 Final proof by traceability ID:

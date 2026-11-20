@@ -1,9 +1,9 @@
-# Agent Prompt — Video Poker COMPLETE REBUILD (Play Like a Real Machine)
+# Agent Prompt - Video Poker COMPLETE REBUILD (Play Like a Real Machine)
 
 Copy everything below this line into the worker agent. This is a large,
 ground-up rebuild; use a capable model. MULTIPLE prior attempts failed and
 the current shipped implementation is unacceptable. FORGET the current
-implementation entirely — this is a from-scratch rebuild, NOT a cleanup of
+implementation entirely - this is a from-scratch rebuild, NOT a cleanup of
 the broken foundation. Do not preserve the current rendering, control, or
 cabinet code; replace it. Rebuild it correctly from the real machine outward.
 
@@ -14,15 +14,15 @@ and confirmed in the running game. Do not archive this prompt, do not declare
 success, and do not stop early because "most" of it works. If a required
 behavior is not yet real, keep working. The only acceptable stopping points
 are: (a) everything proven and confirmed, or (b) a specific gate you genuinely
-cannot pass — then stop, do NOT mark it done, and report exactly what is
+cannot pass - then stop, do NOT mark it done, and report exactly what is
 unmet. "Reworked the art a bit" or "the loop mostly works" is a FAILURE.
 
-## The exact failures this rebuild MUST fix (named, provable must-fixes — the
+## The exact failures this rebuild MUST fix (named, provable must-fixes - the
 ## owner is seeing ALL of these in the current build right now)
 
 1. **Multiple hands display as identical.** On multi-hand cabinets the player
-   sees the SAME hand 2-3 times — it looks like one hand copied. (The dealing
-   may compute distinct hands, but the RENDERER draws them identically — fix
+   sees the SAME hand 2-3 times - it looks like one hand copied. (The dealing
+   may compute distinct hands, but the RENDERER draws them identically - fix
    the display, not just the logic.) The rebuilt game MUST deal AND DISPLAY N
    genuinely different hands. PROVE with a capture of a 3-hand cabinet showing
    three visibly distinct hands.
@@ -47,22 +47,22 @@ You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript casino
 roguelike (900×430 board, immediate-mode canvas, per-game modules,
 data-driven, seeded RNG). `scripts/games/video_poker.gd` (~3,457 lines) is
 broken and off-theme. Rebuild video poker so it plays, looks, and FEELS like
-an actual casino video poker machine — professional art on par with the slot
+an actual casino video poker machine - professional art on par with the slot
 machines, working intuitive controls, correct multi-hand play, real casino
 smoothness/animation/excitement, and a cheat that makes sense.
 
-## PART 0 — Deliverable: a real video poker audit (do this first, write it down)
+## PART 0 - Deliverable: a real video poker audit (do this first, write it down)
 
 Produce `docs/plans/video_poker_reference.md`: an audit of how a REAL video
-poker machine plays — the exact order of operations, what makes it intuitive,
+poker machine plays - the exact order of operations, what makes it intuitive,
 and how multi-hand ("Triple Play") machines work. Use it as the build spec.
 The authoritative spec is below; your audit must reproduce and expand it, and
 every item becomes a PROVABLE acceptance step (see QA).
 
-### Real video poker — order of operations (the machine's rhythm)
+### Real video poker - order of operations (the machine's rhythm)
 
 1. **Bet.** Select coins-per-hand (1–5). Max bet (5 coins) is meaningful:
-   the Royal Flush pays 800×/coin at 5 coins vs 250×/coin at 1–4 — a "Bet
+   the Royal Flush pays 800×/coin at 5 coins vs 250×/coin at 1–4 - a "Bet
    Max" button is standard and the paytable's 5-coin column is the headline.
 2. **Deal.** Press DEAL. Five cards are dealt face-up from a freshly
    shuffled 52-card deck.
@@ -81,7 +81,7 @@ every item becomes a PROVABLE acceptance step (see QA).
 - ONE base hand of five cards is dealt.
 - Holds chosen on the base hand apply to ALL hands.
 - **Each of the N hands is completed from its OWN INDEPENDENT 52-card deck
-  with the held cards removed** — so each hand's drawn cards are independent
+  with the held cards removed** - so each hand's drawn cards are independent
   and the hands DIFFER. NEVER share one deck across hands; NEVER copy the base
   draw. This is the root bug: the current code draws all hands from one
   remaining deck.
@@ -92,7 +92,7 @@ every item becomes a PROVABLE acceptance step (see QA).
 
 ### What makes it intuitive (bake these in)
 
-- ONE primary action button that reads DEAL → DRAW and back — the whole
+- ONE primary action button that reads DEAL → DRAW and back - the whole
   rhythm lives on that button; nothing else competes for it.
 - Tap a card to toggle HOLD; a bold HELD banner on held cards.
 - The paytable is ALWAYS visible; the active bet column is highlighted; the
@@ -100,7 +100,7 @@ every item becomes a PROVABLE acceptance step (see QA).
 - CREDITS / BET / WIN meters always visible and updating.
 - A "Bet Max" shortcut.
 
-## PART 1 — Core gameplay (correct, deterministic)
+## PART 1 - Core gameplay (correct, deterministic)
 
 Rebuild the bet → deal → hold → draw → evaluate → pay → (double-up) loop
 exactly as above, single-hand AND multi-hand with INDEPENDENT decks per hand.
@@ -110,15 +110,15 @@ hands and payouts, reproducible across save/load mid-hand; multi-hand
 independence must itself be deterministic (each hand's deck seeded distinctly
 from the same run seed). No wall-clock in outcomes.
 
-## PART 2 — Controls that actually work (and are tested)
+## PART 2 - Controls that actually work (and are tested)
 
-The controls are currently broken — this is a first-class deliverable. The
+The controls are currently broken - this is a first-class deliverable. The
 DEAL/DRAW button, per-card HOLD toggles, bet +/- and Bet Max, and double-up
 picks must all work by mouse AND touch, at 1280×720 and small-screen. Prove
 each control works with an interaction test (drive the input, assert the
 state change). A player must never be unable to hold a card, deal, or draw.
 
-## PART 3 — Three cabinets, slot-machine-quality art
+## PART 3 - Three cabinets, slot-machine-quality art
 
 Three owner-locked cabinets (hand count in the identity):
 
@@ -134,7 +134,7 @@ families (`slot_family_buffalo.gd`, `slot_family_pinball.gd`) and MATCH that
 professionalism. Each cabinet is a complete authored machine, immediate-mode
 in the game's pixel style: a full cabinet with integrated buttons (not
 generic UI bolted on), a themed paytable display, CREDITS/BET/WIN meters, the
-card area, and the multi-hand stack — UNIQUE per configuration, cohesive, and
+card area, and the multi-hand stack - UNIQUE per configuration, cohesive, and
 professional. They should sit next to a slot machine and look like siblings
 from the same casino.
 
@@ -148,23 +148,23 @@ Paytables (research-accurate, audited RTP per cabinet):
   bonuses (Four Aces w/ 2-4 kicker, Four 2-4 w/ A-4 kicker, etc.); high
   variance.
 
-## PART 4 — The cheat, reworked to fit the machine
+## PART 4 - The cheat, reworked to fit the machine
 
 Forget the current cheat (it does not make sense and feels bad). Design a
-cheat that FITS video poker naturally: the classic move is a HOLDOUT — during
+cheat that FITS video poker naturally: the classic move is a HOLDOUT - during
 the DRAW, the player skillfully palms a better card into the hand. Make it:
 - **Integrated into the draw**, not a separate confusing minigame off to the
-  side — it happens in the moment the cards flip.
+  side - it happens in the moment the cards flip.
 - **A clean skill input** (timing/precision) that is intuitive and feels
   good to pull off; per-cabinet flavor on the same skill core.
 - **Blunt feedback:** a loud, unmistakable beat states exactly what the cheat
-  did — the card swapped in and the resulting hand ("You palmed the Ace —
+  did - the card swapped in and the resulting hand ("You palmed the Ace -
   FOUR ACES").
 - **Preserve the economy:** deterministic ideal card, quality→heat/evidence
   tiers, alcohol/contraband modifiers; same seed + inputs → same result.
 - Reduce-motion: a generously-timed single input, still blunt about outcome.
 
-## PART 5 — Real casino feel
+## PART 5 - Real casino feel
 
 Cards flip and slide with satisfying timing; the deal deals, held cards lock
 visibly, the draw reveals with a beat, wins celebrate at a scale matched to
@@ -177,13 +177,13 @@ poker surface to the performance probe with a budget.
 ## PROVABLE DELIVERABLES / QA (every real-VP behavior must be proven)
 
 Report each as PASS with the evidence. NONE of these may be skipped or
-hand-waved; an unproven item means the work is not done — keep going.
+hand-waved; an unproven item means the work is not done - keep going.
 1. **Order of operations:** a driven test performs bet → deal → hold subset →
    draw → evaluate → pay, asserting each stage's state and that only non-held
    cards changed.
 2. **Multi-hand independence AND DISPLAY (the headline failure):** with
-   identical holds, the N hands' DRAWN cards differ (independent decks) —
-   assert across many seeds they are not copies — AND the on-screen render
+   identical holds, the N hands' DRAWN cards differ (independent decks) -
+   assert across many seeds they are not copies - AND the on-screen render
    shows N visibly distinct hands (fix the renderer that currently draws the
    same hand 2-3 times). Capture a 3-hand cabinet proving three different
    hands on screen.
@@ -203,7 +203,7 @@ hand-waved; an unproven item means the work is not done — keep going.
    fallback works.
 7. **Art parity:** side-by-side captures of each VP cabinet next to a slot
    machine showing comparable polish; each cabinet visually unique.
-8. **Feel acceptance (manual, in words):** play all three cabinets — the
+8. **Feel acceptance (manual, in words):** play all three cabinets - the
    rhythm is obvious, controls respond, multi-hand hands differ and pay
    separately, wins are exciting, the cheat feels good, and it reads as a
    real casino machine.
@@ -233,10 +233,10 @@ hand-waved; an unproven item means the work is not done — keep going.
 ## On completion
 
 DO NOT COMPLETE until all four named must-fixes AND all provable deliverables
-are met and CONFIRMED in the running game — including the manual feel/clarity
+are met and CONFIRMED in the running game - including the manual feel/clarity
 acceptance. If the multi-hand display still shows identical hands, if the bet
 still can't change, if a new player can't tell how to win, or if the art
-isn't slot-parity, the work is NOT done — keep working. Do not archive a
+isn't slot-parity, the work is NOT done - keep working. Do not archive a
 partial result.
 
 Only after every gate passes AND every PROVABLE DELIVERABLE is proven and the
@@ -258,7 +258,7 @@ commit, do NOT push, and report exactly what is not yet real.
 
 ---
 
-## Execution record — 2026-07-30
+## Execution record - 2026-07-30
 
 Branch/worktree: `video-poker-rebuild` in `D:\Projects\Beat-The-House-video-poker-rebuild`.
 
@@ -268,9 +268,9 @@ Preflight/reconciliation:
 - Gate runs waited for zero Godot processes. The final live proof uses a real root viewport because headless/subviewport `frame_post_draw` does not complete in this Godot configuration.
 
 Commits:
-- `9e55d61d` — initial independent multi-hand draw foundation.
-- `706b236e` — expanded the real-video-poker reference into the binding rebuild contract.
-- `14bd731e` — replaced the renderer and control presentation, removed the dormant prior renderer, added strict interaction/display/performance/RTP/live proofs, and corrected gross WIN presentation.
+- `9e55d61d` - initial independent multi-hand draw foundation.
+- `706b236e` - expanded the real-video-poker reference into the binding rebuild contract.
+- `14bd731e` - replaced the renderer and control presentation, removed the dormant prior renderer, added strict interaction/display/performance/RTP/live proofs, and corrected gross WIN presentation.
 - Archive commit: this execution-record commit.
 
 Named must-fix proof:
@@ -318,7 +318,7 @@ Deviations:
 - Work remained on the isolated `video-poker-rebuild` branch and is pushed without merging because another task owns the dirty primary checkout.
 - Captures and RTP reports remain under `.tmp/` as required and are intentionally untracked.
 
-### Landing supplement — 2026-07-30
+### Landing supplement - 2026-07-30
 
 - The finish-and-land pass rebased the branch onto latest `origin/main`, strengthened the live display proof, and reran the complete integrated gate battery.
 - Triple Double Bonus now has explicit acceptance evidence for three unique displayed signatures, three result rows, and mixed independently evaluated outcomes in one live capture.

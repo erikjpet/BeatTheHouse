@@ -1,4 +1,4 @@
-Status: DONE / SUPERSEDED — the exact-target harness correction landed through qa06_1/fix06_27 and is regression-covered on main
+Status: DONE / SUPERSEDED - the exact-target harness correction landed through qa06_1/fix06_27 and is regression-covered on main
 Priority: P1 test-infrastructure defect because it blocks the required playability sweep and misreports working gameplay as broken
 Investigation date: 2026-09-07
 
@@ -52,8 +52,8 @@ That helper, at line 4401, returns the first enabled object whose broad type is 
 
 The parent motel exposes at least two enabled objects of that type:
 
-- `travel:motel_room`, label `Room Door` — valid local travel back into the room
-- `travel:leave` — the world-map opener the test intends to exercise
+- `travel:motel_room`, label `Room Door` - valid local travel back into the room
+- `travel:leave` - the world-map opener the test intends to exercise
 
 Render order places `travel:motel_room` first. The harness therefore double-clicks `Room Door`, legitimately changes environment state by returning to the room, and leaves the world map closed. Lines 659-660 then misclassify that valid local move as a mutating/broken map open.
 

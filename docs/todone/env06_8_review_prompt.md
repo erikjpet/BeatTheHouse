@@ -1,7 +1,7 @@
-Status: TODO — independent review for `env06_8`; run by an agent that did not implement it
+Status: TODO - independent review for `env06_8`; run by an agent that did not implement it
 Board row: `env06_8` in `docs/todo/README_0_6_board.md`
 
-# Review Prompt — env06_8: Environment Readability and Object Presentation
+# Review Prompt - env06_8: Environment Readability and Object Presentation
 
 Copy everything below this line into a reviewer agent. **You must not have
 implemented any part of `env06_8`.** If you did, you are the wrong agent.
@@ -14,7 +14,7 @@ in full before looking at the diff.
 
 The owner reported this regression from their own playtest. Your job is to
 determine whether a player would now experience the rooms the way the owner
-asked for — not whether the tests pass.
+asked for - not whether the tests pass.
 
 ## Verdict format
 
@@ -27,14 +27,14 @@ Acceptance is void the moment the head changes. Re-review the new head.
 
 **Two rejections on this row escalate to the owner, not a third round.**
 
-## 1. Sample the build yourself — do not read reports
+## 1. Sample the build yourself - do not read reports
 
 Reading the implementer's evidence is not review. Launch the game and play it.
 
 - Enter at least two scenarios per archetype, plus every scenario the implementer
   flagged as hard, unusual, or remediated.
 - In each: select every object in the room. Confirm each has an icon, a label,
-  a description, and a populated panel — actionable options or read-only flavor.
+  a description, and a populated panel - actionable options or read-only flavor.
 - Confirm `"Inspect this first."` is unreachable and no panel is ever empty.
 - Advance the scenario through a material state change, then re-read the same
   objects. Confirm descriptions changed and are correct for the new state.
@@ -44,7 +44,7 @@ Reading the implementer's evidence is not review. Launch the game and play it.
 ## 2. Verify the numbers against the baseline
 
 The prompt records a measured baseline. Re-derive it on the accepted head and
-compare — do not trust the implementer's table.
+compare - do not trust the implementer's table.
 
 | Baseline | Was |
 | --- | --- |
@@ -55,7 +55,7 @@ compare — do not trust the implementer's table.
 
 Reject if zoning is not complete, if actions still carry no handler, or if
 conversation, reward and scene-change handlers are not genuinely in use. A table
-that improved only because objects were deleted is a reject — check counts.
+that improved only because objects were deleted is a reject - check counts.
 
 ## 3. Descriptions must not lie
 
@@ -70,13 +70,13 @@ regenerated templates. Template prose is what this row exists to remove; if the
 implementer generated new templates, that is a P1 regardless of how the tests
 look.
 
-## 4. Hidden-information audit — P0, blocking
+## 4. Hidden-information audit - P0, blocking
 
 This is the highest-risk part of the row and the reason it must be reviewed by
 someone who did not write it.
 
 Independently construct paired runs: identical seeds differing only in hidden
-state — a crew member who has turned versus one who has not, a rigged Numbers
+state - a crew member who has turned versus one who has not, a rigged Numbers
 draw versus a clean one, an unrevealed ticket. Diff the complete description sets
 from every object in every reachable state.
 
@@ -109,8 +109,8 @@ math, schema and migration are untouched.
 ## 7. Gates on the exact head
 
 Project validation, scenario and sequence contracts, determinism, native/Web
-parity, performance with the mandatory idle-liveness counter-gate — an idle draw
-cost of 0.000 is a failure, not a pass — accessibility, save and revisit, and
+parity, performance with the mandatory idle-liveness counter-gate - an idle draw
+cost of 0.000 is a failure, not a pass - accessibility, save and revisit, and
 visual QA. Confirm exactly-once behavior for every new consequence across save,
 reload, travel, revisit, abort and expiry.
 
@@ -131,5 +131,5 @@ state that the row remains `IN_PROGRESS` and name what remains.
 Lead with the verdict and the exact head. Then: what you played and where, the
 re-derived baseline comparison table, your independent hidden-state proof method
 and result, placement and contact-sheet findings, scope confirmation, the gate
-table with commands and durations, and — if accepted — the merge commit on `main`
+table with commands and durations, and - if accepted - the merge commit on `main`
 and its green gate result.

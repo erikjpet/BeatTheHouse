@@ -4,11 +4,11 @@ The Test 11 daytime images and Test 04 nighttime images are separate paintings. 
 
 ## Proposed endpoints
 
-1. Noon — the new full-color daytime painting.
-2. Late afternoon — same scene with longer warm shadows.
-3. Sunset — warm sky and reflected coral/gold light; practical lights begin activating.
-4. Blue hour — darker sky and surfaces, first visible neon accents.
-5. Midnight — the restored Test 04 neon night image.
+1. Noon - the new full-color daytime painting.
+2. Late afternoon - same scene with longer warm shadows.
+3. Sunset - warm sky and reflected coral/gold light; practical lights begin activating.
+4. Blue hour - darker sky and surfaces, first visible neon accents.
+5. Midnight - the restored Test 04 neon night image.
 
 ## Registration rules
 
@@ -16,4 +16,4 @@ All intermediate images should reuse the Test 11 noon image as their direct edit
 
 Before integration, register each keyframe to 900 × 430 and verify the anchor points. Use short cross-dissolves only between adjacent registered keyframes. Avoid a single direct noon-to-midnight dissolve, which would expose differences between the independently painted endpoints.
 
-Animated overlays—water, signs, windows, reflections, ceiling fixtures, curtains, smoke and similar elements—should remain separate game layers. Their position and timing can stay fixed while their opacity, hue and emission change through the day cycle.
+Animated overlays-water, signs, windows, reflections, ceiling fixtures, curtains, smoke and similar elements-should remain separate game layers. Their position and timing can stay fixed while their opacity, hue and emission change through the day cycle.

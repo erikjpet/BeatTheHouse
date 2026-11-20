@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-12
 - **Completion/implementation commits:** `408b9628`
-- **Verification:** PASS — powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/foundation_visual_qa.ps1; powershell -ExecutionPolicy Bypass -File tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/foundation_visual_qa.ps1; powershell -ExecutionPolicy Bypass -File tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — Locked-Route Affordance in the Travel UI (Data-Driven, Opt-In)
+# Agent Prompt - Locked-Route Affordance in the Travel UI (Data-Driven, Opt-In)
 
 Copy everything below this line into the agent.
 
@@ -26,7 +26,7 @@ with unmet `requires_flags` as `available: false, hidden: true`
 (`:2944-2950`), and hidden routes vanish entirely from travel lists. The
 same happens for `hide_until_travel_count_met` (`:2934`). That is correct
 for secrets, but it gives the player zero feedback that a known,
-story-relevant destination is locked and what would unlock it — e.g. the
+story-relevant destination is locked and what would unlock it - e.g. the
 Grand Casino invite gate (route `grand_casino` in
 `data/travel/routes.json` requires the `grand_casino_invite` flag; its
 map node may already be visible as a revealed silhouette via neighbor
@@ -34,7 +34,7 @@ discovery, `world_map.gd enter_node :464-498`).
 
 Note: if the grand-casino invite-gate task has already landed when you
 run, build on its final state; if the routes still use the older
-travel-count-only gate, this task still applies to the mechanism — wire
+travel-count-only gate, this task still applies to the mechanism - wire
 the affordance so whichever routes opt in get it.
 
 ## The task (expand the existing system; no new systems)
@@ -52,14 +52,14 @@ the affordance so whichever routes opt in get it.
    status is consistent everywhere.
 3. **UI:** locked routes render in the travel list and on the world map
    as visibly locked (dimmed/lock treatment consistent with existing
-   disabled styles — reuse the existing disabled-row rendering, do not
+   disabled styles - reuse the existing disabled-row rendering, do not
    invent a new visual language), showing `condition_text`, and are NOT
    selectable for travel. The map node, if revealed, shows the same
    locked state in its info panel.
 4. **Apply to data:** set `locked_hint: true` on the `grand_casino`
    route (the boss should be a visible goal with "You need an
    invitation…" style text). Leave `small_underground_casino` as a hidden
-   secret (no hint) — that discovery moment is intended. Do not change
+   secret (no hint) - that discovery moment is intended. Do not change
    any other route's behavior.
 
 ## Hard rules (binding)

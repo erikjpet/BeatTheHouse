@@ -1,4 +1,4 @@
-# AUD061-09 — retry after an older async failure
+# AUD061-09 - retry after an older async failure
 
 Specification: [BTH_0.6.1_audit_work_orders.md](../todo/BTH_0.6.1_audit_work_orders.md). Started from `9bfba25bb2923740b96a6ae430c0d66d0b9b79b6` (paired01/02 delivery receipt; product runtime matches deployed18af19ac).
 

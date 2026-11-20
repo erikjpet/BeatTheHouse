@@ -8,7 +8,7 @@ Board row: `env06_3` in `docs/todo/README_0_6_board.md`
 - **Verification:** PM scope/design review PASS; integrated validation, Foundation systems + UI, 10-seed/320-checkpoint determinism (`3558257132`), visual QA, 25/25 content and selector contracts, Grand Casino clean/showdown regressions, and 14/14 zero-overlap scenario captures PASS.
 - **Deviations:** None. Generic structured debt-settlement deltas and resale-shelf offer mutations were required production seams within prompt scope; Grand Casino scenarios remain limited to presentation/crowd/comps/heat and inert hook flags.
 
-# Agent Prompt — 0.6 env06_3: Tier-2 + Grand Casino Scenario Set
+# Agent Prompt - 0.6 env06_3: Tier-2 + Grand Casino Scenario Set
 
 Copy everything below this line into the agent.
 
@@ -18,7 +18,7 @@ You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript
 casino roguelike (Web/itch.io + Windows, 1280×720). Content authoring
 on the env06_1 engine, sibling of env06_2 (read its landed data as the
 house style for scenario authoring). Binding design contract:
-`docs/plans/0.6_living_world_roadmap.md` — Pillar 1 catalog (★ launch
+`docs/plans/0.6_living_world_roadmap.md` - Pillar 1 catalog (★ launch
 cut). Voice: `docs/archive/0.5/plans/0.5_voice_bible.md` +
 `docs/plans/0.6_voice_bible_world_register.md`. This prompt is
 self-contained for rules and scope.
@@ -38,43 +38,43 @@ self-contained for rules and scope.
 ## Dependencies
 
 `env06_1` DONE. `env06_4` (Punchline 3-layer rework) DONE for the
-Punchline scenarios — its layer model defines where L1/L2 scenarios
+Punchline scenarios - its layer model defines where L1/L2 scenarios
 attach; verify the landed layer API by code. If env06_4 is not DONE,
 author every other venue and mark the Punchline block as a follow-up
 in the board log (do not block the whole task).
 
 ## Task
 
-Author the ★ launch scenarios — ~25 in
+Author the ★ launch scenarios - ~25 in
 `data/environments/scenarios.json`:
 
-- **The Punchline** — layer 1 (3): Open Mic Night, Headliner Night,
+- **The Punchline** - layer 1 (3): Open Mic Night, Headliner Night,
   Bringer Show; layer 2 (3): High-Stakes Night, Greased Week, Debt
   Court. Layer scoping per env06_4's model. Debt Court must integrate
   the existing Collector/debt systems (settle active markers at a
   discount via an exclusive service/event; witness beat when the
   player has no debt).
-- **jazz_club (3):** Guest Legend, Rent Party, Recording Night — these
+- **jazz_club (3):** Guest Legend, Rent Party, Recording Night - these
   layer **above** the shipped set-arc system (sparse→build→peak→
   release stays untouched; scenarios recolor tips, favors, staff
   attention, and exclusive encounters around it).
 - **kitty_cat_lounge (3):** Amateur Night, The Buyout (Velvet
-  recruitment anchor; rope-gated sub-area with a whale inside —
+  recruitment anchor; rope-gated sub-area with a whale inside -
   entry requires a name/flag, deny path is content too), Slow Night.
 - **delta_queen (4):** Wedding Charter, Whale Aboard (heist Plan B
   vouch anchor flag), Fog Delay (phase-based stakes drift), Engine
-  Trouble (travel-locked phases — reuse the existing travel-lock
+  Trouble (travel-locked phases - reuse the existing travel-lock
   mechanics; never soft-lock: the lock must expire by phase).
 - **beach (3):** Bonfire Night, Storm Coming, Festival Weekend
   (Lucky recruitment anchor flag).
 - **pawn_shop (3):** Estate Lot Day (unique one-off resale-shelf
-  items — coordinate schema with the shipped resale shelf; chain06_1
+  items - coordinate schema with the shipped resale shelf; chain06_1
   and heist Plan B source components here, flag-anchored), Serial-Check
   Day (selling hot goods risk; sets strict alarm-tolerance band
   nearby), Sal's Mood (paired micro-variants).
 - **grand_casino (3):** Gala Night, Convention Crowd, Audit Night
   (heist Plan A criteria flag). Grand Casino scenarios tune texture,
-  crowd, comps, and heat only — **the boss duel, invite gate, chips
+  crowd, comps, and heat only - **the boss duel, invite gate, chips
   economy, and Players Card flows are untouchable**; prove no
   interference with a full clean-route + showdown regression.
 
@@ -86,7 +86,7 @@ crew06_5 / crew06_8.
 ## Hard rules
 
 - env06_2's rules apply verbatim (determinism, content check, voice
-  register, tutorial pinning, no new art — log art wishes as
+  register, tutorial pinning, no new art - log art wishes as
   Discoveries).
 - Jazz set-arc and Grand Casino boss structures are read-only.
 - Engine Trouble/Fog Delay locks always expire deterministically.

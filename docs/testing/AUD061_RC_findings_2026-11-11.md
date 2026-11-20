@@ -1,4 +1,4 @@
-# Frozen candidate findings — 2026-11-11
+# Frozen candidate findings - 2026-11-11
 
 Source and Web candidate: fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc.
 Specification: docs/todo/BTH_0.6.1_audit_work_orders.md. Main proof: AUD061-11_candidate_acceptance_2026-11-11.md.

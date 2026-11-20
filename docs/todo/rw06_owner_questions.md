@@ -1,4 +1,4 @@
-# Owner Questions — the only channel between agents and the owner
+# Owner Questions - the only channel between agents and the owner
 
 Status: **CURRENT ONLY FOR FINAL PLACEMENT/RELEASE APPROVALS.** Earlier numbered
 questions are historical decisions. Add a new entry only when the current

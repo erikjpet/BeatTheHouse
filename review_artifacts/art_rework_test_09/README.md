@@ -1,17 +1,17 @@
-# Art Rework Test 09 — Geometry-Locked Day/Night Pair
+# Art Rework Test 09 - Geometry-Locked Day/Night Pair
 
 This review set updates every daytime environment to retain the full detail density of the approved Test 04 night artwork.
 
 ## Contents
 
-- `noon/` — 18 daytime endpoints.
-- `midnight/` — 18 byte-identical copies of the approved Test 04 night masters.
-- `day_night_contact_sheet.png` — all day/night pairs side by side.
-- `noon_contact_sheet.png` and `midnight_contact_sheet.png` — phase-specific overviews.
-- `palette_maps.json` — the exact 40-color midnight-to-noon lookup table for each environment.
-- `day_night_manifest.json` — game-facing asset inventory and validation status.
-- `transition_plan.md` — the proposed drift-free day/night animation method.
-- `calibration_refs/` — visual palette studies only; these are not game-ready assets.
+- `noon/` - 18 daytime endpoints.
+- `midnight/` - 18 byte-identical copies of the approved Test 04 night masters.
+- `day_night_contact_sheet.png` - all day/night pairs side by side.
+- `noon_contact_sheet.png` and `midnight_contact_sheet.png` - phase-specific overviews.
+- `palette_maps.json` - the exact 40-color midnight-to-noon lookup table for each environment.
+- `day_night_manifest.json` - game-facing asset inventory and validation status.
+- `transition_plan.md` - the proposed drift-free day/night animation method.
+- `calibration_refs/` - visual palette studies only; these are not game-ready assets.
 
 ## Alignment guarantee
 

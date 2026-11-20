@@ -1,4 +1,4 @@
-# Main Integration Audit — 2026-09-14
+# Main Integration Audit - 2026-09-14
 
 ## Verdict
 

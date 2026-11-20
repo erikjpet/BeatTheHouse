@@ -1,4 +1,4 @@
-# Art Rework Test 07 — Corrected Neon Midnight Pass
+# Art Rework Test 07 - Corrected Neon Midnight Pass
 
 This revision keeps the approved Test 06 noon artwork and replaces every midnight endpoint with a darker, more concentrated neon treatment.
 
@@ -23,11 +23,11 @@ This revision keeps the approved Test 06 noon artwork and replaces every midnigh
 
 ## Review files
 
-- `noon/` — unchanged aligned noon endpoints
-- `midnight/` — corrected dark-neon endpoints
-- `day_night_contact_sheet.png` — complete paired comparison
-- `midnight_contact_sheet.png` — corrected night overview
-- `calibration_refs/` — built-in ImageGen lighting studies used to calibrate the night balance
-- `day_night_manifest.json` — endpoint mapping and schedule
-- `transition_plan.md` — pixel-preserving animation plan
-- `prompts.md` — corrected midnight art brief
+- `noon/` - unchanged aligned noon endpoints
+- `midnight/` - corrected dark-neon endpoints
+- `day_night_contact_sheet.png` - complete paired comparison
+- `midnight_contact_sheet.png` - corrected night overview
+- `calibration_refs/` - built-in ImageGen lighting studies used to calibrate the night balance
+- `day_night_manifest.json` - endpoint mapping and schedule
+- `transition_plan.md` - pixel-preserving animation plan
+- `prompts.md` - corrected midnight art brief

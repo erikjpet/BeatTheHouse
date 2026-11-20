@@ -1,6 +1,6 @@
-# 0.6.0 final assignments — AUTHORITATIVE (owner, 2026-09-26)
+# 0.6.0 final assignments - AUTHORITATIVE (owner, 2026-09-26)
 
-Status: **HISTORICAL FINAL-LANE INSTRUCTIONS — NO LONGER ACTIVE.** This file was
+Status: **HISTORICAL FINAL-LANE INSTRUCTIONS - NO LONGER ACTIVE.** This file was
 the source of direction for Lanes A, B, C, and D at its dated boundary. Preserve
 it as evidence; do not create or resume lanes from it.
 
@@ -50,7 +50,7 @@ it as evidence; do not create or resume lanes from it.
      immediately before merging, and resolve conflicts yourself;
    - never upload or run butler.
 
-## Round 5 — ROOT CAUSE FOUND for the lock (PM, 2026-09-27) — highest priority
+## Round 5 - ROOT CAUSE FOUND for the lock (PM, 2026-09-27) - highest priority
 
 Rounds 3 and 4 fixed symptoms but not the cause. The PM reproduced the owner's
 lock headless on `a11ed9d7` and captured the real error:
@@ -79,7 +79,7 @@ Probes (headless, run in an isolated worktree with its own APPDATA; copy the
 Run them with `Godot --headless --path <worktree> --script res://pm_probe/<probe>.gd`,
 after copying them into `<worktree>\pm_probe\`.
 
-### Lane A — fix the cause everywhere, prove it with probes
+### Lane A - fix the cause everywhere, prove it with probes
 - **A7:** find every way the current environment can change without scenario
   finalization, and make each one finalize, or rebuild a restored room,
   exactly like `_travel_to` does. At minimum:
@@ -105,11 +105,11 @@ after copying them into `<worktree>\pm_probe\`.
   a separate worktree) and confirm the Counter Phone call and a scenario
   action work.
 
-### Lane C — HOLD
+### Lane C - HOLD
 Hold final zips and the site until A marks Round 5 DONE. Then restart at C1,
 and in C2 play the motel door path.
 
-## Round 4 — still unplayable: motel exit lock and "Scenario unavailable" (owner, 2026-09-26 evening)
+## Round 4 - still unplayable: motel exit lock and "Scenario unavailable" (owner, 2026-09-26 evening)
 
 On site build `bbe864d8` (includes Round 3 and Lane C's travel:leave fix), the
 owner reports two problems:
@@ -129,7 +129,7 @@ The error text is in the placeholder's description.
 **Owner rule: a layout problem must never stop play.** At worst an object
 moves to the Room actions list; travel and every action must keep working.
 
-### Lane A — never block play on a layout failure
+### Lane A - never block play on a layout failure
 - **A5:** when scenario projection fails, keep every base action and travel
   working, and put every scenario action that has no slot into the Room actions
   list (all of them working). Replace the placeholder with a small readable
@@ -140,7 +140,7 @@ moves to the Room actions list; travel and every action must keep working.
   working. Also check a home exit from the apartment and house if reachable.
   Confirm by playing on Web (rebuild locally) for 20+ minutes.
 
-### Lane B — make the binding succeed everywhere
+### Lane B - make the binding succeed everywhere
 - **B3:** write a runtime sweep, not the static checker: for every archetype
   and legal scenario, every phase, and arrival from travel **and** from a
   parent-home door (motel room → Motel, and so on), run the real binder,
@@ -149,11 +149,11 @@ moves to the Room actions list; travel and every action must keep working.
   until the sweep reports **zero** failures. Keep the physical-objects-in-room
   rule. Save the sweep report to `.tmp\owner_review\binding_sweep_round4.txt`.
 
-### Lane C — HOLD again
+### Lane C - HOLD again
 Don't build final zips or refresh the site until A and B finish Round 4. Then
 restart at C1, and in C2 also play the owner's motel-room → Motel lobby path.
 
-## Round 3 — PLAYABILITY BLOCKERS (owner, 2026-09-26, highest priority)
+## Round 3 - PLAYABILITY BLOCKERS (owner, 2026-09-26, highest priority)
 
 The owner reports the build is unplayable: interaction options are missing from
 rooms, and after a short time of play, clicks stop registering and the player
@@ -178,7 +178,7 @@ games, events and travel, with every visible option working and no stuck
 state. **Confirm by playing it, not only with tests.** Test updates are allowed
 only where a test encodes the old broken behavior.
 
-### Lane A — interaction and dispatch
+### Lane A - interaction and dispatch
 - **A1:** find why the Room actions list reopens by itself after returning from a
   game or from any failed activation (see `overflow_was_open …
   room_action_list.open()` in `foundation_main.gd`, and the pending-selection
@@ -195,7 +195,7 @@ only where a test encodes the old broken behavior.
 - **A4:** play the owner's path above plus 30 minutes of mixed play, on the Web
   build (localhost) and the Windows build. There must be no stuck state.
 
-### Lane B — physical things back in the room
+### Lane B - physical things back in the room
 - **B1:** the overflow list is only for abstract things (Q-008). **Every game,
   person, shop item and prop with real art must have a room slot.** Audit all
   21 maps and add hand-placed slots so that no game, person or shop item lands
@@ -206,7 +206,7 @@ only where a test encodes the old broken behavior.
   room, base plus busiest scenario, and list any physical object still in
   overflow (there should be none).
 
-### Lane D — two leftover Contract reds (Lane C's run on `c8c94058`)
+### Lane D - two leftover Contract reds (Lane C's run on `c8c94058`)
 - **D1:** `standalone_contract_game06_2_repeated_reprieve_contract`. It still
   fails with *baseline contract changed: fingerprint=cef4f0ad… heat=0* (earlier
   it showed `heat=-1`). Find what changed the baseline since Round 2. It could
@@ -221,11 +221,11 @@ only where a test encodes the old broken behavior.
 Evidence: `D:\Projects\Beat-The-House\.tmp\test_reports\final_c_round2_contract_c8c94058\`.
 Merge, delete your branch and worktree, then write `DONE`.
 
-### Lane C — HOLD
+### Lane C - HOLD
 Don't build the final zips (C3) or refresh the site until A and B have both
 finished Round 3. Then restart at C1.
 
-## Round 2 — fix list from Lane C's full run on `f77fb7bf` (2026-09-26, binding)
+## Round 2 - fix list from Lane C's full run on `f77fb7bf` (2026-09-26, binding)
 
 Evidence: `D:\Projects\Beat-The-House\.tmp\test_reports\final_c_full_smoke_f77fb7bf\`
 and `...\final_c_full_contract_f77fb7bf\`. Every failure below belongs to
@@ -245,7 +245,7 @@ When your list is done, rerun only your own stages and shards with
 `-AllowConcurrentGodot` until they pass. Then merge, delete your branch and
 worktree, and write `DONE`.
 
-### Lane A — games and surfaces
+### Lane A - games and surfaces
 1. `contracts_games`: all_game_module_contracts / Coin Pusher draw harness.
    The error is *Invalid access to property or key 'size' on RefCounted
    (SurfaceHarness)*, probably from the new retained-layer coin pusher code
@@ -260,7 +260,7 @@ worktree, and write `DONE`.
    pile*. Check in the game that a glimmered ticket, once bought and opened,
    lands in the correct pile.
 
-### Lane B — room layout and placement
+### Lane B - room layout and placement
 1. `standalone_contract_env06_6_full_contract` (10) and `contracts_content_semantics`
    scenario_semantic_presentation_contract (10): *Single-plane fixture could not
    bind its complete generated base inventory to authored base slots: []*.
@@ -279,7 +279,7 @@ worktree, and write `DONE`.
    exercising a checked-in developer-placement room*. Point it at a room that
    still uses developer placement, or at the fixed-slot equivalent.
 
-### Lane D — Crew, heist, economy, release identity
+### Lane D - Crew, heist, economy, release identity
 1. `contracts_crew` crew_heist_contract (8): *Plan A production crew event
    rejected go_hold ("Event is no longer available")*. The real game reaches
    Hold → Sit → Dock (the T1 and T4 runs), so find whether the fixture reaches
@@ -304,13 +304,13 @@ worktree, and write `DONE`.
    not a gate. Make it skip cleanly when the project isn't 0.5.1 (the captured
    0.5.1 fixtures already exist and `integ06_1_v051_migration_smoke` passes).
 
-### Lane C — after Round 2
+### Lane C - after Round 2
 When A, B and D all say `DONE` again, restart at C1: full Smoke and full
 Contract alone. Fix any small leftover red yourself. Then do C2–C5.
 
 ## Assignments
 
-### Lane A — Performance
+### Lane A - Performance
 
 1. Land the blackjack idle optimization Lane D measured: idle p95
    5.338 → 3.433 ms, liveness 13 redraws against a floor of 8. If the code
@@ -320,7 +320,7 @@ Contract alone. Fix any small leftover red yourself. Then do C2–C5.
    without lowering budgets or liveness floors.
 4. Merge, delete your branch and worktree, and write `DONE`.
 
-### Lane B — Room geometry, slots, travel
+### Lane B - Room geometry, slots, travel
 
 1. Own every failing test in authored room geometry, fixed-slot validation
    (`tools/environment_fixed_slot_static_check.py` and the validator stage) and
@@ -330,7 +330,7 @@ Contract alone. Fix any small leftover red yourself. Then do C2–C5.
 4. Run `tools/validate_project.ps1` green.
 5. Merge, delete your branch and worktree, and write `DONE`.
 
-### Lane D — Every other Contract shard
+### Lane D - Every other Contract shard
 
 1. Run `tools/check_godot.ps1 -Suite Contract -AllowConcurrentGodot -KeepGoing`
    once to list the failing shards.
@@ -338,7 +338,7 @@ Contract alone. Fix any small leftover red yourself. Then do C2–C5.
    travel or lender/delivery (Lane B).
 3. Merge, delete your branch and worktree, and write `DONE`.
 
-### Lane C — Final gate, release and cleanup (runs last)
+### Lane C - Final gate, release and cleanup (runs last)
 
 Start now with read-only preparation. Then check the three status files for
 A, B and D every 15 minutes, by reading them, never writing to them. When all

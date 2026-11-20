@@ -1,6 +1,6 @@
-# rw06_10 — Environment slot families and generated object manifests
+# rw06_10 - Environment slot families and generated object manifests
 
-Status: **COMPLETE HISTORICAL MILESTONE — SUPERSEDED FOR CURRENT PLACEMENT
+Status: **COMPLETE HISTORICAL MILESTONE - SUPERSEDED FOR CURRENT PLACEMENT
 AUTHORITY.** This records the 2026-09-29 four-family migration checkpoint. The
 later scenario-instance rework replaced its room-wide scenario bank, and Pull
 Tabs now attach to each venue's staffed sales counter. Use

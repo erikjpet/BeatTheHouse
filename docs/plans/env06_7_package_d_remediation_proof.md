@@ -1,4 +1,4 @@
-# env06_7 Package D — First-Rejection Remediation Proof
+# env06_7 Package D - First-Rejection Remediation Proof
 
 Historical note: this rejected-branch proof is superseded by
 `env06_7_package_d_ordered_recovery.md`. Runtime claims below apply only to the
@@ -18,7 +18,7 @@ honor/escort/divert, Bringer seat/defend/hostile pitch, Debt Court
 uphold/contest/adjourn, Raid Jitters hide/abort/reopen, and Lounge-specific
 bracket, buyout, zone, and storm decisions. The topology is encoded in the
 phase graph, interaction actions, branch ids, command authority, dossiers, and
-calculated signatures—not only in labels or tags.
+calculated signatures-not only in labels or tags.
 
 ## Executed lifecycle matrix
 

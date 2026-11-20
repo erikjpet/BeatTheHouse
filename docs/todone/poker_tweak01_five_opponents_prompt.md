@@ -1,7 +1,7 @@
-Status: DONE — merged to `main` before `d2594eb3`; retained by the 2026-09-14 integration audit
+Status: DONE - merged to `main` before `d2594eb3`; retained by the 2026-09-14 integration audit
 Series: Back-room poker tweaks (tweak01 of an open-ended series; later tweaks stack on the same branch)
 
-# Agent Prompt — Back-Room Poker Tweak 01: Five Opponents at the Table
+# Agent Prompt - Back-Room Poker Tweak 01: Five Opponents at the Table
 
 Copy everything below this line into the agent.
 
@@ -9,7 +9,7 @@ Copy everything below this line into the agent.
 
 You are working on **Beat The House**, a Godot 4.6 GDScript roguelite. This
 prompt is self-contained: every rule you need is below. Read the named code
-before editing — do not plan from this prompt alone.
+before editing - do not plan from this prompt alone.
 
 ## Goal
 
@@ -48,21 +48,21 @@ commit anything in that checkout.**
   `surface_state(...)` dictionary and draws it in `draw_surface(...)`.
   Content and tuning are data-driven from `data/**/*.json`.
 - Back-room poker:
-  - `scripts/games/crew_draw_poker.gd` — the module (≈2,400 lines; despite the
+  - `scripts/games/crew_draw_poker.gd` - the module (≈2,400 lines; despite the
     name it is no-limit Hold'em on the `ordered_v1` turn engine; `legacy_v1`
     five-card draw still exists for old saves/tests).
-  - `scripts/core/crew_poker_model.gd` — pure rules/policy/tell model.
-  - `data/crew/poker.json` — tuning, including `"opponent_count": [3, 3]`, seven
-    member policies, banter. `data/crew/tells.json` — per-member tells.
-  - `data/games/rituals/crew06_10_poker_nights.json` — the five authored nights.
-  - `scripts/games/table_game_visuals.gd` — shared room/table/character drawing
+  - `scripts/core/crew_poker_model.gd` - pure rules/policy/tell model.
+  - `data/crew/poker.json` - tuning, including `"opponent_count": [3, 3]`, seven
+    member policies, banter. `data/crew/tells.json` - per-member tells.
+  - `data/games/rituals/crew06_10_poker_nights.json` - the five authored nights.
+  - `scripts/games/table_game_visuals.gd` - shared room/table/character drawing
     (`CONSOLE_Y = 342`, `TABLE_BOTTOM = 334`, felt polygon, `_draw_table_character`).
-  - `scripts/core/crew_state_model.gd` — `MEMBER_IDS` (7 Crew members) and the
+  - `scripts/core/crew_state_model.gd` - `MEMBER_IDS` (7 Crew members) and the
     Layer-3 resident projection.
 - Hidden-information rule (existing, must hold): presentation never receives an
   opponent's hole cards before showdown or any hidden tell-learning counter.
 
-## Where "three" is baked in today (verified — re-read before editing)
+## Where "three" is baked in today (verified - re-read before editing)
 
 1. `crew_draw_poker.gd` `generate_environment_state` (≈lines 49–60): tops up
    candidates from the roster only when residents `< 3`; clamps min/max/count to
@@ -126,7 +126,7 @@ step 68; player chips (350,280); pot chips (590,270, up to 6 stacks); player
 button (522,292); observation strip `Rect2(138,337,548,35)`; console/controls
 y ≥ 342; raise selector panel.
 
-Treat the table as a proposal — adjust until it passes:
+Treat the table as a proposal - adjust until it passes:
 
 - **Automated no-overlap check (new, keep it for future tweaks):** add a
   function in the Crew poker foundation contract (or `check_table_games.gd`
@@ -191,7 +191,7 @@ genuinely N-player, not quietly 4-player:
 ### 5. Saves and old tables
 
 - `STATE_VERSION` is 3. A table saved with three members (idle or mid-hand)
-  must load and play to completion **as a three-member table** — never re-seat
+  must load and play to completion **as a three-member table** - never re-seat
   or add chairs mid-session, never change cards, pot, or turn owner. Only a
   newly generated table/new night gets five. If you need a version bump to make
   that unambiguous, bump it with a migration and a test using an existing
@@ -208,7 +208,7 @@ genuinely N-player, not quietly 4-player:
 - Five animated characters instead of three raises idle draw cost. Measure
   `crew_draw_poker` in `tools/foundation_performance_probe.gd` before (on `main`)
   and after; report both numbers. It must stay inside its budget in
-  `tools/perf06_budget_table.json`. If it doesn't, optimize the new drawing —
+  `tools/perf06_budget_table.json`. If it doesn't, optimize the new drawing -
   do not raise the budget.
 - **Idle liveness gate:** perf work in this repo has frozen idle table animation
   four separate times because idle budgets reward 0.000. The probe's liveness
@@ -224,7 +224,7 @@ under `.tmp/` only, never committed) containing: the final seat-layout table
 with coordinates; the remaining free regions of the board; where seat count,
 seating rules, betting tuning, banter/tells, and night rituals live (file +
 function); which tests/tools/captures cover each; and the before/after perf
-numbers. Keep it under ~80 lines — it is the orientation doc the next tweak's
+numbers. Keep it under ~80 lines - it is the orientation doc the next tweak's
 agent reads first.
 
 ## Engineering rules
@@ -234,7 +234,7 @@ agent reads first.
 - Build on existing tooling (`crew_poker_visual_capture`, `crew_holdem_*`
   tools, foundation contracts); do not create parallel harnesses.
 - Don't touch unrelated games or systems. No balance changes to stakes/caps in
-  this tweak — but **do** report, from the gameplay audit, the pot-size and
+  this tweak - but **do** report, from the gameplay audit, the pot-size and
   session-swing distribution at 3 vs 5 opponents so the owner can decide whether
   `session_swing_cap` / blinds need a follow-up tweak.
 
@@ -247,7 +247,7 @@ agent reads first.
 5. The new no-overlap check (inside gate 2).
 6. `tools\crew_poker_visual_capture.ps1 -RequireGodot`, `crew_holdem_dynamic_table_capture.gd`,
    `crew_holdem_dynamic_table_audit.gd`, `crew_holdem_gameplay_audit.gd`,
-   `crew_poker_visual_seed_audit.gd` — all updated for five and passing, PNGs
+   `crew_poker_visual_seed_audit.gd` - all updated for five and passing, PNGs
    reviewed by you.
 7. Performance probe for `crew_draw_poker`: within budget, liveness passing.
 8. End-to-end: launch the game, reach the back room, sit at the table, play at
@@ -267,7 +267,7 @@ Only after every gate passes and the end-to-end play works:
    updates). End each commit message with
    `Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>`.
 2. Push the branch: `git push -u origin codex/backroom-poker-tweaks`.
-   **Do not merge into `main` and do not push `main`** — more poker tweaks will
+   **Do not merge into `main` and do not push `main`** - more poker tweaks will
    stack on this branch and it lands as one series.
 3. Keep the worktree; do not remove it.
 4. Append an execution record to the bottom of **this file in the main checkout**

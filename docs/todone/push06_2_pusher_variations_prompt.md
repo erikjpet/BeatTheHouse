@@ -8,7 +8,7 @@ Board row: `push06_2` in `docs/todo/README_0_6_board.md`
 - **Verification:** PM line-by-line scope/design review; Ridge/Vault lifecycle, persistence, seeded distribution, and EV contracts; exact-tree full matrix; two consecutive default performance passes after one non-reproducible host spike; 10-seed/580-checkpoint determinism (`231360296`); canonical and focused visual QA all PASS.
 - **Deviations:** The implementation satisfies this original prompt, but the owner rejected its abstract pile model on design grounds. `rework06_2` supersedes the simulation core while preserving the required visible features and variation identities.
 
-# Agent Prompt — 0.6 push06_2: Jackpot Ridge + The Vault Drop
+# Agent Prompt - 0.6 push06_2: Jackpot Ridge + The Vault Drop
 
 Copy everything below this line into the agent.
 
@@ -18,9 +18,9 @@ You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript
 casino roguelike (Web/itch.io + Windows, 1280×720). push06_1 shipped
 the pusher framework (coarse deterministic pile model, universal
 nudge/alarm system, pile persistence) and Quarter Falls. Binding
-design contract: `docs/plans/0.6_living_world_roadmap.md` — Pillar 4
+design contract: `docs/plans/0.6_living_world_roadmap.md` - Pillar 4
 coin pusher variations 2 and 3. Owner mandate: the three variations
-implement **completely unique mechanics, bonuses, and strategies** —
+implement **completely unique mechanics, bonuses, and strategies** -
 not layouts. This prompt is self-contained for rules and scope.
 
 ## Board protocol
@@ -52,9 +52,9 @@ town-state meter). Verify landed framework APIs by code.
 - Strategy identity = sequencing: which puck comes off first, arming
   before/after locks, clearing duds vs playing around them. Ridge has
   the deepest nudge affordance in the family (largest tolerance pool,
-  finest force granularity) — nudging pucks, not just coins.
+  finest force granularity) - nudging pucks, not just coins.
 - Cheat: `weighted_keyring` (heavier nudge within tolerance); a
-  Mags-crafted "nudge dampener" item hook (raises tolerance one band —
+  Mags-crafted "nudge dampener" item hook (raises tolerance one band -
   item itself ships via content06_1; wire data-driven).
 
 ### 2. The Vault Drop (the progressive pusher)
@@ -62,18 +62,18 @@ town-state meter). Verify landed framework APIs by code.
 - Pile carries **key fragments**; fragments pushed off the ledge bank
   toward the machine's **vault**.
 - **Town-fed progressive**: each Vault Drop machine's jackpot meter is
-  TownState-driven — it grows on action boundaries (faster under
+  TownState-driven - it grows on action boundaries (faster under
   crowded scenarios at its venue), seeded and deterministic. Register
   the meter as a rumor fact class ("the vault at the corner store is
   fat") with town06_2's registry.
-- **Vault round**: spend banked fragments to open vault cells —
+- **Vault round**: spend banked fragments to open vault cells -
   cash amounts, items, fragment refunds, and the RESET cell that
   slams the progressive down. Stop anytime; banked fragments persist
   with the pile (node snapshot).
 - Strategy identity = map-level EV: reading which venue's meter is
   worth the trip (rumors/Switch), banking vs cashing before the sweep
   arrives. The machine plays the whole town.
-- Cheat: `xray_glasses` — peek one vault cell before choosing (reuse
+- Cheat: `xray_glasses` - peek one vault cell before choosing (reuse
   the shipped peek pattern from scratch tickets).
 
 ### 3. Placement + distribution
@@ -81,12 +81,12 @@ town-state meter). Verify landed framework APIs by code.
 - Variation availability seeded per node across tier-1 venues so a
   run sees a varied spread (weights in data); scenario access effects
   respected (Graveyard Shift maintenance opens lax-alarm play;
-  Trucker Convoy occupies the good machine — machine-busy state as an
+  Trucker Convoy occupies the good machine - machine-busy state as an
   environment mutation).
 
 ## Hard rules
 
-- Both variations run on the push06_1 framework — no forked pile or
+- Both variations run on the push06_1 framework - no forked pile or
   nudge code; variation logic is config + variation-specific modules
   over shared core (enforce by structure).
 - Determinism/perf/save/voice rules identical to push06_1 (probe,

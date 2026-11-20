@@ -1,6 +1,6 @@
-# rw06 — Release-week execution agent (orchestrator)
+# rw06 - Release-week execution agent (orchestrator)
 
-Status: **HISTORICAL / SUPERSEDED — DO NOT LAUNCH.** The release-week board and
+Status: **HISTORICAL / SUPERSEDED - DO NOT LAUNCH.** The release-week board and
 its dated target are closed. Use `rw06_4_release_gate_ship_prompt.md` only after
 the current owner placement report is promoted and validated.
 

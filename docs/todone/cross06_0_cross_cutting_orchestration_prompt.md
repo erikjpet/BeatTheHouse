@@ -1,7 +1,7 @@
 Status: LAUNCHER
-Board section: `Family 3 — Cross-cutting completion` in `docs/todo/README_0_6_board.md`
+Board section: `Family 3 - Cross-cutting completion` in `docs/todo/README_0_6_board.md`
 
-# Orchestration Prompt — Cross-Cutting Completion Program (Family 3)
+# Orchestration Prompt - Cross-Cutting Completion Program (Family 3)
 
 Copy everything below this line into one primary Codex agent. That agent is the
 program integrator and must employ sub-agents; it is not permitted to implement
@@ -58,7 +58,7 @@ actually is. These rows are that work.
   preflight, never copy them into worktrees, never stage them, and never use
   reset, clean or checkout commands that could discard them.
 - `balance06_1`, `integ06_1`, `perf06_1` and `pusherv3_11` are audits. An audit
-  that finds nothing is a suspicious audit — but a fabricated finding is worse.
+  that finds nothing is a suspicious audit - but a fabricated finding is worse.
   Report what is there, with evidence.
 - **No release activity.** No version bump, no tag, no packaging, no publish, no
   final balance tuning. `release06_1` remains the only row permitted to do any
@@ -103,28 +103,28 @@ after verifying the registered path and only after the branch is safely merged.
 
 ## 3. Scheduling
 
-### Wave 1 — start immediately, fully parallel
+### Wave 1 - start immediately, fully parallel
 
 `meta06_1`, `balance06_1`, `board06_1` and `polish06_0`. None depends on the
 depth programs. `board06_1` touches the board and docs only and must be
 coordinated with the other family integrators so no one is editing the board at
-the same moment — hold its merge until they confirm a quiet window.
+the same moment - hold its merge until they confirm a quiet window.
 
 `polish06_0` produces prompts and a program document, not code. Its output stays
 parked; do not let it start any polish work it defines.
 
-### Wave 2 — after `pusherv3_10`
+### Wave 2 - after `pusherv3_10`
 
 `pusherv3_11`. It is an audit of a program that ran across ten rows and must be
 owned by an agent that implemented none of them.
 
-### Wave 3 — after Families 1 and 2 merge
+### Wave 3 - after Families 1 and 2 merge
 
 `audio06_1`, then `integ06_1` and `perf06_1` in parallel. `integ06_1` and
 `perf06_1` must run on a tree that already contains both depth programs;
 running them earlier produces a report about a game that no longer exists.
 
-### Wave 4 — after Wave 3
+### Wave 4 - after Wave 3
 
 `teach06_2`, then `playtest06_2` last. `playtest06_2` amends the playtest gate
 and must know what the other nine rows found.

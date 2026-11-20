@@ -1,7 +1,7 @@
-Status: DONE — accepted, landed and exact-main post-land green
+Status: DONE - accepted, landed and exact-main post-land green
 Board row: `fix06_16` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — fix06_16: Web performance server orphan cleanup
+# Agent Prompt - fix06_16: Web performance server orphan cleanup
 
 Work from exact current `main` after `fix06_14` lands. This row owns only the
 Web performance wrapper/server lifecycle defect exposed by the consumed
@@ -47,7 +47,7 @@ Preserve every lifecycle artifact and exact process/port identity. Commit
 logically, self-review, obtain independent review, and land before the next
 locked `fix06_13` shipped-Web run.
 
-## Implementation record — 2026-08-27
+## Implementation record - 2026-08-27
 
 - Exact base: `f0637b8c1dcb4dbc9d979d0f89a1ee811865a90a` on
   `codex/land06-fix06_16` in `D:\bth-f14-int`.
@@ -81,7 +81,7 @@ locked `fix06_13` shipped-Web run.
   No gameplay, RNG, payout, odds, wager, economy, geometry, tuning, migration,
   version, package, release or remote operation occurred.
 
-## Independent rejection and remediation — 2026-08-27
+## Independent rejection and remediation - 2026-08-27
 
 - Independent review rejected exact head
   `239ead2a854ecd46a2ac70fa4f192da4439b6ba2` at P2 because both native
@@ -109,7 +109,7 @@ locked `fix06_13` shipped-Web run.
   server-script command-line matcher, the final combined hostile/static rerun
   passed in 64.9s.
 
-## Expected-shutdown classification rejection and remediation — 2026-08-27
+## Expected-shutdown classification rejection and remediation - 2026-08-27
 
 - Independent re-review rejected exact head
   `e92fab108f5c4e7128f2ff9340d064ac6fb40a72` at P2. The outer helper
@@ -140,7 +140,7 @@ locked `fix06_13` shipped-Web run.
   cleanup failure; the full hostile suite passed again in 24.8s.
   Final parser coverage passed 4/4 and static validation passed in 48.2s.
 
-## Child acknowledgement and fallback identity rejection — 2026-08-27
+## Child acknowledgement and fallback identity rejection - 2026-08-27
 
 - Independent re-review rejected exact head
   `672cdd25b65ed715e2fd0528d1771c1a7997e384` with two lifecycle findings.
@@ -173,7 +173,7 @@ locked `fix06_13` shipped-Web run.
   and child PID; parent and wrapper reject any other writer/identity. The final
   complete hostile/static rerun passed in 68.9s.
 
-## PID-reuse test isolation rejection and remediation — 2026-08-27
+## PID-reuse test isolation rejection and remediation - 2026-08-27
 
 - Independent re-review rejected exact head
   `057f26f015da21a609373f4a293f8e85caf8f697` at P2 for test coverage only.
@@ -194,7 +194,7 @@ locked `fix06_13` shipped-Web run.
   its PID, and again proves it survives. The final complete hostile/static rerun
   with both isolated identity cases passed in 79.6s.
 
-## Final acceptance, landing and post-land closeout — 2026-08-27
+## Final acceptance, landing and post-land closeout - 2026-08-27
 
 - `/root/fix06_16_review` returned `ACCEPT` on exact candidate
   `b38f3e35ed2d8b696e93c4f75ea673760ca4c337`. Every earlier rejected head and

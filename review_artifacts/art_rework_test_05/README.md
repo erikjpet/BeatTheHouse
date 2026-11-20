@@ -1,4 +1,4 @@
-# Art Rework Test 05 — Color and Simplification Pass
+# Art Rework Test 05 - Color and Simplification Pass
 
 This pass refines all 18 environment backgrounds from Test 04 without changing the gameplay layout contract. The art is brighter, smoother, and less dominated by gradients or dense shadow texture.
 
@@ -23,9 +23,9 @@ This pass refines all 18 environment backgrounds from Test 04 without changing t
 
 ## Review files
 
-- `environments/` — final drag-and-drop candidates
-- `contact_sheet.png` — clean overview of all 18 candidates
-- `generated_sources/` — full-resolution built-in ImageGen sources
-- `prompts.md` — shared art rules and environment-specific palette briefs
+- `environments/` - final drag-and-drop candidates
+- `contact_sheet.png` - clean overview of all 18 candidates
+- `generated_sources/` - full-resolution built-in ImageGen sources
+- `prompts.md` - shared art rules and environment-specific palette briefs
 
 The previous Test 04 live-overlay captures remain the placement reference for this pass. Test 05 changes color treatment and rendering simplicity while preserving those established composition landmarks.

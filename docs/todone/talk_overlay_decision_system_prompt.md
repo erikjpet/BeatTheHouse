@@ -1,4 +1,4 @@
-# Agent Prompt — Talk Overlay: Bottom-Left Non-Blocking Decision Dock + NPC Approach Events
+# Agent Prompt - Talk Overlay: Bottom-Left Non-Blocking Decision Dock + NPC Approach Events
 
 ## Execution Record
 
@@ -28,16 +28,16 @@ Copy everything below this line into the agent.
 
 You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript casino
 roguelike (1280×720 fixed viewport; game surfaces render immediate-mode onto a
-900×430 design board — see CLAUDE.md for the architecture summary). You are
+900×430 design board - see CLAUDE.md for the architecture summary). You are
 building the **talk system**: a persistent, non-blocking decision UI docked in
 the bottom-left of the screen, plus the event structure for NPCs (including
 patrons seated at the player's table) approaching and speaking to the player.
 
 ## Product intent (binding)
 
-1. The dock is the "menu" for event triggers: when something happens — someone
+1. The dock is the "menu" for event triggers: when something happens - someone
    talks to the player, heat/suspicion pressure crosses a threshold, an event
-   chain advances — it surfaces **here**, in one known location, and lets the
+   chain advances - it surfaces **here**, in one known location, and lets the
    player decide.
 2. Gameplay is never overlapped or overpowered: the gambling/environment game
    stays fully playable while a talk entry is pending. No modal takeover, no
@@ -49,7 +49,7 @@ patrons seated at the player's table) approaching and speaking to the player.
 ## Current architecture you are extending (investigated)
 
 - **Blocking popup today:** triggered events currently present through
-  `event_choice_popup_overlay` (foundation_main.gd:225-229), which is modal —
+  `event_choice_popup_overlay` (foundation_main.gd:225-229), which is modal -
   `_guard_player_input_route`-adjacent gating at foundation_main.gd:394 blocks
   world interaction while it is visible, and the comment block at
   foundation_main.gd:314-319 documents both triggered and interactable events
@@ -63,7 +63,7 @@ patrons seated at the player's table) approaching and speaking to the player.
   (:3692), serialization (:4035-4036, :4077) and a normalizer
   (`_normalize_triggered_event_entry`). Event chains enqueue via
   `event_module.gd:273`.
-- **Event data:** `data/events/events.json` — 33 entries with `id`,
+- **Event data:** `data/events/events.json` - 33 entries with `id`,
   `display_name`, `type`, `interaction_mode`, `scopes`, `trigger`, and
   `payload.choices[]` where each choice has `id`, `label`, `text`,
   `consequences` (e.g. `bankroll_delta`, `suspicion_delta`, `resolve_event`).
@@ -94,7 +94,7 @@ event remains valid unchanged:
   patrons, the runtime binds the speaker to a live patron (see §4) instead of
   the static name.
 - `payload.timing`: `{ "expires": bool, "duration_actions": int,
-  "timeout_choice_id": "..." }` — see §5 for why the unit is actions, not
+  "timeout_choice_id": "..." }` - see §5 for why the unit is actions, not
   seconds.
 - New trigger type alongside `"manual"`: `{ "type": "heat_threshold",
   "level": 65 | 85 }` and `{ "type": "table_approach", "games": [...],
@@ -107,7 +107,7 @@ validated; malformed values must fall back to defaults, never crash.
 ### 2. RunState (extend the existing queue)
 
 - Extend `_normalize_triggered_event_entry` to carry `presentation`,
-  `speaker`, and timing state. Bump nothing structurally — entries remain
+  `speaker`, and timing state. Bump nothing structurally - entries remain
   dictionaries in the same queue, so SB.3 save/load fuzz idempotence
   (`to_dict -> from_dict -> to_dict`) holds automatically once the normalizer
   round-trips the new keys. Add the new keys to the normalizer's output
@@ -119,7 +119,7 @@ validated; malformed values must fall back to defaults, never crash.
   untouched. One entry is "focused" at a time in the dock; the rest queue
   behind a visible counter badge.
 - Choice resolution routes through the same consequence application code the
-  modal popup uses today (`resolve_event_choice`, foundation_main.gd:1138) —
+  modal popup uses today (`resolve_event_choice`, foundation_main.gd:1138) -
   do not fork consequence semantics. Factor, don't copy.
 
 ### 3. The dock UI (foundation_main.gd + new script)
@@ -129,7 +129,7 @@ validated; malformed values must fall back to defaults, never crash.
   the existing overlay Controls. Before choosing exact geometry, inventory
   what currently occupies the bottom-left region (check `_show_message`
   presentation and any HUD panels there) and either dock above/beside it or
-  relocate the lesser element — nothing may stack on the dock's known
+  relocate the lesser element - nothing may stack on the dock's known
   location. Maximum expanded footprint ~380×220; it must never cover the
   centered game board's interactive area.
 - Two visual states: **collapsed** (one-line speaker + summary strip, queue
@@ -137,7 +137,7 @@ validated; malformed values must fall back to defaults, never crash.
   buttons, urgency bar when timed). Expansion is player-controlled (click the
   strip) and automatic when a timed entry arrives; it never steals keyboard
   focus from an in-progress game action.
-- Selection: standard Control buttons (mouse + touch — touch parity is an
+- Selection: standard Control buttons (mouse + touch - touch parity is an
   SB.4 contract), plus number-key hotkeys 1–4 routed only when the dock is
   expanded and the key is not claimed by an active game surface. Confirm
   destructive/irreversible choices with a second click on the same button
@@ -160,12 +160,12 @@ validated; malformed values must fall back to defaults, never crash.
   placed), evaluates `table_approach` triggers: a seeded roll (see §5) picks
   a patron from the current table's `patrons` array and enqueues a talk event
   whose speaker snapshot copies that patron's identity fields (`name`, `mood`,
-  `silhouette`, colors) **by value** into the event entry — the entry must
+  `silhouette`, colors) **by value** into the event entry - the entry must
   stay valid after the player leaves the table (mutation firewall: reading
   patrons for the snapshot must not mutate the table dictionary).
 - While that patron's talk entry is focused in the dock, set the existing
   per-patron presentation fields the renderer already understands
-  (`watching_player`, `tell_active` — table_game_visuals.gd:124-128) through
+  (`watching_player`, `tell_active` - table_game_visuals.gd:124-128) through
   the game module's normal state pipeline so the seated patron visibly turns
   toward the player. Do it in the module's state-building path, not by
   mutating live table state from the UI (SB.2 mutation firewall: draw/preview
@@ -184,17 +184,17 @@ state hashes, and it covers event chains. Therefore:
 - **No wall-clock decision timers in state.** `payload.timing.duration_actions`
   counts player action boundaries (the same boundaries §4 hooks). When the
   count is exhausted, the timeout choice auto-resolves at the *next action
-  boundary* — deterministic in both processes. The on-screen urgency bar may
+  boundary* - deterministic in both processes. The on-screen urgency bar may
   render smooth wall-clock motion as presentation, but expiry is decided only
   by the action counter carried in the entry.
 - **All randomness is seeded.** `table_approach` chance rolls and patron
   selection draw from the run's seeded RNG streams (find the existing pattern
-  — grep run_generator.gd / run_state.gd for how event and travel rolls derive
-  from the run seed) — never `randf()` on an unseeded global stream, never
+  - grep run_generator.gd / run_state.gd for how event and travel rolls derive
+  from the run seed) - never `randf()` on an unseeded global stream, never
   time-based seeds.
 - New wait states must be sweep-safe: a pending talk entry with `expires ==
   false` must never gate run progress (the stuck-state sweep,
-  `tools/foundation_stuck_state_sweep.ps1`, generalizes over wait states —
+  `tools/foundation_stuck_state_sweep.ps1`, generalizes over wait states -
   extend its inventory if it enumerates them; grep foundation_check.gd for the
   SB.6 wait-state inventory first).
 
@@ -211,7 +211,7 @@ state hashes, and it covers event chains. Therefore:
 
 ## Hard constraints
 
-1. Per-frame paths stay zero-copy (measured 32.6 ms/frame regression history —
+1. Per-frame paths stay zero-copy (measured 32.6 ms/frame regression history -
    see CLAUDE.md). Talk evaluation happens on action boundaries only.
 2. Do not break the modal popup contract for events that remain modal; the
    fuzz and firewall suites assert its behavior (grep foundation_check.gd for
@@ -226,7 +226,7 @@ state hashes, and it covers event chains. Therefore:
    (e) patron speaker snapshot immutability after leaving the table.
 5. Match existing style: tab indentation, typed GDScript, sparse comments
    stating constraints only. UI strings follow existing tone (terse, diegetic).
-6. Simulated gambling only — no real-money framing in any new content text.
+6. Simulated gambling only - no real-money framing in any new content text.
 
 ## Verification gates (run at the end, not iteratively)
 
@@ -234,10 +234,10 @@ state hashes, and it covers event chains. Therefore:
 2. Targeted suites: `tools\check_godot.ps1 -RequireGodot -FoundationSuite ui`
    and `-FoundationSuite systems`, plus one table-game suite (blackjack) for
    the approach hooks.
-3. `tools\foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` —
+3. `tools\foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` -
    must hash-match with talk events in the mix; add a seed prefix that
    exercises them.
-4. `tools\foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 50` — no
+4. `tools\foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 50` - no
    new stuck states.
 5. One `tools\foundation_mouse_batch_playtest.ps1 -RunCount 10 -RequireGodot`
    batch as an integration smoke.

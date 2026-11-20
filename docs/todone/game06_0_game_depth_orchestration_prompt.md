@@ -1,7 +1,7 @@
 Status: LAUNCHER
-Board section: `Family 1 — Game depth parity` in `docs/todo/README_0_6_board.md`
+Board section: `Family 1 - Game depth parity` in `docs/todo/README_0_6_board.md`
 
-# Orchestration Prompt — Game Depth Parity Program (Family 1)
+# Orchestration Prompt - Game Depth Parity Program (Family 1)
 
 Copy everything below this line into one primary Codex agent. That agent is the
 program integrator and must employ sub-agents; it is not permitted to implement
@@ -39,8 +39,8 @@ evidence.
 The owner's 2026-08-25 depth standard says a game must not resolve as a static
 control panel. The depth program applies that standard to craps
 (`craps06_3`), back-room poker (`crew06_10`) and the coin pusher (V3 rows).
-`data/games/games.json` ships eleven games. The other eight — blackjack,
-baccarat, roulette, video poker, slot, scratch tickets, pull tabs, bar dice —
+`data/games/games.json` ships eleven games. The other eight - blackjack,
+baccarat, roulette, video poker, slot, scratch tickets, pull tabs, bar dice -
 plus the Grand Casino showdown surfaces, still resolve as panels. `depth06_1`
 would pass while most of the game fails its own stated bar. This program closes
 that gap.
@@ -98,12 +98,12 @@ While waiting, keep every slot busy with the read-only audits in section 3.
 Give each agent a bounded, read-only audit with a required written handoff:
 
 - **Shared surface seam:** `scripts/core/game_module.gd`,
-  `scripts/games/table_game_visuals.gd`, `scripts/ui/game_surface_canvas.gd` —
+  `scripts/games/table_game_visuals.gd`, `scripts/ui/game_surface_canvas.gd` -
   every extension point, every current consumer, and the exact places a ritual
   contract can attach without changing games that have not opted in.
 - **Craps ritual harvest:** what `craps06_3` actually landed for phases, pointer
   verbs, actor states and energy projection, and which parts are general.
-- **Per-game inventory:** for all eight games plus the duel — `surface_state`,
+- **Per-game inventory:** for all eight games plus the duel - `surface_state`,
   `draw_surface`, `surface_action_command`, `surface_pointer_command` shape,
   action vocabulary, cheat hooks, tutorial lesson references, crew play hooks,
   heist honesty fields, RTP/EV harnesses and their exact commands.
@@ -142,7 +142,7 @@ after verifying the registered path and only after its branch is safely merged.
 
 ## 5. Dependency-aware execution waves
 
-### Wave 1 — the ritual runtime
+### Wave 1 - the ritual runtime
 
 Claim `game06_1`. Assign it to one runtime worker. Its branch must include at
 least these logical commits: (1) the ritual/phase/actor contract and its
@@ -159,7 +159,7 @@ sections 7 and 8. Once accepted, merge with `--no-ff` into the integration
 branch, run smoke and regression gates there, update the board, and record the
 integration commit. Only that accepted commit may base consumer branches.
 
-### Wave 2 — parallel game conversion
+### Wave 2 - parallel game conversion
 
 From the accepted runtime commit, start `game06_2` through `game06_7`
 concurrently, one owner per branch, keeping all slots occupied and swapping a
@@ -179,7 +179,7 @@ If a worker needs a change to a `game06_1` file, it does not edit it. It files a
 runtime request with exact evidence; you decide whether to reopen `game06_1` on
 its own branch or grant a narrow, reviewed exception recorded in the ledger.
 
-### Wave 3 — integrate games one at a time
+### Wave 3 - integrate games one at a time
 
 Each game branch requires independent review and all focused gates before it is
 eligible. Merge accepted branches one at a time with `--no-ff`, preserving
@@ -188,7 +188,7 @@ save and UI smoke on the integration branch. If a later merge breaks an earlier
 one, assign the finding to the responsible branch or an explicit cross-system
 remediation commit; never mask it in the merge resolution.
 
-### Wave 4 — independent release gate
+### Wave 4 - independent release gate
 
 Claim `game06_8`. Spawn at least two reviewers who owned none of the relevant
 implementation: one for correctness, state, determinism, RTP/EV and economy; one
@@ -212,7 +212,7 @@ Any P0/P1 or unmet prompt checkbox blocks closure.
   0.000 is a failure, not a pass. This regression pattern has recurred four
   times in this project's history.
 - Nothing new runs per frame that can run at an action boundary. Per-frame deep
-  copies of state are forbidden — the slot bonus watchdog is the recorded
+  copies of state are forbidden - the slot bonus watchdog is the recorded
   precedent.
 - Save, exit and revisit mid-ritual must never lose, double-settle or silently
   resolve a wager, and rehydration must not replay rewards, dialogue, audio or

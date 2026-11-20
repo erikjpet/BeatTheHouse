@@ -1,7 +1,7 @@
-Status: DONE — 2026-08-25
+Status: DONE - 2026-08-25
 Board row: `pusherv3_9` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — pusherv3_9: Contact Bed and Opaque Payout Edge
+# Agent Prompt - pusherv3_9: Contact Bed and Opaque Payout Edge
 
 Follow-up to archived
 `docs/todone/pusherv3_8_coin_scale_lower_bed_and_edge_ramp_prompt.md`.

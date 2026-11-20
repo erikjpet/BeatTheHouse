@@ -255,7 +255,7 @@ rendering details.
 | Blackjack | cards | `scripts/games/blackjack.gd` | `peek_hole_card`, `count_cards` | Shoe blackjack with hit/stand/split/double, side bets, count challenge, and hole-card peek heat |
 | Baccarat | cards | `scripts/games/baccarat.gd` | `read_baccarat_shoe`, `edge_sort` | Mini-baccarat with Player/Banker/Tie/pair bets, commission, shoe state, read-shoe, and edge-sort play |
 | Roulette | wheel | `scripts/games/roulette.gd` | `read_wheel_bias`, `past_post` | Full roulette layout with inside/outside bets, chip placement, wheel spin, payout animation, wheel-read, and past-post timing |
-| Video Poker | cards | `scripts/games/video_poker.gd` | `mark_holds` | Three cabinets—9/6 Jacks or Better, Double Deuces, and Triple Double Bonus—with 1-5 coin betting, one to three hands, hold/draw, double-up, recommendations, and mark-hold play |
+| Video Poker | cards | `scripts/games/video_poker.gd` | `mark_holds` | Three cabinets-9/6 Jacks or Better, Double Deuces, and Triple Double Bonus-with 1-5 coin betting, one to three hands, hold/draw, double-up, recommendations, and mark-hold play |
 | Coin Pusher | coin_pusher | `scripts/games/coin_pusher.gd` | `nudge_machine` | Three deterministic physics-backed cabinets with live trays, cabinet goals, persistence, and native/Web parity coverage |
 | Craps | dice | `scripts/games/craps.gd` | `dice_setting`, `dice_switching` | Full-table and street variants with 40 reachable wager types, derived house edges, million-roll verification, and a dedicated pavement-circle room object for Street Craps |
 | Crew Hold'em | cards | `scripts/games/crew_draw_poker.gd` | none; tells are surface play | Six-handed no-limit Hold'em with automatic paced opponent turns, five personality-shaped tell emotions, player-projected tells, dealer/muck fold cleanup, animated cards/chips, persistent opponents, and hidden-card authority |
@@ -510,22 +510,22 @@ Windows native access-violation dialogs on later runs.
 
 ## Documentation
 
-- [Current game state](docs/current_game_state.md) — maintained product summary.
-- [Game reference](docs/game_reference.md) — source-backed roster, actions, and mechanics.
-- [Code reference](docs/code_reference.md) — runtime ownership and production code guide.
-- [Documentation index](docs/README.md) — document organization and authority.
-- [Changelog](CHANGELOG.md) — detailed changes.
-- [Release review](docs/releases/0.6.0_candidate_review.md) — accepted placements,
+- [Current game state](docs/current_game_state.md) - maintained product summary.
+- [Game reference](docs/game_reference.md) - source-backed roster, actions, and mechanics.
+- [Code reference](docs/code_reference.md) - runtime ownership and production code guide.
+- [Documentation index](docs/README.md) - document organization and authority.
+- [Changelog](CHANGELOG.md) - detailed changes.
+- [Release review](docs/releases/0.6.0_candidate_review.md) - accepted placements,
   save restoration repair, snapshot review, and fresh-release data audit.
-- [Grand Casino design](docs/plans/grand_casino_endgame_design.md) — rooms,
+- [Grand Casino design](docs/plans/grand_casino_endgame_design.md) - rooms,
   chips/Cage, Linda's card ladder, Rourke, showdown, and rewards.
-- [World map design](docs/plans/world_map_design.md) — travel and progression.
-- [Content style guide](docs/plans/content_style_guide.md) — player-facing copy.
+- [World map design](docs/plans/world_map_design.md) - travel and progression.
+- [Content style guide](docs/plans/content_style_guide.md) - player-facing copy.
 - [Pinball implementation](docs/plans/pinball_feature_rework_plan.md) and
-  [feel targets](docs/plans/pinball_feel_reference.md) — slot feature contracts.
-- [Cheating methods](docs/plans/skill_based_cheating_methods_plan.md) — shared
+  [feel targets](docs/plans/pinball_feel_reference.md) - slot feature contracts.
+- [Cheating methods](docs/plans/skill_based_cheating_methods_plan.md) - shared
   skill-cheat design and cross-game methods.
-- [Music architecture](docs/plans/music_system_rework_plan.md) — adaptive audio.
+- [Music architecture](docs/plans/music_system_rework_plan.md) - adaptive audio.
 
 ## Export Targets
 

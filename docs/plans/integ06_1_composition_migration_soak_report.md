@@ -1,6 +1,6 @@
 # integ06_1 composition, migration, and soak report
 
-Status: **DONE for the owner-directed playtest fast path — migration admission complete; release-gating composition and terminal soak deferred**
+Status: **DONE for the owner-directed playtest fast path - migration admission complete; release-gating composition and terminal soak deferred**
 Audit base: `6875646b19cb8c8ce242414e1251a8ae7bcffc2c`
 Harness prerequisite: `1131c6262eb04b2cbbabc6265caba71c4c234e22`
 Product/content repair: `c9e5941f43c3f507921482bdac1e7a8c34a75a18`
@@ -22,8 +22,8 @@ matrices passed:
 
 | Matrix | Result |
 |---|---|
-| v0.5.1 | PASS — 37/37, `provenance=verified source=FoundationMain round_trip=stable` |
-| genuine mid-0.6 | PASS — 3/3, `provenance=verified source=FoundationMain round_trip=stable` |
+| v0.5.1 | PASS - 37/37, `provenance=verified source=FoundationMain round_trip=stable` |
+| genuine mid-0.6 | PASS - 3/3, `provenance=verified source=FoundationMain round_trip=stable` |
 
 The prior Punchline attribution is corrected: L1→L2→L3, the populated back
 room, save/load and revisit all pass after the composition harness performs the
@@ -337,13 +337,13 @@ producer, not evidence, until it runs green on the final candidate.
 
 | Gate | Result |
 |---|---|
-| `tools/validate_project.ps1` | PASS — foundation architecture validation |
-| `integ06_1_v051_migration_smoke.gd` | PASS — 37/37 genuine saves |
-| `world_sequence_delivery_proof_contract.gd` | PASS — production delivery, actual SaveService mid-active recovery, hidden-observer, hostile checkpoint, retry, replay, and cleanup matrices |
-| `crew06_10_depth_contract.gd` | PASS — 10 seeds, five profiles, `ordered_v1` |
-| `tools/foundation_determinism_probe.ps1 -SeedCount 1 -SeedPrefix INTEG06-1-CHEAP -RequireGodot` | PASS — 56 checkpoints; process hashes `3661442998` / `3661442998` |
-| package-C author | PASS — 11 scenarios, 55 pairs |
-| package-D author | PASS — 12 scenarios, 66 pairs |
+| `tools/validate_project.ps1` | PASS - foundation architecture validation |
+| `integ06_1_v051_migration_smoke.gd` | PASS - 37/37 genuine saves |
+| `world_sequence_delivery_proof_contract.gd` | PASS - production delivery, actual SaveService mid-active recovery, hidden-observer, hostile checkpoint, retry, replay, and cleanup matrices |
+| `crew06_10_depth_contract.gd` | PASS - 10 seeds, five profiles, `ordered_v1` |
+| `tools/foundation_determinism_probe.ps1 -SeedCount 1 -SeedPrefix INTEG06-1-CHEAP -RequireGodot` | PASS - 56 checkpoints; process hashes `3661442998` / `3661442998` |
+| package-C author | PASS - 11 scenarios, 55 pairs |
+| package-D author | PASS - 12 scenarios, 66 pairs |
 
 The earlier direct `check_core_content.gd` invocation is invalid setup evidence,
 not a product verdict. That file is an intermediate inheritance source for the

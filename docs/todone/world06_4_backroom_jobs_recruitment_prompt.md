@@ -1,7 +1,7 @@
-Status: DONE — accepted by the exact-tree Family 2 closeout on 2026-09-03
+Status: DONE - accepted by the exact-tree Family 2 closeout on 2026-09-03
 Board row: `world06_4` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — 0.6 world06_4: Back Room — Job Board, Jobs and Recruitment
+# Agent Prompt - 0.6 world06_4: Back Room - Job Board, Jobs and Recruitment
 
 Copy everything below this line into the agent.
 
@@ -22,7 +22,7 @@ It is not a redesign of the trust ladder or the job economy. Read
 
 The back room is where the crew path is supposed to feel like a place you belong
 to. It ships as a furnished layer with a residency rotation, a job board, a
-Numbers desk, a planning table and a Practice Rig — all of which the player
+Numbers desk, a planning table and a Practice Rig - all of which the player
 experiences as choice lists. Meeting a crew member for the first time, the
 single most characterful beat in the pillar, is an event with options.
 
@@ -58,16 +58,16 @@ do not reimplement them.
 - A first meeting must be a scene: where they are, what they are doing, what
   interrupts it, and how it ends. Refusal, deferral and acceptance need distinct
   staging and distinct aftermath.
-- Contact encounters after recruitment must reflect standing — a member who is
+- Contact encounters after recruitment must reflect standing - a member who is
   aggrieved does not greet you the way one who is not does.
 - Nothing in recruitment staging may reveal Turn eligibility, grievance weights
   or any hidden state.
 
 ## 3. Jobs become work
 
-- All thirteen shipped jobs across the five kinds — `package_run`, `stake_horse`,
+- All thirteen shipped jobs across the five kinds - `package_run`, `stake_horse`,
   `numbers_route`, `lookout_hold`, `collection`, plus the seeded
-  `package_delivery` — must be offered, accepted, performed and resolved as
+  `package_delivery` - must be offered, accepted, performed and resolved as
   sequences. Keep every landed payload, expiry, reward, failure, trust and
   grievance value exactly.
 - Offering is a conversation with the member who owns the job, at the place they

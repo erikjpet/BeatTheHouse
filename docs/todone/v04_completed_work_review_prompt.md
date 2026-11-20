@@ -31,7 +31,7 @@ Copy everything below this line into the agent.
 ---
 
 You are working in `D:\Projects\Beat-The-House` (Godot 4.6 GDScript casino
-roguelike — see CLAUDE.md). An unusually large volume of work landed on
+roguelike - see CLAUDE.md). An unusually large volume of work landed on
 2026-07-06 and 2026-07-07: two full feature waves executed by multiple agent
 sessions. Your job is an **adversarial verification pass** over every one of
 those completed prompts: confirm the work is accurate (does what its prompt
@@ -55,7 +55,7 @@ v04_worktree_baseline_and_gate_recovery (incl. the table-surface idle perf
 recovery commit), web_audio_bridge_modernization,
 v04_content_style_guide_and_copy_audit, v04_meta_home_environment,
 profile_persistence_completion, and act_two_seam (if archived by the time
-you start — if it is still claimed in QUEUE.md, wait for it).
+you start - if it is still claimed in QUEUE.md, wait for it).
 
 Derive the final list yourself from the archive + git log; do not trust this
 paragraph over the repository.
@@ -67,9 +67,9 @@ paragraph over the repository.
 2. Verify claims against the **current** tree, not the record: the feature
    waves landed nearly simultaneously and later work may have broken earlier
    work. Requirements are confirmed by reading the implementing code and by
-   running targeted checks — not by the record saying PASS.
+   running targeted checks - not by the record saying PASS.
 3. Exercise the feature through its test surface: run the specific
-   foundation checks/harnesses the prompt named. Batch shared suites — run
+   foundation checks/harnesses the prompt named. Batch shared suites - run
    each FoundationSuite ONCE at the end for the union of prompts rather than
    per-prompt repeats; run cheap targeted harnesses
    (collection_meta_check, determinism, stuck sweep) as you go.
@@ -87,7 +87,7 @@ paragraph over the repository.
      week. This is what protects real players who update to 0.4.
    - Rapid/hostile input on every new interactive surface (talk dock
      choices, dialogue advance, home interactions, pawn sell confirm, bag
-     open) — no double-applies, no stranded overlays.
+     open) - no double-applies, no stranded overlays.
    - Determinism: two-process probe with seeds that exercise dialogue,
      talk events, eviction, and loadout injection together.
    - The owner-binding isolation rule: daily and challenge runs must not
@@ -115,7 +115,7 @@ Explicitly test feature intersections; record each cell PASS/FAIL:
   violations: `duplicate(true)` in `_process`/`_draw` paths, per-frame
   ImageTexture creation, per-frame JSON stringify, unseeded `randf`.
 - Confirm new UI (talk dock, home screens, reveal panel, badges) caches
-  textures and only redraws on state change (the SA.2 tripwire patterns —
+  textures and only redraws on state change (the SA.2 tripwire patterns -
   extend a tripwire if you find an uncovered hot path).
 - Confirm the baseline task's table-surface idle recovery (`066e479`) still
   holds: `tools\foundation_performance_probe.ps1 -RequireGodot` passes with
@@ -123,8 +123,8 @@ Explicitly test feature intersections; record each cell PASS/FAIL:
 
 ## Deliverable
 
-`docs/plans/v04_work_review_2026_07.md`: one row per reviewed prompt —
-requirements verified / gates rerun / defects found — plus the integration
+`docs/plans/v04_work_review_2026_07.md`: one row per reviewed prompt -
+requirements verified / gates rerun / defects found - plus the integration
 matrix and an efficiency-findings section. For every defect: fix it in place
 if it is small and unambiguous (with its own local commit and a line in the
 report); file a new docs/todo prompt (and QUEUE entry marked for PM review)

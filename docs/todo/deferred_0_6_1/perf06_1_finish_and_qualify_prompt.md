@@ -1,4 +1,4 @@
-Status: PARKED — Phases 1–3 tooling is on `main`; binding Phase 4 waits for accepted placement
+Status: PARKED - Phases 1–3 tooling is on `main`; binding Phase 4 waits for accepted placement
 Priority: P1 after an accepted placement redesign and quiesced candidate
 Board row: `perf06_1` in `docs/todo/README_0_6_board.md`
 Opened: 2026-09-11 by PM audit of the row's real state
@@ -25,7 +25,7 @@ Audit/Full contract package. All completed qualification machinery is now on
 `main`. Only the binding post-placement run and any measurement-driven follow-up
 remain parked.
 
-# Agent Prompt — perf06_1: Finish the Performance and Platform Pass
+# Agent Prompt - perf06_1: Finish the Performance and Platform Pass
 
 Copy everything below this line into one agent. It may spawn sub-agents freely.
 
@@ -36,7 +36,7 @@ own. Read all of it before running anything. Several phases are cheap and safe
 to do today; one phase must not start until a scheduling condition is met, and
 that condition is stated in section 2. Respect it.
 
-## 0. The true state of this row — verified, do not re-derive
+## 0. The true state of this row - verified, do not re-derive
 
 The board records `perf06_1` as PARKED pending an accepted placement redesign.
 Current reality:
@@ -68,8 +68,8 @@ Current reality:
   returns **nothing** in `tools/check_godot.ps1` and nothing relevant in
   `tools/validate_project.ps1`. Every `perf06_*` contract exists as a standalone
   script that no suite runs. The only wired performance stage is a 90-second
-  `foundation_perf_smoke`. The original prompt's section 3 — "a future
-  regression fails a suite rather than a playtest" — is not delivered.
+  `foundation_perf_smoke`. The original prompt's section 3 - "a future
+  regression fails a suite rather than a playtest" - is not delivered.
 - **The stated blockers are now clear.** The row's note says the binding matrix
   waited on landed `integ06_1` and `env06_8`. Both are `DONE`. What remains is
   an exact quiesced candidate and the run itself.
@@ -97,7 +97,7 @@ export size and load figures, the published budget table with liveness pairings,
 every optimization with before/after numbers, and every routed finding with
 severity and destination.
 
-## 2. Scheduling constraint — read before you run anything heavy
+## 2. Scheduling constraint - read before you run anything heavy
 
 The qualification requires a **quiescent host**. `tools/archive/perf06/perf06_capture_quiescence.ps1`
 throws if any `Godot_v4.6-stable_win64`, `Godot_v4.6-stable_win64_console`,
@@ -125,17 +125,17 @@ not idle in a polling loop or start the binding run "just to see".
 
 Commit at the end of each phase. Keep `main` green.
 
-### Phase 1 — Recover custody of the harness (safe now)
+### Phase 1 - Recover custody of the harness (safe now)
 
 1. `git fetch --all`. Branch from **current `origin/main`**. The harness is
    already there; confirm that for yourself before assuming anything else in
-   this section — compare `docs/plans/perf06_1_final_runtime_runbook.md` and the
+   this section - compare `docs/plans/perf06_1_final_runtime_runbook.md` and the
    `tools/perf06_*` set on `main` against the historical final-run tree. They were
    byte-identical when this prompt was written. **Do not cherry-pick or merge
    the stale branch**, and do not delete it.
 2. **Review the landed `[UNREVIEWED]` work properly.** `92bb16f5` and `618d0033`
    are on `main` still carrying that label. For each: read the diff, then run
-   the matching hostile-fixture test and confirm it actually fails closed —
+   the matching hostile-fixture test and confirm it actually fails closed -
    `tools/perf06_binding_preflight_contract_test.ps1`,
    `tools/perf06_phase_qualification_contract_test.ps1`,
    `tools/perf06_quiescence_contract_test.ps1`. A contract that cannot be shown
@@ -147,7 +147,7 @@ Commit at the end of each phase. Keep `main` green.
 4. Correct the board row note to the true state and re-claim the row with your
    own agent identity and today's date. The previous claim is seven days cold.
 
-### Phase 2 — Close the enforcement gap (safe now)
+### Phase 2 - Close the enforcement gap (safe now)
 
 The row cannot close with zero wired gates. Wire the existing contracts so a
 future regression fails a suite:
@@ -155,7 +155,7 @@ future regression fails a suite:
 - Register the **cheap contract-level** perf checks in `tools/check_godot.ps1`,
   following the precedent of `scenario_room_multiseed_finalization` in the
   `Audit`/`Full` suites, and add a `Require-Text` assertion in
-  `tools/validate_project.ps1` so the wiring cannot be silently removed — that
+  `tools/validate_project.ps1` so the wiring cannot be silently removed - that
   is exactly how the 8x55 room gate is protected.
 - **Do not add anything heavy to Smoke/contracts.** That stage measured
   227.786 s against a 230.391 s budget at `fix06_30`. A budget increase needs
@@ -170,7 +170,7 @@ future regression fails a suite:
 - These must be green on `main` before the candidate run, and they must not
   depend on binding measurement data to pass.
 
-### Phase 3 — Reduced-sample dry run (safe now, do not skip)
+### Phase 3 - Reduced-sample dry run (safe now, do not skip)
 
 Execute the **entire** runbook end to end at reduced sample counts against a
 scratch candidate, writing to `.tmp/perf06-dryrun-<stamp>/`:
@@ -192,7 +192,7 @@ to prevent.
 
 Fix whatever the dry run breaks, in the harness only.
 
-### Phase 4 — Binding qualification (only when section 2's condition is met)
+### Phase 4 - Binding qualification (only when section 2's condition is met)
 
 Execute `docs/plans/perf06_1_final_runtime_runbook.md` exactly, at full sample
 counts, all seven steps, three profiles (`native`, `web`, `low_end`).
@@ -202,7 +202,7 @@ counts, all seven steps, three profiles (`native`, `web`, `low_end`).
   agent identity as the worker witness. The director witness is supplied by the
   operator who launches you; it is an attestation that the host was quiescent.
   **Do not invent a second identity and do not reuse your own.** If no director
-  value was supplied, say so and stop — that is a one-line answer from the
+  value was supplied, say so and stop - that is a one-line answer from the
   owner, not a reason to fabricate custody.
 - **No retrying into a pass.** A producer failure stops qualification. Diagnose,
   fix the cause, and start a fresh evidence directory. Evidence directories are
@@ -212,7 +212,7 @@ counts, all seven steps, three profiles (`native`, `web`, `low_end`).
   `tools/perf06_budget_table.json` to fit the result.
 - If a run must be abandoned, keep the partial evidence directory and say why.
 
-### Phase 5 — Optimize only what the measurements name
+### Phase 5 - Optimize only what the measurements name
 
 - Work in measured-cost order. Do not refactor for elegance and do not touch a
   surface the numbers exonerate.
@@ -231,7 +231,7 @@ counts, all seven steps, three profiles (`native`, `web`, `low_end`).
   appears in the ranking, route it to that implementation rather than
   optimizing its fresh code here.
 
-### Phase 6 — Report and budgets
+### Phase 6 - Report and budgets
 
 Write `docs/plans/perf06_1_performance_platform_report.md` containing:
 
@@ -252,7 +252,7 @@ Write `docs/plans/perf06_1_performance_platform_report.md` containing:
    sequences at current actor counts, the environment expansions at maximal
    population, `integ06_1` maximal compositions, the allocation matrix, physical
    low-end runs, and full per-surface Web tables. These are **"no historical
-   comparator"** — not regressions and not passes. Establish the 0.6 baseline for
+   comparator"** - not regressions and not passes. Establish the 0.6 baseline for
    them and compare only metrics whose definitions still match. Do not
    manufacture a comparison.
 8. A plain-language section the owner can read in two minutes: is the game fast
@@ -263,7 +263,7 @@ If any budget is red at the end, do not close the row. Report it with the number
 the surface, and the proposed optimization or the exception you need, and stop
 for the owner's ruling. That is the one decision in this row that is not yours.
 
-### Phase 7 — Closeout
+### Phase 7 - Closeout
 
 Only after every gate is green and the report is written:
 
@@ -288,7 +288,7 @@ Only after every gate is green and the report is written:
   regressions in this project.
 - **No per-frame deep copies.** 32.6 ms/frame, once, in the slot bonus watchdog.
 - **Measurement is not behavior change.** No change to money, RNG, RTP, payouts,
-  odds, schema or migration. No gameplay, feel or timing changes — those are
+  odds, schema or migration. No gameplay, feel or timing changes - those are
   findings.
 - **No release activity:** no version bump, tag, packaging, upload or publish.
 - **Delete nothing:** no branch, worktree, stash or evidence directory. No `gc`,

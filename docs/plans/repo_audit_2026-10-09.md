@@ -1,4 +1,4 @@
-# Repository Audit and Cleanup — 2026-10-09
+# Repository Audit and Cleanup - 2026-10-09
 
 Read-only audit of every tracked file in the repository at `main` commit
 `36e1f51` ("Add slot object size controls"), followed by fixes implemented on
@@ -76,7 +76,7 @@ Each row is one commit on the branch, in order.
 | `review_artifacts/` | 250 MB | Output screenshots from capture tools. 117 files (22 MB) are byte-identical copies, mostly repeated across `art_rework_test_04…11`. | No | Regenerable. Recommend deleting or moving out of Git (owner decision). |
 | `docs/screenshots/` | 32 MB | Review screenshots | No | Recommend the same custody as `review_artifacts/` |
 | `docs/archive/` + `docs/plans/evidence/` | 37 MB | Historical plans and evidence logs | No | Keep (the hygiene manifest pins it) |
-| `.git` pack | 502 MB | History of all the above | — | Only a history rewrite would shrink this. Not recommended without owner sign-off. |
+| `.git` pack | 502 MB | History of all the above | - | Only a history rewrite would shrink this. Not recommended without owner sign-off. |
 
 Godot was also importing everything in these folders. That is fixed with
 `.gdignore`; see the headline numbers.
@@ -409,7 +409,7 @@ Production had changed on purpose, but these tests had not been updated.
 6. Confirm the Jazz Club start-rate tuning (0.75 → 0.6), and re-record the
    Crew-ignoring goldens after the placement rework.
 
-## Appendix A — Production scripts, file by file
+## Appendix A - Production scripts, file by file
 
 One row per production script (213). Lines and functions are current; Δ is the change against `main`. "Unused args" is `gdlint` `unused-argument` (many are interface signatures). "Test/tool-only functions" are production functions whose only callers are tests or tools.
 
@@ -629,7 +629,7 @@ One row per production script (213). Lines and functions are current; Δ is the 
 | `ui/world_map_canvas.gd` | 1,277 | 0 | 79 | current_view_snapshot (89) | 0 | Duplicate bodies with _array@pinball_board.gd, _array_static@pinball_feature.gd, _array_view@pixel_scene_canvas.gd … |
 | `ui/world_map_overlay_controller.gd` | 990 | -4 | 64 | handle_holder_gui_input (68) | 0 | Removed: `refresh_requested`, `message_requested`, `travel_requested`, `meta_travel_requested`; 1 test/tool-only functions (e.g. `global_visual_rect_for_node`); Duplicate bodies with _cell_style@attribute_badge_row.gd, _tooltip_text@attribute_badge_row.gd |
 
-## Appendix B — Everything else
+## Appendix B - Everything else
 
 ### B1. Root files
 
@@ -645,7 +645,7 @@ One row per production script (213). Lines and functions are current; Δ is the 
 
 | Data file | Size | Production loader(s) | Status |
 | --- | ---: | --- | --- |
-| `art/art_manifest.json` | 13.7 KB | — | Not loaded at runtime (README says otherwise); ships in exports |
+| `art/art_manifest.json` | 13.7 KB | - | Not loaded at runtime (README says otherwise); ships in exports |
 | `art/attribute_glyphs.json` | 30.2 KB | attribute_badges.gd | OK |
 | `art/run_outcome_icons.json` | 2.1 KB | run_report_view_model.gd | OK |
 | `audio/music_manifest.json` | 18.3 KB | content_library.gd, procedural_music_player.gd | OK |
@@ -667,7 +667,7 @@ One row per production script (213). Lines and functions are current; Δ is the 
 | `crew/world06_6_heist_sequences.json` | 158.9 KB | world_sequence_package_catalog.gd | OK |
 | `debt/lenders.json` | 6.1 KB | content_library.gd | OK |
 | `dialogue/dialogues.json` | 57.2 KB | content_library.gd | OK |
-| `economy/content06_1_audit.json` | 3.8 KB | — | Audit fixture; not loaded at runtime; ships |
+| `economy/content06_1_audit.json` | 3.8 KB | - | Audit fixture; not loaded at runtime; ships |
 | `environments/archetypes.json` | 121.2 KB | content_library.gd | OK |
 | `environments/developer_placement_overrides.json` | 29.8 KB | developer_placement_store.gd | OK |
 | `environments/placement_surfaces.json` | 823.4 KB | developer_placement_store.gd, environment_placement.gd, environment_slot_binder.gd, pixel_scene_canvas.gd | OK |
@@ -679,15 +679,15 @@ One row per production script (213). Lines and functions are current; Δ is the 
 | `environments/scenario_slot_layouts.json` | 1281.9 KB | developer_placement_store.gd, environment_placement.gd | OK |
 | `environments/scenarios.json` | 57.3 KB | content_library.gd, scenario_sequence_catalog.gd | OK |
 | `events/events.json` | 199.0 KB | content_library.gd | OK |
-| `games/bar_dice_game_ritual_v1.json` | 17.2 KB | — | Test fixture; not loaded at runtime; ships |
+| `games/bar_dice_game_ritual_v1.json` | 17.2 KB | - | Test fixture; not loaded at runtime; ships |
 | `games/games.json` | 109.3 KB | content_library.gd | OK |
 | `games/rituals/craps06_3_environment_bindings.json` | 3.6 KB | craps06_3_environment_binding.gd | Read only by the test-only Craps06EnvironmentBinding |
 | `games/rituals/craps06_3_sequences.json` | 6.4 KB | craps06_3_environment_binding.gd | Read only by the test-only Craps06EnvironmentBinding |
-| `games/rituals/crew06_10_poker_nights.json` | 3.4 KB | — | No reader anywhere in code; ships |
+| `games/rituals/crew06_10_poker_nights.json` | 3.4 KB | - | No reader anywhere in code; ships |
 | `games/scratch_ticket_regions.json` | 57.7 KB | scratch_ticket_region_model.gd | OK |
 | `games/scratch_tickets.json` | 10.7 KB | content_library.gd | OK |
-| `games/showdown_duel_game_ritual_v1.json` | 18.4 KB | — | Test fixture; not loaded at runtime; ships |
-| `games/showdown_duel_ritual_v1.json` | 12.8 KB | — | Test fixture; not loaded at runtime; ships |
+| `games/showdown_duel_game_ritual_v1.json` | 18.4 KB | - | Test fixture; not loaded at runtime; ships |
+| `games/showdown_duel_ritual_v1.json` | 12.8 KB | - | Test fixture; not loaded at runtime; ships |
 | `items/items.json` | 58.3 KB | content_library.gd, inventory_container_catalog.gd, meta_collection_service.gd, run_state.gd | OK |
 | `services/services.json` | 7.9 KB | content_library.gd | OK |
 | `story/character_chains.json` | 5.6 KB | character_chain_model.gd, content_library.gd | OK |
@@ -707,7 +707,7 @@ One row per production script (213). Lines and functions are current; Δ is the 
 | `assets/art/scratch_tickets/layers` | 7 | 20 MB | Only the `*_pro.png` set is live. Removed 7 `*_v2` backgrounds and the v1 foil tile. |
 | `assets/art/scratch_tickets/reveal_symbols` | 24 | 2.4 MB | Removed 7 early symbols with no renderer mapping. |
 | `assets/art/map_backgrounds` | 1 | 34 KB | Removed the unused `cyberpunk_city_overhead_wide.png` (687 KB). |
-| `assets/art/promo` | 0 | — | Removed the 0.3.3 devlog promo image. |
+| `assets/art/promo` | 0 | - | Removed the 0.3.3 devlog promo image. |
 | `assets/art/games/video_poker_cabinets/source_full_scene` | 3 | 487 KB | Source art that is never loaded but ships. Recommend an export exclusion. |
 | `assets/art/items`, `assets/art/ui` | 154 | 3.1 MB | `items/bag.png` = `ui/inventory.png` and `items/creased_luck_card.png` = `items/luck_card.png` are byte-identical pairs. |
 | `assets/art/{environments,events,game_scenes,games,map_icons,run_outcomes,slots}` | 74 | 1.1 MB | All referenced. |

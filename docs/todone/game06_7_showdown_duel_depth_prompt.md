@@ -1,4 +1,4 @@
-Status: COMPLETE — recovered Showdown depth is landed, verified, and archived
+Status: COMPLETE - recovered Showdown depth is landed, verified, and archived
 Board row: `game06_7` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record
@@ -20,7 +20,7 @@ Board row: `game06_7` in `docs/todo/README_0_6_board.md`
   recorded against their owning rows; none is hidden or relabeled as a row
   pass. Only the program-level human playtest remains.
 
-# Agent Prompt — 0.6 game06_7: Rourke Duel and Grand Casino Showdown Depth
+# Agent Prompt - 0.6 game06_7: Rourke Duel and Grand Casino Showdown Depth
 
 Copy everything below this line into the agent.
 
@@ -31,7 +31,7 @@ shipped endgame duel, not a redesign of its outcome ladder. Read
 `scripts/core/grand_casino_duel_model.gd`,
 `scripts/core/grand_casino_showdown_model.gd`, their surfaces and tests,
 `docs/plans/grand_casino_endgame_design.md`, the `game06_1` ritual contract
-document under `docs/plans/`, and the accepted `game06_2` blackjack head — the
+document under `docs/plans/`, and the accepted `game06_2` blackjack head - the
 duel shares blackjack's settlement path.
 
 ## Why this rework exists
@@ -46,7 +46,7 @@ sharper: two different endings, one flat presentation.
 
 Follow the active board protocol. Claim `game06_7`. `game06_1` must be landed
 and reviewed, and this row bases on the accepted `game06_2` head rather than the
-bare runtime commit — record that in the ledger. You own the duel and showdown
+bare runtime commit - record that in the ledger. You own the duel and showdown
 models, their surfaces and their tests exclusively. You may not edit
 `blackjack.gd`; if the duel needs a blackjack change, file it as a request with
 exact evidence.

@@ -1,6 +1,6 @@
 # balance06_1 follow-on prestage
 
-Status: **PRESTAGED ONLY — execution is gated on accepted `game06_8`,
+Status: **PRESTAGED ONLY - execution is gated on accepted `game06_8`,
 `world06_7`, and `pusherv3_11` integrated heads**
 
 This note records the minimum repair boundary discovered while the Family 1

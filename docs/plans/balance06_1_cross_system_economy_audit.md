@@ -193,7 +193,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/coin_pusher_ev_harness
 
 ## Measured distributions
 
-Status: **PARTIAL — point samples only**. Each row has `n=1`, so min, median,
+Status: **PARTIAL - point samples only**. Each row has `n=1`, so min, median,
 mean, and max are the same point and do not constitute a distribution. Every
 run reached the 208-action guard while still active; there were no observed
 terminal failures or victories. The Crew, heist, and mixed rows are explicitly

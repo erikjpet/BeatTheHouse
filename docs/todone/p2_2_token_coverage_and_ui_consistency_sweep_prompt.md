@@ -131,11 +131,11 @@ Date: 2026-07-27
 
 Implementation commit:
 
-- `cb466acd` — Widen UI token coverage
+- `cb466acd` - Widen UI token coverage
 
 Archive commit:
 
-- `8f6a831f` — Archive p2_2 token coverage prompt.
+- `8f6a831f` - Archive p2_2 token coverage prompt.
 
 Summary:
 
@@ -147,14 +147,14 @@ Summary:
 
 Gate results:
 
-- `tools\validate_project.ps1` — PASS.
-- Supported `-FoundationSuite` list discovered from `tools/check_godot.ps1`: `smoke`, `contracts`, `games`, `systems`, `ui`, `slot`, `slot_acceptance`, `blackjack`, `roulette`, `baccarat`, `video_poker`, `bar_dice`, `pull_tabs`, `scratch_tickets`, `audit`, `all` — all PASS. Longest observed suite stages included `foundation_slot_acceptance` 492499ms, `foundation_audit` 497587ms, and `foundation_all` 124628ms.
-- `tools\foundation_visual_qa.ps1` — PASS.
-- `tools\foundation_performance_probe.ps1 -RequireGodot` — PASS.
-- `tools\ui05_asset_pipeline_check.ps1` — PASS (`50 PNGs cross-checked; title and icon temp-copy deletion covered`).
-- `tools\ui05_popup_fit_check.ps1` — PASS (`3 representative viewport/content pairs`).
-- `tools\ui05_surface_coverage_check.ps1` — PASS (`57 scripts/ui files accounted`).
-- `tools\ui05_token_adoption_check.ps1` — PASS (`38 scripts/ui files covered, 19 deliberate exemptions`).
+- `tools\validate_project.ps1` - PASS.
+- Supported `-FoundationSuite` list discovered from `tools/check_godot.ps1`: `smoke`, `contracts`, `games`, `systems`, `ui`, `slot`, `slot_acceptance`, `blackjack`, `roulette`, `baccarat`, `video_poker`, `bar_dice`, `pull_tabs`, `scratch_tickets`, `audit`, `all` - all PASS. Longest observed suite stages included `foundation_slot_acceptance` 492499ms, `foundation_audit` 497587ms, and `foundation_all` 124628ms.
+- `tools\foundation_visual_qa.ps1` - PASS.
+- `tools\foundation_performance_probe.ps1 -RequireGodot` - PASS.
+- `tools\ui05_asset_pipeline_check.ps1` - PASS (`50 PNGs cross-checked; title and icon temp-copy deletion covered`).
+- `tools\ui05_popup_fit_check.ps1` - PASS (`3 representative viewport/content pairs`).
+- `tools\ui05_surface_coverage_check.ps1` - PASS (`57 scripts/ui files accounted`).
+- `tools\ui05_token_adoption_check.ps1` - PASS (`38 scripts/ui files covered, 19 deliberate exemptions`).
 
 Deviations / follow-ups:
 

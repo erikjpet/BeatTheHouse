@@ -57,7 +57,7 @@ Generated reports remain under `.tmp/` and are intentionally not staged.
   `check_table_games.gd` parent (`check_slots_surfaces.gd`) does not resolve,
   producing missing inherited helper parse errors before any test runs.
 
-## Final closeout — 2026-09-02
+## Final closeout - 2026-09-02
 
 The complete recovered implementation is on current `main` through
 `212475356cedb42056a2677b590e5b69ed0ac8aa`, including the later sealed-host

@@ -1,4 +1,4 @@
-# Beat the House 0.6.1 — landing plan
+# Beat the House 0.6.1 - landing plan
 
 Written: 2026-11-19
 Against: `origin/main` at `89403f389a5807e050a450cd27b1bd93b3a4a41e`, which is
@@ -152,22 +152,22 @@ Order:
 5. LAND-06.
 6. The owner's LAND-07 and LAND-08.
 
-### LAND-01 — Reconcile the ledger with what is true today (worker)
+### LAND-01 - Reconcile the ledger with what is true today (worker)
 
 **Why.** About 70 open entries are open only on paper. Until they are closed
 or moved, nobody can see what actually stands between `main` and a release.
 
 **How.**
 
-1. **"Close — delivered" (Appendix A).**
+1. **"Close - delivered" (Appendix A).**
    - For each entry, check that every commit it names is an ancestor of
      `89403f389` (`git merge-base --is-ancestor`). If so, close it as
      "delivered on NEXT `89403f389`; prior verification retained".
    - If a named commit is **not** on `main`, do not close the entry. List it
      in the receipt; LAND-02 step 3 decides what happens to it.
-2. **"Close — not reproducible":** record "not reproducible on the current
+2. **"Close - not reproducible":** record "not reproducible on the current
    build; reopen on recurrence", citing the release bar.
-3. **"Close — admin":** record the stated reason.
+3. **"Close - admin":** record the stated reason.
 4. **"0.6.2":** set "open, no work authorized, owner decision 2026-11-19", and
    add the entry to the 0.6.2 queue record (`FEAT-062-RECORD`, which then
    closes). Entries marked D1/D2 move only if the owner said yes. Otherwise
@@ -190,7 +190,7 @@ these: LAND-02 to LAND-08, 0.6.2, or closed. The receipt
 (`docs/testing/LAND-01_ledger_reconciliation_<date>.md`) gives the count per
 bucket and lists any commit that is not on `main`.
 
-### LAND-02 — Two loose ends (worker)
+### LAND-02 - Two loose ends (worker)
 
 1. **Land the caught-feedback wording fix.**
    - Bring only `c667c0eb7` onto `main`: the `blackjack.gd` change and
@@ -219,7 +219,7 @@ bucket and lists any commit that is not on `main`.
 **Done when** both changes are on `main`, NEXT has promoted them, and both
 checks pass.
 
-### LAND-03 — Finish the save/Continue money checks (worker: native half)
+### LAND-03 - Finish the save/Continue money checks (worker: native half)
 
 **Why.** This is the only open area that touches the release bar directly:
 money settling exactly once across Save and Continue. On 11-11 and 11-15,
@@ -268,7 +268,7 @@ Poker plus two named flows were not reached.
 fixes are on NEXT, and the routes are recorded. Proof:
 `docs/testing/LAND-03_save_continue_<date>.md`.
 
-### LAND-03W — The same cases in the browser (worker)
+### LAND-03W - The same cases in the browser (worker)
 
 **Why.** The owner wants these checks completed for 0.6.1 on Web too, not
 inferred from native runs. A Web save lives in browser storage, and Continue
@@ -294,7 +294,7 @@ goes to the owner; it is not closed.
 rechecked on both platforms. Proof:
 `docs/testing/LAND-03W_web_save_continue_<date>.md`.
 
-### LAND-04 — One browser pass on NEXT (worker)
+### LAND-04 - One browser pass on NEXT (worker)
 
 **Why.** About ten delivered fixes and the travel cinematics were verified
 natively and over HTTP, but never started in a browser.
@@ -334,7 +334,7 @@ normal controls, and watch the console throughout.
 **Done when** every row has a result. Proof:
 `docs/testing/LAND-04_browser_pass_<date>.md`, with a summary and hashes only.
 
-### LAND-05 — Travel slowdown (worker)
+### LAND-05 - Travel slowdown (worker)
 
 **Why.** `BTH-TEST-TRAVEL-PERF-001`: travel was reported getting slow on NEXT
 and TEST. A partial native fix (`7ce76838c`) landed; it was never checked in a
@@ -359,7 +359,7 @@ browser.
 **Rules.** Never gain speed by suppressing redraws or animation (AGENTS.md).
 Run the liveness check after any scheduling change.
 
-### LAND-06 — Freeze RC2 and package (worker)
+### LAND-06 - Freeze RC2 and package (worker)
 
 **After** LAND-01 to LAND-05, including LAND-03W. This repeats CLOSE-05
 exactly.
@@ -393,7 +393,7 @@ evidence. No tag, rename or upload.
 **Done when** all gates pass on the frozen commit and the packages and hashes
 are handed over.
 
-### LAND-07 — Owner playtest and triage
+### LAND-07 - Owner playtest and triage
 
 **Owner:**
 
@@ -409,7 +409,7 @@ are handed over.
 - A release-bar issue gets fixed; RC3 then repeats LAND-06.
 - Anything else goes to 0.6.2, unless it is a trivial text fix.
 
-### LAND-08 — Release
+### LAND-08 - Release
 
 - **Version:** if D4 = no, tell the worker to set it to 0.6.1; it rebuilds
   the packages and reruns the launch checks.
@@ -452,7 +452,7 @@ Answered by the owner on 2026-11-19.
 | D1 | Push the Whale Game investigation and the Count heist timing measurement to 0.6.2. They are reports only and ship nothing. | **Yes** | 4 entries leave the 0.6.1 list |
 | D2 | Push what is left of the code-cleanup audit and of the whole-game performance audit to 0.6.2. Fixes they already landed still ship. | **Yes** | 20 entries leave the 0.6.1 list |
 | D3 | Accept native Windows runs alone as proof for the save/Continue money checks? | **No: complete them on Web too, for 0.6.1** | The worker runs the native half (LAND-03), then plays the same cases in the browser (LAND-03W). "Not reached" closes nothing without the owner. |
-| — | Let the worker use a browser for this run, so it does everything itself? | **Yes** | The inherited browser restriction is lifted for LAND-01 to LAND-06; disposable profile on NEXT at localhost only. No checkpoints. |
+| - | Let the worker use a browser for this run, so it does everything itself? | **Yes** | The inherited browser restriction is lifted for LAND-01 to LAND-06; disposable profile on NEXT at localhost only. No checkpoints. |
 | D4 | The worker changes the menu version to 0.6.1 right before the RC2 freeze, so the build you playtest is the build that ships. | **Yes** | One-line change in `scripts/core/build_identity.gd` at freeze |
 | D5 | Include the Blackjack wording fix from a local branch: legal play that gets caught says "Your play draws scrutiny; heat rises." instead of "Caught cheating; heat spikes." | **Yes** | It ships in 0.6.1 |
 
@@ -500,44 +500,44 @@ Answered by the owner on 2026-11-19.
 
 ---
 
-## Appendix A — every open current ledger entry (95)
+## Appendix A - every open current ledger entry (95)
 
 Counts:
 
 | Bucket | Entries | Of which |
 | --- | ---: | --- |
 | 0.6.2 | 37 | 13 already decided, 24 on D1/D2 |
-| Close — delivered | 28 | |
-| Close — not reproducible | 4 | |
-| Close — admin | 5 | |
+| Close - delivered | 28 | |
+| Close - not reproducible | 4 | |
+| Close - admin | 5 | |
 | LAND-03 | 8 | |
 | LAND-04 | 12 | |
 | LAND-05 | 1 | |
 
 | ID | Disposition |
 | --- | --- |
-| AUD061-EXECUTION | Close — admin: 18/18 processed; open findings live under their own IDs |
-| BTH-09 | Close — not reproducible |
+| AUD061-EXECUTION | Close - admin: 18/18 processed; open findings live under their own IDs |
+| BTH-09 | Close - not reproducible |
 | BTH-11 | 0.6.2 (decided) |
 | BTH-15 | 0.6.2 (decided) |
 | BTH-17 | 0.6.2 (decided) |
 | BTH-BACCARAT-AUTO-MIN-SELECTION-001 | LAND-04 |
-| BTH-BARDICE-JOURNAL-CURRENCY-001 | Close — delivered |
+| BTH-BARDICE-JOURNAL-CURRENCY-001 | Close - delivered |
 | BTH-BARDICE-WARM-PROGRESSION-001 | LAND-03 (Bar Dice row) |
 | BTH-BLACKJACK-DRAFT-RISK-NOTICE-001 | LAND-04 |
 | BTH-BLACKJACK-FIRST-DRAFT-001 | LAND-04 |
-| BTH-COINPUSHER-DROP-PRICE-001 | Close — delivered (glanced in LAND-04) |
+| BTH-COINPUSHER-DROP-PRICE-001 | Close - delivered (glanced in LAND-04) |
 | BTH-FEAT-COUNT-ACCESS-GUIDE-001 | 0.6.2 (D1) |
 | BTH-FEAT-NOOP-GOLDEN-001 | 0.6.2 (D1) |
 | BTH-FEAT-PACK-MERCHANT-001 | 0.6.2 (decided 11-19) |
 | BTH-FEAT-PRACTICE-FEEDBACK-001 | LAND-04 |
 | BTH-GAME-RETURN-001 | LAND-04 |
-| BTH-GAS-SCRATCHER-EXIT-001 | Close — not reproducible |
-| BTH-JOURNAL-ROULETTE-CURRENCY-001 | Close — delivered |
-| BTH-LAN-TLS-TRUST-001 | Close — admin: strict HTTPS startup passes; no trust change needed |
-| BTH-NEXT-DISK-RESERVE-001 | Close — delivered: D: has 31 GB free; NEXT `CURRENT` = `main` |
+| BTH-GAS-SCRATCHER-EXIT-001 | Close - not reproducible |
+| BTH-JOURNAL-ROULETTE-CURRENCY-001 | Close - delivered |
+| BTH-LAN-TLS-TRUST-001 | Close - admin: strict HTTPS startup passes; no trust change needed |
+| BTH-NEXT-DISK-RESERVE-001 | Close - delivered: D: has 31 GB free; NEXT `CURRENT` = `main` |
 | BTH-NEXT-QA-CREW-ROOM-HOST-001 | LAND-04 |
-| BTH-NEXT-QA-GENERAL-SIDEBAR-001 | Close — admin: exploratory QA ends at the RC2 freeze; its findings are registered |
+| BTH-NEXT-QA-GENERAL-SIDEBAR-001 | Close - admin: exploratory QA ends at the RC2 freeze; its findings are registered |
 | BTH-PERF-20261104 | 0.6.2 (D2), after LAND-04 settles -001/-002/-003 |
 | BTH-PERF-20261104-001 | LAND-04 |
 | BTH-PERF-20261104-002 | LAND-04 |
@@ -549,70 +549,70 @@ Counts:
 | BTH-PERF-20261104-008 | 0.6.2 (D2); reopen if the menu-text glitch is seen in LAND-04 or LAND-07 |
 | BTH-ROULETTE-REPAID-DRAFT-001 | LAND-04 |
 | BTH-RUNTIME-CLEANUP-001 | 0.6.2 (D2) |
-| BTH-SCENARIO-ARRIVAL-002 | Close — delivered |
-| BTH-SCENARIO-WEDDING-001 | Close — delivered |
+| BTH-SCENARIO-ARRIVAL-002 | Close - delivered |
+| BTH-SCENARIO-WEDDING-001 | Close - delivered |
 | BTH-SLOT-UNFUNDED-SELECTION-001 | LAND-04 |
 | BTH-TEST-TRAVEL-PERF-001 | LAND-05 |
-| BTH-TODO-RELIABILITY-001 | Close — delivered |
-| BTH-TRAVEL-CLOSING-FALLBACK-R11-1067 | Close — delivered |
+| BTH-TODO-RELIABILITY-001 | Close - delivered |
+| BTH-TRAVEL-CLOSING-FALLBACK-R11-1067 | Close - delivered |
 | BTH061-006 | LAND-03 |
 | BTH061-AUDIT-001 | 0.6.2 (D2) |
 | BTH061-AUDIT-AGGREGATE-TIME-BUDGET-005 | 0.6.2 (D2) |
-| BTH061-AUDIT-CODEC-SIGNED-ZERO-022 | Close — delivered |
+| BTH061-AUDIT-CODEC-SIGNED-ZERO-022 | Close - delivered |
 | BTH061-AUDIT-CONTENT-TIMEOUT-006 | 0.6.2 (D2) |
-| BTH061-AUDIT-COVERAGE-PUBLICATION-024 | Close — delivered (if the evidence is on `main`) |
-| BTH061-AUDIT-CREW-BASELINE-004 | Close — delivered |
-| BTH061-AUDIT-CREW-INITIAL-REPUTATION-020 | Close — delivered |
+| BTH061-AUDIT-COVERAGE-PUBLICATION-024 | Close - delivered (if the evidence is on `main`) |
+| BTH061-AUDIT-CREW-BASELINE-004 | Close - delivered |
+| BTH061-AUDIT-CREW-INITIAL-REPUTATION-020 | Close - delivered |
 | BTH061-AUDIT-DELIVERY-PRECOMMIT-OWNER-032 | 0.6.2 (D2) |
-| BTH061-AUDIT-DUEL-CALLOUT-RECEIPT-022 | Close — delivered |
-| BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009 | Close — delivered |
-| BTH061-AUDIT-FINISH-PUBLISH-20261106 | Close — delivered (if the push happened) |
+| BTH061-AUDIT-DUEL-CALLOUT-RECEIPT-022 | Close - delivered |
+| BTH061-AUDIT-DUEL-SURFACE-ROLLBACK-009 | Close - delivered |
+| BTH061-AUDIT-FINISH-PUBLISH-20261106 | Close - delivered (if the push happened) |
 | BTH061-AUDIT-GENERATOR-INNER-ROLLBACK-030 | 0.6.2 (D2) |
 | BTH061-AUDIT-INDEPENDENT-001 | 0.6.2 (D2) |
 | BTH061-AUDIT-INTERRUPT-BASELINE-004 | 0.6.2 (D2) |
-| BTH061-AUDIT-LAYER-DEFINITION-013 | Close — delivered |
+| BTH061-AUDIT-LAYER-DEFINITION-013 | Close - delivered |
 | BTH061-AUDIT-MEMO-CALLBACK-CHECK-018 | 0.6.2 (D2) |
 | BTH061-AUDIT-MEMO-TYPE-SAFETY-014 | 0.6.2 (D2); the typed-collision fix already shipped |
-| BTH061-AUDIT-MENU-SAVE-SNAPSHOT-028 | Close — delivered |
+| BTH061-AUDIT-MENU-SAVE-SNAPSHOT-028 | Close - delivered |
 | BTH061-AUDIT-NUMBERS-LAYOUT-STUB-024 | 0.6.2 (D2) |
 | BTH061-AUDIT-PERSISTENCE-PROJECTION-013 | 0.6.2 (D2) |
 | BTH061-AUDIT-PLACEMENT-SHADOWED-BRANCH-030 | 0.6.2 (D2) |
-| BTH061-AUDIT-PROJECTION-NUMERIC-IDENTITY-023 | Close — delivered |
-| BTH061-AUDIT-RITUAL-ANCHOR-ARGUMENT-025 | Close — delivered (status says "committed local": check ancestry; LAND-02 step 3 if missing) |
-| BTH061-AUDIT-RITUAL-ID-GRAMMAR-025 | Close — delivered (same check) |
+| BTH061-AUDIT-PROJECTION-NUMERIC-IDENTITY-023 | Close - delivered |
+| BTH061-AUDIT-RITUAL-ANCHOR-ARGUMENT-025 | Close - delivered (status says "committed local": check ancestry; LAND-02 step 3 if missing) |
+| BTH061-AUDIT-RITUAL-ID-GRAMMAR-025 | Close - delivered (same check) |
 | BTH061-AUDIT-RUNTIME-OWNED-COPY-019 | 0.6.2 (D2) |
-| BTH061-AUDIT-SCHEMA-VALIDATION-014 | Close — delivered if on `main` and RC2 Smoke is green; otherwise 0.6.2 |
-| BTH061-AUDIT-SEQUENCE-BASELINE-008 | Close — delivered |
+| BTH061-AUDIT-SCHEMA-VALIDATION-014 | Close - delivered if on `main` and RC2 Smoke is green; otherwise 0.6.2 |
+| BTH061-AUDIT-SEQUENCE-BASELINE-008 | Close - delivered |
 | BTH061-AUDIT-SHOWDOWN-META-CHOICE-FIX-031 | LAND-03 |
-| BTH061-BAR-DICE-COVER-DISPLAY-001 | Close — delivered (CLOSE-02) |
+| BTH061-BAR-DICE-COVER-DISPLAY-001 | Close - delivered (CLOSE-02) |
 | BTH061-BAR-DICE-REVEAL-RESTORE-001 | LAND-03 (Bar Dice row) |
 | BTH061-CLOSE06-SCENARIO-CONTINUE-001 | 0.6.2 (decided 11-19) |
 | BTH061-CREW-EXPIRED-HANDOFF | LAND-03 |
-| BTH061-PULLTABS-SAVE-001 | Close — not reproducible |
+| BTH061-PULLTABS-SAVE-001 | Close - not reproducible |
 | BTH061-RC-ACCEPTANCE-COVERAGE-001 | LAND-03 (parent) |
 | BTH061-RC-NATIVE-RETENTION-001 | 0.6.2 (decided, C4) |
 | BTH061-ROULETTE-SEALED-PENDING-001 | LAND-03 (Roulette row); original cause stays unattributed |
-| BTH061-VAULTDROP-SAVE-001 | Close — not reproducible |
+| BTH061-VAULTDROP-SAVE-001 | Close - not reproducible |
 | BTH062-DAILY-LEADERBOARD | 0.6.2 (decided) |
 | BTH062-SCENARIO-POLISH | 0.6.2 (decided) |
 | BTH062-WHALE-TRUST-ARC | 0.6.2 (decided) |
 | CLOSE-06 | LAND-03 (closes with LAND-03, LAND-03W and LAND-04) |
-| CLOSEOUT-061 | Close — admin: superseded by this plan |
+| CLOSEOUT-061 | Close - admin: superseded by this plan |
 | FEAT-01 | 0.6.2 (decided) |
 | FEAT-02 | 0.6.2 (D1) |
 | FEAT-03 | LAND-04 |
-| FEAT-04 | Close — delivered (closed as not wanted) |
-| FEAT-062-RECORD | Close — delivered, after adding this plan's 0.6.2 moves |
+| FEAT-04 | Close - delivered (closed as not wanted) |
+| FEAT-062-RECORD | Close - delivered, after adding this plan's 0.6.2 moves |
 | FEAT-07 | 0.6.2 (D1) |
 | FEAT-08 | 0.6.2 (decided) |
-| FEAT-09 | Close — delivered (both fixes on NEXT); souvenir acceptance goes to 0.6.2 with FEAT-11 |
-| FEAT-10 | Close — delivered (rechecked, not reproduced) |
+| FEAT-09 | Close - delivered (both fixes on NEXT); souvenir acceptance goes to 0.6.2 with FEAT-11 |
+| FEAT-10 | Close - delivered (rechecked, not reproduced) |
 | FEAT-11 | 0.6.2 (decided 11-19) |
-| FEAT-QUEUE | Close — admin: every child is dispositioned |
-| FEAT-STALE | Close — delivered |
+| FEAT-QUEUE | Close - admin: every child is dispositioned |
+| FEAT-STALE | Close - delivered |
 | LEDGER022 | 0.6.2 (decided) |
 
-## Appendix B — historical-group entries (130 open)
+## Appendix B - historical-group entries (130 open)
 
 Apply these rules in order. List every entry and its rule in the LAND-01
 receipt. Leave none unassigned.

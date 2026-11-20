@@ -1,9 +1,9 @@
-## REJECTED — Owner Review 2026-07-08
+## REJECTED - Owner Review 2026-07-08
 
 The owner playtested this implementation and **rejected it**: the "home" was
-delivered as a menu screen — not the walkable environment this prompt
+delivered as a menu screen - not the walkable environment this prompt
 explicitly required ("persistent, **walkable** home environment", §3 "Walkable
-room using the existing environment rendering") — and the menu itself is
+room using the existing environment rendering") - and the menu itself is
 broken (content cuts off; not usable). The delivered state does not satisfy
 the prompt. Corrective work is owned by
 `docs/todo/CRITICAL_meta_home_must_be_walkable_environment_prompt.md` (top of
@@ -20,12 +20,12 @@ You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript casino
 roguelike (see CLAUDE.md). This task **renovates the out-of-run inventory
 experience**: the main-menu collection browser is replaced by a persistent,
 walkable **home environment** where the player stores, inspects, packs,
-opens, and trades their collection between runs — plus a housing progression
+opens, and trades their collection between runs - plus a housing progression
 (back alley → motel room → apartment → house) bought with meta gold, an
 out-of-run **map** for meta travel, and a **pawn shop** venue whose only
 interaction is its sell counter.
 
-**This prompt supersedes and absorbs two queued prompts** —
+**This prompt supersedes and absorbs two queued prompts** -
 `v04_meta_collection_loadout_prompt.md` and
 `v04_meta_collection_economy_polish_prompt.md` (both deleted from the queue;
 their requirements are folded in below). Do not look for them.
@@ -51,11 +51,11 @@ their requirements are folded in below). Do not look for them.
 1. The purchased meta-home is **linked** to the run-side starting home for
    **normally generated runs only**. Daily runs and challenge runs are fully
    isolated: no home-start change, no loadout injection, no meta drops, no
-   usage decay — they neither read nor write the meta collection.
+   usage decay - they neither read nor write the meta collection.
 2. Housing is bought once with gold and never charges rent in this release.
    Leave a `rent` design note in code comments/data as a future hook, but
    implement no rent mechanics.
-3. Selling happens at the **pawn shop sell counter** from day one — the pawn
+3. Selling happens at the **pawn shop sell counter** from day one - the pawn
    shop's single interaction. Nothing else there is interactive.
 4. Homeless (back alley) players can do **everything except trade-ups**, but
    their storage is only what their owned containers hold, and **everything
@@ -88,7 +88,7 @@ their requirements are folded in below). Do not look for them.
   - **Storage**: alley = containers only (see §4); motel 8, apartment 16,
     house 32 home-storage slots (tunable).
   - **Trade-up station**: present only at apartment/house.
-  - Cosmetics: each tier renders its own archetype — reuse the shipped
+  - Cosmetics: each tier renders its own archetype - reuse the shipped
     0.3.3 room archetypes in a meta interaction mode.
 
 ## 3. The home environment (replaces the collection browser)
@@ -98,12 +98,12 @@ Walkable room using the existing environment rendering (pixel scene canvas
 
 - **Storage/containers**: owned items render as inspectable storage. Item
   inspection shows what the item does (resolved effects), its four floats
-  with condition/usage bands, tier color, and collection — through the
+  with condition/usage bands, tier color, and collection - through the
   shipped glyph/badge system. Sort/filter by collection, tier,
   owned/unopened, and packed state in the storage list view.
 - **Packing**: assign items to owned containers for the next run. Capacity
   is per-container (bag/backpack/suitcase/trunk capacities come from the
-  existing container data — do not invent a second capacity source).
+  existing container data - do not invent a second capacity source).
   Duplicate packing of one instance is impossible.
 - **Bag opening**: the P1 single-button open, upgraded to a compact reveal
   panel (item name, collection, tier color, condition band, four floats).
@@ -121,7 +121,7 @@ Walkable room using the existing environment rendering (pixel scene canvas
   systems; total carry capacity = sum of owned containers' capacities.
 - **Homeless:** there is no home storage. Everything owned lives in the
   containers and ALL of it enters every normal run (auto-packed, capped by
-  container capacity — the cap is also the ownership cap while homeless;
+  container capacity - the cap is also the ownership cap while homeless;
   handle the acquire-while-full case by blocking bag opening with a clear
   "no room" reason rather than deleting anything).
 - **Housed:** the player chooses what to pack; unpacked items stay in home
@@ -131,16 +131,16 @@ Walkable room using the existing environment rendering (pixel scene canvas
 
 - Run start (normal generation): the run's starting environment is the
   owned housing archetype (homeless → back_alley start). Packed containers
-  inject their items into the run inventory via `CollectionItemResolver` —
+  inject their items into the run inventory via `CollectionItemResolver` -
   once, at generation, seed-stable for identical loadouts. Injected items
   keep their meta instance id mapping; deterministic gameplay never reads
   the meta store mid-run.
-- Run end (normal runs): settle once — P1 bag drops grant, and on terminal
+- Run end (normal runs): settle once - P1 bag drops grant, and on terminal
   **failure** every carried item decays its `usage` float by the
   data-defined amount (victory/clean exit: no decay). Items are never
   deleted by decay.
 - Daily and challenge runs: current behavior untouched end to end (assert
-  this in tests — it is an owner-binding rule, not an optimization).
+  this in tests - it is an owner-binding rule, not an optimization).
 
 ## 6. Pawn shop (stub venue, one interaction)
 
@@ -150,14 +150,14 @@ Walkable room using the existing environment rendering (pixel scene canvas
   unopened bags for gold. Deterministic price: items
   f(tier base, condition, usage, potency band); unopened bags f(tier).
   Armed-confirm destructive flow; sale history recorded. Gold is minted
-  ONLY here (and consumed by housing/trade-ups) — no other faucets.
+  ONLY here (and consumed by housing/trade-ups) - no other faucets.
 - Everything else in the room is non-interactive dressing for now.
 
 ## Hard constraints
 
 1. `MetaCollectionService` stays strictly outside RunState: inject once at
    run start, settle once at run end; no meta reads/writes mid-run.
-2. All rolls (trade-up, pricing inputs if randomized — prefer none) from
+2. All rolls (trade-up, pricing inputs if randomized - prefer none) from
    the persisted meta RNG stream; no wall-clock, no unseeded randomness.
 3. Old/corrupt meta stores normalize to defaults; every new field
    round-trips save/load idempotently.

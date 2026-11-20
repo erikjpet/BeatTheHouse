@@ -1,4 +1,4 @@
-# Agent Prompt — SFX Realism Refinement (True-to-Life Fidelity)
+# Agent Prompt - SFX Realism Refinement (True-to-Life Fidelity)
 
 Copy everything below this line into the worker agent.
 
@@ -8,7 +8,7 @@ You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript casino
 roguelike. The SFX are PROCEDURALLY SYNTHESIZED in `scripts/ui/sfx_player.gd`
 (~57 `_sample_*` functions, ~2,000 lines), routed through a web audio bridge.
 The earlier casino-smooth pass LANDED, but some cues still do not sound like
-the REAL THING they represent — the phone ring (`phone_call` /
+the REAL THING they represent - the phone ring (`phone_call` /
 `_sample_phone_call`) does not read as a phone at all, and it is not the only
 one. This is a REALISM refinement: make every cue that represents a
 recognizable real-world object actually SOUND like that object, while keeping
@@ -16,10 +16,10 @@ the warmth/smoothness the first pass added. DO NOT TOUCH THE MUSIC SYSTEM.
 
 ## The bar: blind recognizability
 
-Each real-world cue must pass a blind test — played with no context, a
+Each real-world cue must pass a blind test - played with no context, a
 listener should identify it (or at minimum never MIS-identify it). "Smooth
 but generic" is the current failure; the fix is to synthesize each sound's
-actual acoustic signature. Realism AND pleasantness together — model the real
+actual acoustic signature. Realism AND pleasantness together - model the real
 object, then keep it warm and non-harsh.
 
 ## Audit every recognizable-object cue; the key offenders + fidelity targets
@@ -36,9 +36,9 @@ important ones (cover the rest to the same standard):
 | `blackjack_card`, `card`, `paper_peek`, `paper_peel`, `pull_tab_click`, `pull_tab_thump` | cardstock / paper | soft papery friction and a light snap on the deal; peel is a slow tearing friction; thump is a dull low card-box knock. |
 | `roulette_ball_roll/loop/rim_tick/bounce/scatter/drop/pocket`, `roulette_rotor_launch` | an ivory ball on a spinning wheel | a rolling rattle on the track, discrete rim ticks that DECELERATE, then a clattering settle into a pocket. The whole gesture should read as a real roulette spin. |
 | `lever`, `lever_*` | a slot machine arm | a spring-loaded mechanical ratchet: the pull, the tension, the release/return. |
-| `reel_loop/stop`, `buffalo_reel_*`, `digital_reel_*` | spinning reels | a rhythmic mechanical (or clean digital, for the digital family) spin with a satisfying detent/stop — a reel landing, not a tone cutting off. |
+| `reel_loop/stop`, `buffalo_reel_*`, `digital_reel_*` | spinning reels | a rhythmic mechanical (or clean digital, for the digital family) spin with a satisfying detent/stop - a reel landing, not a tone cutting off. |
 | `button`, `*_button`, `machine_button`, `rounded_cabinet_click`, `digital_button` | a physical cabinet button | a tactile click-THUNK with body; the digital family may be a clean UI click. No naked beep. |
-| `jackpot`, `jackpot_hit`, `bonus_total`, `pinball_money_ding` | a casino win bell/chime | bright, IN-TUNE bell/chime cascade — celebratory, not a siren. |
+| `jackpot`, `jackpot_hit`, `bonus_total`, `pinball_money_ding` | a casino win bell/chime | bright, IN-TUNE bell/chime cascade - celebratory, not a siren. |
 | `drink_consumed` | a drink | a pour/gulp/glass set-down, recognizably drinking. |
 | `scratch_box_pop`, `scratch_paper_foley_loop` | scratching a ticket | coin-on-latex friction and a light pop when a cell clears. |
 | `bumper` | a pinball bumper | a punchy sprung pop/ding. |
@@ -48,17 +48,17 @@ treatment. Report the full audit.
 
 ## Hard rules
 
-- Procedural only — synthesize in `sfx_player.gd`; no external audio assets.
+- Procedural only - synthesize in `sfx_player.gd`; no external audio assets.
   Keep the first pass's warmth (nothing goes back to ringy/metallic-harsh);
-  realism must not reintroduce harshness — model the object AND keep it
+  realism must not reintroduce harshness - model the object AND keep it
   pleasant on the hundredth hear.
-- Music system OUT OF SCOPE — do not touch music synthesis/arrangement/player.
+- Music system OUT OF SCOPE - do not touch music synthesis/arrangement/player.
 - Determinism preserved (seeded variation via named streams / stable hashes,
   never wall-clock-random in a way that breaks the probe). Family event names,
   loop points (`reel_loop`, `roulette_ball_loop`, `scratch_paper_foley_loop`),
-  and the hooks games call stay intact — games need no edits.
+  and the hooks games call stay intact - games need no edits.
 - Web-safe: verify through the web audio bridge; no clipping/dropouts; stays
-  within the audio-generation performance budget (measure — no frame-time
+  within the audio-generation performance budget (measure - no frame-time
   spike). Consistent loudness across cues.
 - Coordination: if the video poker cabinet rework has landed custom sounds,
   bring them up to this realism bar too and keep the synth helpers reusable.
@@ -69,7 +69,7 @@ treatment. Report the full audit.
 
 1. RECOGNIZABILITY ACCEPTANCE (the core test): render a WAV per real-world cue
    under `.tmp/sfx/`, and for each state plainly what real object it now
-   represents and why it reads as that (esp. `phone_call` — confirm it is
+   represents and why it reads as that (esp. `phone_call` - confirm it is
    unmistakably a phone). If a cue still would be mis-identified blind, it is
    not done.
 2. Before/after audit table: every recognizable cue, old vs new, and the
@@ -81,7 +81,7 @@ treatment. Report the full audit.
    `foundation_performance_probe` shows no audio-driven frame regression; web
    smoke passes with audio.
 5. Manual: trigger the offenders in-game (get a phone call, cascade coins,
-   spin roulette, pull a lever, hit a jackpot, scratch a ticket) — each reads
+   spin roulette, pull a lever, hit a jackpot, scratch a ticket) - each reads
    as the real thing while staying pleasant.
 
 ## Gates

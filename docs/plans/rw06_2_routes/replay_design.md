@@ -1,4 +1,4 @@
-# rw06_2 ending replay design — exploratory implementation
+# rw06_2 ending replay design - exploratory implementation
 
 Status: **Q-017A ENGINE-FREE ADMISSION GREEN; LIVE CONTRACT AND QUALIFYING ROUTES PENDING**
 The peer branch contains canonical release-closeout reconciliation

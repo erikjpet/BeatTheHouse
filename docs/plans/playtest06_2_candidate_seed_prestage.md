@@ -1,6 +1,6 @@
 # playtest06_2 Candidate Seed Prestage
 
-Status: **PRESTAGE ONLY — no owner build, final seed, route, or readiness claim**
+Status: **PRESTAGE ONLY - no owner build, final seed, route, or readiness claim**
 
 Prepared from its actual main parent
 `49841960750a873707e79dbf6b5c7836041fcbf5`,

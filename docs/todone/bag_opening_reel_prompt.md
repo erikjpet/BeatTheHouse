@@ -1,4 +1,4 @@
-# Agent Prompt — Bag Opening: Counter-Strike-Style Reveal Reel
+# Agent Prompt - Bag Opening: Counter-Strike-Style Reveal Reel
 
 Copy everything below this line into the agent.
 
@@ -34,26 +34,26 @@ wins over any drifted references.
 - Item art: items carry an icon/asset key; reuse the existing item-icon
   rendering used elsewhere in the meta/collection UI.
 
-## The feature — a bag-opening reveal reel
+## The feature - a bag-opening reveal reel
 
 Model it on the Counter-Strike case-opening screen.
 
 ### 1. The reel
 
 - A horizontal reel of item "cards" that scrolls fast left→right (or
-  right→left — pick one, be consistent), decelerating to a stop.
+  right→left - pick one, be consistent), decelerating to a stop.
 - A STATIC vertical marker line down the center of the reel indicates the
-  landing slot — whatever card rests under the marker when the reel stops
+  landing slot - whatever card rests under the marker when the reel stops
   is the reveal.
 - Each card shows: the item's image, boxed with an OUTLINE in that item's
   RARITY color (blue/purple/pink/red/gold). Higher rarities read as more
   vivid.
 - The reel is populated with a long sequence of cards drawn from the
-  bag's possible items (weighted to look natural — mostly common, rarer
+  bag's possible items (weighted to look natural - mostly common, rarer
   ones sprinkled), and the card at the landing position IS the
   predetermined winning item from `open_bag`.
 
-### 2. Determinism (critical — the reel never decides the outcome)
+### 2. Determinism (critical - the reel never decides the outcome)
 
 - The winning item is `result.item` from `open_bag`, which is already
   rolled and granted by the seeded resolver. The reel is PURE
@@ -83,7 +83,7 @@ Model it on the Counter-Strike case-opening screen.
   (name, rarity, and it is now in the collection). Preserve any existing
   post-open state/selection (`selected_meta_item_key`) and the collection
   reveal messaging.
-- Reduce-motion: SKIP the spin entirely — show the contents showcase and
+- Reduce-motion: SKIP the spin entirely - show the contents showcase and
   the won item directly, no animation. The result is identical.
 - A skip/click-to-finish control ends the spin early and snaps to the
   reveal (never changes the item).
@@ -130,7 +130,7 @@ Model it on the Counter-Strike case-opening screen.
    on reload; no reel residue.
 8. Small-screen: reel + marker + showcase fit and read at both sizes.
 9. FEEL ACCEPTANCE (manual, report in words): open several bags of
-   different tiers — the spin builds tension, lands cleanly on the marker,
+   different tiers - the spin builds tension, lands cleanly on the marker,
    rarity colors pop, and the contents showcase makes the odds legible.
 
 ## Gates (all must pass)
@@ -152,7 +152,7 @@ end-to-end (manual feel-acceptance done):
    animation; contents showcase; flow wiring + old-path removal).
 2. ARCHIVE this prompt file by moving it to `docs/todone/` with
    `git mv docs/todo/bag_opening_reel_prompt.md docs/todone/` in the
-   final commit — do NOT delete it. Append a short execution record to
+   final commit - do NOT delete it. Append a short execution record to
    the bottom of the archived file (date, implementing commit hashes,
    gate results, any deviations).
 3. PUSH to the remote.
@@ -177,14 +177,14 @@ Implementing commits:
 - Archive record: the commit containing this section
 
 Gate results:
-- `tools/validate_project.ps1` — PASS
-- `tools/check_godot.ps1 -FoundationSuite ui -TimeoutSec 300` — PASS (`20260722_193158_smoke`)
-- `tools/check_godot.ps1 -FoundationSuite systems -TimeoutSec 300` — PASS (`20260722_193040_smoke`)
-- `.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe --headless --path . --script res://scripts/tests/collection_meta_check.gd` — PASS
-- `tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` — PASS, 10 seeds, 326 checkpoints, combined hash `439730414`
-- `tools/foundation_performance_probe.ps1 -RequireGodot` — PASS
-- `tools/foundation_visual_qa.ps1` — PASS
-- `tools/foundation_mouse_playtest.ps1` — PASS, 60 input events, visible-control victory and recovery/debt pressure verified
+- `tools/validate_project.ps1` - PASS
+- `tools/check_godot.ps1 -FoundationSuite ui -TimeoutSec 300` - PASS (`20260722_193158_smoke`)
+- `tools/check_godot.ps1 -FoundationSuite systems -TimeoutSec 300` - PASS (`20260722_193040_smoke`)
+- `.tools\godot-4.6-stable\Godot_v4.6-stable_win64_console.exe --headless --path . --script res://scripts/tests/collection_meta_check.gd` - PASS
+- `tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` - PASS, 10 seeds, 326 checkpoints, combined hash `439730414`
+- `tools/foundation_performance_probe.ps1 -RequireGodot` - PASS
+- `tools/foundation_visual_qa.ps1` - PASS
+- `tools/foundation_mouse_playtest.ps1` - PASS, 60 input events, visible-control victory and recovery/debt pressure verified
 
 Manual feel/readability acceptance:
 - Exercised the reel view model and component across all five rarity tiers. The component opens with a long precomputed horizontal sequence, decelerates under a static center marker, highlights the committed landing card, supports click/Skip snap-to-finish, and shows the won item plus the full contents showcase below.

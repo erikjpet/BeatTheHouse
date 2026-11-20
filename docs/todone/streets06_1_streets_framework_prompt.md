@@ -8,7 +8,7 @@ Board row: `streets06_1` in `docs/todo/README_0_6_board.md`
 - **Verification:** PM integrated-tree PASS: systems (`.tmp/wave_c_pm/streets_integrated_systems/summary.json`), UI (`.tmp/wave_c_pm/streets_integrated_ui/summary.json`), 10-seed determinism (350 checkpoints, combined hash `973077643`), and visual QA (57 headless state snapshots; package, multi-stop progress, and Hold signal exit all covered).
 - **Deviations:** The repository visual harness captures structured headless state snapshots rather than raster screenshots; all three required player-facing modes are recorded in the visual report with zero warnings.
 
-# Agent Prompt — 0.6 streets06_1: The Streets Framework (Playable Town)
+# Agent Prompt - 0.6 streets06_1: The Streets Framework (Playable Town)
 
 Copy everything below this line into the agent.
 
@@ -16,7 +16,7 @@ Copy everything below this line into the agent.
 
 You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript
 casino roguelike (Web/itch.io + Windows, 1280×720). Binding design
-contract: `docs/plans/0.6_living_world_roadmap.md` — Pillar 3 "The
+contract: `docs/plans/0.6_living_world_roadmap.md` - Pillar 3 "The
 Streets" (owner-approved at full scope, round 4, **including the heist
 Getaway chase variant**). This framework turns crew deliveries, Numbers
 routes, lookout holds, and the heist getaway into played gameplay on
@@ -51,17 +51,17 @@ registered and logged.
   per run + edge + attempt).
 - Grid/intersection movement, turn-based. Board features painted from
   live state at generation:
-  - **Patrol cones** — units with sweeping sightlines on seeded
+  - **Patrol cones** - units with sweeping sightlines on seeded
     routes; density scales with local reputation, town heat, and
     sweep proximity (seam).
-  - **Light/weather** — rain/fog shrink sightlines (slower, safer);
+  - **Light/weather** - rain/fog shrink sightlines (slower, safer);
     blackout blocks are dark (fast, but seeded hazards live in the
     dark); clear payday nights are bright and busy.
-  - **Crowds** — Fight Night/Festival crowds block routes but break
+  - **Crowds** - Fight Night/Festival crowds block routes but break
     line-of-sight (slow cover).
-  - **Props** — stash boxes (bank carried cargo mid-route), shortcut
+  - **Props** - stash boxes (bank carried cargo mid-route), shortcut
     alleys (fast, exposed), the snitch's window (pass it and Silas
-    learns your business — reputation/rumor write).
+    learns your business - reputation/rumor write).
 - Presentation: stylized top-down blocks consistent with the game's
   art language; view-model + controller; board built once at
   generation, mutations on action only.
@@ -69,23 +69,23 @@ registered and logged.
 ### 2. The verbs + run resolution
 
 - Per turn: move (walk = quiet / run = fast+noisy), wait, duck (into
-  cover/crowd), stash, ditch (dump cargo — run fails cleanly, evidence
+  cover/crowd), stash, ditch (dump cargo - run fails cleanly, evidence
   gone). Getting spotted starts a **pursuit timer** (N turns to reach
   destination or a stash) rather than instant failure; timer expiry =
   caught consequence.
-- Cargo rules: carried packages/slips are contraband — caught =
+- Cargo rules: carried packages/slips are contraband - caught =
   confiscation + heat + job failure (+ trust hit via the job
   framework); clean fast runs pay speed bonuses.
 - Run modes shipped this slice:
-  - **Package run** — replace the `crew_favor_delivery` job resolution
+  - **Package run** - replace the `crew_favor_delivery` job resolution
     (crew06_1's marked seam) with a played run; keep the event id and
     reward flow compatible.
-  - **Multi-stop route** — ordered/free-order stops with a deadline in
+  - **Multi-stop route** - ordered/free-order stops with a deadline in
     action boundaries (consumed by crew06_3 Numbers).
-  - **Hold** — stationary variant: watch a marked zone, call the
+  - **Hold** - stationary variant: watch a marked zone, call the
     signal in the right window, don't get made (the Lookout absorbed;
     consumed by crew06_6 jobs and heist setups).
-  - **Chase** — getaway variant: pursuit starts hot, Rook's car is the
+  - **Chase** - getaway variant: pursuit starts hot, Rook's car is the
     destination, one-use crew assists (consumed by crew06_8; ship the
     mode behind a flag with a test harness driver).
 - Failing or declining a run never soft-locks: the world state
@@ -94,17 +94,17 @@ registered and logged.
 ### 3. Integration honesty
 
 - Entering a Streets run is always diegetic and optional per job
-  design: normal travel between nodes stays exactly as shipped —
+  design: normal travel between nodes stays exactly as shipped -
   Streets boards fire only for jobs/routes that declare them.
 
 ## Hard rules
 
-- Determinism: board generation, patrol routes, pursuit outcomes —
+- Determinism: board generation, patrol routes, pursuit outcomes -
   seeded, boundary-driven, reproducible (probe-integrated).
 - Perf: board is a budgeted game surface; no per-frame allocations;
   idle liveness green on an open board.
 - Save compat: mid-run board state serializes (or the run declares
-  atomic-with-rollback semantics — choose, document, and test the
+  atomic-with-rollback semantics - choose, document, and test the
   choice; log it on the board).
 - Voice: street register throughout.
 - Style: tabs, typed GDScript, sparse comments; `.tmp/` reports.

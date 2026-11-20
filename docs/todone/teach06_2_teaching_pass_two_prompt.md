@@ -1,7 +1,7 @@
-Status: DONE — dependency-complete teaching pass accepted; TUT-N17 remains owner-human only
+Status: DONE - dependency-complete teaching pass accepted; TUT-N17 remains owner-human only
 Board row: `teach06_2` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — 0.6 teach06_2: Teaching Pass Two
+# Agent Prompt - 0.6 teach06_2: Teaching Pass Two
 
 Copy everything below this line into the agent.
 
@@ -20,7 +20,7 @@ the tutorial defect checks under `scripts/tests/`.
 `tip06_craps_pass_line`, `tip06_coin_pusher`, `tip06_numbers_book`,
 `tip06_crew_standing` and three siblings. Since then the update grew a Crew path
 with a trust ladder, deliveries and holds, a Police Sweep, back-room poker,
-scenario objectives, rumors, and — through the depth programs — a different way
+scenario objectives, rumors, and - through the depth programs - a different way
 of physically operating craps, the coin pusher, and every other game.
 
 Two problems follow. Systems a player must understand have no teaching at all.
@@ -30,7 +30,7 @@ worse than silence.
 ## Board and dependencies
 
 Follow the active board protocol. Claim `teach06_2`. This row requires
-`depth06_1`, `game06_8` and `world06_7` to be DONE — teaching written against a
+`depth06_1`, `game06_8` and `world06_7` to be DONE - teaching written against a
 surface that is still being reworked will be wrong by the time it lands. You own
 `data/tutorial/lessons.json`, the coach surfaces and their tests.
 
@@ -72,7 +72,7 @@ placement, secrecy discipline, and no lesson that reveals hidden state.
 - Never teach a hidden system. Nothing here may reveal Turn state, traitor
   eligibility, grievance weighting, a rigged draw the player has not discovered,
   or an unrevealed ticket.
-- Voice obeys the Voice Bible register — the coach speaks in the register of
+- Voice obeys the Voice Bible register - the coach speaks in the register of
   wherever the player is standing.
 - Determinism: triggers fire at action boundaries, never on wall-clock time.
 - Respect the once-only budget as a whole. If adding a lesson pushes total

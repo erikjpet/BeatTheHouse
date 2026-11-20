@@ -41,8 +41,8 @@ Copy everything below this line into the agent.
 ---
 
 You are working in `D:\Projects\Beat-The-House` (Godot 4.6 GDScript casino
-roguelike — see CLAUDE.md). Owner playtest: **selecting an area on the
-world map makes the map move** — the view shifts/re-frames on click
+roguelike - see CLAUDE.md). Owner playtest: **selecting an area on the
+world map makes the map move** - the view shifts/re-frames on click
 instead of staying put.
 
 ## Likely mechanism (verify, then fix at the source)
@@ -52,7 +52,7 @@ bounds: `_bounds_focus_nodes()` (:316) reads
 `snapshot.map_focus_node_ids`, and the window is computed and clamped from
 those nodes' bounds (:279-312). If node selection adds the selected node
 to (or replaces) `map_focus_node_ids`, every selection recomputes the
-bounds and the whole map re-frames — which matches the observed bug.
+bounds and the whole map re-frames - which matches the observed bug.
 Trace who writes `map_focus_node_ids` (world_map.gd snapshot building
 and/or foundation_main's selection handling) and confirm.
 
@@ -66,10 +66,10 @@ and/or foundation_main's selection handling) and confirm.
 2. Re-framing is allowed ONLY on events that genuinely change what exists
    to look at (new node revealed, map opened fresh). If such a case
    occurs while the map is open, the window updates without a jarring
-   jump (either imperceptible or smoothly interpolated — pick the
+   jump (either imperceptible or smoothly interpolated - pick the
    cheaper one consistent with existing canvas patterns; no new tween
    systems for this fix).
-3. Applies to both map modes (in-run world map and the meta map — they
+3. Applies to both map modes (in-run world map and the meta map - they
    share this canvas).
 
 ## Guard
@@ -81,7 +81,7 @@ Cover hover too if hover feeds the same path.
 
 ## Verification
 
-1. Manual: open the map, click several nodes including edge nodes — the
+1. Manual: open the map, click several nodes including edge nodes - the
    map does not move; travel previews/details still display correctly.
 2. `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1`
 3. `tools\check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300`

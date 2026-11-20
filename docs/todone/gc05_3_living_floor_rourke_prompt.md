@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-16
 - **Completion/implementation commits:** `caa61f33`
-- **Verification:** PASS — tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_performance_probe.ps1 -RequireGodot; tools/foundation_visual_qa.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_performance_probe.ps1 -RequireGodot; tools/foundation_visual_qa.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — 0.5 Slice 3: The Living Floor — Rourke Agent + Rival Cheaters
+# Agent Prompt - 0.5 Slice 3: The Living Floor - Rourke Agent + Rival Cheaters
 
 Copy everything below this line into the agent.
 
@@ -16,7 +16,7 @@ roguelike (Web/itch.io + Windows, 1280×720). Immediate-mode canvas
 rendering (`scripts/ui/pixel_scene_canvas.gd` draws rooms and ambient
 characters); run logic in `scripts/core/run_state.gd`; seeded RNG via
 `RngStream` forks only. This file is self-contained; the binding design
-contract is `docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` section 3 — read
+contract is `docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` section 3 - read
 it first. Requires slices 1-2 landed; re-verify their actual code.
 
 ## Task
@@ -33,10 +33,10 @@ it first. Requires slices 1-2 landed; re-verify their actual code.
   with inertia (stays put when accumulators are near-equal). All from a
   seeded fork (`create_rng("rourke_floor")` style); never wall-clock.
 - **Spatial watch**: `pit_boss_watch_status()`
-  (`run_state.gd` — re-verify location) returns watched/active ONLY
+  (`run_state.gd` - re-verify location) returns watched/active ONLY
   when Rourke is in the player's current room; his presence, position,
   and facing render on the room canvas as a living character (reuse
-  the ambient patron/dealer drawing pipeline in pixel_scene_canvas —
+  the ambient patron/dealer drawing pipeline in pixel_scene_canvas -
   presentational animation from state snapshots, zero per-frame
   copies). The player must be able to SEE whether Rourke is in the
   room at a glance.
@@ -47,21 +47,21 @@ it first. Requires slices 1-2 landed; re-verify their actual code.
   each assigned a room and a visible tell (rendered patron with a
   distinct idle behavior).
 - On action boundaries, cheaters generate small heat events in their
-  room (raising that room's accumulator — pulling Rourke toward them
+  room (raising that room's accumulator - pulling Rourke toward them
   and away from you). Their heat does NOT raise the player's suspicion
   directly; it heats the ROOM.
 - **Escort events**: seeded chance per action window that Rourke, when
-  in a cheater's room, catches them: a visible scene — Rourke walks the
+  in a cheater's room, catches them: a visible scene - Rourke walks the
   cheater across the Main Floor to the back-room door (story log entry
   + canvas moment). The cheater leaves the cast; Rourke is OFF THE
-  FLOOR (no room) for K actions *(tunable, propose 4)* — the game's
+  FLOOR (no room) for K actions *(tunable, propose 4)* - the game's
   best cheat window, taught by showing.
 
 ### 3. Pre-Grand cameos
 
 - A rare seeded talk-dock event at the tier-2 casinos (delta_queen,
   kitty_cat_lounge): Rourke scouting. Choices feed the EXISTING
-  prior-boss-event modifier flags (`grand_casino_event_*` family — see
+  prior-boss-event modifier flags (`grand_casino_event_*` family - see
   `docs/plans/grand_casino_endgame_design.md`); do not invent a new
   modifier channel.
 
@@ -73,7 +73,7 @@ it first. Requires slices 1-2 landed; re-verify their actual code.
 - Zero-copy per-frame (the 32.6 ms/frame lesson): character animation
   reads immutable snapshots; accumulators update at action boundaries
   only.
-- Idle-animation liveness gates untouched — living characters ADD idle
+- Idle-animation liveness gates untouched - living characters ADD idle
   motion; the perf probe must stay within budgets (measure the casino
   rooms before/after and report).
 - Save compat: Rourke/cheater state serializes; canonical ids/flags

@@ -1,4 +1,4 @@
-# world06_1 Crew Sequence Adapter — Pre-implementation Acceptance Checklist
+# world06_1 Crew Sequence Adapter - Pre-implementation Acceptance Checklist
 
 Status: independent checklist written before product implementation  
 Scope: acceptance criteria for the future `world06_1` implementation; this
@@ -107,7 +107,7 @@ rejection regardless of other results.
 - [ ] Interactions retained in `EventModule` are byte/behavior compatible, and
   conversion can proceed one interaction at a time.
 
-## 6. Hidden-state isolation — blocking audit
+## 6. Hidden-state isolation - blocking audit
 
 - [ ] Public definitions, scene/object/actor/interaction state, objectives,
   receipts, serialized keys, captures, logs, errors, fixtures, and reports use
@@ -205,8 +205,8 @@ rejection regardless of other results.
 
 ## Reviewer verdict
 
-- [ ] ACCEPT — every blocking item is satisfied on the recorded exact head.
-- [ ] REJECT — findings list the smallest reproducible contract violation.
-- [ ] BLOCKED — only for an unresolved owner decision or missing authoritative
+- [ ] ACCEPT - every blocking item is satisfied on the recorded exact head.
+- [ ] REJECT - findings list the smallest reproducible contract violation.
+- [ ] BLOCKED - only for an unresolved owner decision or missing authoritative
   vocabulary handoff; the report names the exact binding and compatible work
   already completed.

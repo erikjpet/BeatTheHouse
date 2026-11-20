@@ -10,7 +10,7 @@ The original scope/source gaps can be reconciled using directly retrieved retain
 
 2026-10-27T14:36:52.378509+00:00; user.
 
-> You reviewed the current BTH work status, including overnight testing, verified fixes, and the current Crew reputation rules. You requested broader testing with three tracks—general mechanics, the Crew heist ending, and both Grand Casino endings—and proposed scaling reputation gains, including 25 per successful delivery; your dot also noted that a second fix worker should be added only if the implementation queue exceeds two items, with merge conflicts avoided.
+> You reviewed the current BTH work status, including overnight testing, verified fixes, and the current Crew reputation rules. You requested broader testing with three tracks-general mechanics, the Crew heist ending, and both Grand Casino endings-and proposed scaling reputation gains, including 25 per successful delivery; your dot also noted that a second fix worker should be added only if the implementation queue exceeds two items, with merge conflicts avoided.
 
 ### Sentinel_52dad59a8d5081918ac42055af7126b0
 

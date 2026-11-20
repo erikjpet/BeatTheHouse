@@ -1,4 +1,4 @@
-# AUD061-16 — Gate test-only faults in distribution builds
+# AUD061-16 - Gate test-only faults in distribution builds
 
 Started from main **20b6ff23aeac080ff20d487a51e1b5ea274f4a9d**(QOL-05 receipt); NEXT d389abcf59c682ba02d378ec4c7ff4d94f20de25. Specification: [audit work order](../todo/BTH_0.6.1_audit_work_orders.md#aud061-16--test-only-fault-switches-live-in-shipping-classes).
 

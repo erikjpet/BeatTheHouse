@@ -51,7 +51,7 @@ Copy everything below this line into the agent.
 ---
 
 You are working in `D:\Projects\Beat-The-House` (Godot 4.6 GDScript casino
-roguelike — see CLAUDE.md). Every 0.4 queue task through
+roguelike - see CLAUDE.md). Every 0.4 queue task through
 `v04_release_docs_packaging` is archived and the 0.4.0 packages are built.
 This task **publishes the release to GitHub** and prepares the itch upload
 for the owner. The owner launching this prompt IS the explicit
@@ -81,32 +81,32 @@ report; do not publish a broken cut.
    `builds/itch/BeatTheHouse-web.zip` and `BeatTheHouse-windows.zip` and
    confirm they match the checklist exactly. If the packages are stale
    relative to the final commit, STOP and report (do not re-export inside
-   this task — that invalidates the gate evidence trail).
+   this task - that invalidates the gate evidence trail).
 4. `project.godot` and export presets are stamped 0.4.0; the review and
    performance reports exist under docs/plans/.
 5. `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1`
    passes one final time.
 
-## 2. GitHub publish (existing git credentials — no gh, no new logins)
+## 2. GitHub publish (existing git credentials - no gh, no new logins)
 
 1. `git fetch origin` and inspect `origin/main..HEAD` and `HEAD..origin/main`.
-   If the remote has new commits, merge (never rebase — evidence ledgers pin
+   If the remote has new commits, merge (never rebase - evidence ledgers pin
    commit hashes) and re-run the validate gate before continuing.
-2. `git push origin main` (the machine's stored git credentials — the same
+2. `git push origin main` (the machine's stored git credentials - the same
    path every queue push has used).
-3. Tag and push: `git tag -a v0.4.0 -m "Beat the House 0.4.0 — Act 1 completion"`,
+3. Tag and push: `git tag -a v0.4.0 -m "Beat the House 0.4.0 - Act 1 completion"`,
    `git push origin v0.4.0`.
 4. Do NOT use `gh` or attempt to create a GitHub Release object; prior
    releases shipped as pushed tags only. The owner can add a web release
    later if desired.
 
-## 3. itch.io upload — prepared for the owner, performed by the owner
+## 3. itch.io upload - prepared for the owner, performed by the owner
 
 Do NOT attempt butler or any itch upload; no itch credentials exist by
 owner decision, and prior releases were uploaded manually via the itch
 web page. Instead, prepare the manual step precisely:
 
-1. Write an "Itch Upload — Owner Action" section into the checklist's
+1. Write an "Itch Upload - Owner Action" section into the checklist's
    Published section with: the two zip paths, their SHA256 hashes, target
    channels (web zip → the HTML/playable channel, windows zip → the
    Windows channel), and the user-visible version string 0.4.0.
@@ -116,7 +116,7 @@ web page. Instead, prepare the manual step precisely:
 ## 4. Record
 
 Append a "Published" section to `docs/archive/0.4/plans/0.4_release_checklist.md`: push
-commit hash, tag, publish timestamp, and the Itch Upload — Owner Action
+commit hash, tag, publish timestamp, and the Itch Upload - Owner Action
 block. Commit it and push (part of this authorized publish).
 
 ## Done gate

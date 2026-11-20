@@ -1,8 +1,8 @@
-# fix06_29 — Punchline Natural L3 Back-Room Route
+# fix06_29 - Punchline Natural L3 Back-Room Route
 
 ## Status
 
-DONE — completed 2026-09-10 on implementation `3f31bf10`.
+DONE - completed 2026-09-10 on implementation `3f31bf10`.
 
 ## Execution Record
 

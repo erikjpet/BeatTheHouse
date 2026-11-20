@@ -1,9 +1,9 @@
-Status: SUPERSEDED — historical closeout prompt archived during two-branch consolidation
+Status: SUPERSEDED - historical closeout prompt archived during two-branch consolidation
 Board rows: `env06_8` (re-scoped), `fix06_26` (new), `integ06_1`, `playtest06_1` in `docs/todo/README_0_6_board.md`
 Supersedes: `closeout06_1_env06_8_landing_and_board_completion_prompt.md`
 Owner decision date: 2026-09-06
 
-# Agent Prompt — closeout06_2: Fast-Path to a Playtestable Build
+# Agent Prompt - closeout06_2: Fast-Path to a Playtestable Build
 
 Copy everything below this line into one agent. It may spawn sub-agents freely.
 
@@ -13,20 +13,20 @@ You are finishing 0.6 in `D:\Projects\Beat-The-House`. This prompt is complete o
 its own. Read `docs/todo/README_0_6_board.md` for row state, but do not wait on
 any other document, queue, or ceremony.
 
-## 0. The owner's decision — read this before anything else
+## 0. The owner's decision - read this before anything else
 
 The owner has **re-prioritized the program**. The goal is no longer "verify
 everything, then hand off." It is:
 
-> **Get to a full playtestable build as fast as is safe, so refinement — bug
-> fixing, performance, scenario tweaking — can start against the real game.**
+> **Get to a full playtestable build as fast as is safe, so refinement - bug
+> fixing, performance, scenario tweaking - can start against the real game.**
 
 Two consequences bind you:
 
 1. **`env06_8` is split.** Its structural work lands now. Its visual work becomes
    a separate row, `env06_9`, which is **parked** (section 6). The second-review
    `REJECT` at `9c4196dd` is **resolved by this re-scoping**, not by exception and
-   not by waiving a requirement — the findings were real but out of that row's
+   not by waiving a requirement - the findings were real but out of that row's
    reach (section 2).
 2. **Verification that gates a *release* is deferred; verification that gates
    *playability* is not.** Section 5 says exactly which is which. Do not run the
@@ -43,7 +43,7 @@ Two consequences bind you:
   paired observer. Structural census: 55 scenarios, 376 phases, 0 unzoned
   objects, 0 handlerless actions.
 - **One uncommitted tracked change** exists in the working tree:
-  `tools/wave_b_composition_probe.gd`. Review and commit it — see section 3.
+  `tools/wave_b_composition_probe.gd`. Review and commit it - see section 3.
 - `project.godot` reports `config/version="0.5.1"`. That is correct. Do not
   change it.
 - Untracked prompt files in `docs/todo/` are inherited scaffolding. Leave them.
@@ -64,7 +64,7 @@ func _fallback_event_prop(visual_key: String, icon_key: String) -> String:
 in `scripts/ui/pixel_scene_canvas.gd`. Object `state` is **not an input** to prop
 selection. `env06_8`'s dominant consequence handler is `change_scene_object`
 (360 uses), which changes an object's `state` and therefore its description
-variant — but it **cannot** change the object's glyph. That is the whole
+variant - but it **cannot** change the object's glyph. That is the whole
 explanation for the "45 unchanged settled-room rasters." Likewise, 462 of 827
 object ops carry no authored `icon_key` and fall through a keyword ladder into a
 fixed vocabulary of roughly two dozen shared glyphs, which is why distinct
@@ -78,7 +78,7 @@ is captured in `env06_9`; it is not abandoned.
 **Do not** re-run the visual probe against `env06_8`, and do not treat its
 findings as blocking this row.
 
-## 3. The uncommitted change — review, then commit
+## 3. The uncommitted change - review, then commit
 
 `tools/wave_b_composition_probe.gd` gained one finalization call plus its
 assertion, after the Punchline L1 arrival and before the L2 layer transition.
@@ -91,7 +91,7 @@ five were this same harness gap:
 | Reported failure | Actual cause |
 | --- | --- |
 | Punchline L2 layer transition refused | L1 club room never finalized; preflight is fail-closed |
-| L3 made-rank path "no door that way" | cascade — L2 was never entered |
+| L3 made-rank path "no door that way" | cascade - L2 was never entered |
 | Save/load did not restore L3 | cascade |
 | Revisit did not restore L3 | cascade |
 
@@ -105,7 +105,7 @@ This is the **fourth** instance of the same defect. The first three were fixed i
 `env06_8_environment_readability_contract.gd`,
 `world_sequence_delivery_proof_contract.gd`, and two earlier sites in this same
 probe. **Whenever a harness travels between rooms, it must finalize on arrival
-exactly as the production host does** — see section 4.
+exactly as the production host does** - see section 4.
 
 **Correct the record when you close `integ06_1`:** its soak report and the board
 both currently misattribute these four to production. One genuine failure
@@ -140,7 +140,7 @@ why this row lands before anything else.
 
 ## 5. Order of work
 
-### Required — these gate playability
+### Required - these gate playability
 
 1. **Commit** the `wave_b_composition_probe.gd` change (section 3).
 2. **Re-scope and close `env06_8`** against the structural bar in section 7. Do
@@ -148,19 +148,19 @@ why this row lands before anything else.
 3. **Independent acceptance of the re-scoped row.** This is a *fresh* review
    against the *new* bar by an agent that implemented no part of it. The prior
    two rejections were against the old bar and do not count against the
-   re-scoped row — record that explicitly so the two-rejection rule is not
+   re-scoped row - record that explicitly so the two-rejection rule is not
    misapplied. If this review rejects on **structural** grounds, escalate.
 4. **Merge to `main` and push**, in this proven conflict-free order:
    `codex/env06_8-clean` → `codex/integ06-final-run` → `codex/playtest06-final-custody`
    → `codex/balance06-final-run`. This is the source freeze.
-5. **`fix06_26` — crew favor cadence.** The one genuine composition finding: the
+5. **`fix06_26` - crew favor cadence.** The one genuine composition finding: the
    lender action succeeds (bankroll `+45`, debt recorded) but no Crew favor event
    is queued afterward. Evidence: `event_selection.enqueued = false`,
    `rolled_ids = []`, source
    `ContentLibrary.action_trigger_event_candidates_for_context_readonly`. An
    empty roll list means no candidate matched the trigger context, which points
    at content/trigger wiring rather than probability. **Timebox this.** If it is
-   not a contained wiring fix, record it as a playtest finding and move on — it
+   not a contained wiring fix, record it as a playtest finding and move on - it
    does not block the build.
 6. **`integ06_1`, migration only.** Run the v0.5.1 and mid-0.6 admission
    matrices so the owner's existing saves survive. Correct the Punchline
@@ -171,16 +171,16 @@ why this row lands before anything else.
    repeatedly without refusal; enter The Punchline L1→L2→L3; open and play at
    least one game per surface family; save, reload, and revisit. Any hard block
    is a `fix06_*` row; cosmetic issues go to the playtest findings list.
-8. **Idle liveness sanity check.** Not the full matrix — just the counter-gate in
+8. **Idle liveness sanity check.** Not the full matrix - just the counter-gate in
    `scripts/ui/performance_liveness_guard.gd` on the reworked surfaces. **An idle
    draw cost of 0.000 is a failure, not a pass.** This project has four recorded
    regressions where a perf pass froze idle animations. Catch it now, not after
    the owner plays.
-9. **`playtest06_1` — produce the build.** Export the Windows release to
+9. **`playtest06_1` - produce the build.** Export the Windows release to
    `builds/windows/BeatTheHouse.exe`, boot it, and hand the owner an honest
    report: what is in it, what is known-broken, what was deferred and why.
 
-### Deferred to the refinement phase — do NOT run these now
+### Deferred to the refinement phase - do NOT run these now
 
 - `perf06_1` binding performance matrix (`docs/plans/perf06_1_final_runtime_runbook.md`)
 - `balance06_1` follow-on distributions and the 600k-drop pusher EV
@@ -191,7 +191,7 @@ why this row lands before anything else.
 These are release-gating, not playability-gating. The owner will re-open them
 after playing. Recording a deferral is required; running one is out of scope.
 
-## 6. env06_9 — parked, do not start
+## 6. env06_9 - parked, do not start
 
 The visual work from the second review is captured in
 `docs/todone/env06_9_visual_consequence_and_object_identity_prompt.md`. It is
@@ -204,7 +204,7 @@ decision the owner has not yet made:
 - is this 0.6 scope, or does it belong to the post-playtest polish pass?
 
 Do not start it, do not guess the bar, and do not port the alternate contract
-from `codex/closeout06-final` — the owner already applied the default of not
+from `codex/closeout06-final` - the owner already applied the default of not
 porting it.
 
 ## 7. Acceptance bar for the re-scoped env06_8
@@ -212,10 +212,10 @@ porting it.
 This is the **complete** bar. Nothing outside it blocks the row.
 
 - every scenario object has an icon key, a label, a description, and a populated
-  panel — actionable options or read-only flavor;
+  panel - actionable options or read-only flavor;
 - `"Inspect this first."` is unreachable and no panel is ever empty;
 - every action has a handler; no action is a silent no-op at the data layer;
-- object zoning is complete — 0 unzoned objects — and the object count did not
+- object zoning is complete - 0 unzoned objects - and the object count did not
   improve by deleting objects;
 - **55/55 rooms finalize**, in normal and expanded small-screen layout;
 - descriptions are state-accurate and do not lie about what happened;
@@ -239,7 +239,7 @@ anything else requiring `pixel_scene_canvas.gd` to read object `state`.
 - **No release activity.** No version bump, no tag, no packaging, no publish.
   `release06_1` stays parked. A local build for the owner is `playtest06_1`'s
   deliverable and is allowed.
-- **Delete nothing** — no branch, worktree, or stash. No `gc`, `reset --hard`,
+- **Delete nothing** - no branch, worktree, or stash. No `gc`, `reset --hard`,
   `clean`.
 - **Never stage owner property**: `.tmp/`, `.tools/`, `review_artifacts/`,
   `builds/`, build output.

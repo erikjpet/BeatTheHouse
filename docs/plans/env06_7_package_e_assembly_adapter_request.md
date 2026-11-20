@@ -1,4 +1,4 @@
-# env06_7 Package E — Assembly Adapter Request
+# env06_7 Package E - Assembly Adapter Request
 
 Historical note: the ordered recovery at
 `env06_7_package_e_ordered_recovery.md` supplies this bounded seam on top of

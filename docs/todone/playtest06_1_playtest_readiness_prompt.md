@@ -8,7 +8,7 @@ Board row: `playtest06_1` in `docs/todo/README_0_6_board.md`
 - **Verification:** project validation PASS; v0.5.1 37/37 and mid-0.6 3/3 migration admission PASS; eight full mouse-driven seed passes from nine exercised; six surface families PASS; Punchline L1→L2→L3/save/revisit PASS; idle liveness PASS with 122 redraws, 3 draws and 0.249 ms nonzero average; verified Windows export booted from `builds/windows/BeatTheHouse.exe`.
 - **Deviations:** Owner-directed `closeout06_2` superseded this prompt's release-level matrix. Full suites/performance, Web export, exhaustive composition/terminal soak, balance follow-ons, visual `env06_9`, voice and release activity were explicitly deferred and not run. One delivery-seed QA failure, the visited-scenario/Crew-rank digest finding and a Windows export-wrapper false negative are retained in `docs/plans/0.6_playtest_handoff.md`.
 
-# Agent Prompt — 0.6 playtest06_1: Playtest Readiness & Owner Handoff
+# Agent Prompt - 0.6 playtest06_1: Playtest Readiness & Owner Handoff
 
 Copy everything below this line into the agent.
 
@@ -25,7 +25,7 @@ and it is expected to surface real problems and change direction. Your
 job is to make the build *worth playtesting* and then get out of the
 way.
 
-**Explicitly OUT of scope — do none of these:**
+**Explicitly OUT of scope - do none of these:**
 
 - No version bump. `project.godot`, README, and CHANGELOG keep their
   current version identity. Do not stamp 0.6.0 anywhere.
@@ -34,7 +34,7 @@ way.
   Release, no publish copy, no devlog, no release checklist, no
   screenshots-for-marketing.
 - No final balance tuning. Fix only what is *broken*; leave what is
-  merely *unbalanced* for the owner to judge in play — their read on
+  merely *unbalanced* for the owner to judge in play - their read on
   feel is the input that matters, and pre-tuning it destroys the
   signal.
 - No new features, no scope additions, no "while I was in there"
@@ -63,14 +63,14 @@ string, you have misread this prompt.
 
 ### 1. Stability verification on one clean commit
 
-Run the complete matrix on the exact source the owner will play — not
+Run the complete matrix on the exact source the owner will play - not
 a historical report, not a dirty tree:
 
 - `tools/validate_project.ps1`
 - every supported `-FoundationSuite` (systems + UI)
 - `tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10`
 - `tools/foundation_visual_qa.ps1`
-- the performance/soak suite at existing 0.5 budgets — **idle
+- the performance/soak suite at existing 0.5 budgets - **idle
   liveness floors unchanged; a 0.000 idle number without its liveness
   counter is an automatic FAIL** (this project's recurring regression)
 - save-migration matrix: 0.5-release saves and mid-0.6 dev saves both
@@ -83,7 +83,7 @@ recorded as a known limitation in the handoff report with a clear
 statement of what the owner will see. Never weaken a test, budget,
 liveness floor, or assertion to go green.
 
-### 2. Playability sweep — the thing that actually matters
+### 2. Playability sweep - the thing that actually matters
 
 A playtester's time is destroyed by dead ends, not by imperfect
 numbers. Drive these end to end (headless where possible, by hand
@@ -93,7 +93,7 @@ where not) and fix anything that blocks or wastes play:
   every interactable event/object placed in any generated environment
   yields a working interaction. Extend the sweep to the systems that
   landed after that guard (crew jobs, plays, heist beats, chains,
-  Numbers, pushers, craps, active delivery map layers and in-room handoffs) — an icon that does
+  Numbers, pushers, craps, active delivery map layers and in-room handoffs) - an icon that does
   nothing is the single worst playtest experience and this project
   has already shipped that bug once.
 - **No soft-locks.** Sweep travel locks, delivery failures, heist
@@ -104,21 +104,21 @@ where not) and fix anything that blocks or wastes play:
   plans (under their criteria), the Turn and its confrontation, the
   Numbers fix and past-post, all three pushers, craps and street
   craps, back-room poker, all three Punchline layers, and each of the
-  three victory routes. Report seeds that reach each — the owner will
+  three victory routes. Report seeds that reach each - the owner will
   use them.
 - **Save/load anywhere.** Mid-heist, mid-delivery, mid-hand, mid-layer.
 
 ### 3. Truthful state-of-the-update report
 
-Write `docs/plans/0.6_playtest_handoff.md` — the document the owner
+Write `docs/plans/0.6_playtest_handoff.md` - the document the owner
 reads before playing. It must be blunt and complete:
 
 - **What is implemented**, feature by feature, in player-facing
   language (what you can now *do* that you could not in 0.5).
-- **What is registered but inert** — every seam earlier prompts left
+- **What is registered but inert** - every seam earlier prompts left
   deliberately unwired, so the owner does not report unbuilt things
   as bugs.
-- **What is rough on purpose** — placeholder art (Punchline L1/L3
+- **What is rough on purpose** - placeholder art (Punchline L1/L3
   reuse the underground raster; note every other art debt logged
   during the waves), unbalanced numbers, unpolished copy, anything
   the waves knowingly deferred.
@@ -152,7 +152,7 @@ the roadmap, never guessed by an agent.
 - Nothing in the OUT-of-scope list, no exceptions, even if it seems
   helpful.
 - Fixes in this task are limited to play-blocking defects. Anything
-  larger becomes a new `fix06_*` row with a scoped prompt — never a
+  larger becomes a new `fix06_*` row with a scoped prompt - never a
   drive-by.
 - The handoff report must be honest to a fault. Overstating readiness
   wastes the owner's playtest; understating it wastes their time

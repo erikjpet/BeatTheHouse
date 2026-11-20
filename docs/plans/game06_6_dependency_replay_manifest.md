@@ -1,6 +1,6 @@
 # game06_6 BAR-DICE dependency replay manifest
 
-Status: **SUPERSEDED HISTORICAL PRESTAGE** — final accepted recovery is
+Status: **SUPERSEDED HISTORICAL PRESTAGE** - final accepted recovery is
 `d98de5440bec7685f4bb26eace77f2dbb1627f53`; see
 `docs/plans/game06_6_final_closeout.md`. The constraints below remain preserved
 as historical intake evidence.

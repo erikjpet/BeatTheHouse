@@ -1,4 +1,4 @@
-# env06_7 Package A — Implementation Ownership
+# env06_7 Package A - Implementation Ownership
 
 - Squad: `ENV06_7-A`
 - Branch: `codex/env06_7-pkg-a`

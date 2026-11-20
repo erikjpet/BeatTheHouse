@@ -1167,7 +1167,7 @@ func _can_roll(table: Dictionary, pending: Dictionary) -> bool:
 
 func _validate_pending_bets(table: Dictionary, pending: Dictionary, street: bool = false) -> Dictionary:
 	if int(pending.get("horn", 0)) in [1, 2, 3]:
-		return {"ok": false, "message": "Horn High needs at least four units—one on each horn number."}
+		return {"ok": false, "message": "Horn High needs at least four units-one on each horn number."}
 	var staged := {}
 	var ordered_ids: Array[String] = []
 	var validation_targets := _street_bet_targets(table, _dict(table.get("rules", {}))) if street else CrapsSurfaceViewModelScript.bet_targets(table, _dict(table.get("rules", {})))
@@ -1784,13 +1784,13 @@ func _react_table_to_roll(table: Dictionary, roll: Dictionary, settlement: Dicti
 	elif dice.size() == 2 and int(dice[0]) == int(dice[1]) and total in [4, 6, 8, 10]:
 		kind = "hardway"
 	var lines := {
-		"seven_out_player": ["Seven out—those dice turned cold in your hand.", "You sent the seven. Pass them left and let us rebuild."],
+		"seven_out_player": ["Seven out-those dice turned cold in your hand.", "You sent the seven. Pass them left and let us rebuild."],
 		"seven_out_table": ["Seven out. Good run; pass the dice and make room.", "That seven cleared half the rail. New shooter, new noise."],
-		"point_made": ["Point hit! Keep the dice moving—this table is awake.", "That is the point. Press it or pocket it, but stay with us."],
-		"natural": ["Winner on the come-out! The whole line eats.", "Seven or eleven—front line gets paid."],
+		"point_made": ["Point hit! Keep the dice moving-this table is awake.", "That is the point. Press it or pocket it, but stay with us."],
+		"natural": ["Winner on the come-out! The whole line eats.", "Seven or eleven-front line gets paid."],
 		"craps": ["Craps on the come-out. Shake it off; the dice stay up.", "Short roll for the line. Same shooter, fresh chance."],
 		"point_set": ["Point is %d. Now give us that number again." % total, "%d is home. Everybody find a number." % total],
-		"hardway": ["Hard %d! Center action finally earns the shouting." % total, "Pair on the felt—hard %d for the rail." % total],
+		"hardway": ["Hard %d! Center action finally earns the shouting." % total, "Pair on the felt-hard %d for the rail." % total],
 		"number": ["%d. Mark it and keep the rhythm." % total, "%d rolls; the table shifts its chips." % total],
 	}
 	var speaker_index := _stable_hash("%s:%d:%s" % [str(table.get("table_name", "craps")), int(table.get("roll_count", 0)), kind]) % patrons.size()

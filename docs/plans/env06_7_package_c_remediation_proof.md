@@ -1,4 +1,4 @@
-# env06_7 Package C — First-Rejection Remediation Proof
+# env06_7 Package C - First-Rejection Remediation Proof
 
 This package-local manifest binds to the exact product head named by the
 immutable handoff. It records executable evidence, not an acceptance verdict.

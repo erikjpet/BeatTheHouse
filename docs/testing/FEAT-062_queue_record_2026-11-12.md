@@ -1,4 +1,4 @@
-# FEAT-062-RECORD — owner-deferred queue recorded, no work started
+# FEAT-062-RECORD - owner-deferred queue recorded, no work started
 
 Date:2026-11-12. Starting commit:1f70b2e4365c221822bb1286f32eb345d9012fd1.
 Source: docs/todo/BTH_unfinished_features_audit.md section9 and its owner table.

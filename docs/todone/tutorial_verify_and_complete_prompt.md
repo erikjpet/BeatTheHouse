@@ -1,4 +1,4 @@
-# Agent Prompt — Tutorial Rework: VERIFY Everything Is Done Per Spec (and Finish What Isn't)
+# Agent Prompt - Tutorial Rework: VERIFY Everything Is Done Per Spec (and Finish What Isn't)
 
 Copy everything below this line into the worker agent. Use a capable model.
 
@@ -6,10 +6,10 @@ Copy everything below this line into the worker agent. Use a capable model.
 
 You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript casino
 roguelike. The guided first-run tutorial was reworked per
-`docs/todone/tutorial_guided_run_rework_prompt.md` (its archived copy — that
+`docs/todone/tutorial_guided_run_rework_prompt.md` (its archived copy - that
 is the binding spec). Your job: INDEPENDENTLY VERIFY that EVERY beat and
 requirement of that spec is actually implemented and working, with concrete
-PROOF — and where any is NOT met, FINISH implementing it until you can prove
+PROOF - and where any is NOT met, FINISH implementing it until you can prove
 it. Do not trust prior claims or commit messages. Conclude "done" ONLY when
 every checklist item is proven with the stated evidence and all gates pass.
 
@@ -31,11 +31,11 @@ every checklist item is proven with the stated evidence and all gates pass.
 
 **Delivery & characters**
 1. Guidance is delivered through the DIALOGUE popup (the guide actually
-   speaks) plus coach HIGHLIGHT anchors — not the old coach-bubble-only
+   speaks) plus coach HIGHLIGHT anchors - not the old coach-bubble-only
    "dealer's advice." PROOF: captures of the guide speaking with the subject
    highlighted.
 2. The 8 ambient `tip_first_*` lessons (and the old `tip_starter_card_home`
-   beat) are REMOVED — no double-teaching during the tutorial. PROOF: data
+   beat) are REMOVED - no double-teaching during the tutorial. PROOF: data
    check + a run showing no ambient tips fire.
 3. **Pal** (the early-run guide who calls themselves "your pal") is defined in
    `docs/archive/0.5/plans/0.5_voice_bible.md` and voices the first half in-character.
@@ -61,7 +61,7 @@ every checklist item is proven with the stated evidence and all gates pass.
    casino and the underground casino). PROOF: captures of the loan/debt and
    the two routes opening.
 
-**Path A (gas casino) — steered but skippable**
+**Path A (gas casino) - steered but skippable**
 8. Pal strongly steers to Path A but it is genuinely SKIPPABLE (going straight
    to underground works with no soft-lock). PROOF: both a take-Path-A run and
    a skip-Path-A run.
@@ -74,8 +74,8 @@ every checklist item is proven with the stated evidence and all gates pass.
 10. Enter blackjack, play a hand, then change the BET with on-screen chips and
     raise it. PROOF: capture of the bet change.
 11. Lookaway/peek: the guide teaches peeking the dealer's card ONLY when the
-    dealer looks away, and the spill-a-drink lookaway window — using the REAL
-    existing mechanic (confirm it drives the actual code, not a fake) — and
+    dealer looks away, and the spill-a-drink lookaway window - using the REAL
+    existing mechanic (confirm it drives the actual code, not a fake) - and
     frames it as the EASIEST way to cheat here but with CONSEQUENCES if caught.
     PROOF: capture of a triggered lookaway + peek.
 12. Counting: the player must select ALL count bubbles or gain heat; heat
@@ -103,7 +103,7 @@ every checklist item is proven with the stated evidence and all gates pass.
 
 **After the tutorial & isolation**
 18. A scripted Rourke WARNING can occur if the player cheats/gains heat post-
-    tutorial — but there is NO fixed every-20-heat escalation ladder. PROOF:
+    tutorial - but there is NO fixed every-20-heat escalation ladder. PROOF:
     confirm the warning exists and the escalation ladder does NOT.
 19. NORMAL-RUN ISOLATION: a non-tutorial run has byte-identical home/item
     spawns, loans, pull-tab stock, and card thresholds; only the Host greeting
@@ -145,7 +145,7 @@ pass:
 3. PUSH to the remote.
 4. Report the full verification table (20 items, each PASS/FIXED with proof),
    the both-route playthrough proofs, the normal-run isolation proof, and a
-   plain verdict: "TUTORIAL COMPLETE PER SPEC — all 20 proven" or the exact
+   plain verdict: "TUTORIAL COMPLETE PER SPEC - all 20 proven" or the exact
    list of what remained unmet.
 
 If any item cannot be proven or a gate cannot pass, do NOT declare complete:
@@ -154,14 +154,14 @@ exactly what is unproven and why.
 
 ---
 
-## Execution record — 2026-08-01
+## Execution record - 2026-08-01
 
-Result: **TUTORIAL COMPLETE PER SPEC — all 20 proven.**
+Result: **TUTORIAL COMPLETE PER SPEC - all 20 proven.**
 
 Commits:
 
-- `aadd80ee` — tutorial-only first-map constraint plus binding Pal copy and regression checks.
-- `592405c2` — independent two-route audit, expanded production capture harness, and verification plan.
+- `aadd80ee` - tutorial-only first-map constraint plus binding Pal copy and regression checks.
+- `592405c2` - independent two-route audit, expanded production capture harness, and verification plan.
 
 Canonical detailed report: `docs/plans/tutorial_verification.md`
 Machine-readable proof: `.tmp/tut_verify/tutorial_guided_run_audit.json`
@@ -199,11 +199,11 @@ Capture set: `.tmp/tut_verify/captures/` (18 PNGs)
 
 ### Final gates
 
-- `tools/validate_project.ps1` — PASS.
-- `tools/check_godot.ps1 -RequireGodot -NoImport -FoundationSuite all -TimeoutSec 300` — PASS (`.tmp/tut_verify/gates/foundation_all_final/summary.json`; 130.9 s wall time).
-- Tutorial two-route audit + alternating 100-run tutorial sweep — PASS.
-- `tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` — PASS; 320 checkpoints in each process, matching hash `3634294742`.
-- `tools/foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100` — PASS; zero stuck.
-- `tools/foundation_visual_qa.ps1 -RequireGodot` — PASS; no warnings (`.tmp/tut_verify/gates/foundation_visual_qa_final.log`).
+- `tools/validate_project.ps1` - PASS.
+- `tools/check_godot.ps1 -RequireGodot -NoImport -FoundationSuite all -TimeoutSec 300` - PASS (`.tmp/tut_verify/gates/foundation_all_final/summary.json`; 130.9 s wall time).
+- Tutorial two-route audit + alternating 100-run tutorial sweep - PASS.
+- `tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10` - PASS; 320 checkpoints in each process, matching hash `3634294742`.
+- `tools/foundation_stuck_state_sweep.ps1 -RequireGodot -SeedCount 100` - PASS; zero stuck.
+- `tools/foundation_visual_qa.ps1 -RequireGodot` - PASS; no warnings (`.tmp/tut_verify/gates/foundation_visual_qa_final.log`).
 
 No tests, budgets, determinism rules, zero-copy paths, or idle-animation liveness requirements were weakened.

@@ -1,4 +1,4 @@
-# env06_7 Package E — Completion Proof
+# env06_7 Package E - Completion Proof
 
 Historical note: runtime and raster claims in this proof bind the recovered
 Package E evidence. Ordered production-composition status is recorded in

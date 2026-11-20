@@ -1,7 +1,7 @@
-Status: COMPLETE — independent current-tree depth closure accepted 2026-09-03
+Status: COMPLETE - independent current-tree depth closure accepted 2026-09-03
 Board row: `depth06_1` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — 0.6 depth06_1: Craps, Poker, and Scenario Depth Release Gate
+# Agent Prompt - 0.6 depth06_1: Craps, Poker, and Scenario Depth Release Gate
 
 Copy everything below this line into the agent.
 
@@ -47,7 +47,7 @@ craps/poker still resolve as static control panels, or if a consequence can
 double-fire across save/revisit. On pass, archive this prompt and note the exact
 commit and report paths on the board.
 
-## Execution record — 2026-09-03
+## Execution record - 2026-09-03
 
 Audited the landed product tree without rebuilding it. All four child rows are
 accepted together; the current audit reports 55 stable ids, 1,485 pair

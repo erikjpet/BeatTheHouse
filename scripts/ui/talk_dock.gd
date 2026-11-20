@@ -1211,7 +1211,7 @@ func _speaker_display_name() -> String:
 	var character_name := str(speaker.get("speaking_character_name", "")).strip_edges()
 	var character_title := str(speaker.get("speaking_character_title", "")).strip_edges()
 	if not character_name.is_empty():
-		return "%s — %s" % [character_name, character_title] if not character_title.is_empty() else character_name
+		return "%s - %s" % [character_name, character_title] if not character_title.is_empty() else character_name
 	var speaker_name := _speaker_name()
 	return speaker_name if not speaker_name.is_empty() else "Unknown"
 

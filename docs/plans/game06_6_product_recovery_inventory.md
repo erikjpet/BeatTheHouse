@@ -51,7 +51,7 @@ This is the precise dependency gap authorized by the row prompt's “file the
 finding with evidence” clause. It is not resolved by caller claims, direct
 calls to Craps private helpers, or copying the rules.
 
-## Final closeout — 2026-09-02
+## Final closeout - 2026-09-02
 
 This recovery inventory's earlier “candidate evidence; no acceptance verdict”
 status is superseded. The recovered product was completed on `main` at

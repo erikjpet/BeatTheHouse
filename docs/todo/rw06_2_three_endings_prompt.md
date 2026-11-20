@@ -1,6 +1,6 @@
-# rw06_2 — Three endings, start to finish, through the real UI
+# rw06_2 - Three endings, start to finish, through the real UI
 
-Status: **HISTORICAL / IMPLEMENTED — DO NOT LAUNCH.** All three ending routes
+Status: **HISTORICAL / IMPLEMENTED - DO NOT LAUNCH.** All three ending routes
 are present in the feature-complete source. Current finalization is limited to
 owner placement, focused validation, packaging, and publication approval.
 

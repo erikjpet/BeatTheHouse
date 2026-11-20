@@ -8,7 +8,7 @@ Board row: `rework06_1` in `docs/todo/README_0_6_board.md`
 - **Verification:** PM line-by-line scope and roadmap review passed. Integrated-tree full matrix passed 235/235 stages (`.tmp/test_reports/20260816_201528_full/summary.json`); determinism passed 10 seeds / 590 checkpoints with exact combined hash `3483570349`; canonical visual QA passed with zero warnings and confirmed the delivery map layer, target marker, in-venue handoff, and failure exit (`.tmp/rework06_1_pm_visual_qa_report.json`). Ordinary inactive travel matched the pre-change golden byte-for-byte, the 20-seed real-node property sweep passed, all four modes and no-soft-lock cases passed, and `crew_favor_delivery` retained exact +22 cash/+4 heat success and +9 heat failure behavior.
 - **Deviations:** None. Legacy authored identifiers containing `streets` remain only where changing them would alter ordinary seeded content; the synthetic geography, public API, runtime model, UI, tests, and compatibility shim were removed.
 
-# Agent Prompt — 0.6 rework06_1: Delivery Runs on the Real Map (replaces the Streets board)
+# Agent Prompt - 0.6 rework06_1: Delivery Runs on the Real Map (replaces the Streets board)
 
 Copy everything below this line into the agent.
 
@@ -16,8 +16,8 @@ Copy everything below this line into the agent.
 
 You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript
 casino roguelike (Web/itch.io + Windows, 1280×720). Binding design
-contract: `docs/plans/0.6_living_world_roadmap.md` — read the section
-**"Delivery Runs — courier work on the real map (round-5 rework)"**
+contract: `docs/plans/0.6_living_world_roadmap.md` - read the section
+**"Delivery Runs - courier work on the real map (round-5 rework)"**
 in Pillar 3 before anything else. World-map contract:
 `docs/plans/world_map_design.md`.
 
@@ -56,7 +56,7 @@ the synthetic board because it exists.
 `town06_1`, `town06_2`, `town06_3`, `crew06_1` are DONE on `main`.
 `streets06_1` is DONE on `main` and is what you are replacing.
 `crew06_3` (Numbers) consumes the old multi-stop API on the Wave C
-integration branch — **coordinate before you break it**: read its
+integration branch - **coordinate before you break it**: read its
 landed consumption, and either land your API first and re-point
 Numbers, or agree the new contract with the PM and re-point in the
 same integration. Record the chosen order on the board.
@@ -103,7 +103,7 @@ layer that appears only while a delivery job is active:
 - delivery targets marked with remaining deadline;
 - carried cargo shown as contraband;
 - a per-edge **carrier risk read** derived from state the town
-  already models — Police Sweep position/heading (respect
+  already models - Police Sweep position/heading (respect
   `sweep_status` capability gating: unearned intel must not leak),
   weather, local reputation, scenario law-pressure. Present it as
   route information the player weighs, not as a solved answer.
@@ -127,7 +127,7 @@ carrying more truth while they are working.
 
 - Arriving at a target generates that environment normally (tonight's
   scenario running) and exposes a hand-off interaction through the
-  existing event/interaction systems — a real beat in a real room,
+  existing event/interaction systems - a real beat in a real room,
   never a menu confirmation.
 - Completing all targets before the deadline resolves the job through
   the crew06_1 job framework with its rewards; missing it fails the
@@ -136,22 +136,22 @@ carrying more truth while they are working.
 
 ### 6. The four modes
 
-- **Package run** — one target, one deadline.
-- **Multi-stop route** — several targets before a deadline; ordering
+- **Package run** - one target, one deadline.
+- **Multi-stop route** - several targets before a deadline; ordering
   is the strategy. This is what Numbers collection routes consume.
-- **Hold** — remain in a named venue across a window and satisfy a
+- **Hold** - remain in a named venue across a window and satisfy a
   condition without drawing attention; resolves against existing
   suspicion/security systems in that real venue.
-- **Getaway** — the heist exit: pressured map movement with elevated
+- **Getaway** - the heist exit: pressured map movement with elevated
   pursuit and one-use crew assists, expressed through travel. Ship
   behind a flag with a test-harness driver for crew06_8.
 
 ### 7. Compatibility
 
-- **Ordinary travel is untouched** when no delivery job is active —
+- **Ordinary travel is untouched** when no delivery job is active -
   prove byte-identical behavior against a pre-change baseline.
 - The shipped `crew_favor_delivery` reward/failure contracts survive
-  exactly (`streets06_1` preserved +22/+4 success and +9 failure —
+  exactly (`streets06_1` preserved +22/+4 success and +9 failure -
   verify the landed values and keep them).
 - Save migration: in-flight old-board runs must load without crashing
   (resolve them to a clean non-blocking state and log it); new

@@ -1,6 +1,6 @@
 # game06_1 Table and Machine Ritual Vocabulary
 
-Status: COMPLETE — accepted vocabulary and landed product runtime; see `game06_1_final_closeout.md`
+Status: COMPLETE - accepted vocabulary and landed product runtime; see `game06_1_final_closeout.md`
 Contract version: `game_ritual/1`  
 Checklist: `docs/plans/game06_1_ritual_contract_acceptance_checklist.md`
 Normative shared-vocabulary source: `749390ce`,
@@ -219,13 +219,13 @@ bounded rejected-ingress diagnostic that is never game authority.
 
 Condition records are closed and use exactly one `kind`:
 
-- `accepted_action` — matches one action id in the current command cause;
-- `fact` — matches one declared public fact type and closed payload predicate;
-- `receipt_present` — closed record `{kind, receipt_kind, receipt_key,
+- `accepted_action` - matches one action id in the current command cause;
+- `fact` - matches one declared public fact type and closed payload predicate;
+- `receipt_present` - closed record `{kind, receipt_kind, receipt_key,
   content_fingerprint}` and matches only an accepted receipt whose envelope kind,
   exact key, and exact canonical fingerprint all match;
-- `authoritative_result_present` — matches a trusted game-owned result ref;
-- `public_state_equals` — matches an allowlisted public state key/value.
+- `authoritative_result_present` - matches a trusted game-owned result ref;
+- `public_state_equals` - matches an allowlisted public state key/value.
 
 Conditions cannot inspect private state, hidden outcomes, wall-clock time,
 frame count, raw input paths, or renderer geometry. Branches are evaluated in
@@ -394,34 +394,34 @@ diagnostic and no mutation.
 
 | Record | Required fields | Optional fields |
 | --- | --- | --- |
-| phase | `id`, `entry_conditions`, `permitted_actions`, `entry_operations`, `transitions`, `terminal` | — |
-| transition | `id`, `condition`, `next_phase`, `operations` | — |
-| condition: accepted action | `kind`, `action_id` | — |
-| condition: fact | `kind`, `fact_type`, `payload_equals` | — |
-| condition: receipt | `kind`, `receipt_kind`, `receipt_key`, `content_fingerprint` | — |
-| condition: authoritative result | `kind` | — |
-| condition: public state | `kind`, `key`, `value` | — |
-| staged commitment | `pending_collection`, `working_collection`, `resolution_collection`, `funds_authority`, `actions`, `readable_totals` | — |
-| commitment action | `id`, `effect` | — |
-| action declaration | `action_id`, `handler_id`, `parameters` | — |
-| pointer verb | `id`, `verb`, `source_region`, `target_regions`, `bounds`, `phases`, `accepted_action`, `rejection`, `rejection_effects`, `equivalents` | — |
-| pointer bounds | `space`, `min_distance`, `max_distance` | — |
-| equivalents | `keyboard`, `controller`, `reduced_motion` | — |
-| keyboard/controller equivalent | `action_id`, `target_selection` | — |
-| reduced-motion equivalent | `action_id`, `target_selection`, `staging` | — |
-| actor | `id`, `role`, `anchor`, `poses`, `behavior_states`, `initial_pose`, `initial_behavior`, `fact_reactions` | — |
-| actor fact reaction | `fact_type`, `operation_ids` | — |
-| scene object | `id`, `anchor`, `bounds`, `z_layer`, `visual_states`, `functional_states`, `initial_visual_state`, `initial_functional_state`, `hit_regions`, `text_safety_regions` | — |
-| design rectangle | `space`, `x`, `y`, `w`, `h` | — |
-| hit region | `id`, `bounds`, `minimum_touch_target` | — |
-| text-safety region | `id`, `bounds` | — |
-| energy | `initial_tier`, `tiers` | — |
-| energy tier | `id`, `actor_operations`, `object_operations`, `interaction_operations`, `audio_cues` | — |
-| fact declaration | `fact_type`, `fact_version`, `boundary`, `visibility`, `payload` | — |
-| ritual persistence | `authoritative_serialized`, `derived_projection`, `transient_presentation`, `one_shot_receipted`, `save_boundaries`, `restore_policy` | — |
-| handler | `handler_id`, `version`, `accepted_actions`, `accepted_operations`, `inputs`, `outputs`, `authority`, `persisted_state`, `transient_state`, `rng`, `emitted_facts`, `rejection` | — |
-| handler RNG | `owner`, `stream`, `consumption` | — |
-| declared targets | `anchors`, `regions`, `sealed_host_targets` | — |
+| phase | `id`, `entry_conditions`, `permitted_actions`, `entry_operations`, `transitions`, `terminal` | - |
+| transition | `id`, `condition`, `next_phase`, `operations` | - |
+| condition: accepted action | `kind`, `action_id` | - |
+| condition: fact | `kind`, `fact_type`, `payload_equals` | - |
+| condition: receipt | `kind`, `receipt_kind`, `receipt_key`, `content_fingerprint` | - |
+| condition: authoritative result | `kind` | - |
+| condition: public state | `kind`, `key`, `value` | - |
+| staged commitment | `pending_collection`, `working_collection`, `resolution_collection`, `funds_authority`, `actions`, `readable_totals` | - |
+| commitment action | `id`, `effect` | - |
+| action declaration | `action_id`, `handler_id`, `parameters` | - |
+| pointer verb | `id`, `verb`, `source_region`, `target_regions`, `bounds`, `phases`, `accepted_action`, `rejection`, `rejection_effects`, `equivalents` | - |
+| pointer bounds | `space`, `min_distance`, `max_distance` | - |
+| equivalents | `keyboard`, `controller`, `reduced_motion` | - |
+| keyboard/controller equivalent | `action_id`, `target_selection` | - |
+| reduced-motion equivalent | `action_id`, `target_selection`, `staging` | - |
+| actor | `id`, `role`, `anchor`, `poses`, `behavior_states`, `initial_pose`, `initial_behavior`, `fact_reactions` | - |
+| actor fact reaction | `fact_type`, `operation_ids` | - |
+| scene object | `id`, `anchor`, `bounds`, `z_layer`, `visual_states`, `functional_states`, `initial_visual_state`, `initial_functional_state`, `hit_regions`, `text_safety_regions` | - |
+| design rectangle | `space`, `x`, `y`, `w`, `h` | - |
+| hit region | `id`, `bounds`, `minimum_touch_target` | - |
+| text-safety region | `id`, `bounds` | - |
+| energy | `initial_tier`, `tiers` | - |
+| energy tier | `id`, `actor_operations`, `object_operations`, `interaction_operations`, `audio_cues` | - |
+| fact declaration | `fact_type`, `fact_version`, `boundary`, `visibility`, `payload` | - |
+| ritual persistence | `authoritative_serialized`, `derived_projection`, `transient_presentation`, `one_shot_receipted`, `save_boundaries`, `restore_policy` | - |
+| handler | `handler_id`, `version`, `accepted_actions`, `accepted_operations`, `inputs`, `outputs`, `authority`, `persisted_state`, `transient_state`, `rng`, `emitted_facts`, `rejection` | - |
+| handler RNG | `owner`, `stream`, `consumption` | - |
+| declared targets | `anchors`, `regions`, `sealed_host_targets` | - |
 
 The top-level `public_projection_schema` ledger record requires exactly
 `authority` and `fields`; its `fields` member uses the same closed schema-map
@@ -735,14 +735,14 @@ handler shape, resolving `ENV-VOCAB-09`.
 
 `ritual_persistence` divides state into four classes:
 
-1. **authoritative serialized** — ritual version/id, legal phase, pending and
+1. **authoritative serialized** - ritual version/id, legal phase, pending and
    working item identities, authoritative result references, actor/object state,
    energy tier, handler state, and all receipts/fingerprints required for replay;
-2. **derived prepared projection** — layout and visual records rebuilt from
+2. **derived prepared projection** - layout and visual records rebuilt from
    authoritative state without side effects;
-3. **transient presentation** — pointer path, hover, focus animation progress,
+3. **transient presentation** - pointer path, hover, focus animation progress,
    and other state safe to discard;
-4. **one-shot receipted presentation** — transition/audio/dialogue cues that may
+4. **one-shot receipted presentation** - transition/audio/dialogue cues that may
    resume visually under policy but never replay consequences.
 
 Restore normalizes/migrates the record, validates references, selects the saved

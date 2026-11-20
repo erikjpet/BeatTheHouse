@@ -1,7 +1,7 @@
-Status: DONE — merged to `main` before `d2594eb3`; retained by the 2026-09-14 integration audit
+Status: DONE - merged to `main` before `d2594eb3`; retained by the 2026-09-14 integration audit
 Series: Back-room poker tweaks (tweak02; stacks on tweak01 on the same branch)
 
-# Agent Prompt — Back-Room Poker Tweak 02: Crew Dealer and Card Animations
+# Agent Prompt - Back-Room Poker Tweak 02: Crew Dealer and Card Animations
 
 Copy everything below this line into the agent.
 
@@ -9,7 +9,7 @@ Copy everything below this line into the agent.
 
 You are working on **Beat The House**, a Godot 4.6 GDScript roguelite. This
 prompt is self-contained: every rule you need is below. Read the named code
-before editing — do not plan from this prompt alone.
+before editing - do not plan from this prompt alone.
 
 ## Goal
 
@@ -22,14 +22,14 @@ The Crew's back-room Texas Hold'em table has the player plus five Crew opponents
 2. **Card and chip animations** so the table visibly deals, burns, folds, collects
    and pays out.
 
-## Precondition — check before doing anything
+## Precondition - check before doing anything
 
 This tweak edits the same files as tweak01 and builds on its seat layout.
 
 - Open `D:\Projects\Beat-The-House\docs\todo\poker_tweak01_five_opponents_prompt.md`.
   Its first line must read `Status: DONE`. If it says READY, BLOCKED, or anything
   else, **stop**: change this file's first line to
-  `Status: WAITING — tweak01 not DONE (<its status>)` and end.
+  `Status: WAITING - tweak01 not DONE (<its status>)` and end.
 - Read tweak01's execution record at the bottom of that file and
   `.tmp/backroom_poker_tweaks/table_map.md` in the worktree (below). Where
   anything in this prompt disagrees with what tweak01 actually built, trust the
@@ -56,19 +56,19 @@ stage, stash, reset, or commit anything in that checkout.**
   `draw_surface(...)`. The canvas is `scripts/ui/game_surface_canvas.gd`.
   Content and tuning are data-driven from `data/**/*.json`.
 - Back-room poker:
-  - `scripts/games/crew_draw_poker.gd` — module (no-limit Hold'em on the
+  - `scripts/games/crew_draw_poker.gd` - module (no-limit Hold'em on the
     `ordered_v1` engine; `legacy_v1` five-card draw remains for old saves/tests).
     `draw_surface` calls `_draw_room`, `_draw_seats`, `_draw_shared_board`,
     `_draw_betting_chips`, `_draw_player`, `_draw_observation`, `_draw_controls`.
     After tweak01 the seats come from one seat-layout table.
-  - `scripts/core/crew_poker_model.gd` — pure rules/policy/tell model.
-  - `data/crew/poker.json` — tuning, `opponent_count`, seven member policies, banter.
+  - `scripts/core/crew_poker_model.gd` - pure rules/policy/tell model.
+  - `data/crew/poker.json` - tuning, `opponent_count`, seven member policies, banter.
   - `data/crew/tells.json`, `data/games/rituals/crew06_10_poker_nights.json`
     (five nights; `persistence.transient` already lists `animation_progress`).
-  - `scripts/games/table_game_visuals.gd` — shared room/table/character drawing
+  - `scripts/games/table_game_visuals.gd` - shared room/table/character drawing
     (`_draw_table_character` poses: idle/watching/snitch/covered; `CONSOLE_Y = 342`).
-  - `scripts/games/playing_card_renderer.gd` — `draw_card(surface, card, rect, options)`.
-  - `scripts/core/crew_state_model.gd` — `MEMBER_IDS` (seven Crew members).
+  - `scripts/games/playing_card_renderer.gd` - `draw_card(surface, card, rect, options)`.
+  - `scripts/core/crew_state_model.gd` - `MEMBER_IDS` (seven Crew members).
   - Surface audio: the poker module already declares the `crew_cards` profile with
     cues `card_deal`, `card_fold`, `card_check`, `chips_place`
     (`data/audio/surface_sfx_manifest.json`).

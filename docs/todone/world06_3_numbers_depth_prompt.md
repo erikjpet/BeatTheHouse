@@ -1,7 +1,7 @@
-Status: DONE — accepted by the exact-tree Family 2 closeout on 2026-09-03
+Status: DONE - accepted by the exact-tree Family 2 closeout on 2026-09-03
 Board row: `world06_3` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — 0.6 world06_3: The Numbers — Book, Desk, Routes and Rigging
+# Agent Prompt - 0.6 world06_3: The Numbers - Book, Desk, Routes and Rigging
 
 Copy everything below this line into the agent.
 
@@ -65,12 +65,12 @@ consume its API rather than reimplementing routing.
 
 ## 4. Both rig routes, staged
 
-- **The crew fix** — the bribe run, the camouflage spread and the player cut —
+- **The crew fix** - the bribe run, the camouflage spread and the player cut -
   becomes a sequence of real transactions with real people at real places. The
   camouflage spread in particular must be something the player performs and can
   perform badly, not a parameter.
-- **Solo past-posting** — the discovery chain, the travel-speed exploit and the
-  street-debt consequence — becomes physically staged: the player must be
+- **Solo past-posting** - the discovery chain, the travel-speed exploit and the
+  street-debt consequence - becomes physically staged: the player must be
   somewhere, do something observable, and be seen or not seen. Keep the landed
   discovery conditions, detection math and consequences exactly.
 - Tells for both routes must be observable and derived from authoritative state.

@@ -182,22 +182,22 @@ These do not ship in the game, but they add maintenance surface.
 
 ### PowerShell (9)
 
-- `rw06_1_environment_exact_seed_contract_test.ps1:1428` — `Test-PushedCandidate`
-- `rw06_1_visual_capture_contract_test.ps1:515` — `Get-ExactOwnedResidualPids`
-- `rw06_2_ending_replay.ps1:1344` — `Refresh-Look`
-- `rw06_2_final_evidence_source_contract.ps1:249` — `Replace-SourceRegexOnce`
-- `rw06_2_final_evidence_source_contract.ps1:385` — `Add-TopLevelHashtableEntry`
-- `rw06_2_replay_source_contract.ps1:665` — `Get-PowerShellFunctionSource`
-- `rw06_6_pull_tab_glimmer_contract.ps1:3444` — `Close-OwnedCacheGuardChecked`
-- `rw06_q009_process_support.ps1:1445` — `Get-Q009SafeHandleFinalPath`
-- `rw06_q009_process_support.ps1:2835` — `Get-ExactOwnedGodotResidualPids`
+- `rw06_1_environment_exact_seed_contract_test.ps1:1428` - `Test-PushedCandidate`
+- `rw06_1_visual_capture_contract_test.ps1:515` - `Get-ExactOwnedResidualPids`
+- `rw06_2_ending_replay.ps1:1344` - `Refresh-Look`
+- `rw06_2_final_evidence_source_contract.ps1:249` - `Replace-SourceRegexOnce`
+- `rw06_2_final_evidence_source_contract.ps1:385` - `Add-TopLevelHashtableEntry`
+- `rw06_2_replay_source_contract.ps1:665` - `Get-PowerShellFunctionSource`
+- `rw06_6_pull_tab_glimmer_contract.ps1:3444` - `Close-OwnedCacheGuardChecked`
+- `rw06_q009_process_support.ps1:1445` - `Get-Q009SafeHandleFinalPath`
+- `rw06_q009_process_support.ps1:2835` - `Get-ExactOwnedGodotResidualPids`
 
 ### Python (4)
 
-- `author_scenario_slot_layouts.py:1372` — `place_provisional_geometry`
-- `environment_fixed_slot_static_check.py:268` — `slot_has_physical_support`
-- `generate_scratch_ticket_art.py:70` — `hex_color`
-- `generate_trailer_cards.py:140` — `_draw_backdrop`
+- `author_scenario_slot_layouts.py:1372` - `place_provisional_geometry`
+- `environment_fixed_slot_static_check.py:268` - `slot_has_physical_support`
+- `generate_scratch_ticket_art.py:70` - `hex_color`
+- `generate_trailer_cards.py:140` - `_draw_backdrop`
 
 `setUp`, `tearDown`, and `setUpClass` methods that appear textually uncalled were
 excluded because `unittest` invokes them by convention.

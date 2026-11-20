@@ -8,7 +8,7 @@ Board row: `fix06_1` in `docs/todo/README_0_6_board.md`
 - **Verification:** `tools/validate_project.ps1`; foundation `systems`, `ui`, and `all`; 10-seed determinism (350 checkpoints, hash `1671116934`); full visual QA (58 states, zero warnings); 99-event before/after catalog audit (32 authored speakers, 67 synthesized, only 3 beach events changed); broken synthesized-speaker fixture rejected by `interactable_event_class_guard`.
 - **Deviations:** None.
 
-# Agent Prompt — 0.6 fix06_1: Dead Scenario Event Interactions (Beach) + Interactability Class Guard
+# Agent Prompt - 0.6 fix06_1: Dead Scenario Event Interactions (Beach) + Interactability Class Guard
 
 Copy everything below this line into the agent.
 
@@ -24,7 +24,7 @@ self-contained for rules and scope.
 All three beach scenario events (`scenario_bonfire_story`,
 `scenario_storm_stranger`, `scenario_festival_lucky_pitch`) place
 their icons in generated beach environments but silently refuse all
-interaction — icons with no action. Root cause chain:
+interaction - icons with no action. Root cause chain:
 
 1. The authored definitions in `data/events/events.json` declare **no
    `speaker`**.
@@ -40,14 +40,14 @@ interaction — icons with no action. Root cause chain:
    generation), but `_eligible_event_option` → empty → the context
    card shows "Nothing is happening here right now."
 
-Evidence: 15-seed interaction probe — 39/42 scenario events pass the
+Evidence: 15-seed interaction probe - 39/42 scenario events pass the
 full `can_trigger` + `choices` chain; the only failures are these
 three, all at the beach. Punchline L2 events verified working (layer
 flattening presents `kind: casino`).
 
 ## Task
 
-### 1. Root fix (generic — no beach special case, no event allowlist)
+### 1. Root fix (generic - no beach special case, no event allowlist)
 
 - Fix the normalization/requirement mismatch at its root: a speaker
   that was **synthesized by normalization** (not authored) must not
@@ -56,13 +56,13 @@ flattening presents `kind: casino`).
   on synthesis, or an explicit authored-flag), so
   `_event_requires_room_actor` only demands an actor when the
   authored data actually declared one. Choose the cleanest
-  implementation consistent with code reality — but it must be
+  implementation consistent with code reality - but it must be
   generic and data-driven, never keyed to event ids or the beach.
 - Regression duty: prove no shipped event changes behavior. Any
   event that authored its own `speaker` keeps exact current
   semantics; events that never authored one (audit the full
   `events.json`) must be listed in your report with before/after
-  `can_trigger` results in their host environments — behavior may
+  `can_trigger` results in their host environments - behavior may
   only change from "silently dead" to "working" (or stay identical).
 - The three beach events must present their authored choices in the
   real context-card path and resolve their consequences end-to-end.
@@ -74,7 +74,7 @@ flattening presents `kind: casino`).
   generated environments across ALL archetypes (including entered
   Punchline layers), **every** `interactable`-mode event id present
   in `event_ids` must yield `can_trigger == true` and non-empty
-  `choices` — i.e., an icon may never exist without a working
+  `choices` - i.e., an icon may never exist without a working
   interaction. Legitimately conditional events (heat/tier/flag-gated)
   must be expressed through their conditions so the guard can
   recognize an intentionally-dormant event (assert the gate reason is
@@ -89,7 +89,7 @@ flattening presents `kind: casino`).
 - Extend the visual-QA/mouse-playtest tooling with one scripted
   click: open a scenario event icon in a generated environment and
   capture the context card showing its choice buttons (evidence to
-  `.tmp/`). One venue is enough — the class guard covers breadth;
+  `.tmp/`). One venue is enough - the class guard covers breadth;
   this covers the UI seam the model-level guard cannot see.
 
 ## Board protocol
@@ -107,7 +107,7 @@ flattening presents `kind: casino`).
 
 - Generic fix only: no event-id allowlists, no beach/archetype
   special cases in the requirement logic.
-- Never weaken `_environment_allows_room_actor` itself — the beach
+- Never weaken `_environment_allows_room_actor` itself - the beach
   staying actor-free is shipped design; the fix is that actor-free
   events stop demanding actors.
 - Determinism, perf, save-compat, voice, and style rules as all 0.6

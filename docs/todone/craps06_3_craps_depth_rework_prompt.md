@@ -1,4 +1,4 @@
-Status: COMPLETE — landed Craps depth accepted and archived
+Status: COMPLETE - landed Craps depth accepted and archived
 Board row: `craps06_3` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record
@@ -18,7 +18,7 @@ Board row: `craps06_3` in `docs/todo/README_0_6_board.md`
 - Only the program-level cold-player comprehension check remains for
   `playtest06_1`; it is not automated implementation work.
 
-# Agent Prompt — 0.6 craps06_3: Craps Table Depth and Living Sequence Rework
+# Agent Prompt - 0.6 craps06_3: Craps Table Depth and Living Sequence Rework
 
 Copy everything below this line into the agent.
 

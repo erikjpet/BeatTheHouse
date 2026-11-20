@@ -1,6 +1,6 @@
-# rw06_2p — Endings and balance peer agent
+# rw06_2p - Endings and balance peer agent
 
-Status: **HISTORICAL / SUPERSEDED — DO NOT LAUNCH.** The peer lane has ended;
+Status: **HISTORICAL / SUPERSEDED - DO NOT LAUNCH.** The peer lane has ended;
 its route and balance outcomes are incorporated into current `main`.
 
 You are a **peer** of the release orchestrator (a separate agent running

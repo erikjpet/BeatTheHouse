@@ -1,4 +1,4 @@
-# Agent Prompt — Finish & LAND the Video Poker Rebuild (branch: video-poker-rebuild)
+# Agent Prompt - Finish & LAND the Video Poker Rebuild (branch: video-poker-rebuild)
 
 Copy everything below this line into the worker agent. Use a capable model.
 
@@ -7,10 +7,10 @@ Copy everything below this line into the worker agent. Use a capable model.
 You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript casino
 roguelike. The video poker rebuild was started on the branch
 **`video-poker-rebuild`** (worktree `D:/Projects/Beat-The-House-video-poker-
-rebuild`) but it is NOT merged to `main` — so the owner is still playing the
+rebuild`) but it is NOT merged to `main` - so the owner is still playing the
 OLD broken code on main and none of the fixes have reached them. Your job:
 finish the remaining rebuild deliverables ON THAT BRANCH, PROVE every one, and
-MERGE it to main so the fixes are real. Build on the branch's existing work —
+MERGE it to main so the fixes are real. Build on the branch's existing work -
 do NOT restart from scratch.
 
 The binding spec is `docs/todo/video_poker_complete_rebuild_prompt.md` (its
@@ -29,7 +29,7 @@ archived copy on the branch) and `docs/plans/video_poker_reference.md`.
 Not done until EVERY acceptance criterion below is PROVABLY met, CONFIRMED in
 the running game, AND merged to main. Do not stop early, do not declare
 success on a partial result, and do not leave it unmerged. If a behavior isn't
-real, keep working. Only stop on a gate you genuinely cannot pass — then stop,
+real, keep working. Only stop on a gate you genuinely cannot pass - then stop,
 do NOT merge, and report exactly what is unmet.
 
 ## Finish & PROVE these (the owner's four failures + the rest)
@@ -43,14 +43,14 @@ do NOT merge, and report exactly what is unmet.
 2. **Betting works end to end.** Interaction test: drive coins-per-hand 1→5
    and Bet Max; assert the total wager and the highlighted paytable column
    update; the player is never stuck at 1. Capture.
-3. **Clarity — how to win.** A first-timer always knows the next step
+3. **Clarity - how to win.** A first-timer always knows the next step
    (DEAL → hold → DRAW) and sees WHY they won/lost (winning hand named, the
    paytable row flashes). PROVE with a driven walkthrough + capture.
 4. **Art is slot-parity.** Each of the three cabinets (Jacks or Better/1,
    Double Deuces/2, Triple Double Bonus/3) has professional art matching the
    slot machines (`scripts/games/slots/slot_renderer.gd`), unique per cabinet.
    PROVE with side-by-side captures next to a slot machine. This is the item
-   most likely still weak — hold it to the slot bar.
+   most likely still weak - hold it to the slot bar.
 5. **The cheat.** An in-draw holdout with a clean skill input and BLUNT
    feedback naming the swapped card + resulting hand; reduce-motion fallback;
    economy preserved (deterministic ideal card, quality→heat/evidence tiers).
@@ -63,13 +63,13 @@ do NOT merge, and report exactly what is unmet.
 8. **Determinism.** Same seed + same holds → identical hands/payouts across
    replays and save/load mid-hand; multi-hand independence deterministic.
 
-## Integration — LAND it on main
+## Integration - LAND it on main
 
 1. Rebase/merge `video-poker-rebuild` onto the LATEST `origin/main` (main has
-   moved — resolve conflicts preserving both sides' intent; never discard main
+   moved - resolve conflicts preserving both sides' intent; never discard main
    work). Re-run the branch's suites after.
 2. Run the FULL battery on the integrated result (gates below), all green.
-3. MERGE to main (no squash — keep the rebuild history), push, and delete/
+3. MERGE to main (no squash - keep the rebuild history), push, and delete/
    clean the worktree + branch stragglers.
 4. Archive `video_poker_complete_rebuild_prompt.md` to `docs/todone/` (if not
    already) with the completion record, and delete/archive THIS follow-up
@@ -109,7 +109,7 @@ main, and report exactly what is not yet real.
 
 ---
 
-## Execution record — 2026-07-30
+## Execution record - 2026-07-30
 
 Landing:
 - Rebuild branch: `video-poker-rebuild`.

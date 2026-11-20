@@ -1,4 +1,4 @@
-# world06_6 Heist and Confrontation — Pre-implementation Acceptance Checklist
+# world06_6 Heist and Confrontation - Pre-implementation Acceptance Checklist
 
 Status: binding checklist written before implementation acceptance  
 Scope: `world06_6` only; this document changes no product code, runtime,

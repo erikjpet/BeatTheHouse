@@ -1,4 +1,4 @@
-Status: COMPLETE — landed shared runtime accepted and archived 2026-09-03
+Status: COMPLETE - landed shared runtime accepted and archived 2026-09-03
 Board row: `game06_1` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record
@@ -17,7 +17,7 @@ Board row: `game06_1` in `docs/todo/README_0_6_board.md`
   the only remaining human experience check are recorded in
   `docs/plans/game06_1_final_closeout.md`.
 
-# Agent Prompt — 0.6 game06_1: Table and Machine Ritual Runtime
+# Agent Prompt - 0.6 game06_1: Table and Machine Ritual Runtime
 
 Copy everything below this line into the agent.
 
@@ -31,7 +31,7 @@ the games-side equivalent of `env06_6`. It owns vocabulary, not content.
 Read before editing: `scripts/core/game_module.gd`,
 `scripts/games/table_game_visuals.gd`, `scripts/ui/game_surface_canvas.gd`, the
 landed `craps06_3` implementation and its archived prompt, and
-`scripts/games/scratch_tickets.gd` plus `scripts/games/coin_pusher.gd` — today
+`scripts/games/scratch_tickets.gd` plus `scripts/games/coin_pusher.gd` - today
 those two are the only modules that implement `surface_pointer_command`, so they
 are the existing evidence of what tactile interaction costs here. Code reality
 wins over this prompt.
@@ -55,7 +55,7 @@ without eight agents editing the same shared files.
 
 Follow the active board protocol in `docs/todo/README_0_6_board.md`. Claim
 `game06_1` before work and log discoveries. `craps06_3` must be DONE before
-implementation starts — read its accepted head first. This row unblocks
+implementation starts - read its accepted head first. This row unblocks
 `game06_2` through `game06_7`.
 
 ## 1. Harvest the craps ritual before designing
@@ -67,7 +67,7 @@ implementation starts — read its accepted head first. This row unblocks
 - Classify every item as general (belongs in this runtime), table-specific
   (belongs to craps), or accidental. Justify each classification.
 - The contract you build must re-express the landed craps ritual with no
-  craps-specific branch in shared code. If it cannot, the contract is wrong —
+  craps-specific branch in shared code. If it cannot, the contract is wrong -
   redesign rather than special-case.
 
 ## 2. The ritual contract
@@ -96,7 +96,7 @@ every capability below is mandatory:
   actor, object or interactable state. It may also drive music; music alone is
   a validation failure and the tests must enforce that.
 - `game_facts`: typed facts published at safe boundaries for other systems to
-  consume — round start, commitment, resolution, streak tier, large swing,
+  consume - round start, commitment, resolution, streak tier, large swing,
   cheat attempt and result, attention or heat change, session end.
 - `ritual_persistence`: what mid-ritual state serializes, what is transient,
   and how a restore lands in a legal phase with no replayed reward, dialogue,
@@ -127,7 +127,7 @@ reflection targets, resource paths outside allowlists, or raw node paths.
   reroll, reorder or alter a result, and may never read wall-clock time for one.
 - Phase advancement and fact publication happen at action boundaries. Nothing
   new runs per frame that can run at a boundary, and no per-frame deep copy of
-  state is permitted — the slot bonus watchdog is the recorded precedent for
+  state is permitted - the slot bonus watchdog is the recorded precedent for
   that failure.
 - The idle-liveness counter-gate in `scripts/ui/performance_liveness_guard.gd`
   is mandatory for every surface touched. An idle draw cost of 0.000 is a
@@ -138,7 +138,7 @@ reflection targets, resource paths outside allowlists, or raw node paths.
 
 - Contract validation tests: malformed phases, unreachable transitions, unbound
   pointer verbs, actors without behavior states, objects without bounds, energy
-  tiers that touch nothing but music — each must fail loudly.
+  tiers that touch nothing but music - each must fail loudly.
 - Phase-machine property tests: no input sequence can double-commit,
   double-settle, act out of phase, charge on a rejected verb, or strand a wager.
 - Opt-out proof: all eleven games unmodified in behavior and rendering, with

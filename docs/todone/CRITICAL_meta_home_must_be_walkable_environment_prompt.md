@@ -19,20 +19,20 @@
 
 # Agent Prompt - CRITICAL: The Meta Home Must Be A Walkable Environment, Not A Menu
 
-Priority: **CRITICAL — top of queue. Execute before every other entry.**
+Priority: **CRITICAL - top of queue. Execute before every other entry.**
 
 Copy everything below this line into the agent.
 
 ---
 
 You are working in `D:\Projects\Beat-The-House` (Godot 4.6 GDScript casino
-roguelike — see CLAUDE.md). This is a **rework of rejected work**. The
+roguelike - see CLAUDE.md). This is a **rework of rejected work**. The
 `v04_meta_home_environment` task (now archived with a REJECTED notice in
 docs/todone/) was supposed to deliver a persistent, **walkable** home
 environment. What it delivered instead was:
 
 1. **A menu.** The "home" is a menu/list screen. The owner explicitly did
-   not ask for a menu — the entire point of the feature was to REPLACE the
+   not ask for a menu - the entire point of the feature was to REPLACE the
    menu-style inventory browser with an environment the player stands in
    and interacts with, exactly like an in-run room. The original prompt
    said this in its first paragraph and again in §3 ("Walkable room using
@@ -41,7 +41,7 @@ environment. What it delivered instead was:
 2. **The menu is also broken.** Its content cuts off on screen and it is
    not actually usable even judged as the wrong thing.
 
-## What "an environment" means here — no room for interpretation
+## What "an environment" means here - no room for interpretation
 
 The player's home renders and behaves **exactly like an in-run room does**:
 
@@ -49,14 +49,14 @@ The player's home renders and behaves **exactly like an in-run room does**:
   (`scripts/ui/pixel_scene_canvas.gd` + authored archetype spots from
   `data/environments/archetypes.json`). The archetypes already exist and
   already render in runs: `back_alley`, `motel_room`, `apartment`, `house`.
-  Runs start in these rooms today — the meta home is those same rooms in a
+  Runs start in these rooms today - the meta home is those same rooms in a
   meta interaction mode.
 - The player interacts by clicking **props/objects placed in the room**
   (the same interaction-spot machinery in-run rooms use), not by scrolling
   a list:
   - **Storage containers** (the owned bag/backpack/suitcase/trunk render
     as props; homeless alley = only your containers on the ground/against
-    the wall) — clicking one opens its contents.
+    the wall) - clicking one opens its contents.
   - **Bags** stored at home are visible objects; clicking an unopened bag
     offers the single Open button and plays the reveal.
   - **Trade-up station** is a physical prop that only exists in the
@@ -66,8 +66,8 @@ The player's home renders and behaves **exactly like an in-run room does**:
     reaches the pawn shop, which is likewise a **room** with a counter
     prop (its one interaction), not a screen.
 - Detail panels opened FROM a prop (item inspection with floats/badges,
-  container contents, sell confirm) are acceptable popups — the in-run
-  inventory popup is the established pattern — but the home itself is a
+  container contents, sell confirm) are acceptable popups - the in-run
+  inventory popup is the established pattern - but the home itself is a
   room you stand in, never a full-screen menu.
 - Every popup/panel must fit inside the 1280×720 viewport with nothing cut
   off, including with 4-choice/long-content cases (the current cut-off bug
@@ -78,7 +78,7 @@ The player's home renders and behaves **exactly like an in-run room does**:
 
 ## What to keep
 
-The rejected task's **backend is not the problem** — keep and reuse:
+The rejected task's **backend is not the problem** - keep and reuse:
 `MetaCollectionService` state (housing tiers, gold, prices in
 data/collections/collections.json, homeless carry-everything rule,
 trade-up gating, pawn pricing, daily/challenge isolation), the meta map
@@ -104,10 +104,10 @@ leads to the meta map/home room.)
    return home. Every step through real clicks on room props.
 3. `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1`
 4. `tools\check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300`
-   and `-FoundationSuite systems -TimeoutSec 300` — including the updated
+   and `-FoundationSuite systems -TimeoutSec 300` - including the updated
    popup-fits-screen assertions.
 5. `tools\foundation_determinism_probe.ps1 -RequireGodot -SeedCount 5
-   -SeedPrefix V04-METAHOME-REWORK` — the presentation rework must not
+   -SeedPrefix V04-METAHOME-REWORK` - the presentation rework must not
    touch run determinism.
 6. Archive this prompt to docs/todone/ with an execution record that
    includes the screenshot paths; update QUEUE.md. Commit locally; do NOT
@@ -115,10 +115,10 @@ leads to the meta map/home room.)
 
 ## Hard constraints
 
-1. Reuse the in-run environment/interaction machinery — do not write a
+1. Reuse the in-run environment/interaction machinery - do not write a
    second room renderer or a second interaction system.
 2. Zero per-frame allocations; the meta rooms obey the same idle-redraw
-   discipline as run rooms (dirty/animation gating — see CLAUDE.md).
+   discipline as run rooms (dirty/animation gating - see CLAUDE.md).
 3. All prior owner-binding rules from the archived prompt still apply
    unchanged (daily/challenge isolation, homeless rule, trade-up gating,
    pawn-only gold faucet, no rent).

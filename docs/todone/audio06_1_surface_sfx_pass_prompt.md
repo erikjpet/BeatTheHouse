@@ -1,4 +1,4 @@
-Status: COMPLETE — the surface SFX pass is landed, verified, and archived
+Status: COMPLETE - the surface SFX pass is landed, verified, and archived
 Board row: `audio06_1` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record
@@ -24,7 +24,7 @@ Board row: `audio06_1` in `docs/todo/README_0_6_board.md`
 - Production music and music-system behavior were not changed. The external
   music delta remains in `docs/plans/audio_engineer_handoff.md`.
 
-# Agent Prompt — 0.6 audio06_1: Surface SFX Pass
+# Agent Prompt - 0.6 audio06_1: Surface SFX Pass
 
 Copy everything below this line into the agent.
 
@@ -47,14 +47,14 @@ either produces sound through ad-hoc code or produces none. `assets/audio/sfx_na
 holds 41 sounds, most of them from the slot and pinball era.
 
 Music is a separate matter and is **out of scope for this row**. The music
-manifest contains three fixtures — a corner store sparse fixture and two jazz
-club delivery fixtures explicitly labelled "not production music" — and
+manifest contains three fixtures - a corner store sparse fixture and two jazz
+club delivery fixtures explicitly labelled "not production music" - and
 production music belongs to the external audio-engineer delivery contract.
 
 ## Board and dependencies
 
 Follow the active board protocol. Claim `audio06_1`. This row requires Families 1
-and 2 to have landed their rituals — sound for a ritual that is still being
+and 2 to have landed their rituals - sound for a ritual that is still being
 designed will be wrong. You own `data/audio/surface_sfx_manifest.json`, new SFX
 assets, the shared surface audio path, and their tests. You may not change music
 system behavior or the music manifest beyond the handoff document in section 4.
@@ -66,7 +66,7 @@ system behavior or the music manifest beyond the handoff document in section 4.
   that pattern so any surface can declare a profile, rather than writing a second
   audio system beside it.
 - Sound must be driven by the `game06_1` game facts and the `env06_6` /
-  `world06_1` transition ops — the same boundaries that drive visuals — so audio
+  `world06_1` transition ops - the same boundaries that drive visuals - so audio
   cannot desynchronize from what is on screen and cannot fire on a frame timer.
 - Deterministic selection seeded from run RNG, with variation that does not
   repeat audibly. No wall-clock dependence anywhere.
@@ -87,7 +87,7 @@ Author profiles for the surfaces the depth programs changed, at minimum:
 - **Counter games:** rack, ticket handed over, the scratch itself, the peel,
   redemption, refusal.
 - **Bar dice:** cup shake, slam, lift, reveal, cash on the bar.
-- **Back-room poker:** chips, cards, the beats a tell lands in — without giving
+- **Back-room poker:** chips, cards, the beats a tell lands in - without giving
   any tell an audio signature the tell contract does not permit.
 - **Crew and world sequences:** door, handoff, package, stash, duck, pursuit,
   sweep proximity, book close, slip written, draw called, confrontation.

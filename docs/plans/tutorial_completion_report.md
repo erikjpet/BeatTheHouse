@@ -15,7 +15,7 @@ rewriting the historical run.
 
 ## Verdict
 
-**PRE-HUMAN TUTORIAL CANDIDATE READY — TUT-N17 PENDING HUMAN.**
+**PRE-HUMAN TUTORIAL CANDIDATE READY - TUT-N17 PENDING HUMAN.**
 
 The authored tutorial now completes through the legitimate 1280x720 Web UI
 with real pointer input for New Run and Replay Lessons, through both Path A and
@@ -124,7 +124,7 @@ next normal-run goal. Two participants must begin without Blackjack knowledge.
 TUT-N17 passes only at 5/5 unassisted completion and at least 80% aggregate
 core-concept comprehension.
 
-## 0.6 exact-root addendum — 2026-09-03
+## 0.6 exact-root addendum - 2026-09-03
 
 The landed 0.6 tutorial implementation was recovered and verified on the final
 integrated game/depth/audio/world root; it was not rebuilt from the older 0.5
@@ -143,7 +143,7 @@ It does not supersede or waive `TUT-N17`: five cold-player sessions, including
 two players without Blackjack knowledge, remain owner/human-only and move to
 `playtest06_1`.
 
-## 0.6 teaching-pass-two closeout — 2026-09-04
+## 0.6 teaching-pass-two closeout - 2026-09-04
 
 `teach06_2` recovered the existing 0.6 tutorial work and completed it at product
 head `c1cc6df82acfde2404012470f9709202e9ad7b78`; it did not rebuild the guided

@@ -2724,7 +2724,7 @@ func _verify_numbers_surfaces() -> void:
 	_require(str(silas_popup.get("source_id", "")) == "silas" and _has_visible_button_role("numbers_slip_submit_button", []) == false, "Silas encounter exposed the wrong Numbers controls.")
 	_require(not _has_visible_text(app, "today's handle") and not _has_visible_text(app, "past-post") and not _has_visible_text(app, "past post"), "First Silas encounter advertised undiscovered Numbers information.")
 	bankroll_before = run_state.bankroll
-	_require(not _click_button_exact("Buy a quiet route tip — $12").is_empty(), "Silas encounter did not expose its visible paid tip exchange.")
+	_require(not _click_button_exact("Buy a quiet route tip - $12").is_empty(), "Silas encounter did not expose its visible paid tip exchange.")
 	await _settle()
 	_require(run_state.bankroll == bankroll_before - 12, "Visible Silas exchange did not call the paid tip path.")
 	_require(_has_visible_text(app, "Silas sells a time and a place, not an apology."), "Visible Silas exchange did not render its authored transaction result on the production surface.")
@@ -2738,7 +2738,7 @@ func _verify_numbers_surfaces() -> void:
 	silas_object = _canvas_object_by_id(canvas, "numbers:silas")
 	_require(not (await _double_click_canvas_object_data(canvas, silas_object, "numbers")).is_empty(), "Ordinary Silas surface did not reopen after genuine discovery.")
 	await _settle()
-	_require(_has_visible_text(app, "Buy today's handle — $24"), "Silas handle exchange did not unlock after the real rumor-plus-tip discovery and post timing.")
+	_require(_has_visible_text(app, "Buy today's handle - $24"), "Silas handle exchange did not unlock after the real rumor-plus-tip discovery and post timing.")
 	_cover("numbers_silas_surface")
 	_record_state("numbers_silas_surface", "Silas encounter keeps the handle exchange absent until its ordinary hidden discovery conditions are met.")
 	_require(not _click_button_exact("Back").is_empty(), "Silas popup could not be closed through its visible Back button.")

@@ -1,18 +1,18 @@
-# Art Rework Test 06 — Noon and Midnight Environment Set
+# Art Rework Test 06 - Noon and Midnight Environment Set
 
 This set establishes aligned noon and midnight artwork for all 18 game environments.
 
 ## Delivered assets
 
-- `noon/` — 18 restrained daytime backgrounds
-- `midnight/` — 18 neon-night counterparts
-- `day_night_contact_sheet.png` — side-by-side review sheet
-- `noon_contact_sheet.png` — complete noon overview
-- `midnight_contact_sheet.png` — complete midnight overview
-- `source_noon/` — full-resolution built-in ImageGen noon masters
-- `day_night_manifest.json` — pair mapping and transition metadata
-- `transition_plan.md` — animation and future intermediate-art plan
-- `prompts.md` — generation and pixel-treatment brief
+- `noon/` - 18 restrained daytime backgrounds
+- `midnight/` - 18 neon-night counterparts
+- `day_night_contact_sheet.png` - side-by-side review sheet
+- `noon_contact_sheet.png` - complete noon overview
+- `midnight_contact_sheet.png` - complete midnight overview
+- `source_noon/` - full-resolution built-in ImageGen noon masters
+- `day_night_manifest.json` - pair mapping and transition metadata
+- `transition_plan.md` - animation and future intermediate-art plan
+- `prompts.md` - generation and pixel-treatment brief
 
 ## Art contract
 

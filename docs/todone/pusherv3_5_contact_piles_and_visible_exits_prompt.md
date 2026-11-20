@@ -1,4 +1,4 @@
-Status: DONE — 2026-08-25
+Status: DONE - 2026-08-25
 Board row: `pusherv3_5` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record
@@ -30,7 +30,7 @@ Board row: `pusherv3_5` in `docs/todo/README_0_6_board.md`
   harness's documented `-AggregateOnly` path revalidated those exact reports
   and produced the passing manifest without rerunning or changing simulation.
 
-# Agent Prompt — pusherv3_5: Physical Piles, Contact Pressure, Visible Exits
+# Agent Prompt - pusherv3_5: Physical Piles, Contact Pressure, Visible Exits
 
 Follow-up to archived `docs/todone/pusherv3_4_variations_integration_prompt.md`.
 

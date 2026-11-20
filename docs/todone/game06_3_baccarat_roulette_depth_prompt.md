@@ -1,4 +1,4 @@
-Status: COMPLETE — full Baccarat and Roulette depth is landed, verified, and archived
+Status: COMPLETE - full Baccarat and Roulette depth is landed, verified, and archived
 Board row: `game06_3` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record
@@ -41,7 +41,7 @@ Board row: `game06_3` in `docs/todo/README_0_6_board.md`
   actual full two-game implementation (the earlier D3 full-closure outcome),
   without a requirement reduction, split successor, or exception.
 
-# Agent Prompt — 0.6 game06_3: Baccarat and Roulette Depth
+# Agent Prompt - 0.6 game06_3: Baccarat and Roulette Depth
 
 Copy everything below this line into the agent.
 
@@ -72,7 +72,7 @@ shared runtime or visual layer; file a runtime request instead.
 Do these as two separate logical commit groups on one branch. They share a
 vocabulary, not an implementation.
 
-## 1. Roulette — the wheel and the felt
+## 1. Roulette - the wheel and the felt
 
 - Chip placement on the real layout: inside and outside bets addressed by named
   board regions, including split, street, corner, line and column positions, with
@@ -93,7 +93,7 @@ vocabulary, not an implementation.
 - The "no more bets" moment must be a real, readable gate with an accessible
   non-color-only state, and late input must be rejected gently without charge.
 
-## 2. Baccarat — the ceremony
+## 2. Baccarat - the ceremony
 
 - Presentation phases: `betting → shoe → deal → squeeze/reveal → third-card rule
   → settlement → betting`, with the third-card rule shown as procedure rather
@@ -115,7 +115,7 @@ vocabulary, not an implementation.
 - Neighbours are actors with their own seeded wagers and reactions. They must
   never consume or generate player money and must never alter player odds or
   outcomes. Their money on the felt is the point; their influence is forbidden.
-- Table energy must change actors, objects or interactables — crowd size, rail
+- Table energy must change actors, objects or interactables - crowd size, rail
   space, croupier attention, security presence. Music and a patron line alone
   are a validation failure.
 - Heat and pit attention become visible presence at both tables while remaining
@@ -126,8 +126,8 @@ vocabulary, not an implementation.
 - Preserve every landed cheat contract, its detection math and its heat effects
   exactly. Integrate cheat flows into the ritual rather than a detached panel.
 - Crew coordinated plays that list `baccarat` or `roulette` in
-  `data/crew/plays.json` — including the chip dump, which ships as a
-  player-funded transfer of $40 for a $6 fee — must present as visible crew
+  `data/crew/plays.json` - including the chip dump, which ships as a
+  player-funded transfer of $40 for a $6 fee - must present as visible crew
   presence using the `game06_1` actor vocabulary, with availability, cost,
   window, detection and heat contracts untouched.
 

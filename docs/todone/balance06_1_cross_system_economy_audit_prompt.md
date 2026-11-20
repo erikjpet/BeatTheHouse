@@ -11,7 +11,7 @@ Board row: `balance06_1` in `docs/todo/README_0_6_board.md`
 - **Scope boundary:** This DONE verdict is deliberately limited to the runnable opt-in prototype, honest partial report and complete small-evidence archive. The 64-seed-per-playstyle distributions, uncensored terminal-run evidence, historical numeric comparison, 600k-drop pusher EV run, ranked findings and proposals remain NOT STARTED and are retained as the ordered `balance06_1-follow-on` after Families 1 and 2.
 - **Custody:** The initial interrupted Contract attempt and the precondition/interrupted Systems attempt are retained beside the corrected runs. Source, landing, verification and ignored evidence worktrees remain retained; no cleanup, remote, release, version or packaging action occurred, and primary owner WIP was untouched.
 
-# Agent Prompt — 0.6 balance06_1: Cross-System Economy and Difficulty Audit
+# Agent Prompt - 0.6 balance06_1: Cross-System Economy and Difficulty Audit
 
 Copy everything below this line into the agent.
 
@@ -40,7 +40,7 @@ number that a tuning pass could have fixed first.
 ## Board and dependencies
 
 Follow the active board protocol. Claim `balance06_1`. This row can start
-immediately and does not depend on the depth programs — the depth programs
+immediately and does not depend on the depth programs - the depth programs
 change presentation, not economic values, and every one of them is required to
 prove its values unchanged. If you find a depth row that did move a value, that
 is a finding and it is routed back to that row.
@@ -81,8 +81,8 @@ tune anything. `release06_1` is the only row permitted to apply balance changes.
   bind, and any path that reaches a victory route far faster than its peers.
 - Call out anything that trivializes debt, since debt pressure is the spine of
   the run.
-- Call out anything that makes a whole system pointless — a job kind nobody would
-  take, a game nobody would play, a service nobody would buy — because that is a
+- Call out anything that makes a whole system pointless - a job kind nobody would
+  take, a game nobody would play, a service nobody would buy - because that is a
   content loss as much as a balance one.
 - For each finding, propose the smallest change that would address it, with the
   predicted effect and the risk. Proposals are ranked, not applied.
@@ -90,8 +90,8 @@ tune anything. `release06_1` is the only row permitted to apply balance changes.
 ## 4. Discipline
 
 - Do not change product values, tuning files or content data. If a genuine bug
-  is found — money created from nothing, a conservation violation, a value that
-  contradicts its own documented band — that is a defect finding routed as a
+  is found - money created from nothing, a conservation violation, a value that
+  contradicts its own documented band - that is a defect finding routed as a
   `fix06_*` row, not something you patch inside this branch.
 - Every number in the report must be reproducible from a stated command, seed
   and build. A claim without a reproduction is not a finding.

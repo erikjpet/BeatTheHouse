@@ -1,6 +1,6 @@
-# 0.6 Remaining Work — PM operating page
+# 0.6 Remaining Work - PM operating page
 
-Status: **HISTORICAL OPERATING PAGE — DO NOT RELAUNCH THE THREE FAMILY
+Status: **HISTORICAL OPERATING PAGE - DO NOT RELAUNCH THE THREE FAMILY
 INTEGRATORS.** Their recovered product payloads were reconciled through PR #21.
 Its dated execution state is recorded in
 `docs/plans/0.6_todo_state_audit_2026-08-31.md` and the now-closed boards. The
@@ -24,20 +24,20 @@ integration branch, and merges back when its release gate passes.
 
 | Family | Launcher | Rows | Gate |
 | --- | --- | --- | --- |
-| 1 — Game depth parity | `../todone/game06_0_game_depth_orchestration_prompt.md` | `game06_1`–`game06_8` | `game06_8` |
-| 2 — Crew and world depth | `../todone/world06_0_crew_world_depth_orchestration_prompt.md` | `world06_1`–`world06_7` | `world06_7` |
-| 3 — Cross-cutting | `../todone/cross06_0_cross_cutting_orchestration_prompt.md` | ten rows, mixed timing | per-row |
+| 1 - Game depth parity | `../todone/game06_0_game_depth_orchestration_prompt.md` | `game06_1`–`game06_8` | `game06_8` |
+| 2 - Crew and world depth | `../todone/world06_0_crew_world_depth_orchestration_prompt.md` | `world06_1`–`world06_7` | `world06_7` |
+| 3 - Cross-cutting | `../todone/cross06_0_cross_cutting_orchestration_prompt.md` | ten rows, mixed timing | per-row |
 
 Each launcher is self-contained: authority, preflight, worktree topology, waves,
 self-review protocol, independent review protocol, merge discipline, final merge,
 and terminal conditions. A PM does not need to explain the house rules to an
-integrator — the launcher does it.
+integrator - the launcher does it.
 
 ## Launch order
 
 **Today, with no further dependencies:**
 
-- Family 3's Wave 1 — `meta06_1`, `balance06_1`, `board06_1`, `polish06_0`.
+- Family 3's Wave 1 - `meta06_1`, `balance06_1`, `board06_1`, `polish06_0`.
   Launch `cross06_0` now; its own scheduling section holds the later rows until
   their dependencies land.
 
@@ -59,13 +59,13 @@ integrator — the launcher does it.
 
 **After both depth families merge:**
 
-- Family 3's Wave 3 and 4 — `audio06_1`, then `integ06_1` and `perf06_1` in
+- Family 3's Wave 3 and 4 - `audio06_1`, then `integ06_1` and `perf06_1` in
   parallel, then `teach06_2`, then `playtest06_2` last.
 
 Families 1 and 2 can run concurrently once their dependencies clear. They touch
 different files: Family 1 owns the game modules and the shared surface layer,
 Family 2 owns the crew models and the EventModule crew seam. `world06_5` is the
-one row that needs both — it uses Family 1's actor vocabulary for crew presence
+one row that needs both - it uses Family 1's actor vocabulary for crew presence
 at tables, and its prompt says to build the sweep half first if that vocabulary
 has not landed.
 
@@ -81,7 +81,7 @@ has not landed.
 3. **Route audit findings.** `balance06_1`, `integ06_1`, `perf06_1` and
    `pusherv3_11` produce findings, not fixes. They become `fix06_*` rows or go
    back to the owning family. An audit branch that quietly rewrites the thing it
-   audits has destroyed its own evidence — that rule is in every audit prompt and
+   audits has destroyed its own evidence - that rule is in every audit prompt and
    the PM enforces it.
 4. **Hold the line on scope.** No row in this program performs release activity.
    No row changes RTP, EV, payout tables, odds or any landed economic value.

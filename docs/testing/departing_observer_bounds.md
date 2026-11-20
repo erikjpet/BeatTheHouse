@@ -1,4 +1,4 @@
-# DEPARTING_OBSERVER_CLIP — departing observer bounds
+# DEPARTING_OBSERVER_CLIP - departing observer bounds
 
 Owner: task-14. Status: Complete; scoped native acceptance and NEXT verification passed.
 Fix commit: `cc39dd5081df178484f24e786a919bd259724d2b`.

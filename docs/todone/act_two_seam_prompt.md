@@ -16,14 +16,14 @@ Deviations:
 - The prompt's normal queue rule says push, but this prompt explicitly said commit locally and do not push; no push was performed.
 - Visual QA now seeds an isolated motel-tier meta collection store for this route because the v0.4 meta-home system, not the legacy menu selector, owns normal-run housing. This preserves the home-start assertion without touching the real player profile.
 
-# Agent Prompt — Act 2 Seam: Cross-Act Contract, Save Marker, Victory Hook (parked T8.1)
+# Agent Prompt - Act 2 Seam: Cross-Act Contract, Save Marker, Victory Hook (parked T8.1)
 
 Copy everything below this line into the agent.
 
 ---
 
 You are working in `D:\Projects\Beat-The-House` (Godot 4.6 GDScript casino
-roguelike — see CLAUDE.md). This promotes the parked Act-1 board task T8.1
+roguelike - see CLAUDE.md). This promotes the parked Act-1 board task T8.1
 (docs/plans/act_one_feature_complete_task_board.md:1825). It is a **seam,
 not content**: define what carries from Act 1 into a future Act 2, stamp
 saves with an act marker, and replace the victory screen's shrug with a
@@ -46,12 +46,12 @@ run_state.gd victory routes and to_dict/from_dict, save_service.gd, and
 ProfileInventory first. Define:
 
 - **Carries across acts:** victory route (players-card cashout vs showdown
-  — the two routes MUST produce distinct payloads), final bankroll band
-  (band, not exact value — define 4–5 bands), key story flags (the
+  - the two routes MUST produce distinct payloads), final bankroll band
+  (band, not exact value - define 4–5 bands), key story flags (the
   `story_flags` dict if the dialogue system has landed; otherwise reserve
   the key with an empty default), and profile lifetime stats (already
   persisted separately).
-- **Resets:** everything else — runs stay self-contained.
+- **Resets:** everything else - runs stay self-contained.
 - **Where it lives:** the cross-act payload is recorded into the profile
   file (one `act_seam` section) at victory, versioned like the rest.
 
@@ -59,7 +59,7 @@ ProfileInventory first. Define:
 
 - RunState serialization gains `act: 1` with a migration default: saves
   without the marker load as act 1 (prove with the existing 0.3.0 save
-  fixture pattern — see scripts/tests/fixtures/run_state_0_3_0_save.json
+  fixture pattern - see scripts/tests/fixtures/run_state_0_3_0_save.json
   and SB.3's compatibility test for how old-save coverage is done).
 - SaveService/profile files gain the same marker where relevant.
 
@@ -71,10 +71,10 @@ ProfileInventory first. Define:
   Keep it to 1–2 lines of copy in the game's terse voice; this is a hook,
   not a trailer. No prestige/purchase teaser: ui_scene_compile_check.gd
   (:943-944, :1588, :4069) actively forbids exposing prestige hooks while
-  prestige data is empty — respect those assertions; if your new copy trips
+  prestige data is empty - respect those assertions; if your new copy trips
   them, the copy is wrong, not the test.
 - Update tools/foundation_visual_qa.gd:854, which currently REQUIRES the
-  "not implemented" text — flip that assertion to require the new hook per
+  "not implemented" text - flip that assertion to require the new hook per
   route instead.
 
 ## Hard constraints

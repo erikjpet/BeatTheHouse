@@ -93,7 +93,7 @@ The X-ray capture contains a small mark near the bottom of one stack, four stack
 - the difference between buying, collecting the tray, opening/peeling, filing, winner/loser piles, and redeeming;
 - why the result is fixed and what X-ray has actually changed.
 
-The branch succeeds mechanically, but it needs a small, persistent step counter such as `Marked winner: stack 1, 3 tickets away — cost $3` and separate highlights for Buy → Collect → Peel → File → Leave → Clerk.
+The branch succeeds mechanically, but it needs a small, persistent step counter such as `Marked winner: stack 1, 3 tickets away - cost $3` and separate highlights for Buy → Collect → Peel → File → Leave → Clerk.
 
 #### G. Blackjack assumes the player already knows Blackjack
 
@@ -165,9 +165,9 @@ Linda's Bronze line and `Aim for the Golden Card` response are clipped below the
 
 ## Required tutorial changelog
 
-### P0 — must be fixed before calling the tutorial complete
+### P0 - must be fixed before calling the tutorial complete
 
-#### TUT-N01 — Make every tutorial line readable
+#### TUT-N01 - Make every tutorial line readable
 
 - Replace the hard two-line TalkDock body limit with content-aware height, pagination, or a minimum of four readable lines.
 - Keep the entire panel and every response inside the 1280×720 safe area.
@@ -176,7 +176,7 @@ Linda's Bronze line and `Aim for the Golden Card` response are clipped below the
 
 Acceptance: all 48 tutorial lessons capture at 1280×720 with no clipped text, blank speaker plate, or off-screen response.
 
-#### TUT-N02 — Stop the tutorial from covering its target
+#### TUT-N02 - Stop the tutorial from covering its target
 
 - Reposition or compact TalkDock based on the active anchor.
 - Keep the highlighted room object or surface control unobscured.
@@ -185,7 +185,7 @@ Acceptance: all 48 tutorial lessons capture at 1280×720 with no clipped text, b
 
 Acceptance: each lesson capture shows the complete instruction and complete target simultaneously; a strict mouse test can activate every target without hiding the dialogue first.
 
-#### TUT-N03 — Add the missing first-minute mental model
+#### TUT-N03 - Add the missing first-minute mental model
 
 - Before the X-ray pickup, state the run loop in plain language: explore, spend cash, gamble, manage Heat/debt/time, and pursue the Players Card.
 - Sequentially identify Bankroll, Heat, Drunk, clock, Inventory, and active-item slot.
@@ -194,7 +194,7 @@ Acceptance: each lesson capture shows the complete instruction and complete targ
 
 Acceptance: a cold player can answer “What am I trying to do?”, “What can make me fail?”, and “What do the top meters mean?” before leaving the apartment.
 
-#### TUT-N04 — Teach Blackjack before testing Blackjack
+#### TUT-N04 - Teach Blackjack before testing Blackjack
 
 - Add a short table overlay for the goal of 21, busting, dealer comparison, card values, Hit, and Stand.
 - Keep advanced actions visually secondary until their lesson.
@@ -203,7 +203,7 @@ Acceptance: a cold player can answer “What am I trying to do?”, “What can 
 
 Acceptance: a tester who has never played Blackjack can correctly finish the clean hand and explain why.
 
-#### TUT-N05 — Guarantee Heat comprehension without requiring failure
+#### TUT-N05 - Guarantee Heat comprehension without requiring failure
 
 - Explain Heat and the meter before the first lookaway action.
 - State the exact risk of Drink Pass, Peek, and missed count bubbles.
@@ -212,14 +212,14 @@ Acceptance: a tester who has never played Blackjack can correctly finish the cle
 
 Acceptance: both a perfect route and a mistake route receive a Heat lesson; only the mistake route receives the contextual consequence branch.
 
-#### TUT-N06 — Clear stale results at context boundaries
+#### TUT-N06 - Clear stale results at context boundaries
 
 - Clear, collapse, or expire the Result message on travel, game entry/exit, and the start of a new guided conversation.
 - Preserve a short history in a menu if needed, but do not let a roadside payout remain active in the Grand Casino.
 
 Acceptance: every tutorial capture's Result panel is empty or describes the current room/action.
 
-#### TUT-N07 — Repair and expand the tutorial ending
+#### TUT-N07 - Repair and expand the tutorial ending
 
 - Ensure Linda's complete Bronze/Gold explanation and response fit on screen.
 - Standardize one term: `Gold Players Card` or `Golden Players Card`.
@@ -228,39 +228,39 @@ Acceptance: every tutorial capture's Result panel is empty or describes the curr
 
 Acceptance: a cold player can describe the normal-run goal and the difference between Bronze and Gold after the final screen.
 
-### P1 — required comprehension improvements
+### P1 - required comprehension improvements
 
-#### TUT-N08 — Make item effects explicit
+#### TUT-N08 - Make item effects explicit
 
 - Replace the X-ray inventory placeholder with its actual passive effect.
 - Label items as passive, active, equipped, consumable, or permanent in plain language.
 - Explain the top-bar active-item slot and why X-ray does not appear there.
 
-#### TUT-N09 — Teach money and debt with numbers
+#### TUT-N09 - Teach money and debt with numbers
 
 - Show store price, remaining bankroll, loan amount, lender/source, and repayment rule during the relevant beats.
 - After accepting the family loan, display a clear debt receipt and highlight the exact debt HUD location.
 - Explain that Grand Casino cashout services debt before returning cash.
 
-#### TUT-N10 — Turn the pull-tab branch into a visible procedure
+#### TUT-N10 - Turn the pull-tab branch into a visible procedure
 
 - Show `stack`, `tickets until target`, and `total cost` beside the X-ray marker.
 - Use separate anchored steps for Buy, Collect, Peel/Open, File, Winner pile, Leave, and Redeem.
 - Explain that purchase fixes the outcome and scratching/opening only reveals it.
 
-#### TUT-N11 — Explain cheating resources and benefits
+#### TUT-N11 - Explain cheating resources and benefits
 
 - Identify where Drink Pass and Chip Spill come from and whether they are consumed.
 - Explain what seeing the hole card changes.
 - Explain count bubble values, the running count, the gameplay benefit, and the miss penalty before starting the timed interaction.
 
-#### TUT-N12 — Make Bronze progress concrete
+#### TUT-N12 - Make Bronze progress concrete
 
 - Replace “until Bronze lights up” with the compressed requirement in player language.
-- Show visible progress such as `Grand table games: 0/1` and `Bronze ready — return to Linda`.
+- Show visible progress such as `Grand table games: 0/1` and `Bronze ready - return to Linda`.
 - Keep the objective tracker visible without competing with dialogue.
 
-#### TUT-N13 — Split Linda's lesson into digestible steps
+#### TUT-N13 - Split Linda's lesson into digestible steps
 
 - Page 1: cash → chips.
 - Page 2: chips fund Grand tables and the shop.
@@ -268,24 +268,24 @@ Acceptance: a cold player can describe the normal-run goal and the difference be
 - Require inspection of one shop offer, but do not require a purchase.
 - Display the exact comp reward and where it is stored before entering the Cage.
 
-### P2 — polish and resilience
+### P2 - polish and resilience
 
-#### TUT-N14 — Improve blocked-action feedback
+#### TUT-N14 - Improve blocked-action feedback
 
 - When tutorial gating blocks an action, say what is currently required and keep the target highlighted.
 - Never make an unrelated click look unresponsive.
 
-#### TUT-N15 — Clarify travel information
+#### TUT-N15 - Clarify travel information
 
 - Point out route cost, travel time, open/closed state, and the recommended Path A badge.
 - Preserve the ability to skip Path A without presenting the skip as a mistake.
 
-#### TUT-N16 — Reduce repeated dialogue
+#### TUT-N16 - Reduce repeated dialogue
 
 - Avoid replaying identical Pal lines for opening the map and selecting a destination, or for inspecting both store items.
 - Use short continuation text for repeated mechanical steps.
 
-#### TUT-N17 — Add a true novice usability gate
+#### TUT-N17 - Add a true novice usability gate
 
 - Run at least five cold testers who have not played the project and at least two who do not know Blackjack.
 - Record wrong clicks, time per beat, requests for help, and comprehension answers.

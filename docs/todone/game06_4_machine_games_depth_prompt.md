@@ -1,4 +1,4 @@
-Status: COMPLETE — recovered machine depth is landed, verified, and archived
+Status: COMPLETE - recovered machine depth is landed, verified, and archived
 Board row: `game06_4` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record
@@ -22,7 +22,7 @@ Board row: `game06_4` in `docs/todo/README_0_6_board.md`
   playtest must still confirm that new players understand wagers, holds,
   payline readout, feature progression, and Slot attendant acknowledgement.
 
-# Agent Prompt — 0.6 game06_4: Machine Games Depth (Slot, Video Poker)
+# Agent Prompt - 0.6 game06_4: Machine Games Depth (Slot, Video Poker)
 
 Copy everything below this line into the agent.
 
@@ -33,14 +33,14 @@ shipped slot and video poker implementations, not a math or paytable rewrite.
 Read `scripts/games/slot.gd`, `scripts/games/slots/*`,
 `scripts/games/video_poker.gd`, `scripts/games/video_poker_renderer.gd`, the
 `game06_1` ritual contract document under `docs/plans/`, and the landed coin
-pusher V3 cabinet — that cabinet is the reference for what machine presence
+pusher V3 cabinet - that cabinet is the reference for what machine presence
 means in this project now.
 
 ## Why this rework exists
 
 The coin pusher V3 rows built a real machine: a cabinet with a body, physical
 audio, a playfield that dominates the frame, and a room that contains it. Slot
-and video poker sit beside it as panels — a reel strip, a paytable and a spin
+and video poker sit beside it as panels - a reel strip, a paytable and a spin
 button floating in a surface. They are also the games a player touches most
 often in the early run, so their flatness sets the tone for the whole update.
 
@@ -99,15 +99,15 @@ and must be sealed, receipted, replay-safe, and settlement-neutral.
   outcomes.
 - A floor attendant actor appears for Slot jackpot acknowledgement, lockups and suspicion; the
   cabinet's tower light is how that attention becomes visible.
-- A big win must change the room — heads turn, the attendant walks over, the
-  candle lights — rather than printing a bigger number. Energy tiers must change
+- A big win must change the room - heads turn, the attendant walks over, the
+  candle lights - rather than printing a bigger number. Energy tiers must change
   at least one actor, object or interactable state; music alone is a validation
   failure.
 - Cheat flows integrate into the machine (the nudge and tilt language already in
   the project, tilt dampener items, and any landed slot cheat) rather than
   opening a detached panel, with detection math and heat contracts untouched.
 
-## 4. Performance discipline — read this twice
+## 4. Performance discipline - read this twice
 
 - The slot bonus watchdog per-frame deep copy is a recorded 32.6 ms/frame
   regression in this project's history. Nothing in this row may deep-copy state

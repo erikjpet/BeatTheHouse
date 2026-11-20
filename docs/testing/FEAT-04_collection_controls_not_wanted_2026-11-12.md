@@ -1,4 +1,4 @@
-# FEAT-04 — collection controls closed as not wanted
+# FEAT-04 - collection controls closed as not wanted
 
 Starting commit7c0d0b178fce6109e973ed803038427dd717b197.
 Owner2026-11-12 decision in the unchanged unfinished-features audit overrides

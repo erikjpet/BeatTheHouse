@@ -1,4 +1,4 @@
-# FEAT-11 — pack default preflight and specification conflict
+# FEAT-11 - pack default preflight and specification conflict
 
 Date: 2026-11-12. Source: `964d6df457f3ec653188e36ac549bde369919f06`.
 No production file or group default has been changed for this item.

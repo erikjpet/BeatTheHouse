@@ -1,4 +1,4 @@
-# Coin Pusher V3 — The Real Machine (binding design contract)
+# Coin Pusher V3 - The Real Machine (binding design contract)
 
 Status: **OWNER-APPROVED, IMPLEMENTED BINDING DESIGN** (approved 2026-08-17).
 All three production cabinets, persistence, deterministic native/Web paths,
@@ -32,7 +32,7 @@ Supersedes the simulation sections of
 tasks `pusher06_0/1/2/3/4`. Owner decisions in this document are
 round-6 locks from a direct design session; nothing here is open to
 reinterpretation. A worker agent reading this document has the
-mechanics ALREADY DESIGNED — implement them as specified, log genuine
+mechanics ALREADY DESIGNED - implement them as specified, log genuine
 contradictions with code reality on the board, and do not substitute
 a different machine model.
 
@@ -41,7 +41,7 @@ a different machine model.
 ## 1. Why V2 is rejected (verified against code, with references)
 
 The V2 solver (`scripts/games/coin_pusher/coin_pusher_solver.gd`) is
-a real fixed-point discrete-body core — and the MACHINE built on it
+a real fixed-point discrete-body core - and the MACHINE built on it
 is not a coin pusher:
 
 1. **Turn-based batch.** One press simulates `ACTION_TICKS = 48`
@@ -61,14 +61,14 @@ is not a coin pusher:
 5. **Contact solver defects** (cause of the owner-observed "pile goes
    crazy then crystallizes into even rows"):
    - separation along cardinal axes with Chebyshev overlap
-     (`_hot_resolve_collisions`) — an attractor into an axis-aligned
+     (`_hot_resolve_collisions`) - an attractor into an axis-aligned
      lattice;
    - `overlap * 5` velocity injection, no restitution, one pass
-     (`MAX_COLLISION_PASSES = 1`) — energy chain reactions;
+     (`MAX_COLLISION_PASSES = 1`) - energy chain reactions;
    - single-nearest support + `lean > 620 -> topple`
-     (`_hot_resolve_supports`) — coins may not nestle into gaps, so
+     (`_hot_resolve_supports`) - coins may not nestle into gaps, so
      natural packing is actively destroyed;
-   - `_pressurize_full_pile` — teleports a payout when the pile is
+   - `_pressurize_full_pile` - teleports a payout when the pile is
      full. Physics fraud; delete.
 6. **Replay-trace presentation.** The packed 14-frame trace subsystem
    exists only to replay the frozen 0.8 s burst. A live machine
@@ -96,7 +96,7 @@ is not a coin pusher:
   EV-emergent principle (measured, tuned via machine geometry, never
   imposed).
 
-## 3. The machine — mechanics specification
+## 3. The machine - mechanics specification
 
 ### 3.1 Anatomy (one assembly, two levels)
 
@@ -106,10 +106,10 @@ the lower level. Owner's words, binding: "the top level coins should
 always be moving on the pusher, not 2 rows of sweeping arms."
 
 Fixed-point geometry (existing scale kept; all constants live in the
-machine definition data, section 7 — these are the default machine's
+machine definition data, section 7 - these are the default machine's
 values):
 
-Axis convention (binding): **+y runs REARWARD** — the tray is at low
+Axis convention (binding): **+y runs REARWARD** - the tray is at low
 y (the player side), the back plate at high y. "Extended" = the face
 at its LOWEST y (pushed forward toward the tray); "retracted" = the
 face at its HIGHEST y (pulled back toward the plate).
@@ -136,7 +136,7 @@ STROKE_PERIOD    = 240 ticks     # 4.0 s full cycle at 60 Hz
 ```
 
 The platform FACE collider spans z = 0 up past the platform top: a
-full-height wall. Nothing slips beneath the pusher — deck coins in
+full-height wall. Nothing slips beneath the pusher - deck coins in
 its path are pushed, always.
 
 The platform is a kinematic block: front face at `face_y(phase)`,
@@ -166,14 +166,14 @@ platform. Side walls at x = 0 / WIDTH above the gutter mouths.
 ### 3.3 The ratchet transport cycle (the engine of the machine)
 
 This is what makes it a coin pusher. All of it is emergent from the
-contact rules in section 4 — no scripted coin movement:
+contact rules in section 4 - no scripted coin movement:
 
 1. A coin landing ON the platform top RIDES it (the platform is its
-   support; carry rule 4.7) — carried rearward on retract, forward on
+   support; carry rule 4.7) - carried rearward on retract, forward on
    the push stroke.
 2. On the retract stroke, riding coins are blocked by the fixed BACK
    PLATE (they cannot pass rearward under it: gap 400 < coin height
-   1700). The platform keeps sliding back beneath them — blocked
+   1700). The platform keeps sliding back beneath them - blocked
    coins advance forward RELATIVE to the platform.
 3. The walk off the platform is COLLECTIVE: each new coin joining the
    queue at the plate pushes the top stock forward through coin-coin
@@ -181,12 +181,12 @@ contact rules in section 4 — no scripted coin movement:
    the queue (face_y exceeds the coin's y), that coin loses support
    and deposits onto the deck IN FRONT of the face. With this
    geometry ~1 queued row triggers a deposit while ~2 rows always
-   remain riding — the owner-required persistent, visibly moving top
+   remain riding - the owner-required persistent, visibly moving top
    stock. All of this must EMERGE from carry + plate + contacts; no
    scripted walk.
 4. On the forward stroke, the platform FACE shoves the mass of coins
    sitting on the deck toward the tray lip. Friction (4.4) makes the
-   mass move as a body — rows push rows.
+   mass move as a body - rows push rows.
 5. Coins pushed past TRAY_LIP_Y fall to the TRAY (3.6). Coins
    escaping past the side gutter mouths are LOST (house).
 
@@ -227,7 +227,7 @@ hardcoded:
   `(carriage_x, DROP_Y, DROP_Z)`. Between DROP_Z and the upper-platform
   landing zone sit **3 fixed pegs** (cylinders r=1200) at data-given
   positions (default: x = 30000/50000/70000, z = 9000) that the coin
-  can clip and deflect off — pure collision, plus a seeded release
+  can clip and deflect off - pure collision, plus a seeded release
   jitter of +/-300 on x so identical inputs still vary
   deterministically per RNG stream.
 - **Jackpot Ridge:** 3 fixed entry holes (x = 25000/50000/75000)
@@ -250,7 +250,7 @@ hardcoded:
 
 ### 3.7 Idle model (owner-locked)
 
-- While the player is AT the machine the motor strokes continuously —
+- While the player is AT the machine the motor strokes continuously -
   alive, always moving. A settled pile riding a stroking platform
   produces no net change (carried-sleep, 4.8): motion without
   stimulus changes nothing, which is exactly real behavior.
@@ -265,7 +265,7 @@ hardcoded:
 ### 4.1 Body model (kept)
 
 `{id, kind, x, y, z, vx, vy, vz, radius, height, mass, sleeping,
-sleep_ticks, rest_state, meta}` — continuous fixed-point integers.
+sleep_ticks, rest_state, meta}` - continuous fixed-point integers.
 Coins, pucks, fragments, and prize riders are all bodies; pegs,
 walls, the back plate, the deck, and the platform are
 static/kinematic colliders.
@@ -279,11 +279,11 @@ move, skill stop, nudge, collect) are quantized to the tick at which
 they apply. Determinism contract: settled snapshot + tick-stamped
 input trace + RNG stream -> bit-identical end state (section 9).
 
-### 4.3 Broadphase — spatial hash, O(n*k), no n^2 pool
+### 4.3 Broadphase - spatial hash, O(n*k), no n^2 pool
 
 2D hash on (x/CELL, y/CELL), CELL = 10000, open addressing; z handled
 in the narrow phase. Neighbor query = 3x3 cells. Candidate pool sized
-`ceiling * 32` (a fixed-radius disc has a bounded contact count — the
+`ceiling * 32` (a fixed-radius disc has a bounded contact count - the
 V2 `n^2 * 2` pool is deleted). `HARD_BODY_CEILING = 600` is a safety
 ceiling ONLY: the machine geometry holds roughly 250 settled coins,
 so realistic play cannot approach it. If an insert would exceed the
@@ -325,7 +325,7 @@ pass count, fixed order -> deterministic. Residual penetration after
 6 passes carries and is corrected next tick by BETA (this converges;
 V2's single pass with velocity injection diverged).
 
-### 4.6 Support & stability — the nestle rule (replaces lean/topple)
+### 4.6 Support & stability - the nestle rule (replaces lean/topple)
 
 A body's support set = every body/surface whose top is within
 `[z - 400, z + 400]` of its base and whose horizontal center distance
@@ -336,12 +336,12 @@ is < `(r1 + r2) * 0.9`. Stability:
   on the x axis AND the y axis (a support with dx <= +margin and one
   with dx >= -margin; same for dy; margin = 800).
 - A stable body rests: z snaps to the highest support top, vz = 0.
-  THIS IS NESTLING — a coin sits happily in the pocket between two or
+  THIS IS NESTLING - a coin sits happily in the pocket between two or
   three coins. The V2 single-support `lean > 620 -> topple` rule is
   deleted; it is the direct cause of the crystallization/collapse the
   owner observed.
 - **Unstable** (no bracket, single support too off-center): the body
-  slides — apply lateral acceleration away from the support centroid
+  slides - apply lateral acceleration away from the support centroid
   (magnitude GRAVITY/2) and let the contact solver find where it
   goes. No teleports, no scripted topple velocity.
 - Impact events for audio/presentation are emitted from real state
@@ -357,7 +357,7 @@ is < `(r1 + r2) * 0.9`. Stability:
 - The BACK PLATE is a static wall for coins at any z above its bottom
   edge. A carried coin pressed against it during retract stops; the
   platform slides on beneath it (carry delta suppressed by the wall
-  contact) — the ratchet walk of 3.3 emerges from exactly these two
+  contact) - the ratchet walk of 3.3 emerges from exactly these two
   rules. No special-case "ratchet code" may be written.
 - The platform FRONT FACE is a kinematic wall for deck-level bodies;
   on the forward stroke its delta transfers through contacts into the
@@ -373,7 +373,7 @@ is < `(r1 + r2) * 0.9`. Stability:
 - **Carried-sleep:** bodies riding the platform with no relative slip
   and no awake contacts are advanced by the platform delta WITHOUT
   entering the solver. A fully settled machine costs near zero per
-  tick while visibly alive — this is the 3.7 idle model's perf
+  tick while visibly alive - this is the 3.7 idle model's perf
   foundation and the idle-liveness gate's evidence.
 
 ### 4.9 Invariants (tested, section 9)
@@ -409,7 +409,7 @@ Nudge = an impulse to all bodies (magnitude per force x direction,
 from existing data) + tolerance cost as shipped. Tell-ladder rungs
 and the hidden tolerance work unchanged; rung decay converts from
 "per action" to a fixed tick interval (data: 600 ticks per decay).
-Hard alarm: the machine locks for the night — motor stops, slot
+Hard alarm: the machine locks for the night - motor stops, slot
 refuses, cabinet goes dark; heat 22; staff-watch floor 12; **the
 player is never ejected**. Skill stop has NO tell/heat interaction
 (owner-locked).
@@ -418,7 +418,7 @@ player is never ejected**. Skill stop has NO tell/heat interaction
 
 Scenario tolerance deltas, swept-window loosening, pusher-pile rumor
 facts (now including "the tray is loaded" as a fact class), Graveyard
-Shift lax alarms, Trucker Convoy busy machine — all preserved against
+Shift lax alarms, Trucker Convoy busy machine - all preserved against
 the new state fields.
 
 ### 5.5 Economy
@@ -429,10 +429,10 @@ scripted input policy), tuned ONLY via machine geometry (stroke
 length, lip width, gutter mouths, apparatus spread) into the
 documented band. Never a payout multiplier applied to physics
 results. (Ridge's multiplier applies to the TRAY-VALUE CREDITING of
-coins that physically fell while armed — it scales the ledger; it
+coins that physically fell while armed - it scales the ledger; it
 never moves coins.)
 
-## 6. Presentation — the alive cabinet (slot-renderer parity)
+## 6. Presentation - the alive cabinet (slot-renderer parity)
 
 New `scripts/games/coin_pusher/coin_pusher_renderer.gd`, modeled on
 `scripts/games/slots/slot_renderer.gd` (floor, cabinet, topper,
@@ -462,7 +462,7 @@ glass, game). Required components:
    - depth scale: rear width factor 0.78
    - coin: ellipse rx 17 px, ry 12 px, rim highlight + seeded
      per-coin rotation variant (4 rotation frames), NOT one glyph
-   - **z layer offset ~= 11 px per COIN_HEIGHT** (about 65% of ry — a
+   - **z layer offset ~= 11 px per COIN_HEIGHT** (about 65% of ry - a
      stacked coin is unmistakably raised, with a small drop shadow)
    - the platform top drawn as a distinct lit surface so "riding"
      reads at a glance
@@ -537,7 +537,7 @@ tray_value and sub-game state, and log the migration once.
    and falls within N cycles); face push moves a 3-row mass; landing
    skill (same drop x at two phases joins different upper-stock topology while
    both first land on platform support); nestle (a coin dropped into a 2-coin pocket rests
-   between them — THE regression test for the crystallization bug);
+   between them - THE regression test for the crystallization bug);
    no-lattice (a 300-coin settle produces no axis-aligned rows: the
    nearest-neighbor angle histogram must not spike at 0/90 degrees);
    skill-stop bank-and-release (5 banked coins push at least as far

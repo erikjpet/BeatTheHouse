@@ -1,11 +1,11 @@
 # Dead & Redundant Code Audit
 
-> **HISTORICAL AUDIT — kept for reference.** This is a 2026-07-01 snapshot;
+> **HISTORICAL AUDIT - kept for reference.** This is a 2026-07-01 snapshot;
 > later cleanup commits and the current tree, not this file's line references,
 > determine whether code is live.
 
 Date: 2026-07-01
-Type: READ-ONLY AUDIT — no code was changed. This report classifies what is
+Type: READ-ONLY AUDIT - no code was changed. This report classifies what is
 dead, what is suspect, what is live-but-looks-dead, and prescribes an
 efficient removal sequence that leaves every implemented system untouched.
 
@@ -14,7 +14,7 @@ efficient removal sequence that leaves every implemented system untouched.
 Every claim below was traced, not guessed:
 - **Script reference graph**: every `.gd` file scanned for inbound references
   by filename AND `class_name` across scripts, scenes, `project.godot`, tools,
-  and data packs (dynamic loading included — see §4.1).
+  and data packs (dynamic loading included - see §4.1).
 - **Data consumption**: every `effect` key in `items.json` checked against the
   full script corpus; every PNG checked against scripts, art manifest, and all
   data packs; every `games.json` action field counted in scripts.
@@ -29,7 +29,7 @@ Every claim below was traced, not guessed:
 | `tools/` | 14,447 lines | QA/audit harness |
 | `assets/art` | 1.1 MB | |
 | `data/` | ~140 KB | |
-| `.tmp/` | **136 MB** | untracked generated reports — biggest disk item by far |
+| `.tmp/` | **136 MB** | untracked generated reports - biggest disk item by far |
 
 Top single files: `foundation_check.gd` 12,757 · `foundation_main.gd` 9,181 ·
 `blackjack.gd` 5,577 · `ui_scene_compile_check.gd` 4,580.
@@ -39,9 +39,9 @@ rework already deleted the largest dead mass (`slot_pinball_table.gd`;
 `slot_family_pinball.gd` shrank 1,789 → 666 lines). What remains is a modest
 set of true dead code (§3), dead data (§5), ghost assets (§3.2), and two large
 *pending-decision* masses (§6). The single biggest "size" win is not code at
-all — it is `.tmp/` (§7).
+all - it is `.tmp/` (§7).
 
-## 3. CONFIRMED DEAD — safe to remove now
+## 3. CONFIRMED DEAD - safe to remove now
 
 ### 3.1 `scripts/ui/main_menu_background.gd` (157 lines)
 - **Evidence:** class `MainMenuBackground` and filename referenced by nothing:
@@ -52,7 +52,7 @@ all — it is `.tmp/` (§7).
 - **Removal:** delete the file + its `.uid`. Gate: `validate_project.ps1` +
   `check_godot.ps1 -FoundationSuite ui`.
 
-### 3.2 Ghost game art — 9 PNGs + their `art_manifest.json` entries
+### 3.2 Ghost game art - 9 PNGs + their `art_manifest.json` entries
 `assets/art/games/`: `monte.png`, `three_card_monte.png`, `street_dice.png`,
 `last_chance.png`, `scratch_tickets.png`, `scratch.png`, `slots.png`,
 `ticket.png`, `vpoker.png`.
@@ -61,11 +61,11 @@ all — it is `.tmp/` (§7).
   renamed prototypes (three-card monte, street dice, last chance, scratch
   tickets; `slots/ticket/vpoker` are pre-rename duplicates of
   `slot/pull_tabs/video_poker`). Four are referenced by nothing at all; five
-  are referenced ONLY by their own `art_manifest.json` entries — a closed loop.
-- **Keep:** `cards.png`, `poker.png`, `dice.png` — referenced by `games.json`
+  are referenced ONLY by their own `art_manifest.json` entries - a closed loop.
+- **Keep:** `cards.png`, `poker.png`, `dice.png` - referenced by `games.json`
   and `items.json`.
 - **Removal:** delete the 9 PNGs (+ `.import` siblings) AND their manifest
-  entries in the same commit — the manifest validator will fail if either side
+  entries in the same commit - the manifest validator will fail if either side
   is removed alone. Also delete their `draw_*`/`GAME_ICONS` entries in
   `tools/generate_icon_art.py` if present, or the next art regen recreates
   them. Gate: `check_godot.ps1 -FoundationSuite contracts` +
@@ -86,15 +86,15 @@ all — it is `.tmp/` (§7).
   `grep -r "<name>" . --include="*.md" --include="*.ps1"` as a final guard.
   Gate: `check_godot.ps1 -Suite Smoke` (its load-check globs `tools/`).
 
-### 3.4 Tracked `.import` files (11) — policy violation
+### 3.4 Tracked `.import` files (11) - policy violation
 `assets/art/items/*.png.import` for the 11 pinball items are committed;
 README's cleanup policy explicitly lists `*.import` as not-source.
 - **Removal:** `git rm --cached` the 11 files; verify `.gitignore` covers
   `*.import` (the other ~50 item icons' `.import`s are correctly untracked, so
-  the ignore rule exists — these were force-added). Do NOT delete from disk.
-  Also exclude `branding/social/*.import` (currently untracked — never add).
+  the ignore rule exists - these were force-added). Do NOT delete from disk.
+  Also exclude `branding/social/*.import` (currently untracked - never add).
 
-## 4. NOT DEAD — looks dead, verified live. Do not touch.
+## 4. NOT DEAD - looks dead, verified live. Do not touch.
 
 | Suspect | Why it looks dead | Why it is live |
 | --- | --- | --- |
@@ -108,7 +108,7 @@ README's cleanup policy explicitly lists `*.import` as not-source.
 | `icon_sprite_renderer.gd` | 1 ref | used by `pixel_scene_canvas.gd` (the whole room renderer) |
 | `games.json` `win_chance`/`payout_mult` fields | look vestigial (mostly 0) | read in 19–22 script sites (object cards/summaries) |
 
-## 5. SUSPECT DEAD DATA — item effect keys shadowed by constants
+## 5. SUSPECT DEAD DATA - item effect keys shadowed by constants
 
 7 of 87 `items.json` effect keys are consumed **nowhere** in scripts; the
 behavior they promise is instead driven by hardcoded constants or differently
@@ -123,24 +123,24 @@ named runtime state:
 | `slot_lucky_reel_grease_spins` / `_near_misses` | `lucky_reel_grease` | unprefixed `lucky_reel_grease_*` item_state keys |
 | `slot_split_reel_note_heat` | `split_reel_note` | unprefixed variants |
 
-- **Risk framing:** these are player-facing promises — the item descriptions
+- **Risk framing:** these are player-facing promises - the item descriptions
   imply tunable behavior that the data key does not actually control. Each key
   needs a 5-minute trace at removal time: `grep -rn "<key-minus-prefix>"
   scripts/` to determine whether the JSON key seeds the runtime state
   (keep + document) or is fully shadowed (delete key, and if behavior is
   constant-driven, either wire the key or accept the constant deliberately).
 - **Recommendation:** fold this into Act 1 board T4.4 (its orphaned-effect-key
-  test) rather than a standalone pass — T4.4 already plans a
+  test) rather than a standalone pass - T4.4 already plans a
   `foundation_check` that fails on orphaned keys, which permanently prevents
   recurrence.
 
-## 6. PENDING PRODUCT DECISION — large, but do not remove yet
+## 6. PENDING PRODUCT DECISION - large, but do not remove yet
 
 ### 6.1 Prestige system (~140 references)
 `run_action_service.gd` (26 refs), `foundation_main.gd` (106 refs),
 `run_state.gd` (4), `environment_instance.gd` (2), plus empty
 `data/prestige/purchases.json` and README rows. This is the single largest
-removable *code* mass — but Act 1 board **T5.1** owns the ship-or-cut
+removable *code* mass - but Act 1 board **T5.1** owns the ship-or-cut
 decision. If the decision is HIDE, most of the `foundation_main` prestige UI
 paths become deletable. Do not pre-empt; record this audit as input to T5.1.
 
@@ -148,22 +148,22 @@ paths become deletable. Do not pre-empt; record this audit as input to T5.1.
 `demo_release_task_board.md` (1,504) and `slot_cabinet_backgrounds_ui_plan.md`
 (243) are historical. README policy allows preserving or folding. If size
 matters, fold each into a 10-line summary in the Act 1 board's Status Ledger
-and delete — but this is the user's call (they are the project's memory).
+and delete - but this is the user's call (they are the project's memory).
 
-## 7. NOT CODE — where the real disk weight is
+## 7. NOT CODE - where the real disk weight is
 
 - **`.tmp/` = 136 MB** of generated test reports. Untracked; delete freely
-  (`Remove-Item -Recurse -Force .tmp`) — regenerated on demand. This dwarfs
+  (`Remove-Item -Recurse -Force .tmp`) - regenerated on demand. This dwarfs
   every code cut in this report combined.
-- `.godot/`, `.tools/` (local Godot install), `builds/` — same class,
+- `.godot/`, `.tools/` (local Godot install), `builds/` - same class,
   already ignored; safe to purge locally whenever.
 
 ## 8. What NOT to cut, explicitly
 
 - **Tests (17,337 lines, 22% of scripts).** They are the enabling mechanism
-  for every deletion above — each removal gate below relies on them.
+  for every deletion above - each removal gate below relies on them.
 - **`foundation_main.gd` (9,181 lines).** A monolith and a legitimate refactor
-  target, but it is live UI flow — splitting it is restructuring, not dead-code
+  target, but it is live UI flow - splitting it is restructuring, not dead-code
   removal, and should not ride along with deletions.
 - Anything in §4's protect list.
 
@@ -171,14 +171,14 @@ and delete — but this is the user's call (they are the project's memory).
 
 One commit per class, gate after each, no mixing:
 
-1. **Commit A — dead script:** delete `main_menu_background.gd` (+`.uid`).
+1. **Commit A - dead script:** delete `main_menu_background.gd` (+`.uid`).
    Gate: `validate_project.ps1` + `check_godot.ps1 -FoundationSuite ui`.
-2. **Commit B — ghost art:** delete 9 PNGs + `.import`s + manifest entries +
+2. **Commit B - ghost art:** delete 9 PNGs + `.import`s + manifest entries +
    any generator entries, atomically. Gate: `-FoundationSuite contracts` +
    `foundation_visual_qa.ps1`.
-3. **Commit C — orphan tools:** delete the 5 tools after per-file grep guard.
+3. **Commit C - orphan tools:** delete the 5 tools after per-file grep guard.
    Gate: `check_godot.ps1 -Suite Smoke`.
-4. **Commit D — untrack `.import`:** `git rm --cached` the 11 files; confirm
+4. **Commit D - untrack `.import`:** `git rm --cached` the 11 files; confirm
    `.gitignore` coverage. Gate: `git status` clean of `.import`;
    `validate_project.ps1`.
 5. **Data keys (§5):** execute inside Act 1 T4.4 with its orphan-key test.
@@ -191,10 +191,10 @@ Estimated tracked-repo reduction from commits A–D: ~2,100 script lines,
 
 ## 10. Recurrence prevention (recommend adding to Act 1 board)
 
-- T4.4's orphaned-effect-key check (already planned) — extend to fail on
+- T4.4's orphaned-effect-key check (already planned) - extend to fail on
   art-manifest entries whose asset is referenced by nothing else.
 - Add a `validate_project.ps1` rule: fail if any `*.import`/`*.uid` is
   git-tracked.
 - Shared-guideline line for agents: new tools must either get a `.ps1`
-  wrapper, a suite entry, or a doc citation — otherwise they are presumed
+  wrapper, a suite entry, or a doc citation - otherwise they are presumed
   orphaned at the next audit.

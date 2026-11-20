@@ -1,4 +1,4 @@
-# Agent Prompt — Edge-State & New-Feature Polish Pass
+# Agent Prompt - Edge-State & New-Feature Polish Pass
 
 Copy everything below this line into the worker agent.
 
@@ -10,46 +10,46 @@ every empty / first-run / edge state look INTENTIONAL, and (2) make the new
 0.5 systems POLISHED, clear, and intuitive for a first-time player. A new
 player must always understand what's going on.
 
-## Part A — Edge & empty states look intentional
+## Part A - Edge & empty states look intentional
 
 Drive the game into each of these states and confirm it looks designed,
 not broken; fix the ones that don't. At minimum:
 
-- **Fresh profile** — zero collection, zero run history, no housing
+- **Fresh profile** - zero collection, zero run history, no housing
   upgrades, no cards, no tips seen. The start screen, career/stats surface,
   meta home, and collection display must all read as inviting, not empty/
   broken.
-- **First run / first loss / first win** — the very first time a player
+- **First run / first loss / first win** - the very first time a player
   hits each screen (run report, drops, home) with no prior context.
-- **Top housing tier** — no further upgrade; the meta-home HUD and housing
+- **Top housing tier** - no further upgrade; the meta-home HUD and housing
   UI show a clean "top tier" state, not a broken next-cost.
-- **Out-of-stock scratch machine** — the machine with few/no tickets
+- **Out-of-stock scratch machine** - the machine with few/no tickets
   stocked reads intentionally, not empty.
-- **Zero gold / zero bankroll / empty inventory / no unopened bags** —
+- **Zero gold / zero bankroll / empty inventory / no unopened bags** -
   each shows a clean empty state with guidance, never a blank or a crash.
-- **No world-map routes / all-closed venues at a given time** — the map
+- **No world-map routes / all-closed venues at a given time** - the map
   and travel UI handle it gracefully.
 
 For each: the empty state has a clear message and (where useful) a nudge
 toward the action that fills it. Use tokens; small-screen and reduce-motion
 clean.
 
-## Part B — New-feature clarity & polish
+## Part B - New-feature clarity & polish
 
 The 0.5 systems are powerful but dense for a newcomer. Make each clear and
 intuitive on first encounter, extending the existing coach / first-time-tip
-system where a gap exists (do not build a new tutorial system — use the
+system where a gap exists (do not build a new tutorial system - use the
 lesson/coach engine):
 
-- **Chips vs cash + the Cage** — a first-timer must grasp that Grand
+- **Chips vs cash + the Cage** - a first-timer must grasp that Grand
   Casino tables use chips, that the Cage cashes them, and the ATM/debt/
   card interactions. Clear first-time guidance and readable affordances.
-- **Players Card tiers** — Bronze/Silver/Gold progress and how to claim at
+- **Players Card tiers** - Bronze/Silver/Gold progress and how to claim at
   Linda must be legible; the player should understand why a claim is
   blocked (debt, threshold not met).
-- **The Rourke showdown/duel** — the four-phase flow and the duel must be
+- **The Rourke showdown/duel** - the four-phase flow and the duel must be
   understandable in the moment, not confusing.
-- **Scratch tickets, cheating, prestige cards** — each reads clearly the
+- **Scratch tickets, cheating, prestige cards** - each reads clearly the
   first time; the player knows what they're doing and what happened.
 
 For each system: confirm the flow is smooth (clean transitions, clear
@@ -59,7 +59,7 @@ rough/unclear affordances in place.
 
 ## Rules
 
-- Presentation, clarity, and empty-state handling — NOT new mechanics or
+- Presentation, clarity, and empty-state handling - NOT new mechanics or
   balance changes. If you find a genuine bug or a system that needs a
   design change, fix obvious bugs in place and REPORT anything larger as a
   follow-up prompt in `docs/todo/`.

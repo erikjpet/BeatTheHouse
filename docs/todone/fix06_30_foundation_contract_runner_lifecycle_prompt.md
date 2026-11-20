@@ -1,8 +1,8 @@
-# fix06_30 — Foundation Contracts Runner Lifecycle Repair
+# fix06_30 - Foundation Contracts Runner Lifecycle Repair
 
 ## Status
 
-DONE — completed 2026-09-10 on implementation `3f31bf10`. This is a
+DONE - completed 2026-09-10 on implementation `3f31bf10`. This is a
 harness-integrity row; its runner work does not change money, RNG, RTP,
 payouts, odds, schema or migrations.
 

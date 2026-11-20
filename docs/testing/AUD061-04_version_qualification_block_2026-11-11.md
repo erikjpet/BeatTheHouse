@@ -1,4 +1,4 @@
-# AUD061-04 — Version update blocked by existing exact-input qualification
+# AUD061-04 - Version update blocked by existing exact-input qualification
 
 Started from main854b12568d0a53ccb3c9dde9f14f5f99fc23bfbb (AUD12 delivered-report receipt); accepted NEXTbdaa9b337d3fae076a9ee623051acc2af2e6a7d9. [Work order](../todo/BTH_0.6.1_audit_work_orders.md#aud061-04--version-stamps-still-read-060-everywhere).
 

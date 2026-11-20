@@ -132,17 +132,17 @@ func _build_canvas() -> void:
 func _update_canvas(trace: Dictionary) -> void:
 	var phase_id := str(trace.get("phase_id", ""))
 	var rourke := _dict(trace.get("rourke_actor", {})); var room := _dict(trace.get("room_state", {})); var stakes := _dict(trace.get("player_stakes", {}))
-	_title.text = "Rourke Showdown — %s" % phase_id.replace("_", " ").capitalize()
+	_title.text = "Rourke Showdown - %s" % phase_id.replace("_", " ").capitalize()
 	_status.text = "Ending: %s | Energy: %s" % [str(trace.get("selected_ending", "pending")), str(trace.get("energy_tier", ""))]
 	_rourke.text = "ROURKE\n%s / %s" % [str(rourke.get("pose", "")), str(rourke.get("behavior_state", ""))]
-	_stakes.text = "YOU %d  —  ANTE %d  —  ROURKE %d\nHand %d / %d | Margin %+d" % [int(stakes.get("player_stack", 0)), int(stakes.get("ante", 0)), int(stakes.get("rourke_stack", 0)), int(stakes.get("hand_number", 0)), int(stakes.get("hand_limit", 0)), int(stakes.get("margin", 0))]
+	_stakes.text = "YOU %d  -  ANTE %d  -  ROURKE %d\nHand %d / %d | Margin %+d" % [int(stakes.get("player_stack", 0)), int(stakes.get("ante", 0)), int(stakes.get("rourke_stack", 0)), int(stakes.get("hand_number", 0)), int(stakes.get("hand_limit", 0)), int(stakes.get("margin", 0))]
 	_room.text = "Crowd: %s | Rail: %s | Staff: %s | Security: %s | Exit: %s" % [str(room.get("crowd_state", "")),str(room.get("rail_state", "")),str(room.get("staff_state", "")),str(room.get("security_state", "")),str(room.get("exit_state", ""))]
 	var crowd_count := 12 if str(room.get("crowd_state", "")) in ["full","celebrating"] else 6 if str(room.get("crowd_state", "")) == "thinning" else 2
 	for index in range(_crowd.size()): _crowd[index].visible = index < crowd_count
 	_rail.color = Color("81444b") if str(room.get("rail_state", "")) == "tight" else Color("8b6b42")
 	_security.modulate = Color(1.0, 0.55, 0.55) if str(room.get("security_state", "")) == "high" else Color.WHITE
 	var controls := _array(trace.get("available_controls", []))
-	for index in range(_buttons.size()): _buttons[index].text = str(controls[index]).replace("_", " ") if index < controls.size() else "—"; _buttons[index].disabled = index >= controls.size()
+	for index in range(_buttons.size()): _buttons[index].text = str(controls[index]).replace("_", " ") if index < controls.size() else "-"; _buttons[index].disabled = index >= controls.size()
 	_canvas.scale = Vector2(0.78, 0.78) if bool(trace.get("small_screen", false)) else Vector2.ONE
 	_canvas.modulate = Color(0.9, 0.9, 0.9) if bool(trace.get("reduced_motion", false)) else Color.WHITE
 	_table.color = Color("245b6b") if bool(trace.get("colorblind", false)) else Color("174b3a")

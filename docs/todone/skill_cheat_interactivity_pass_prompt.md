@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-17
 - **Completion/implementation commits:** `d0b07835`
-- **Verification:** PASS — tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_performance_probe.ps1 -RequireGodot; tools/foundation_visual_qa.ps1; tools/foundation_mouse_playtest.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_performance_probe.ps1 -RequireGodot; tools/foundation_visual_qa.ps1; tools/foundation_mouse_playtest.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — Skill-Cheat Interactivity Pass (All Games Audit + Upgrades)
+# Agent Prompt - Skill-Cheat Interactivity Pass (All Games Audit + Upgrades)
 
 Copy everything below this line into the agent.
 
@@ -18,12 +18,12 @@ roguelike (Web/itch.io + Windows, 1280×720). Per-game modules under
 "every game has a skill-based cheat." This file is self-contained. Suite
 timeout = max(300s, ceil(recorded baseline in tools/check_godot.ps1 × 1.5)).
 
-## Owner verdicts (locked — these frame the whole task)
+## Owner verdicts (locked - these frame the whole task)
 
 - **Blackjack is the ONLY cheat with a solid baseline** (the
   count-challenge system). It is the quality bar. Keep it; do not
   rework it.
-- **Pull tabs is EXEMPT**: it needs no distinct skill cheat — item-based
+- **Pull tabs is EXEMPT**: it needs no distinct skill cheat - item-based
   cheating (its item interactions) is its intended cheat surface.
   Verify those items work; add nothing.
 - Every OTHER implemented cheat gets audited and, where it is passive or
@@ -35,9 +35,9 @@ timeout = max(300s, ceil(recorded baseline in tools/check_godot.ps1 × 1.5)).
 
 ### 1. Audit (report before touching code)
 
-For each game — blackjack, roulette (past-post), baccarat (edge-sort),
+For each game - blackjack, roulette (past-post), baccarat (edge-sort),
 video poker (holdout swap), bar dice (controlled roll), slots (reel
-nudge), pull tabs (item-driven) — document in a table: what the cheat
+nudge), pull tabs (item-driven) - document in a table: what the cheat
 actually does today in code (cite file/function), its input model
 (passive click vs timed/skill), how alcohol/contraband/items modify it,
 its heat/consequence wiring, and test coverage. Flag anything the store
@@ -56,24 +56,24 @@ pressure, readable feedback, fail states that sting):
   brief look; holdout: track which card you palmed across a shuffle
   animation),
 - **Precision under degradation**: alcohol widens/blurs/shifts the
-  input (the modifier data already exists — wire it into the new
+  input (the modifier data already exists - wire it into the new
   interactions), contraband sharpens it.
 Choose the mechanic that fits each game's fiction; keep scope
-proportionate — one good interactive beat per cheat, not a minigame
+proportionate - one good interactive beat per cheat, not a minigame
 suite. All windows/timings are data-tuned. Success/failure probabilities
 must remain deterministic given the same seed and the same player
 inputs; timing inputs resolve against simulation-time windows evaluated
-at action boundaries (the count-challenge precedent shows the pattern —
+at action boundaries (the count-challenge precedent shows the pattern -
 study how it keeps skill input deterministic before designing).
 
 ### 3. Consistency layer
 
 - Uniform cheat affordance: every cheat action telegraphs risk the same
-  way (heat preview, watched-status relevance — now spatial where the
+  way (heat preview, watched-status relevance - now spatial where the
   pit boss system applies).
 - Failure feedback: a failed skill input has a distinct, readable
   consequence beat (not just a heat number).
-- The duel (Grand Casino boss, if landed) consumes blackjack's system —
+- The duel (Grand Casino boss, if landed) consumes blackjack's system -
   do not break its hooks; run its tests.
 
 ## Hard rules

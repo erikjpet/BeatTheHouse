@@ -1,4 +1,4 @@
-# Art Rework Test 02 — Generation Briefs
+# Art Rework Test 02 - Generation Briefs
 
 All source art was made with the built-in image-generation tool and then converted locally to the game’s exact raster contracts. The shared direction is an original retro coastal casino look: simple geometric construction, hard-edged pixels, calm resort architecture, cobalt/coral/ivory color, strong graphic light and limited detail. No specific artist was copied.
 

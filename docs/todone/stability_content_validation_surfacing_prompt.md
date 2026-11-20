@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-12
 - **Completion/implementation commits:** `37bd54d7`
-- **Verification:** PASS — powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - powershell -ExecutionPolicy Bypass -File tools/validate_project.ps1; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite systems -TimeoutSec 300; powershell -ExecutionPolicy Bypass -File tools/check_godot.ps1 -RequireGodot -FoundationSuite ui -TimeoutSec 300. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — Surface Content-Validation Errors at Runtime Boot
+# Agent Prompt - Surface Content-Validation Errors at Runtime Boot
 
 Copy everything below this line into the agent.
 
@@ -37,13 +37,13 @@ flies blind.
    `validation_errors`:
    - In debug builds (`OS.is_debug_build()`): print every error via
      `push_error`, and show a visible one-line banner/message on the start
-     screen ("Content validation: N errors — see console") using the
+     screen ("Content validation: N errors - see console") using the
      existing status/message affordances. Do not build new UI chrome.
    - In release builds: print via `push_warning` only; never block play
      (the shipped data has already passed gates; tolerance is correct).
 2. Add a count to the existing library stats/debug output if one exists
    (`content_library.gd:596` already exposes a
-   `validation_errors` size in a stats dict — wire that through rather
+   `validation_errors` size in a stats dict - wire that through rather
    than duplicating).
 3. Do not change any validation rules themselves; surfacing only.
 
@@ -62,7 +62,7 @@ flies blind.
 1. Foundation test: a library constructed with a known-bad injected pack
    reports errors AND the boot-surfacing path flags them (assert the
    banner/message state in debug mode).
-2. Clean data: current `data/*.json` must produce zero validation errors —
+2. Clean data: current `data/*.json` must produce zero validation errors -
    if any real errors surface, FIX the data (that is in scope and is the
    point) and list each fix in your report.
 3. Manual: temporarily break a data file locally, boot, confirm the debug

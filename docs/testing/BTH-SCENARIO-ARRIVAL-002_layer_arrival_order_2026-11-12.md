@@ -1,4 +1,4 @@
-# BTH-SCENARIO-ARRIVAL-002 — settle a layer arrival before accepting room commands
+# BTH-SCENARIO-ARRIVAL-002 - settle a layer arrival before accepting room commands
 
 Date: 2026-11-12
 Starting commit: babc66ea8e89d1d5efc62f6dc32dc1bca255fc5e.

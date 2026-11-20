@@ -1,6 +1,6 @@
-# rw06 RESET step 1 — Consolidate everything onto main
+# rw06 RESET step 1 - Consolidate everything onto main
 
-Status: **HISTORICAL / COMPLETED — DO NOT LAUNCH.** The consolidation outcome
+Status: **HISTORICAL / COMPLETED - DO NOT LAUNCH.** The consolidation outcome
 is recorded in `rw06_reset_status.md`; later source is already on `main`.
 
 ## Why

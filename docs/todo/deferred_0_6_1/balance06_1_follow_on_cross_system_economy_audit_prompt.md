@@ -1,9 +1,9 @@
-Status: **PARKED — contract-ready, but do not claim until placement is accepted
+Status: **PARKED - contract-ready, but do not claim until placement is accepted
 and the refreshed playtest supplies owner direction**
 
 Board row: `balance06_1-follow-on` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — balance06_1-follow-on: Full Cross-System Economy Audit
+# Agent Prompt - balance06_1-follow-on: Full Cross-System Economy Audit
 
 Copy everything below this line into the implementation agent only after the
 board owner has made the row claimable.
@@ -201,7 +201,7 @@ documentation prose, or present-day assumptions.
 Use the accepted production pusher implementation and the existing EV harness.
 Run exactly three machine strata with exactly 200,000 accepted, player-funded
 production-origin drops each: `quarter_falls`, `jackpot_ridge`, and
-`vault_drop` — exactly 600,000 accepted paid drops combined. The accepted
+`vault_drop` - exactly 600,000 accepted paid drops combined. The accepted
 denominator includes only paid-origin player inserts accepted by the production
 solver. It excludes refused or rejected attempts, queued but uncommitted input,
 opening stock, free/feature/bonus/child inserts, and retries. Record attempted

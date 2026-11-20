@@ -1,6 +1,6 @@
-Status: DONE — independently accepted, landed and post-land accepted
+Status: DONE - independently accepted, landed and post-land accepted
 
-# fix06_6 — Delivery Full-State Golden Closure
+# fix06_6 - Delivery Full-State Golden Closure
 
 ## Purpose
 

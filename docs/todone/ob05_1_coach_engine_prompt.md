@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-17
 - **Completion/implementation commits:** `d0b07835`
-- **Verification:** PASS — tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_visual_qa.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_visual_qa.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — Onboarding Slice 1: The Coach Engine + First-Time Tips
+# Agent Prompt - Onboarding Slice 1: The Coach Engine + First-Time Tips
 
 Copy everything below this line into the agent.
 
@@ -17,7 +17,7 @@ rendering; UI via extracted components + pure view models
 (foundation_main gains wiring only); content data-driven from
 `data/*.json`; profile persistence is schema-versioned with atomic
 writes. This file is self-contained; the binding design contract is
-`docs/archive/0.5/plans/0.5_onboarding_tutorial_plan.md` Part 1 — read it first.
+`docs/archive/0.5/plans/0.5_onboarding_tutorial_plan.md` Part 1 - read it first.
 No dependency on the Grand Casino rework; but if it has landed, its
 surfaces (chips, card tiers) are valid tip subjects.
 
@@ -44,7 +44,7 @@ surfaces (chips, card tiers) are valid tip subjects.
   (highlight + dim) or to HUD element keys; distinct "dealer's advice"
   visual identity using the existing VisualStyle palette and panel
   idioms. Non-blocking unless the lesson declares `gating`.
-- Triggers evaluate at action boundaries / screen transitions only —
+- Triggers evaluate at action boundaries / screen transitions only -
   find the existing refresh seams and hook there; never per frame.
   Bubble view model builds on state change only.
 
@@ -63,7 +63,7 @@ Author these lessons (one-shot each, non-gating, exact copy per
 taken, first closing-time warning, first pawn interaction, first item
 purchase, first travel/map open; plus, ONLY if the casino rework has
 landed: first chips gained, first card tier. Verify each trigger
-predicate against real state flags — no invented signals.
+predicate against real state flags - no invented signals.
 
 ## Hard rules
 
@@ -76,7 +76,7 @@ predicate against real state flags — no invented signals.
 - SCHEDULING GUARD: do not run while the gc05 queue is mid-flight on
   this tree (gc05_*_prompt.md present in docs/todo) unless you are
   operating in an isolated worktree branch per an orchestrator's
-  instructions — this task wires into foundation_main and the settings
+  instructions - this task wires into foundation_main and the settings
   overlay, which that queue also touches.
 
 ## QA / Tests

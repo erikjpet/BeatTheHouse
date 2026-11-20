@@ -1,4 +1,4 @@
-# Feat 06.1 — Scratch Scalper Ticket Trade
+# Feat 06.1 - Scratch Scalper Ticket Trade
 
 Status: **COMPLETE / ROW-LOCAL GATES GREEN**
 Claim commit: `600a0fba`

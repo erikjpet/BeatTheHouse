@@ -55,7 +55,7 @@ Copy everything below this line into the agent.
 ---
 
 You are working in `D:\Projects\Beat-The-House` (Godot 4.6 GDScript casino
-roguelike — see CLAUDE.md). The owner's playtest produced CRITICAL fixes
+roguelike - see CLAUDE.md). The owner's playtest produced CRITICAL fixes
 (idle-animation liveness, meta home lag/phantom-items/top-bar) that
 post-date the packaged 0.4.0 builds, so `builds/itch/*.zip` and the hashes
 in `docs/archive/0.4/plans/0.4_release_checklist.md` no longer describe the release
@@ -73,7 +73,7 @@ against the FIXED tree.
 ## Required work
 
 1. Re-run the release-grade verification affected by the fixes (not the
-   full 3h matrix — the final-gate evidence still stands for everything
+   full 3h matrix - the final-gate evidence still stands for everything
    the fixes did not touch; scope honestly and record what you reran and
    why it suffices):
    - `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1`

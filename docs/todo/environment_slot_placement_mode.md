@@ -56,8 +56,8 @@ mode contract.
 - Allow pointer dragging and keyboard nudging on the canonical 900x430 room
   plane. Moving a slot translates its position, hit rectangle, and label
   anchor without changing its size, family, or identity. The selected slot can
-  also use one of three explicit draw layers—**Behind**, **Standard**, or
-  **Front**—and higher layers render above lower layers.
+  also use one of three explicit draw layers-**Behind**, **Standard**, or
+  **Front**-and higher layers render above lower layers.
 - Keep the placement controls in one fixed, no-scroll panel that fits the
   supported viewport. Family, visibility, layer, and action controls retain
   consistent height, type size, and equal-width grouping rather than resizing

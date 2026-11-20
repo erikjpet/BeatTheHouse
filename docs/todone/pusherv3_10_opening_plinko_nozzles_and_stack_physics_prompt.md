@@ -1,7 +1,7 @@
-Status: DONE — completed and reverified 2026-09-01
+Status: DONE - completed and reverified 2026-09-01
 Board row: `pusherv3_10` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — pusherv3_10: Full-Width Resting Openings, Full Plinko, Drop Nozzles, and Stack Physics
+# Agent Prompt - pusherv3_10: Full-Width Resting Openings, Full Plinko, Drop Nozzles, and Stack Physics
 
 Follow-up to archived
 `docs/todone/pusherv3_9_contact_bed_and_opaque_edge_prompt.md`.

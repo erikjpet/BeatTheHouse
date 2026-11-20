@@ -1,6 +1,6 @@
 # fix06_7 - Coin Pusher V3 intro copy correction
 
-Status: DONE — independently accepted, landed, and post-land verified on
+Status: DONE - independently accepted, landed, and post-land verified on
 2026-08-26.
 
 ## Defect and authority

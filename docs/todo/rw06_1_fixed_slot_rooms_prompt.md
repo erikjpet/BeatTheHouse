@@ -1,4 +1,4 @@
-# rw06_1 — Fixed, modular room slots (replaces runtime placement solving)
+# rw06_1 - Fixed, modular room slots (replaces runtime placement solving)
 
 Status: **HISTORICAL / SUPERSEDED.** This pre-implementation prompt used the
 retired `stage.*` model. The shipped four-family and exact scenario-instance

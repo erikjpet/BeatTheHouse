@@ -102,7 +102,7 @@ and content remain consumer responsibilities; this row adds no game-specific
 branch. Downstream Family 1 rows can adopt the shared runtime without editing its
 neutral files.
 
-## Final closeout — 2026-09-03
+## Final closeout - 2026-09-03
 
 Current-main acceptance reconciliation is recorded in
 `docs/plans/game06_1_final_closeout.md`. The landed runtime and its seven Family

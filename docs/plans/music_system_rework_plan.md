@@ -16,18 +16,18 @@ music paths inside `scripts/ui/sfx_player.gd`, and the audio bus graph.
 ## 1. Review of the removed pre-rework implementation
 
 ### What it did before the rework
-- **Composer (good bones):** real music theory — mode scales (minor, dorian,
+- **Composer (good bones):** real music theory - mode scales (minor, dorian,
   phrygian, harmonic minor), chord progressions with chord-tone gravity for
   the lead, motif-driven melodies, phrase energy arcs, per-theme BPM/root/
   texture, all deterministically seeded per environment. This layer is worth
   keeping almost verbatim.
-- **Renderer (the architectural limit):** the entire arrangement — pad, bass,
-  lead, drums, siren, ambience texture — is summed per-frame into ONE mono
+- **Renderer (the architectural limit):** the entire arrangement - pad, bass,
+  lead, drums, siren, ambience texture - is summed per-frame into ONE mono
   16-bit 22 kHz PCM buffer on a background thread, cached as a WAV, and
   looped on a single `AudioStreamPlayer`. Latency is masked by a three-stage
   ladder (1.25 s instant bed → 8-step primer → full arrangement) and stream
   swaps wait for phrase breakpoints.
-- **Input surface (narrow):** exactly two inputs — the environment's
+- **Input surface (narrow):** exactly two inputs - the environment's
   `music_profile` and heat quantized to 10 bands. One call site
   (`FoundationMain._update_procedural_music()` in the historical
   implementation). Every heat-band crossing re-bakes and swaps an
@@ -35,7 +35,7 @@ music paths inside `scripts/ui/sfx_player.gd`, and the audio bus graph.
 - **Second, disconnected music system:** slot feature music
   (`bonus_music_pinball`/`bonus_music_buffalo`) is baked separately inside
   `sfx_player.gd` with no coordination with the ambient system.
-- **Zero DSP:** the bus layout has volume buses only — no filter, chorus,
+- **Zero DSP:** the bus layout has volume buses only - no filter, chorus,
   distortion, reverb, or compressor anywhere.
 
 ### Why it can't meet the goals as-is
@@ -43,7 +43,7 @@ music paths inside `scripts/ui/sfx_player.gd`, and the audio bus graph.
 | --- | --- |
 | Updates quickly on input criteria | any state change = full re-bake + wait for phrase break; only heat is even an input |
 | Dynamic on ALL input factors | alcohol, watch state, win streaks, debt, showdown, feature state are invisible to music |
-| Layers | one pre-mixed stream — nothing can fade in/out independently |
+| Layers | one pre-mixed stream - nothing can fade in/out independently |
 | Distortion/FX | no AudioEffect exists on any bus |
 | Unique, well composed | straight 16ths (no swing), root-position pads (no voice leading), single A-section loop, one instrument palette for all venues |
 
@@ -68,9 +68,9 @@ thread, token cancellation, instant-bed and primer staging all carry over.
 A single node owning: current theme context, stem players, a **mix target
 vector** (per-stem gain) and an **FX target vector** (per-effect parameters).
 Each frame it lerps live values toward targets (fast attack ~0.25 s, slow
-release ~2 s) — so state changes audibly land within a beat, never a re-bake.
+release ~2 s) - so state changes audibly land within a beat, never a re-bake.
 Musical changes (unmuting a stem, stingers) quantize to the next beat/bar
-using playback position and the known `step_period` — transitions become
+using playback position and the known `step_period` - transitions become
 musical instead of crossfaded.
 
 ### 2.3 Input matrix (the "all input factors" contract)
@@ -95,9 +95,9 @@ and parameter-driven by the director:
 1. `AudioEffectLowPassFilter` (drunk fog, interior muffle)
 2. `AudioEffectChorus` (drunk wow/flutter; light on jazz venues always)
 3. `AudioEffectDistortion` (danger/showdown grit; lo-fi character at dives)
-4. `AudioEffectReverb` (venue size — room scale from archetype)
+4. `AudioEffectReverb` (venue size - room scale from archetype)
 5. `AudioEffectCompressor` → `AudioEffectLimiter` (glue + safety, always on)
-This alone — even before stems — transforms perceived quality and is Phase 1
+This alone - even before stems - transforms perceived quality and is Phase 1
 because it's independent of the re-architecture.
 
 ### 2.5 Unify the second music system
@@ -116,7 +116,7 @@ All inside the existing composer, cheap and testable:
   lift) so loops breathe; re-seed lead ornaments per loop pass for
   non-repetition without losing the motif identity.
 - **Answer phrases:** motif call in bars 1-2, transformed answer (inversion/
-  transposition) in bars 3-4 — the single biggest "composed, not generated"
+  transposition) in bars 3-4 - the single biggest "composed, not generated"
   tell.
 - **Phrase-end drum fills** gated by the existing phrase-energy arc.
 - **Per-venue instrument palettes:** jazz club = brushes/upright/warm pad;
@@ -146,13 +146,13 @@ contract** as the only thing MusicDirector consumes:
 - **Binding is data-driven:** an archetype's `music_profile` (or a feature's
   music spec) gains an optional `authored_track_id`. If set and the manifest
   entry resolves, the authored provider wins; otherwise silent fallback to
-  procedural — a missing file must never break a run.
+  procedural - a missing file must never break a run.
 - **Sparse stem sets are legal.** An authored track may ship as one full-mix
   stem plus a tension layer; the director treats absent stems as silent and
   maps its mix matrix onto whatever roles exist. Authored bpm/loop metadata
   drives the same beat/bar quantization, so stingers and state transitions
   work identically.
-- **The FX chain (§2.4) is source-agnostic by construction** — it lives on
+- **The FX chain (§2.4) is source-agnostic by construction** - it lives on
   buses, so drunk/danger/venue treatment applies equally to authored music.
 - Result: a composer can later hand us real recordings and they drop in as
   content (manifest + files), zero code changes.
@@ -194,7 +194,7 @@ Each phase ships independently; Phase 1 alone is a worthwhile release.
 ## 4. Constraints & risks
 
 - **Baked stems can't change tempo live.** Heat-driven BPM lift is replaced
-  by drum-density stem variants (double-time hats) — reads as acceleration
+  by drum-density stem variants (double-time hats) - reads as acceleration
   without resampling artifacts. True tempo ramps would need a streaming
   synth rewrite; explicitly out of scope.
 - **Stem sync:** all stems must be started on the same mix frame and share
@@ -204,6 +204,6 @@ Each phase ships independently; Phase 1 alone is a worthwhile release.
   cancellation; stems generate as one job to avoid partial sets.
 - **Headless/CI:** all new behavior must expose snapshot APIs (mix state,
   FX state, stem manifest) like the existing theory/latency/transition
-  snapshots — the current test pattern extends cleanly.
+  snapshots - the current test pattern extends cleanly.
 - **Do not regress the staging ladder:** venue entry must still make sound
   within ~1.25 s (instant bed) regardless of stem bake time.

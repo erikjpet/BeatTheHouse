@@ -1,6 +1,6 @@
-# rw06 RESET step 2 — Three implementation lanes (implementation only)
+# rw06 RESET step 2 - Three implementation lanes (implementation only)
 
-Status: **HISTORICAL / COMPLETED — DO NOT LAUNCH.** The reset lanes were a dated
+Status: **HISTORICAL / COMPLETED - DO NOT LAUNCH.** The reset lanes were a dated
 recovery workflow and are superseded by the feature-complete source on `main`.
 
 ## Owner rules (binding, override every older prompt)
@@ -43,7 +43,7 @@ recovery workflow and are superseded by the feature-complete source on `main`.
   check that it opens.
 - If it doesn't work, fix it and look again. That's all.
 
-## Lane A — Rooms (the priority; this must land)
+## Lane A - Rooms (the priority; this must land)
 
 Make every room lay out like a real place. Owner feedback, all binding, is in
 Q-006, Q-007 and Q-008 in the questions file. Read those answers in full. In
@@ -79,7 +79,7 @@ short:
 
 Merge each working step to `main`.
 
-## Lane B — Endings
+## Lane B - Endings
 
 Make all three endings winnable to their win screen: clean (Linda's Players
 Card ladder), cheat (Rourke's walk, pat-down, interrogation, five-hand duel),
@@ -102,7 +102,7 @@ and crew/heist (a heist plan executed at the Grand Casino). Read
    `pixel_scene_canvas.gd`, the placement JSONs). If a room problem blocks
    you, note it in the status file for Lane A.
 
-## Lane C — Pull-tab glimmer, then help rooms
+## Lane C - Pull-tab glimmer, then help rooms
 
 1. Finish the pull-tab yellow glimmer (Q-014 in the questions file;
    `docs/todo/rw06_6_pull_tab_glimmer_prompt.md` "Product contract" only; skip
@@ -114,7 +114,7 @@ and crew/heist (a heist plan executed at the Grand Casino). Read
    lane's line in the status file. Only edit your claimed rooms' entries in
    `placement_surfaces.json`, following Lane A's rules above.
 
-## Lane D — Release prep (added 2026-09-24)
+## Lane D - Release prep (added 2026-09-24)
 
 This doesn't depend on final game code. Don't edit game logic, rooms or endings.
 
@@ -146,7 +146,7 @@ This doesn't depend on final game code. Don't edit game logic, rooms or endings.
 4. Tell the owner in the questions file that the copy draft and trial builds
    are ready. Then mark your line DONE.
 
-## Lane C part 3 — Heist ending (added 2026-09-24; takes heist from Lane B)
+## Lane C part 3 - Heist ending (added 2026-09-24; takes heist from Lane B)
 
 Lane C owns the **crew/heist ending**. Lane B keeps **clean** and **cheat**.
 

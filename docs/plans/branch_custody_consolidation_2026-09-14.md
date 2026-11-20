@@ -1,4 +1,4 @@
-# Branch Custody Consolidation — 2026-09-14
+# Branch Custody Consolidation - 2026-09-14
 
 ## Result
 

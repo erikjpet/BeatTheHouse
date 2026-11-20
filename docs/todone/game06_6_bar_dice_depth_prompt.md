@@ -1,4 +1,4 @@
-Status: COMPLETE — recovered Bar Dice depth is landed, verified, and archived
+Status: COMPLETE - recovered Bar Dice depth is landed, verified, and archived
 Board row: `game06_6` in `docs/todo/README_0_6_board.md`
 
 ## Execution Record
@@ -40,7 +40,7 @@ Board row: `game06_6` in `docs/todo/README_0_6_board.md`
   and real-renderer rerun passed. Full report and hashes:
   `docs/plans/game06_6_final_closeout.md`.
 
-# Agent Prompt — 0.6 game06_6: Bar Dice Depth
+# Agent Prompt - 0.6 game06_6: Bar Dice Depth
 
 Copy everything below this line into the agent.
 
@@ -50,12 +50,12 @@ You are working in `D:\Projects\Beat-The-House`. This is a depth pass over the
 shipped bar dice implementation, not a rules rewrite. Read
 `scripts/games/bar_dice.gd` (~3300 lines), the `game06_1` ritual contract
 document under `docs/plans/`, and the landed `craps06_2` street craps and
-`craps06_3` depth work — street craps is this game's closest sibling and its
+`craps06_3` depth work - street craps is this game's closest sibling and its
 dispersal, teaching and cash-only seams must be reused, not duplicated.
 
 ## Why this rework exists
 
-Bar dice is the street register's own game: no felt, no dealer, no house — just
+Bar dice is the street register's own game: no felt, no dealer, no house - just
 a cup, a person across from you, and cash on the bar. It currently resolves as a
 panel with a result line, which throws away the one thing it has that no casino
 game does. This is also the game most likely to be a player's first experience
@@ -77,7 +77,7 @@ not edit the shared runtime or visual layer; file a runtime request instead.
 - Wagers are agreed, not selected: money goes on the bar, the opponent covers it
   or does not, and a raise is a thing the other person can refuse. Show available
   cash, at-risk cash, what is covered and what is returned, with no ambiguity.
-- The bar is a scene with onlookers as actors — bounded, seeded reactions, no
+- The bar is a scene with onlookers as actors - bounded, seeded reactions, no
   effect on outcomes. A tense round draws people; a bad beat empties the space.
 - Preserve every landed rule, payout and probability exactly.
 
@@ -91,7 +91,7 @@ not edit the shared runtime or visual layer; file a runtime request instead.
   never reroll or alter them, and may never read wall-clock time for a result.
 - Rejected or incomplete throws return the cup without charging or advancing.
 - Where the game has bluffing or calling, the opponent needs observable tells
-  that a player can learn — bounded, deterministic, and never a hidden second
+  that a player can learn - bounded, deterministic, and never a hidden second
   RNG. Keep them honest: a tell that lies is only acceptable if the design says
   it lies and the player can discover that.
 - Settlement is hand to hand. Money physically moves between two people, and the

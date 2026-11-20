@@ -1,6 +1,6 @@
 # env06_7 A-E current-main integration
 
-Status: **DONE / ACCEPTED ON CURRENT MAIN CANDIDATE — 2026-08-31**
+Status: **DONE / ACCEPTED ON CURRENT MAIN CANDIDATE - 2026-08-31**
 
 This candidate starts at exact current main
 `b091bc43330dd1df472c868b3246032c47570e9b` and semantically replays, in its

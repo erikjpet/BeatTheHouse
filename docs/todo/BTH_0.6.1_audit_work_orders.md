@@ -1,4 +1,4 @@
-# Beat the House 0.6.1 — pre-release audit and work orders
+# Beat the House 0.6.1 - pre-release audit and work orders
 
 Audit date: 2026-11-10
 Audited source: `main` at `85d38b96a3c2b1d47020dd6e5a6c4bb12605ca0f`
@@ -15,7 +15,7 @@ above; if `main` has moved, re-locate by the quoted code or function name.
 
 ## 0. How to use this document
 
-### Owner decisions (2026-11-11) — read these first
+### Owner decisions (2026-11-11) - read these first
 
 1. **Save data does not need to be preserved.** The game is in active
    development. Carrying saves, settings or home progression from one version
@@ -30,7 +30,7 @@ What decision 1 changes:
 
 | Item | Before | Now | What is left to do |
 | --- | --- | --- | --- |
-| AUD061-13 Web save folder move | Blocker | **Closed — reset accepted** | No migration. Optional one-line release note. Ignore the "Change required if migrating" steps. |
+| AUD061-13 Web save folder move | Blocker | **Closed - reset accepted** | No migration. Optional one-line release note. Ignore the "Change required if migrating" steps. |
 | AUD061-06 0.6.0 save fixtures | Blocker | **Dropped** | Nothing. Do not capture 0.6.0 saves or add upgrade tests. |
 | AUD061-07 Save version check | High | **Dropped** | Nothing for now. |
 | AUD061-15 Crew key / portability | Medium | **Low** | Only item 2 (repair a wrong-sized key file). Skip the rest. |
@@ -88,7 +88,7 @@ Done:
 - Ran `python -m unittest discover -s tools/tests` and the documented ledger
   reconciliation command.
 
-Not done — treat these as open:
+Not done - treat these as open:
 
 - **No Godot runtime check was executed.** Running the engine binary was
   refused in the audit sandbox. The Smoke suite, the animation-liveness check
@@ -136,11 +136,11 @@ Not done — treat these as open:
 | AUD061-01 | High | Persistence | Leftover `.rollback` file blocks all later saves permanently | S |
 | AUD061-02 | Blocker | Exit path | Game cannot be closed while a save fails | S |
 | AUD061-03 | Low (deferred) | Shipping gates | Performance harness reachable in shipped builds | M |
-| AUD061-13 | Closed | Web persistence | 0.6.1 Web build moves the save folder — reset accepted by owner | — |
+| AUD061-13 | Closed | Web persistence | 0.6.1 Web build moves the save folder - reset accepted by owner | - |
 | AUD061-04 | Blocker | Release identity | Version stamps still read 0.6.0 everywhere | S |
 | AUD061-05 | Blocker | Release identity | Pre-release tag is not the candidate; changelog incomplete | S |
-| AUD061-06 | Dropped | Compatibility | No save fixture from the published 0.6.0 build — not needed | — |
-| AUD061-07 | Dropped | Persistence | Save/codec version never checked on load — not needed now | — |
+| AUD061-06 | Dropped | Compatibility | No save fixture from the published 0.6.0 build - not needed | - |
+| AUD061-07 | Dropped | Persistence | Save/codec version never checked on load - not needed now | - |
 | AUD061-08 | Low | Lifecycle | No save flush on background, tab hide or tab close | S |
 | AUD061-09 | Medium | Persistence | Explicit Save reports an older save's failure without trying | S |
 | AUD061-14 | Low | Persistence | Six call sites ignore a failed profile/meta/settings save | S |
@@ -160,16 +160,16 @@ Not done — treat these as open:
 | QOL-08 | Later | Pacing | No faster-table or skip-animation option | M |
 | QOL-09 | Later | Saves | One save slot; no manual slots | M |
 | QOL-10 | Later | Text | No localisation layer | L |
-| STR-01 | — | Structure | Two god objects carry the game | L |
-| STR-02 | — | Structure | State is untyped dictionaries | L |
-| STR-03 | — | Structure | Integrity hashes depend on JSON number types | M |
-| STR-04 | — | Structure | Save format is heavier than needed; `eval` on Web | M |
-| STR-05 | — | Structure | Threaded save relies on an unenforced immutability rule | M |
-| STR-06 | — | Structure | RNG is a 31-bit Lehmer generator | M |
-| STR-07 | — | Process | 449 tests, no CI, Windows-only runner | M |
-| STR-08 | — | Process | Ledger and repository weight | M |
-| STR-09 | — | Hygiene | Lint findings and disabled limits | S |
-| STR-10 | — | Distribution | Unsigned Windows build; stale mobile presets | S–M |
+| STR-01 | - | Structure | Two god objects carry the game | L |
+| STR-02 | - | Structure | State is untyped dictionaries | L |
+| STR-03 | - | Structure | Integrity hashes depend on JSON number types | M |
+| STR-04 | - | Structure | Save format is heavier than needed; `eval` on Web | M |
+| STR-05 | - | Structure | Threaded save relies on an unenforced immutability rule | M |
+| STR-06 | - | Structure | RNG is a 31-bit Lehmer generator | M |
+| STR-07 | - | Process | 449 tests, no CI, Windows-only runner | M |
+| STR-08 | - | Process | Ledger and repository weight | M |
+| STR-09 | - | Hygiene | Lint findings and disabled limits | S |
+| STR-10 | - | Distribution | Unsigned Windows build; stale mobile presets | S–M |
 
 Effort: S = under a day, M = one to three days, L = multi-week, staged.
 
@@ -203,15 +203,15 @@ so "ready" still starts with reproducing.
 
 ---
 
-# Part A — Release items
+# Part A - Release items
 
-## AUD061-01 — A leftover `.rollback` file blocks every later save, permanently
+## AUD061-01 - A leftover `.rollback` file blocks every later save, permanently
 
 > **Owner decision 2026-11-11:** now **High**, fixed together with AUD061-02. Save data is disposable, so the change below is the simple version: delete the stale file and carry on.
 
 **Severity:** High. **Area:** `scripts/core/durable_store.gd`.
 **Affects:** run saves, settings, profile inventory, meta collection and
-developer placement — everything written through `DurableStore.write_json`.
+developer placement - everything written through `DurableStore.write_json`.
 
 ### What is wrong
 
@@ -248,7 +248,7 @@ fails with `stale_transaction_rollback` for the life of the install.
 
    On Windows a just-renamed file is often held briefly by antivirus or the
    search indexer. The delete fails, `write_json` still reports success, and
-   the *next* save is the one that fails — forever.
+   the *next* save is the one that fails - forever.
 3. **Restore fails part-way.** `_restore_install_generations` (`:250-283`)
    can return an error while leaving a rollback name on disk.
 
@@ -312,7 +312,7 @@ Low. One branch in one static function.
 
 ---
 
-## AUD061-02 — The game cannot be closed while a save fails
+## AUD061-02 - The game cannot be closed while a save fails
 
 **Severity:** Blocker. **Area:** `scripts/ui/foundation_main.gd`.
 
@@ -451,7 +451,7 @@ to the two public entry points and one new modal.
 
 ---
 
-## AUD061-03 — The performance harness is reachable in shipped builds and overwrites the player's run
+## AUD061-03 - The performance harness is reachable in shipped builds and overwrites the player's run
 
 > **Owner decision 2026-11-11:** now **Low, deferred until after 0.6.1.** Losing a run no longer matters. What is left is that a public build can be made to run a scripted plan from a URL. Read "Important constraint" below before touching it; the obvious fix breaks the perf tooling.
 
@@ -480,7 +480,7 @@ plans. Several of them drive the real application object:
 
 - `_run_lb3_plan` calls `app.start_foundation_run("LB3-FIRST-RUN")` (`:2202`)
   and later `app.call("_autosave_foundation_run", "LB3 Autosave.", false)`
-  (`:2251`) — the normal autosave, to the normal slot.
+  (`:2251`) - the normal autosave, to the normal slot.
 - `_run_la1_plan` does the same: `app.start_foundation_run("LA1-WEB-CORE")`
   (`:2357`), then the normal autosave (`:2371`).
 - Other plans call `run_state.fail_run("performance_probe", …)` (`:1419`), set
@@ -570,7 +570,7 @@ That is why it is deferred, not because the code change is hard.
 
 ---
 
-## AUD061-04 — Version stamps still read 0.6.0 everywhere
+## AUD061-04 - Version stamps still read 0.6.0 everywhere
 
 **Severity:** Blocker. **Area:** release metadata.
 
@@ -589,7 +589,7 @@ would identify itself as 0.6.0.
 | `scripts/tests/fixsweep06_1_packaging_runtime_contract.gd:14-16` | asserts `"0.6.0"` |
 | `tools/game_documentation_check.ps1:84-90` | asserts `0.6.0` stamps |
 | `README.md:20-54` | download links and "Published release" row point at `v0.6.0` |
-| `tools/export_itch.ps1:71` | `$buildVersion = "0.6.0-dev+$short"` — **hard-coded** |
+| `tools/export_itch.ps1:71` | `$buildVersion = "0.6.0-dev+$short"` - **hard-coded** |
 | `tools/fixsweep06_1_packaging_contract_test.ps1:83` | asserts the literal `0.6.0-dev+` |
 
 The last row matters most. Exported builds do not show the project setting.
@@ -674,7 +674,7 @@ Low. Do this **after** the code freeze so the RC is built once.
 
 ---
 
-## AUD061-05 — The pre-release tag is not the candidate; the changelog is incomplete
+## AUD061-05 - The pre-release tag is not the candidate; the changelog is incomplete
 
 > **Task type: release process, no code. Depends on the code freeze.**
 
@@ -722,9 +722,9 @@ Players and the owner cannot tell what changed. More importantly, "tested" and
 
 ---
 
-# Part B — Should fix in 0.6.1
+# Part B - Should fix in 0.6.1
 
-## AUD061-08 — No save flush on background, tab hide or tab close
+## AUD061-08 - No save flush on background, tab hide or tab close
 
 > **Owner decision 2026-11-11:** now **Low**, optional.
 
@@ -797,7 +797,7 @@ the Exit button, not tab close.
 
 ---
 
-## AUD061-09 — An explicit Save reports an older save's failure without trying
+## AUD061-09 - An explicit Save reports an older save's failure without trying
 
 **Severity:** Medium. **Area:** `save_service.gd`, `foundation_main.gd`.
 
@@ -849,7 +849,7 @@ current state was never attempted. Through AUD061-02 this also blocks exit.
 
 ---
 
-## AUD061-14 — Six call sites ignore a failed profile, meta or settings save
+## AUD061-14 - Six call sites ignore a failed profile, meta or settings save
 
 > **Owner decision 2026-11-11:** now **Low**, optional.
 
@@ -891,7 +891,7 @@ flag. With AUD061-01 active, all of these fail every time.
 
 ---
 
-## AUD061-10 — Crew heist payouts bypass `change_bankroll`
+## AUD061-10 - Crew heist payouts bypass `change_bankroll`
 
 **Severity:** Low. **Area:** `scripts/core/crew_run_facade.gd`.
 
@@ -933,7 +933,7 @@ immediately after the heist resolves.
 
 ---
 
-## AUD061-15 — The Crew private capsule is bound to a per-install key; saves are not portable
+## AUD061-15 - The Crew private capsule is bound to a per-install key; saves are not portable
 
 > **Owner decision 2026-11-11:** now **Low**. Portability does not matter. Do item 2 only (replace a key file of the wrong size so saving the capsule is not permanently disabled). Skip items 1, 3, 4 and 6.
 
@@ -1018,7 +1018,7 @@ ways. The player sees an aborted heist with no explanation they can act on.
 
 ---
 
-## AUD061-16 — Test-only fault switches live in shipping classes
+## AUD061-16 - Test-only fault switches live in shipping classes
 
 **Severity:** Low. **Area:** `durable_store.gd`, `run_save_codec.gd`,
 `foundation_main.gd`.
@@ -1060,7 +1060,7 @@ report it. Keep names and signatures; tests depend on them.
 
 ---
 
-## AUD061-11 — Fixes on `main` whose deployed acceptance is still open
+## AUD061-11 - Fixes on `main` whose deployed acceptance is still open
 
 > **Task type: test run, no code. Run the recorded acceptance for each row on the release candidate and record the result. A failure becomes a new, separately diagnosed task.**
 
@@ -1094,7 +1094,7 @@ one to prioritise; it overlaps AUD061-06.
 
 ---
 
-## AUD061-12 — The Web export failed twice at 49% with no root cause
+## AUD061-12 - The Web export failed twice at 49% with no root cause
 
 > **Task type: investigation. The cause is not known and this document does not supply one. The deliverable is a root cause and a fix or a bounded, explained workaround. Needs the Windows export environment.**
 
@@ -1133,7 +1133,7 @@ cause in place for the next patch.
 
 ---
 
-## AUD061-17 — The plan's own coverage gates are still pending or partial
+## AUD061-17 - The plan's own coverage gates are still pending or partial
 
 > **Task type: test run, no code. Running these checks is the work. Failures become new tasks; they are not pre-diagnosed here.**
 
@@ -1181,12 +1181,12 @@ the ones that map directly onto the release gate's wording.
 
 ---
 
-# Part C — Structural weaknesses and improvements (after 0.6.1)
+# Part C - Structural weaknesses and improvements (after 0.6.1)
 
 None of these should be attempted before the release. They are the reasons the
 bug rate is what it is, and where sustained effort will pay off.
 
-## STR-01 — Two god objects carry the game
+## STR-01 - Two god objects carry the game
 
 **Evidence**
 
@@ -1228,7 +1228,7 @@ refresh" and "controls remain locked after Y" entries is the symptom.
 Rule for each step: move code without changing behavior, keep the public
 method names as thin forwards for one release, land one seam at a time.
 
-## STR-02 — State is untyped dictionaries
+## STR-02 - State is untyped dictionaries
 
 **Evidence.** In production code: 36,097 string-keyed `.get("…")` lookups,
 2,347 `Variant` annotations, 2,358 `duplicate(true)` deep copies, 478 untyped
@@ -1252,7 +1252,7 @@ time on Web where everything is single-threaded.
 4. Profile deep copies on a late-run Web session and remove the ones on
    per-action paths.
 
-## STR-03 — Integrity hashes depend on JSON number types
+## STR-03 - Integrity hashes depend on JSON number types
 
 **Evidence.** JSON has one number type; Godot parses every number as float.
 Several systems hash or sign typed values, so a round-trip through JSON breaks
@@ -1278,7 +1278,7 @@ being signed and the value being verified, and the storage format stops
 mattering. Migrate one authority at a time, accepting both hashes for a
 release. Also pin a catalog digest in scenario patches (see AUD061-06).
 
-## STR-04 — The save format is heavier than it needs to be
+## STR-04 - The save format is heavier than it needs to be
 
 **Evidence.** A save is: snapshot → encoded dictionary → JSON text → zstd →
 Z85 text → wrapped in an outer JSON envelope → pretty-printed with tabs
@@ -1312,7 +1312,7 @@ an injection hole.
 4. Measure before and after on a late-run Web save; the perf harness has
    plans for exactly this.
 
-## STR-05 — Threaded save relies on an unenforced immutability rule
+## STR-05 - Threaded save relies on an unenforced immutability rule
 
 **Evidence.** `begin_save_run` hands the worker a snapshot that deliberately
 shares scenario records with the main thread:
@@ -1338,14 +1338,14 @@ are stored in the town network. A stray write then fails loudly in
 development. Add a stress check that mutates game state every frame during
 repeated async saves and verifies each saved generation loads.
 
-## STR-06 — RNG is a 31-bit Lehmer generator
+## STR-06 - RNG is a 31-bit Lehmer generator
 
 **Evidence.** `rng_stream.gd`: multiplier 48271, modulus 2^31−1 (MINSTD),
 range reduction by modulo (`:42-43`), seed normalisation by `abs(value) %
 MODULUS` (`:92-96`).
 
-**Assessment.** Determinism is well disciplined — no production code calls the
-engine's global RNG — and this generator is adequate for a seeded
+**Assessment.** Determinism is well disciplined - no production code calls the
+engine's global RNG - and this generator is adequate for a seeded
 single-player game. Its limits:
 
 - State is 31 bits, so one stream can produce at most about 2.1 billion
@@ -1363,10 +1363,10 @@ with unbiased range reduction for new runs, and keep MINSTD for loading old
 ones. Guard the `abs()` edge now; it is a one-line clamp that changes no
 existing seed.
 
-## STR-07 — 449 tests and no automation
+## STR-07 - 449 tests and no automation
 
 **Evidence.** 449 test scripts, 160,172 lines. The runner is
-`tools/check_godot.ps1` plus helpers — Windows PowerShell only. There is no CI
+`tools/check_godot.ps1` plus helpers - Windows PowerShell only. There is no CI
 configuration in the repository. `python -m unittest discover -s tools/tests`
 ran 180 tests on Linux with 7 failures, 18 errors and 13 skipped, all in
 `test_bth_qa_storage`, `test_bth_qa_resident` and `test_bth_qa_atomic_receipt`
@@ -1387,14 +1387,14 @@ entries: tests that were already failing when someone next looked.
 4. Longer term, a Linux headless job for the pure-logic suites. Godot headless
    runs them; only the PowerShell wrapper is Windows-bound.
 
-## STR-08 — Process and repository weight
+## STR-08 - Process and repository weight
 
 **Evidence**
 
 - Ledger: 305 objectives, 195 open (65 current, 130 historical). 31 of the 65
   current open items are under the user-requested pause.
 - The documented reconciliation command reports 1,594 errors against the
-  committed snapshots. 1,030 are `RUNTIME_FUTURE_*` — artefacts of pinning
+  committed snapshots. 1,030 are `RUNTIME_FUTURE_*` - artefacts of pinning
   `--now` to 2026-11-04 while the inventory has later timestamps. Run without
   `--now` it reports 884.
 - `bth_task_ledger.json` is 30,718 lines; the runtime inventory 22,607.
@@ -1418,7 +1418,7 @@ read. Real gaps are hidden among recorded-and-accepted ones.
 
 These are the user's calls; nothing here authorises changing ledger state.
 
-## STR-09 — Lint
+## STR-09 - Lint
 
 **Evidence.** All 224 production scripts parse under gdtoolkit. `gdlint`
 reports 448 findings: 293 `max-returns`, 111 `unused-argument`, 37
@@ -1433,7 +1433,7 @@ limits (`max-file-lines: 50000`, `max-line-length: 1000`) and
    `scripts/core/persistent_environment_projection.gd:74,86`.
 2. Review the 111 unused arguments: prefix intentional ones with `_`; the rest
    are either dead parameters or bugs where a value was meant to be used
-   (for example `pinball_feature.gd:146` takes an `rng` it never reads —
+   (for example `pinball_feature.gd:146` takes an `rng` it never reads -
    confirm that is intended in a seeded game).
 3. The 37 class-variable-name findings are lazy-loaded script holders named
    like constants (`GameSurfaceCanvasScript`); either allow the pattern in the
@@ -1443,7 +1443,7 @@ limits (`max-file-lines: 50000`, `max-line-length: 1000`) and
    `JsonCoerceScript._valid_sha256`, `_copy_dict`, …) are given public names.
 5. Add `gdlint` to CI once the count is zero or baselined.
 
-## STR-10 — Distribution
+## STR-10 - Distribution
 
 - **Windows executable is unsigned** (`export_presets.cfg:21`,
   `codesign/enable=false`). Players get a SmartScreen warning. Sign it.
@@ -1458,7 +1458,7 @@ limits (`max-file-lines: 50000`, `max-line-length: 1000`) and
 
 ---
 
-# Part D — Checked and found sound
+# Part D - Checked and found sound
 
 So nobody re-audits these without cause:
 
@@ -1490,7 +1490,7 @@ So nobody re-audits these without cause:
 
 ---
 
-# Part F — Quality of life
+# Part F - Quality of life
 
 From a static read of the start screen, settings, HUD, messages and input
 handling. Not from play. QOL-01 to QOL-05 are small and worth taking in 0.6.1;
@@ -1504,7 +1504,7 @@ the Run Menu; Copy Seed on the run report; a confirm before deleting a saved
 run; a recovery message when a backup save is used; tutorial skip; Rebet in
 Blackjack, Baccarat and Roulette.
 
-## QOL-01 — START NEW RUN replaces a saved run with no confirmation
+## QOL-01 - START NEW RUN replaces a saved run with no confirmation
 
 > **Owner decision 2026-11-11:** now **Low**, optional.
 
@@ -1561,7 +1561,7 @@ offers the old run.
 - With a saved run, START NEW RUN asks first; cancel leaves the save intact.
 - Without one, behavior is unchanged.
 
-## QOL-02 — A failed autosave looks the same as a healthy one
+## QOL-02 - A failed autosave looks the same as a healthy one
 
 **Severity:** Medium. **Take in 0.6.1** (pairs with AUD061-01/02).
 **Area:** `scripts/ui/foundation_hud_view_model.gd`.
@@ -1591,13 +1591,13 @@ they try to leave. That is the worst moment to learn it.
    inferring from text.
 2. Give the save icon a distinct warning treatment in that state (the HUD
    already has an `alert` / `danger` icon style used for pit boss and
-   pressure) and a tooltip that leads with the problem: "Not saving — open
+   pressure) and a tooltip that leads with the problem: "Not saving - open
    Run Menu to retry".
 3. Show a one-time message when autosave first becomes blocked, and clear the
    warning when a save succeeds.
 4. Do not add a modal; play should not be interrupted.
 
-## QOL-03 — Internal wording shown to players
+## QOL-03 - Internal wording shown to players
 
 **Severity:** Low. **Area:** messages.
 
@@ -1622,7 +1622,7 @@ for other `"message":` strings containing *authority, projection, publication,
 envelope, transaction, receipt, intent* will find any others; the search used
 here found only these.
 
-## QOL-04 — Loaded numbers can render as `2.0`
+## QOL-04 - Loaded numbers can render as `2.0`
 
 **Severity:** Low. **Area:** rendering of saved values.
 
@@ -1638,7 +1638,7 @@ saved integer drawn as text after a load. This is the display side of STR-03.
 2. During AUD061-06 and AUD061-17 testing, watch every game screen after
    Continue for a trailing `.0`.
 
-## QOL-05 — No way to copy version and save diagnostics
+## QOL-05 - No way to copy version and save diagnostics
 
 **Severity:** Low. **Area:** support.
 
@@ -1654,7 +1654,7 @@ identity (`BuildIdentity`), platform, the last save and load outcomes
 failure code. No personal data, no save contents. On desktop, also offer
 "Open save folder". This makes AUD061-01-class reports diagnosable.
 
-## QOL-06 to QOL-10 — For a later version
+## QOL-06 to QOL-10 - For a later version
 
 - **QOL-06 Controls.** Input uses only the built-in `ui_*` actions plus
   hard-coded keys (F1, F2, F5, F9, 1–4). There is no controls reference
@@ -1675,15 +1675,15 @@ failure code. No personal data, no save contents. On desktop, also offer
 
 ---
 
-# Part E — Recommended order of work
+# Part E - Recommended order of work
 
 Reflects the owner decisions at the top of this document.
 
 1. **AUD061-02**, with **AUD061-01** (simple version) in the same change.
    Reproduce both first.
 2. **AUD061-16** if wanted (optional).
-3. **AUD061-09, -10**, **QOL-02, -03, -04, -05** — small, independent fixes.
-4. **AUD061-12** — settle the Web export before the RC is built.
+3. **AUD061-09, -10**, **QOL-02, -03, -04, -05** - small, independent fixes.
+4. **AUD061-12** - settle the Web export before the RC is built.
 5. Code freeze. **AUD061-04** version bump and **AUD061-05** changelog.
 6. Tag `v0.6.1-rc.1`. Run on that exact commit: Smoke, animation-liveness,
    RTP/economy audits (`tools/craps_rtp_audit`, `tools/cross_economy_audit`),
@@ -1701,7 +1701,7 @@ Not to be done: AUD061-06, AUD061-07, AUD061-13 migration (Appendix B).
 
 ---
 
-# Appendix — Commands and raw results
+# Appendix - Commands and raw results
 
 ```text
 git diff --stat v0.6.0 HEAD                    1,012 files, +289,086 / -33,139 (all paths)
@@ -1721,14 +1721,14 @@ Test code size: 449 scripts, 160,172 lines.
 
 ---
 
-# Appendix B — Closed by owner decision (record only, do not work on)
+# Appendix B - Closed by owner decision (record only, do not work on)
 
 These three were closed on 2026-11-11 because save data does not need to be
 preserved. They stay here so the behavior is documented.
 
-## AUD061-13 — The 0.6.1 Web build moves the save folder; every 0.6.0 Web player's data is orphaned
+## AUD061-13 - The 0.6.1 Web build moves the save folder; every 0.6.0 Web player's data is orphaned
 
-> **Owner decision 2026-11-11:** **closed — reset accepted.** Do not migrate. The only optional action is a one-line release note that Web progress from 0.6.0 does not carry over. Everything under "Change required if migrating" is void. Kept here as a record of the behavior.
+> **Owner decision 2026-11-11:** **closed - reset accepted.** Do not migrate. The only optional action is a one-line release note that Web progress from 0.6.0 does not carry over. Everything under "Change required if migrating" is void. Kept here as a record of the behavior.
 
 **Severity:** Blocker (needs an explicit owner decision).
 **Area:** `scripts/core/persistence_paths.gd`.
@@ -1769,7 +1769,7 @@ Continue, default settings, an empty home and collection, and tutorial state
 reset. Their data still exists in the browser but nothing reads it. Windows
 players are not affected.
 
-This may be acceptable — it may even be what the owner wants — but it must be a
+This may be acceptable - it may even be what the owner wants - but it must be a
 decision, not a side effect, and it must be announced.
 
 ### Decide first
@@ -1789,7 +1789,7 @@ The owner chooses one:
    (`SaveService._payload_dictionary_loadable`, `_settings_payload_valid`,
    `_profile_payload_valid`, `_meta_payload_valid`). Discard a copy that fails.
 
-   *Why:* the old root also holds leftovers from pre-release Web builds — the
+   *Why:* the old root also holds leftovers from pre-release Web builds - the
    very data the epoch was introduced to avoid. Validation plus the 0.6.0 →
    0.6.1 save gate (AUD061-06) is what makes importing it safe.
 3. Copy, do not move. Leave the old root intact so a failed import can be
@@ -1831,7 +1831,7 @@ why this item depends on AUD061-06.
 
 ---
 
-## AUD061-06 — No save fixture from the published 0.6.0 build
+## AUD061-06 - No save fixture from the published 0.6.0 build
 
 > **Owner decision 2026-11-11:** **dropped.** Old saves do not need to load. Do not capture 0.6.0 saves or add upgrade tests. Kept as a record; the scenario-patch behavior described here is still worth knowing when changing scenario data.
 
@@ -1916,7 +1916,7 @@ Blackjack hand whose ledger no longer validates, or a run rejected as corrupt.
    capturing.
 3. **Extend the migration smoke** so each fixture is loaded, the run reaches a
    playable room, one legal action is taken in the saved game, the run is
-   saved and loaded again, and — for the scenario fixtures — the player
+   saved and loaded again, and - for the scenario fixtures - the player
    travels to the node and the scenario mounts.
 4. **Fix what it finds.** If a changed scenario package breaks a 0.6.0
    definition, add a compatibility snapshot the way Gala Night has one, rather
@@ -1939,7 +1939,7 @@ code fixes.
 
 ---
 
-## AUD061-07 — Save and codec versions are never checked on load
+## AUD061-07 - Save and codec versions are never checked on load
 
 > **Owner decision 2026-11-11:** **dropped** for now. Revisit when saves start to matter.
 

@@ -1,4 +1,4 @@
-# FEAT-03 — Daily Challenge uses the full local calendar date
+# FEAT-03 - Daily Challenge uses the full local calendar date
 
 Date: 2026-11-12. Starting source: `fd8bb1581d4e676fb1c86229deaa7dbb3630f7e4`.
 The intervening FEAT-STALE/FEAT-04 commits record documentation and delivery only.

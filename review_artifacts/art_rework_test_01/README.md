@@ -10,9 +10,9 @@ An original retro coastal casino look built from crisp geometric forms, saturate
 
 ### Environments
 
-- `environments/beach.png` — The Beach, bright midday
-- `environments/jazz_club.png` — Jazz Club, moonlit interior
-- `environments/grand_casino_main_floor.png` — Grand Casino Main Floor, sunset
+- `environments/beach.png` - The Beach, bright midday
+- `environments/jazz_club.png` - Jazz Club, moonlit interior
+- `environments/grand_casino_main_floor.png` - Grand Casino Main Floor, sunset
 
 ### Items
 
@@ -24,7 +24,7 @@ An original retro coastal casino look built from crisp geometric forms, saturate
 
 ### Character
 
-- `characters/pal_model_sheet.png` — Pal front, three-quarter, and side views
+- `characters/pal_model_sheet.png` - Pal front, three-quarter, and side views
 
 ## Suggested feedback
 

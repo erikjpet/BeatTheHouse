@@ -1,7 +1,7 @@
-Status: DONE — accepted by the exact-tree Family 2 closeout on 2026-09-03
+Status: DONE - accepted by the exact-tree Family 2 closeout on 2026-09-03
 Board row: `world06_1` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — 0.6 world06_1: Crew and World Sequence Adapter
+# Agent Prompt - 0.6 world06_1: Crew and World Sequence Adapter
 
 Copy everything below this line into the agent.
 
@@ -23,15 +23,15 @@ Read before editing: the landed `env06_6` runtime and its contract document,
 
 `env06_6` gives environments spatial operations, actors, objectives, branch
 graphs and persistent aftermath. Crew and world systems cannot use any of it.
-They reach the player through `EventModule` choice actions — `crew_job_accept`,
+They reach the player through `EventModule` choice actions - `crew_job_accept`,
 `crew_rook_ride`, `crew_practice_rig`, `crew_heist_table_choices()`,
-`crew_heist_live_table_choices()` and their siblings — which produce a list of
+`crew_heist_live_table_choices()` and their siblings - which produce a list of
 text options and apply outcomes. The result is that 0.6's flagship pillar is a
 menu inside rooms that have just learned to be places.
 
 The completed state must let a crew or world system author a sequence, run it
 through the shipped runtime, and get the same persistence, cleanup, reentry and
-aftermath guarantees an environment scenario gets — without duplicating the
+aftermath guarantees an environment scenario gets - without duplicating the
 runtime and without leaking hidden state.
 
 ## Board and dependencies
@@ -54,8 +54,8 @@ head. This row unblocks `world06_2` through `world06_6`.
 ## 2. The adapter contract
 
 - Let a crew or world system declare a sequence definition using the `env06_6`
-  vocabulary — `scene_ops`, `interaction_ops`, `actor_ops`, `objectives`,
-  `transition_ops`, `reentry_policy`, `expiry`, `cleanup`, `aftermath` — sourced
+  vocabulary - `scene_ops`, `interaction_ops`, `actor_ops`, `objectives`,
+  `transition_ops`, `reentry_policy`, `expiry`, `cleanup`, `aftermath` - sourced
   from crew data rather than the scenario catalog, and validated by the same
   validator.
 - Define ownership: a crew sequence mounted at a node must compose with whatever
@@ -67,7 +67,7 @@ head. This row unblocks `world06_2` through `world06_6`.
   environment sequence does, and must clean up completely when the crew system
   that owns it ends.
 - Define the outcome path: sequence results feed back into the owning crew model
-  through its existing API — trust, grievance, job state, delivery state, heat
+  through its existing API - trust, grievance, job state, delivery state, heat
   and money all keep their landed contracts and their exactly-once semantics.
 - Keep the `EventModule` path working. Interactions that stay choices must be
   unaffected, and a system must be able to convert one interaction at a time.
@@ -100,7 +100,7 @@ This is the part that gets audited hardest.
 
 ## 5. Proof conversion
 
-- Convert exactly one real crew interaction end to end as the proof — the
+- Convert exactly one real crew interaction end to end as the proof - the
   smallest genuine one, not a fixture. It must demonstrate mount, play, outcome
   feedback into the owning model, persistence across save and revisit, cleanup,
   and composition with an active environment scenario at the same node.
@@ -110,7 +110,7 @@ This is the part that gets audited hardest.
 ## 6. Tests and acceptance
 
 - Validation tests: conflicting scene ops, unowned outcomes, missing cleanup,
-  unreachable objectives, expiry without a policy — each must fail loudly.
+  unreachable objectives, expiry without a policy - each must fail loudly.
 - Composition tests: crew sequence plus environment scenario at one node, with
   save, load, travel away, revisit and expiry in every order.
 - Exactly-once tests: every outcome kind fires once across save, reload, revisit

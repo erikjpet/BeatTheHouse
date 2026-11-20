@@ -1,8 +1,8 @@
-# CLOSE-01 — tutorial and Smoke closure
+# CLOSE-01 - tutorial and Smoke closure
 
 Source: docs/todo/BTH_0.6.1_closeout_plan.md. Up-to-date initial main4cb86ee3fd9b04733a794af2289ab8fce0132443, following accepted audit2113db41 and separately delivered Count repair. Plan saved unchanged, SHA256 b6f8e907a0af800fec4d64b195d6b69af9eb7af905f41bc5ce241fbf7d7a6d64, first commit84627b0fe6380eaf7f4d52c4f3c05bf8d18f94df. Registration precedes implementation.
 
-## Tutorial first — actual new-profile NEXT before changes
+## Tutorial first - actual new-profile NEXT before changes
 
 Exact immutable served4cb86ee3fd9b04733a794af2289ab8fce0132443, fresh admitted E browser profile, no initial save; unmodified HTML/PCK/engine/native.49 normal-control commands,0 page errors,0 console warnings/errors,4 asset requests200. No scene override, save editing or internal gameplay call.
 
@@ -68,7 +68,7 @@ Raw files remain outside the repository. The external index lists every file/pat
 | E:\CodexQA\BTH\runs\close061-before-smoke-20261111\evidence\smoke\cold_continue_room_projection.stderr.txt | 216457fd20f765ca3994670255cd0b7ede9a869fd972584545595bfaa6dd73f0 |
 | E:\CodexQA\BTH\runs\close061-before-smoke-20261111\evidence\smoke\foundation_perf_smoke.stderr.txt | 490296bf7e976628b7aac7bac0631afbf18703d0069e72cdcb008254cd7b70d0 |
 
-### Five initial-arrival failures — stale harness, before repair
+### Five initial-arrival failures - stale harness, before repair
 
 The direct unchanged synthetic fixture builds an object manifest but its unknown fixture_environment has no authored slot schema/map. The real binder rejects it with missing schema/fixed/event/scenario/exit slots; atomic generator installation rolls back, leaving no room id. The harness then tries to finalize that empty run, producing the misleading Object manifest is missing text. Real playable rooms are not implicated. This deliberately stronger production requirement replaced pre-slot fixture generation. Repair the synthetic catalog with its own complete isolated authored map and run the unchanged real manifest/binder/install/finalization path; do not bypass readiness or forge a seal. Existing production maps and item/scenario content remain untouched. Diagnostic command/actual output: close061-fixture-arrival-composed-diagnostic-20261111.
 
@@ -988,7 +988,7 @@ This is the expressly authorized one-file exception, not a QA root migration.
 Raw QA evidence remains onE; no pipeline code, setting, pin, cap or audience
 was changed. Existing watcher observation and exact served verification follow.
 
-## Exact NEXT delivery — completed
+## Exact NEXT delivery - completed
 
 Existing watcher consumed the one-file request with its exact hash and approved
 only data/debt/lenders.json and data/events/events.json. It promoted

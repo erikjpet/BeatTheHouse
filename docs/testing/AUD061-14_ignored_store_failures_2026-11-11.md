@@ -1,4 +1,4 @@
-# AUD061-14 — Handle six ignored store-save results
+# AUD061-14 - Handle six ignored store-save results
 
 Started from main **494c5db53e9ca0a39b55e0955f58f65e7ee7524d** (AUD061-16 delivery receipt); NEXT e05ceb6bd64f3ddec44804752aaa32d88600c622. Specification: [audit work order](../todo/BTH_0.6.1_audit_work_orders.md#aud061-14--six-call-sites-ignore-a-failed-profile-meta-or-settings-save).
 

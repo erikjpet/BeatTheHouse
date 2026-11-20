@@ -29,16 +29,16 @@ changed. `TUT-N17` is not claimed: it remains an owner/human playtest gate.
 
 | Requirement | Result |
 | --- | --- |
-| Classify all original lessons before authoring | PASS — 59 correct, four stale, zero redundant, zero broken; full 63-row table retained in `teach06_2_dependency_complete_lesson_classification.md`. |
-| Repair stale/broken teaching | PASS — all four stale tips repaired; no broken lesson existed. |
-| Missing systems | PASS — Poker/tells, trust/standing, package and lookout work, Police Sweep, scenario objectives, true rumors, Coin Pusher, and physical Craps are covered. |
-| Once-only and negative triggers | PASS — every contextual lesson has positive, seen, preference-off, tutorial-run, and never-reached negatives. |
-| Handoff and double-notify | PASS — every contextual lesson is dismissible, non-modal, non-consuming, and remains completed after a duplicate notification. |
-| Placement/accessibility | PASS — every contextual anchor and bubble is checked at 1280x720 and 854x480, with reduced motion off/on; no target overlap or viewport escape. |
-| Secrecy | PASS — discovery-blocker vocabulary and never-reached paths expose no Turn, traitor, grievance, rigged draw, or unrevealed ticket state. Poker copy names only verified public behavior. |
-| Crew-ignoring run | PASS — delivery, standing, Poker, rumor, and Sweep lessons all remain inactive. |
-| Guided cold run/save boundaries | PASS — both routes reach Bronze; 100/100 alternating seeds complete; all 56 guided lesson boundaries survive save/load. |
-| Normal-run isolation/determinism | PASS — both audits retain normal-start hash `1024435150` and normal-stock hash `2121162340`. |
+| Classify all original lessons before authoring | PASS - 59 correct, four stale, zero redundant, zero broken; full 63-row table retained in `teach06_2_dependency_complete_lesson_classification.md`. |
+| Repair stale/broken teaching | PASS - all four stale tips repaired; no broken lesson existed. |
+| Missing systems | PASS - Poker/tells, trust/standing, package and lookout work, Police Sweep, scenario objectives, true rumors, Coin Pusher, and physical Craps are covered. |
+| Once-only and negative triggers | PASS - every contextual lesson has positive, seen, preference-off, tutorial-run, and never-reached negatives. |
+| Handoff and double-notify | PASS - every contextual lesson is dismissible, non-modal, non-consuming, and remains completed after a duplicate notification. |
+| Placement/accessibility | PASS - every contextual anchor and bubble is checked at 1280x720 and 854x480, with reduced motion off/on; no target overlap or viewport escape. |
+| Secrecy | PASS - discovery-blocker vocabulary and never-reached paths expose no Turn, traitor, grievance, rigged draw, or unrevealed ticket state. Poker copy names only verified public behavior. |
+| Crew-ignoring run | PASS - delivery, standing, Poker, rumor, and Sweep lessons all remain inactive. |
+| Guided cold run/save boundaries | PASS - both routes reach Bronze; 100/100 alternating seeds complete; all 56 guided lesson boundaries survive save/load. |
+| Normal-run isolation/determinism | PASS - both audits retain normal-start hash `1024435150` and normal-stock hash `2121162340`. |
 
 ## Exact gates
 

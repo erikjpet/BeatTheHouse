@@ -4,7 +4,7 @@
 - **Implementation commits:** `be2c920f`, `7b441789`, `0e3cbd99`,
   `32a51420`, `01b7a5a3`, `724c6f09`, `a931f939`
 - **Verification and handoff commits:** `12a437b6`, `c01820f8`
-- **Verification:** PASS — `tools/validate_project.ps1`; all 19 accepted
+- **Verification:** PASS - `tools/validate_project.ps1`; all 19 accepted
   nonempty `-FoundationSuite` arguments (including `contract` and `full`
   aliases); UI scene/component and spatial-inventory integration checks;
   `tools/foundation_visual_qa.ps1` (51 state captures, zero warnings);
@@ -21,7 +21,7 @@
   was therefore restored from Git history after all implementation and
   verification finished. No gameplay or acceptance requirement was waived.
 
-# Agent Prompt — 0.5 UI Full Redesign Overhaul (Final-State UI)
+# Agent Prompt - 0.5 UI Full Redesign Overhaul (Final-State UI)
 
 Copy everything below this line into the agent.
 
@@ -33,13 +33,13 @@ mode exists). UI is code-built (no scenes beyond main): `VisualStyle`
 palette + `FoundationWidgets` helpers + extracted components under
 `scripts/ui/`, driven by view models. The game already has an
 artist-editable PNG asset pipeline under `assets/art/` (environments,
-game scenes, items, inventory containers) — extend that pipeline for UI
+game scenes, items, inventory containers) - extend that pipeline for UI
 art in this task.
 
 This file is SELF-CONTAINED: every rule you need is in here. The design
 philosophy in `docs/archive/0.5/plans/0.5_ui_overhaul_brief.md` is binding
 background reading (identity preserved, hierarchy over chrome, readable
-at both sizes, zero performance tax) — read it first. This prompt
+at both sizes, zero performance tax) - read it first. This prompt
 SUPERSEDES `docs/todo/ui05_0_audit_design_system_prompt.md`; delete that
 file in your final commit alongside this one.
 
@@ -68,7 +68,7 @@ one red.
 
 ---
 
-## Phase A — Design system foundation + UI art pipeline
+## Phase A - Design system foundation + UI art pipeline
 
 Everything later consumes this; build it first.
 
@@ -77,7 +77,7 @@ Everything later consumes this; build it first.
    color ROLES (surface, panel, accent-primary/danger/success/warning,
    text-primary/muted, meter-heat, meter-drunk), radii, border widths,
    and interaction states (idle/hover/press/focus/disabled). This
-   codifies the existing neon-pixel identity — it does not restyle it.
+   codifies the existing neon-pixel identity - it does not restyle it.
 2. **Widget kit.** Extend `scripts/ui/foundation_widgets.gd` with:
    panel, heading, label, button variants (primary/secondary/danger/
    ghost/icon), segmented meter bar (see Phase B), stat chip, icon+label
@@ -92,7 +92,7 @@ Everything later consumes this; build it first.
    the deliverable is that every one of these files is swappable.
    - Write an asset manifest `docs/archive/0.5/plans/0.5_ui_art_manifest.md`
      listing every UI art file, its exact pixel dimensions, palette
-     notes, and what it represents — this is the artist's handoff doc.
+     notes, and what it represents - this is the artist's handoff doc.
    - Loading must go through a single helper with a code-drawn fallback
      if a PNG is missing (game must never break on a missing/replaced
      asset).
@@ -109,7 +109,7 @@ Everything later consumes this; build it first.
    literals outside the token system. Add a scripted check (see QA)
    that enforces this on every file you touch.
 
-## Phase B — Top-of-screen HUD rework
+## Phase B - Top-of-screen HUD rework
 
 Replace the current raw-text status strip (built from
 `scripts/ui/foundation_hud_view_model.gd` `run_status_model`, rendered
@@ -120,7 +120,7 @@ sees only the following, laid out as one coherent bar with clear
 grouping and zero overlapping elements:
 
 1. **Wallet.** A wallet/cash widget showing current money with a coin/
-   bill pixel icon — the dominant, most readable element on the bar.
+   bill pixel icon - the dominant, most readable element on the bar.
    Gain/loss deltas animate briefly (count-up/down or floating +/-
    chip, reduce-motion: instant swap). In the Grand Casino, chips
    display alongside cash as a visually distinct chip stack, matching
@@ -128,7 +128,7 @@ grouping and zero overlapping elements:
 2. **Heat bar (0–100).** A segmented meter with color bands (cool →
    caution → danger) and tick marks at the thresholds that matter
    (pit-boss/showdown pressure). One glance must answer "how much room
-   do I have to cheat?" — the remaining-room portion must be visually
+   do I have to cheat?" - the remaining-room portion must be visually
    obvious, not inferred. Delta pulses on change; the bar itself, not a
    number, carries the meaning (exact value on hover/tooltip only).
 3. **Drunk bar (0–100).** Same meter language as heat, its own color
@@ -153,7 +153,7 @@ The HUD must hold at 1280×720 and in small-screen mode without
 truncating any of the five elements into unreadability (compact
 variants allowed; dropping information is not).
 
-## Phase C — Environment header + goal/options section
+## Phase C - Environment header + goal/options section
 
 Rework the environment identity area (currently `[ENV] name / kind`
 text plus the `[GOAL] … | …` objective dump):
@@ -163,7 +163,7 @@ text plus the `[GOAL] … | …` objective dump):
    style that fits the venue (grimy stencil for the back alley, neon
    script for the jazz club, gaudy gold for the Grand Casino, etc.).
    These are PNG assets at
-   `assets/art/ui/environment_titles/<archetype_id>.png` — one per
+   `assets/art/ui/environment_titles/<archetype_id>.png` - one per
    environment archetype (enumerate them all from
    `data/`/`RunState`; cover every archetype including rooms like the
    Cage). Artist-swappable per the Phase A pipeline; code-drawn
@@ -176,10 +176,10 @@ text plus the `[GOAL] … | …` objective dump):
    data-driven per environment (JSON under `data/`, keyed by archetype
    id) so writing can be tuned without code changes. Objective/
    pressure guidance that the current `objective_text` carried must
-   remain reachable — distill it to a single short goal line with an
+   remain reachable - distill it to a single short goal line with an
    expandable detail (tooltip or tap-to-expand), environment-aware.
 
-## Phase D — In-environment interaction chrome + cheat dock
+## Phase D - In-environment interaction chrome + cheat dock
 
 1. **Every interactive element** in the environment/game view gets the
    Phase A treatment: clear button shapes with real states, icon
@@ -191,17 +191,17 @@ text plus the `[GOAL] … | …` objective dump):
    encouraged) so the player always knows: "to cheat or distract, I go
    there." Availability, cooldown, and risk states are visible on the
    dock itself. Shifting or resizing the game environment layout to
-   make room is allowed and expected — the hard constraints are: all
+   make room is allowed and expected - the hard constraints are: all
    existing actions and functionality remain reachable, nothing
    overlaps, and both screen sizes hold.
 3. Wagering, game-surface action buttons, and the talk dock
    (`scripts/ui/talk_dock.gd`) adopt the same system so the whole play
    view reads as one designed screen.
 
-## Phase E — Selection/information popups
+## Phase E - Selection/information popups
 
 Rework every selection popup (events, item offers, services, lenders,
-travel, wager confirmation, item-found, etc. — sweep
+travel, wager confirmation, item-found, etc. - sweep
 `scripts/ui/foundation_main.gd`, `environment_interaction_controller.gd`,
 `item_found_popup.gd`, `wager_confirmation_controller.gd` and enumerate
 the rest from code):
@@ -211,7 +211,7 @@ the rest from code):
    no overflow/clipping either. Add a shared auto-sizing panel helper
    in the widget kit and use it everywhere.
 2. **Decision-grade information only.** Show what the player needs to
-   choose — stakes, costs, who's asking, visible risk cues — without
+   choose - stakes, costs, who's asking, visible risk cues - without
    spelling out the mechanical outcome of each choice. Cut restated
    mechanics and redundant labels.
 3. **Icon rework.** Every icon in these popups becomes a designed
@@ -219,16 +219,16 @@ the rest from code):
    code-drawn icon whose meaning isn't instantly readable. Icons are
    highlightable (hover/selected variant) rather than boxed with text.
 4. Consistent popup anatomy across all of them: title zone, content
-   zone, choice zone — so every popup is instantly parseable even when
+   zone, choice zone - so every popup is instantly parseable even when
    its content is unique.
 
-## Phase F — Conversation/event popup rework
+## Phase F - Conversation/event popup rework
 
 The conversation/event UI (currently a box of boxes with buttons) is
 rebuilt as a living pixel-art conversation:
 
 1. **Conversation frame.** A designed pixel-art dialogue panel with a
-   speaker identity zone — pixel portrait or silhouette + name plate
+   speaker identity zone - pixel portrait or silhouette + name plate
    for the speaker (Rourke, Linda, the Host, patrons, generic staff).
    Author portraits as artist-swappable PNGs
    (`assets/art/ui/portraits/`, in the manifest) with a styled
@@ -241,29 +241,29 @@ rebuilt as a living pixel-art conversation:
    rules unchanged). Long content is broken into sequential beats
    ("next" advances) rather than one dump.
 3. **Contextual choice presentation.** Options are styled to the
-   conversation — replies/actions phrased and rendered as things you'd
+   conversation - replies/actions phrased and rendered as things you'd
    say or do in that moment, visually distinct by flavor (risky/
    defiant vs. safe/compliant options read differently), NOT a uniform
    stack of grey buttons. The Rourke showdown, patron approaches, and
    ordinary environment events should each feel distinct while sharing
    the same underlying frame.
 
-## Phase G — Menus and remaining screens
+## Phase G - Menus and remaining screens
 
-Every remaining menu and popup gets a finalized pass — unique,
+Every remaining menu and popup gets a finalized pass - unique,
 streamlined to its purpose, self-explanatory to a first-time player:
 
 - **Main menu / start screen:** designed title treatment, clear
   primary action (continue/new run), settings and secondary entries
-  quiet. First screen a new player sees — it sets the identity.
-- **Sale/pawn window:** not a box of items — a showcase. Selected item
+  quiet. First screen a new player sees - it sets the identity.
+- **Sale/pawn window:** not a box of items - a showcase. Selected item
   displayed large with its art, and the offered price presented as a
   visible breakdown (base value, condition/usage wear, dealer's cut or
   environment modifier) so the player SEES why the price is what it
   is, without prose paragraphs.
 - **Settings, run inventory, containers/bag reel, world map overlay,
   journal, run report, meta home screens, collection browser, coach
-  bubbles:** migrate each to the design system with a layout pass —
+  bubbles:** migrate each to the design system with a layout pass -
   keep what already works (run report tabs precedent), fix hierarchy,
   spacing, iconography, and fit everywhere else. Enumerate every
   surface from `scripts/ui/` and check each off in your report; none
@@ -272,7 +272,7 @@ streamlined to its purpose, self-explanatory to a first-time player:
 ## Hard rules (all phases)
 
 - **Identity preserved.** After the overhaul the game reads as "the
-  same game, finished" — same neon-pixel brand the store page trades
+  same game, finished" - same neon-pixel brand the store page trades
   on. Before/after captures required for every major surface.
 - **Zero gameplay-behavior change.** All changes are presentation and
   layout. Game logic, odds, economy, event outcomes, save format, and
@@ -283,7 +283,7 @@ streamlined to its purpose, self-explanatory to a first-time player:
   at 1280×720 AND small-screen mode for every surface you touch.
 - **Performance.** Zero-copy per-frame rules hold: no per-frame deep
   copies or allocations in HUD/meter/typewriter updates. Idle table
-  animations must stay alive — never accept a 0.000 idle-draw number
+  animations must stay alive - never accept a 0.000 idle-draw number
   without the liveness counter check (this exact regression shipped 4
   times; the guard is mandatory). Perf probe surfaces stay within
   recorded budgets; HUD animations must be dirty-flagged, not
@@ -318,7 +318,7 @@ streamlined to its purpose, self-explanatory to a first-time player:
    threshold ticks, and icon-tray contents match expectations
    (scripted where possible, captures for the rest).
 6. **Determinism:** run the deterministic replay/QA route before and
-   after — identical outcomes. Typewriter and HUD animation must not
+   after - identical outcomes. Typewriter and HUD animation must not
    perturb it.
 7. **Visual QA route pass** plus before/after capture pairs for: HUD,
    environment header (every environment's title plate), cheat dock,
@@ -340,9 +340,9 @@ streamlined to its purpose, self-explanatory to a first-time player:
 ## Deliverables
 
 - All code/asset changes, committed in logical units per phase.
-- `docs/archive/0.5/plans/0.5_ui_art_manifest.md` — artist handoff for every UI
+- `docs/archive/0.5/plans/0.5_ui_art_manifest.md` - artist handoff for every UI
   art asset (path, dimensions, palette, meaning, swap instructions).
-- `docs/archive/0.5/plans/0.5_ui_redesign_report.md` — surface-by-surface
+- `docs/archive/0.5/plans/0.5_ui_redesign_report.md` - surface-by-surface
   checklist (every surface in `scripts/ui/` accounted for), the
   cold-look notes, capture index, gate results per phase, and any
   intentionally-deferred items with reasons.
@@ -354,4 +354,4 @@ Delete this prompt file AND
 push, and report: per-phase summary, gate results, the report and
 manifest paths, and the top remaining polish items (if any) you would
 queue next. On an unfixable gate failure: stop at the last green
-commit and report the failure verbatim — do not push a red state.
+commit and report the failure verbatim - do not push a red state.

@@ -1,4 +1,4 @@
-# Beat the House 0.6.1 — review of the first worker run and closeout plan
+# Beat the House 0.6.1 - review of the first worker run and closeout plan
 
 Review date: 2026-11-11
 Reviewed: `main` at `2113db415ce3639eb546caaaf58d582782e30bc7` (66 commits after
@@ -104,7 +104,7 @@ in section 4.
 
 "Drop" means: close it in the ledger with the stated reason; no more work.
 
-### AUD061-04 — version stamps (blocked) → **reduced by owner decision; one variable**
+### AUD061-04 - version stamps (blocked) → **reduced by owner decision; one variable**
 
 The block is real and it is not the worker's fault. The NEXT builder lives in
 the site repository (`D:/Projects/site/scripts/build-bth-next-gdscript.ps1`).
@@ -142,7 +142,7 @@ internal `0.6.0-dev+…` build identity will still say 0.6.0 after that switch.
 Players do not see them in the game. Bringing them in line needs the builder's
 pins updated once, which the owner has chosen not to do now.
 
-### AUD061-12 — Web export failure (not reproduced) → **drop**
+### AUD061-12 - Web export failure (not reproduced) → **drop**
 
 Nine full exports under the original 2 GiB cap passed, on current source and
 on the two historical commits that failed. NEXT has promoted over sixty builds
@@ -154,20 +154,20 @@ One thing worth keeping from the investigation: the progress marker points at
 loading `main.tscn` and `foundation_main.gd`, a 25,000-line script. If the
 failure returns, that is where to look, and it is one more reason for STR-01.
 
-### AUD061-11 and AUD061-17 — acceptance and coverage runs → **done; findings below**
+### AUD061-11 and AUD061-17 - acceptance and coverage runs → **done; findings below**
 
 ### The eight findings
 
 | ID | What it is | Disposition |
 | --- | --- | --- |
-| `BTH061-RC-BARDICE-COVER-CLIP-001` | **Real, visible.** | **Fix** — CLOSE-02 |
-| `BTH061-RC-BARDICE-COLD-001` | Test and popup interaction | **Fix the test** — CLOSE-03 |
-| `BTH061-RC-COUNT-EXPECTATION-001` | Test reference rounds a float | **Fix the test** — CLOSE-03 |
-| `BTH061-RC-RIVERBOAT-FIXTURE-001` | Test stub never builds the dialogue dock | **Fix the test** — CLOSE-03 |
-| `BTH061-RC-SCRATCH-STATE-001` | In-memory difference after Continue, saved bytes identical | **One diagnostic step, then close** — CLOSE-03 |
-| `BTH061-RC-ACCEPTANCE-COVERAGE-001` | Coverage gap | **Run it** — CLOSE-06 |
+| `BTH061-RC-BARDICE-COVER-CLIP-001` | **Real, visible.** | **Fix** - CLOSE-02 |
+| `BTH061-RC-BARDICE-COLD-001` | Test and popup interaction | **Fix the test** - CLOSE-03 |
+| `BTH061-RC-COUNT-EXPECTATION-001` | Test reference rounds a float | **Fix the test** - CLOSE-03 |
+| `BTH061-RC-RIVERBOAT-FIXTURE-001` | Test stub never builds the dialogue dock | **Fix the test** - CLOSE-03 |
+| `BTH061-RC-SCRATCH-STATE-001` | In-memory difference after Continue, saved bytes identical | **One diagnostic step, then close** - CLOSE-03 |
+| `BTH061-RC-ACCEPTANCE-COVERAGE-001` | Coverage gap | **Run it** - CLOSE-06 |
 | `BTH061-RC-NATIVE-RETENTION-001` | A measurement could not be taken | **Drop for 0.6.1** |
-| `BTH061-RC-PACKAGING-001` | Version stamps plus the final build | **Reduced** — CLOSE-04 and CLOSE-05; stamps other than the menu stay 0.6.0 by owner decision |
+| `BTH061-RC-PACKAGING-001` | Version stamps plus the final build | **Reduced** - CLOSE-04 and CLOSE-05; stamps other than the menu stay 0.6.0 by owner decision |
 
 Details:
 
@@ -209,7 +209,7 @@ open in the ledger for after release.
 
 ## 4. Work orders for the closeout
 
-### CLOSE-01 — Bring the Smoke suite to green
+### CLOSE-01 - Bring the Smoke suite to green
 
 **Why.** Section 2. A release cannot be called qualified against a red gate.
 
@@ -237,7 +237,7 @@ to the two over-long lines are permitted.
 **Done when** `tools/check_godot.ps1 -Suite Smoke` exits 0 on the candidate,
 or every remaining failure has a written owner-accepted reason.
 
-### CLOSE-02 — Bar Dice financial line is cut off in chips
+### CLOSE-02 - Bar Dice financial line is cut off in chips
 
 **Change.** In `_draw_bar_room` (`scripts/games/bar_dice.gd:3293-3297`):
 
@@ -252,7 +252,7 @@ or every remaining failure has a written owner-accepted reason.
 three and four digits and assert the full RET value is drawn inside the box at
 1280×720. Verify on NEXT in Grand Casino practice.
 
-### CLOSE-03 — Four test repairs
+### CLOSE-03 - Four test repairs
 
 1. **Bar Dice cold.** Split the assertion into two checks so each reports on
    its own. Before waiting for the tumble, dismiss any open event popup through
@@ -270,7 +270,7 @@ three and four digits and assert the full RET value is drawn inside the box at
    normalize the comparison and record why. If a real value differs, stop and
    report.
 
-### CLOSE-04 — One version variable
+### CLOSE-04 - One version variable
 
 As described in section 3 under AUD061-04: `RELEASE_VERSION` in
 `scripts/core/build_identity.gd`, shown on the menu with the short commit. No
@@ -278,7 +278,7 @@ pinned file changes. Check on NEXT that the footer reads `0.6.0 (<commit>)`,
 then confirm in a source run that changing the constant alone changes the
 menu text, and change it back.
 
-### CLOSE-06 — Remaining acceptance coverage (owner decision C2)
+### CLOSE-06 - Remaining acceptance coverage (owner decision C2)
 
 The owner wants the agent to run the missing acceptance cases, and will
 playtest afterwards.
@@ -300,7 +300,7 @@ playtest afterwards.
 4. A failure is a new finding with its own ID and reproduction. Do not fix it
    inside this task unless it is a one-line regression from this run.
 
-### CLOSE-05 — Final candidate
+### CLOSE-05 - Final candidate
 
 After CLOSE-01 to -04 and CLOSE-06: freeze `main`, record the commit as the release
 candidate, run Smoke, animation liveness and the Python tests on it, build

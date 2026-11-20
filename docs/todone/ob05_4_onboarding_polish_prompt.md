@@ -2,10 +2,10 @@
 
 - **Completed:** 2026-07-17
 - **Completion/implementation commits:** `16bc7411`
-- **Verification:** PASS — tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_visual_qa.ps1; tools/web_perf_smoke.ps1; tools/foundation_mouse_playtest.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
+- **Verification:** PASS - tools/validate_project.ps1; -FoundationSuite; tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10; tools/foundation_visual_qa.ps1; tools/web_perf_smoke.ps1; tools/foundation_mouse_playtest.ps1. The historical completion commit records the task as complete; console-only artifacts not stored in Git cannot be reconstructed by this archive audit.
 - **Deviations:** The completed prompt was historically deleted from `docs/todo` instead of moved to `docs/todone`; this archive audit restored the exact prompt body from its parent commit.
 
-# Agent Prompt — Onboarding Slice 4: Polish, Copy Pass, Fresh-Profile Gates
+# Agent Prompt - Onboarding Slice 4: Polish, Copy Pass, Fresh-Profile Gates
 
 Copy everything below this line into the agent.
 
@@ -39,7 +39,7 @@ slice: polish and proof, no new mechanics.
    - legacy profile (pre-onboarding fields) → loads, never sees the
      tutorial, tips fire normally.
 5. **Web export smoke**: the tutorial is most new players' first
-   session ON ITCH — run the web perf smoke and click through the full
+   session ON ITCH - run the web perf smoke and click through the full
    tutorial in the web export; report load/perf feel and any
    web-specific issues found (fix in-scope ones).
 

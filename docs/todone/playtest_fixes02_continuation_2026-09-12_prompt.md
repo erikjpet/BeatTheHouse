@@ -1,8 +1,8 @@
-Status: DONE — fixes merged to `main` in `429079bb`; regression group passes on 2026-09-14
+Status: DONE - fixes merged to `main` in `429079bb`; regression group passes on 2026-09-14
 Source report: `docs/plans/agent_playtest/agent_playtest_report_2026-09-12.md` (continuation findings BUG-24 … BUG-31)
 Predecessor task: `docs/todo/playtest_fixes01_agent_sweep_2026-09-12_prompt.md` (BUG-01 … BUG-23)
 
-# Agent Prompt — Playtest Fixes 02: Fix the Eight Continuation Findings
+# Agent Prompt - Playtest Fixes 02: Fix the Eight Continuation Findings
 
 Copy everything below this line into the agent.
 
@@ -94,7 +94,7 @@ You may use sub-agents to validate groups in parallel, with distinct harness
 session names and persistence roots. All product edits must be made serially by
 you in the one shared fix worktree.
 
-## 3. Validation protocol — required for every bug
+## 3. Validation protocol - required for every bug
 
 For each BUG-NN:
 
@@ -123,9 +123,9 @@ For each BUG-NN:
 Line numbers below are from the original report and may have moved after Fixes
 01. Re-locate every symbol.
 
-### G8 — surface layout and copy
+### G8 - surface layout and copy
 
-**BUG-24 — Baccarat LEAVE overlaps the hand explainer.**
+**BUG-24 - Baccarat LEAVE overlaps the hand explainer.**
 
 - Original evidence:
   - `.tmp/agent_playtest/2026-09-12/pt_b3/0013.png`
@@ -142,7 +142,7 @@ Line numbers below are from the original report and may have moved after Fixes
   intersect Baccarat's explainer/content rectangles in every relevant state.
   Verify the hit target and label remain visible, not merely the drawing.
 
-**BUG-25 — Dave's consequence preview is clipped.**
+**BUG-25 - Dave's consequence preview is clipped.**
 
 - Original evidence:
   `.tmp/agent_playtest/2026-09-12/pt_c5/0063.png`.
@@ -156,7 +156,7 @@ Line numbers below are from the original report and may have moved after Fixes
 - Add a rendered-layout or deterministic geometry test proving all visible text
   fits its assigned region.
 
-**BUG-26 — scenario instruction appears twice.**
+**BUG-26 - scenario instruction appears twice.**
 
 - Original evidence:
   `.tmp/agent_playtest/2026-09-12/pt_d4/0021.png`.
@@ -168,7 +168,7 @@ Line numbers below are from the original report and may have moved after Fixes
 - Audit the current scenario catalog for other identical pairs and add a view-
   model/presentation test for both duplicate and legitimately distinct cases.
 
-**BUG-28 — Bar Dice guidance clips at 1280×720.**
+**BUG-28 - Bar Dice guidance clips at 1280×720.**
 
 - Original evidence:
   `.tmp/agent_playtest/2026-09-12/pt_b6/0019.png`.
@@ -180,9 +180,9 @@ Line numbers below are from the original report and may have moved after Fixes
 - No collection-building or text measurement cache churn may be introduced per
   frame; cache layout inputs if the draw path is hot.
 
-### G9 — round and result state
+### G9 - round and result state
 
-**BUG-27 — Blackjack loss headline says `PUSH +0`.**
+**BUG-27 - Blackjack loss headline says `PUSH +0`.**
 
 - Original evidence:
   `.tmp/agent_playtest/2026-09-12/pt_b5/0026.png`.
@@ -199,7 +199,7 @@ Line numbers below are from the original report and may have moved after Fixes
 - Confirm save/load of a completed hand preserves the same headline and does not
   replay settlement.
 
-**BUG-29 — Roulette REBET is disabled after CLEAR.**
+**BUG-29 - Roulette REBET is disabled after CLEAR.**
 
 - Original evidence:
   `.tmp/agent_playtest/2026-09-12/pt_b7/0013.png`.
@@ -215,9 +215,9 @@ Line numbers below are from the original report and may have moved after Fixes
   unrelated old bets.
 - Keep spin determinism and idle liveness unchanged.
 
-### G10 — dialogue identity and loan disclosure
+### G10 - dialogue identity and loan disclosure
 
-**BUG-30 — chained phone event loses “Caller” from “Unknown Caller”.**
+**BUG-30 - chained phone event loses “Caller” from “Unknown Caller”.**
 
 - Original evidence:
   `.tmp/agent_playtest/2026-09-12/pt_c7/0021.png`.
@@ -231,7 +231,7 @@ Line numbers below are from the original report and may have moved after Fixes
   faceless name, and a truly unnamed speaker that should still fall back to
   “Unknown”. Check save/Continue mid-chain.
 
-**BUG-31 — Vic Mercer's loan hides its terms.**
+**BUG-31 - Vic Mercer's loan hides its terms.**
 
 - Original evidence:
   `.tmp/agent_playtest/2026-09-12/pt_d7/0020.png`.
@@ -338,14 +338,14 @@ Do not edit the original playtest report or the Fixes 01 report. Structure:
    - inherited failures/timeouts;
    - owner decisions or remaining work.
 5. Change the top line to:
-   `Status: DONE — continuation fixes uncommitted in shared fix worktree, awaiting owner review`.
+   `Status: DONE - continuation fixes uncommitted in shared fix worktree, awaiting owner review`.
 
-If the predecessor is incomplete, set `Status: BLOCKED — waiting for Playtest
+If the predecessor is incomplete, set `Status: BLOCKED - waiting for Playtest
 Fixes 01` and do not touch the fix worktree. If a new gate failure cannot be
 resolved within BUG-24–31 scope, leave all work uncommitted, set `Status:
 BLOCKED`, and paste the failing output verbatim into the execution record.
 
-## Execution record — 2026-09-12
+## Execution record - 2026-09-12
 
 - Dependency check: BLOCKED. `playtest_fixes01_agent_sweep_2026-09-12_prompt.md` is still `Status: READY`, not `DONE`.
 - Predecessor report: `docs/plans/agent_playtest/agent_playtest_fixes_2026-09-12.md` does not exist.
@@ -355,7 +355,7 @@ BLOCKED`, and paste the failing output verbatim into the execution record.
 - Cleanup: no Godot process launched by this continuation remains running.
 - Required next step: complete Fixes 01, mark its prompt `DONE`, and create its fix report before rerunning this continuation.
 
-## Execution record — 2026-09-13 continuation
+## Execution record - 2026-09-13 continuation
 
 - Dependency: Fixes 01 was confirmed `DONE`; its full prompt, execution record, and fix report were read before continuation work began.
 - Inherited state: branch `codex/agent-playtest-fixes`, HEAD `56de66598a2bcdbc3f171f090b48c361daf35563`, inherited unstaged content-diff hash `6c108b64a8766e5f4c6f58089d4e939610671b49`. All inherited changes were preserved.

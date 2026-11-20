@@ -1,4 +1,4 @@
-# Agent Prompt — Attribute Glyph System: Symbol Badges Replace Prose Text Boxes
+# Agent Prompt - Attribute Glyph System: Symbol Badges Replace Prose Text Boxes
 
 ## Execution Record
 
@@ -25,8 +25,8 @@ Copy everything below this line into the agent.
 
 You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript casino
 roguelike (1280×720 viewport, immediate-mode canvas rendering, data-driven
-content — see CLAUDE.md). You are replacing prose "text box" attribute
-descriptions — starting with the travel menu — with a **repo-wide attribute
+content - see CLAUDE.md). You are replacing prose "text box" attribute
+descriptions - starting with the travel menu - with a **repo-wide attribute
 glyph system**: small, standardized, instantly recognizable symbols that show
 how something (a travel route, item, event, service) affects the run, plus a
 class badge showing what category it belongs to.
@@ -35,14 +35,14 @@ class badge showing what category it belongs to.
 
 1. A player glancing at a travel route, shop item, or event choice reads its
    effects from symbols in under a second: a cash glyph with `+5`, a heat
-   glyph with `+1`, a three-pip risk tier — not a sentence.
+   glyph with `+1`, a three-pip risk tier - not a sentence.
 2. Symbols are **standard across all content types**: the same heat glyph
    means suspicion everywhere it appears; the same cash glyph means bankroll
    everywhere. One vocabulary, learned once.
 3. Every card/entry shows its **class** (item class, event type, route risk
    tier, service category) as a compact badge so category recognition is
    immediate.
-4. Prose does not disappear — it demotes: one short flavor line stays on
+4. Prose does not disappear - it demotes: one short flavor line stays on
    cards, and the full sentence moves to hover/focus detail. Symbols carry
    the mechanical facts.
 
@@ -58,20 +58,20 @@ class badge showing what category it belongs to.
   preview lines at foundation_main.gd:4966-4970; travel risk detail strings
   are hand-assembled at foundation_main.gd:2328-2335.
 - The world map (scripts/ui/world_map_canvas.gd) and the travel object focus
-  path present route info — inventory every place route attributes render as
+  path present route info - inventory every place route attributes render as
   text before you start (grep for `risk_summary`, `cost_summary`,
   `_travel_risk_summary`, `route_risk`).
 
 ## Existing infrastructure you MUST build on (do not invent a parallel system)
 
 - `scripts/ui/icon_sprite_renderer.gd` (`IconSpriteRenderer`) renders small
-  pixel sprites authored as shape data in `data/runtime/icon_sprites.json` —
+  pixel sprites authored as shape data in `data/runtime/icon_sprites.json` -
   frame + shapes, accent-colorable, `texture()` and `draw_canvas()` paths.
   Its header comment states the design rule: icons are authored as data, not
   content-id branches inside UI scripts. Attribute glyphs follow the same
   rule.
 - `pixel_scene_canvas.gd` already consumes authored icon sprites via
-  `_texture_for_icon_sprite` (:3029) — study its texture caching before
+  `_texture_for_icon_sprite` (:3029) - study its texture caching before
   writing any new texture path.
 - `scripts/ui/visual_style.gd` holds the palette; glyph color semantics must
   come from there, not hard-coded colors.
@@ -101,13 +101,13 @@ attribute keys** to glyph definitions:
 - Core set (extend after auditing all effect keys): `bankroll` (cash),
   `suspicion` (heat), `luck`, `risk_tier` (1–3 pips), `distance`, `cost`,
   `win_chance`, `win_bonus`, `risk_decay`, `debt`, `time_actions`.
-- Class badges: item classes (`permanent`, consumable, etc. — enumerate from
+- Class badges: item classes (`permanent`, consumable, etc. - enumerate from
   items.json), event types, route risk tiers, service categories.
 - Each glyph entry: sprite shapes (icon_sprites.json format, reuse the
   renderer), a `polarity` rule (whether positive values are good, bad, or
-  neutral — heat +1 is bad, cash +5 is good) driving color from
+  neutral - heat +1 is bad, cash +5 is good) driving color from
   visual_style.gd (dual-code with shape/direction so color is never the only
-  signal — colorblind safety), and a compact value format (`"+%d"`, `"%d%%"`,
+  signal - colorblind safety), and a compact value format (`"+%d"`, `"%d%%"`,
   pips).
 - Validate the file on load exactly like icon_sprites.json is validated; add
   it to `tools/validate_project.ps1`'s required-files list.
@@ -119,11 +119,11 @@ that translates a content definition + context into an ordered badge list
 `[{glyph_id, value_text, polarity}, ...]`:
 
 - `for_route(route, route_risk)`, `for_item(item)`, `for_event_choice(choice)`,
-  `for_service(service)` — every UI consumer calls these; no UI script builds
+  `for_service(service)` - every UI consumer calls these; no UI script builds
   badge lists ad hoc (same rule as IconSpriteRenderer's no-content-branches).
 - Read-only: builders take definitions and return new arrays; they must not
   mutate inputs (SB.2 mutation firewall covers preview/read paths).
-- Unknown/missing attribute keys are skipped silently — content additions
+- Unknown/missing attribute keys are skipped silently - content additions
   must not crash old builds.
 
 ### 3. Badge row renderer (UI layer)
@@ -136,7 +136,7 @@ has:
   choice cards, shop/inventory item rows, event choice buttons).
 - **Canvas path** (`draw_canvas`-style, like IconSpriteRenderer) for
   immediate-mode surfaces (world map route hover, pixel scene object labels).
-- Textures are cached by (glyph_id, size, polarity) — never create an
+- Textures are cached by (glyph_id, size, polarity) - never create an
   ImageTexture per frame (idle-draw budgets are release-gated; zero per-frame
   allocations).
 - Fixed badge size (~14–18 px glyph + value text) and consistent ordering
@@ -148,7 +148,7 @@ has:
 - Travel choice cards and the travel focus detail card render a badge row
   (class/tier, cost, distance, risk pips, risk-event deltas) instead of the
   concatenated `cost_summary`/`risk_summary` prose; keep one short flavor
-  line (`description` — "Cheap supplies.").
+  line (`description` - "Cheap supplies.").
 - The full prose sentence moves to the hover/expanded state of the card, not
   deleted (screen-reader/clarity fallback and legend reinforcement).
 - Apply the same treatment to the world map route presentation
@@ -158,7 +158,7 @@ has:
 
 - Shop and inventory item rows: class badge + price + effect badges.
   **Sequencing:** `docs/todo/run_inventory_screen_extraction_prompt.md`
-  restructures the inventory popup — check whether it has been executed (see
+  restructures the inventory popup - check whether it has been executed (see
   docs/todone/) and integrate with whichever inventory implementation is
   current.
 - Event choice buttons (modal popup now; the talk dock from
@@ -170,7 +170,7 @@ has:
 ### 6. Legend (learnability)
 
 A compact legend reachable from the run menu (and linked wherever badges
-first appear) listing every glyph with its meaning — generated **from**
+first appear) listing every glyph with its meaning - generated **from**
 `attribute_glyphs.json` at runtime so it can never drift from the vocabulary.
 
 ## Hard constraints
@@ -178,7 +178,7 @@ first appear) listing every glyph with its meaning — generated **from**
 1. Zero per-frame allocations in badge rendering; cache textures; never
    `duplicate(true)` live state per frame (see CLAUDE.md).
 2. Builders are read-only over definitions (mutation firewall suites will
-   catch violations — run them).
+   catch violations - run them).
 3. Do not remove the prose summary keys from data or the summary builder
    until every consumer of `_world_object_summary_text` is inventoried; any
    consumer you do not convert in this task keeps working.
@@ -198,7 +198,7 @@ first appear) listing every glyph with its meaning — generated **from**
 1. `powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1`
 2. `tools\check_godot.ps1 -RequireGodot -FoundationSuite ui` and
    `-FoundationSuite systems`.
-3. `tools\foundation_performance_probe.ps1 -RequireGodot` — idle-draw budgets
+3. `tools\foundation_performance_probe.ps1 -RequireGodot` - idle-draw budgets
    must hold with badges rendering.
 4. One `tools\foundation_mouse_batch_playtest.ps1 -RunCount 10 -RequireGodot`
    integration smoke (travel + shop interactions exercise the new cards).

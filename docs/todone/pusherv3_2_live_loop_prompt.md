@@ -8,14 +8,14 @@ Board row: `pusherv3_2` in `docs/todo/README_0_6_board.md`
 - **Verification:** PM line-by-line scope/design review; final combined Systems/UI/Contracts PASS; 10-seed/510-checkpoint two-process determinism PASS (`3549586652`); visual QA PASS with zero warnings; performance PASS (300-body native tick p95 3.072 ms, active DROP p95 15.727 ms, zero full-snapshot fallbacks); Windows/Web native parity exact (`c25d088c...`, input `61c7c14e...`), collection 1/$3 and empty tray.
 - **Deviations:** None. Stage-3 cabinet presentation remains intentionally downstream.
 
-# Agent Prompt — pusherv3_2: The Live Machine Loop (continuous play, tray, persistence)
+# Agent Prompt - pusherv3_2: The Live Machine Loop (continuous play, tray, persistence)
 
 Copy everything below this line into the agent.
 
 ---
 
 You are working in `D:\Projects\Beat-The-House`. **Binding design
-contract:** `docs/plans/coin_pusher_v3_machine_rework_plan.md` —
+contract:** `docs/plans/coin_pusher_v3_machine_rework_plan.md` -
 read it in full; this stage implements sections 3.5–3.7, 5.1–5.2,
 and 8 on top of pusherv3_1's solver. The machine stops being
 turn-based here.
@@ -48,7 +48,7 @@ turn-based here.
   input trace (the determinism artifact): DROP, carriage movement,
   skill stop toggle, nudge, collect.
 - **World-time pricing (owner-locked):** DROP costs one game action
-  at standard pricing — wire through the existing action/wager seam
+  at standard pricing - wire through the existing action/wager seam
   so bankroll deduction, story logging, and turn advancement behave
   exactly like other games' actions. Carriage movement, skill stop,
   and collection are FREE and consume no world time. Nudge keeps its
@@ -56,7 +56,7 @@ turn-based here.
 - Payout crediting is decoupled from actions: coins crossing the
   tray lip at ANY tick append to the tray ledger with their
   provenance (which Ridge multiplier state was armed when they fell
-  — plan 5.5), regardless of which insert caused them.
+  - plan 5.5), regardless of which insert caused them.
 
 ### 2. Entry apparatus framework (plan 3.5, 7)
 
@@ -68,13 +68,13 @@ turn-based here.
   arrives in stage 4 but the framework must already support it
   (test with a synthetic 5-row peg definition).
 
-### 3. Skill stop (plan 3.2 — owner-locked free)
+### 3. Skill stop (plan 3.2 - owner-locked free)
 
 - The toggle input drives the solver's rate ramp (24-tick ease
   out/in). No cost, no heat, no tell interaction, always available,
   visibly smooth. State surfaces to the renderer (button lit).
 
-### 4. The physical tray (plan 3.6 — owner-locked)
+### 4. The physical tray (plan 3.6 - owner-locked)
 
 - Tray ledger + COLLECT interaction: free, transfers value to
   bankroll and prize riders to inventory through the existing result
@@ -84,10 +84,10 @@ turn-based here.
 ### 5. Exit settle + settled-state persistence (plan 3.7, 5.2, 8)
 
 - On surface close: input-lock, run to carried-sleep steady state
-  (bounded 1200 ticks, chunked across frames — the player sees the
+  (bounded 1200 ticks, chunked across frames - the player sees the
   machine finish its business), write `coin_pusher_settled_v3`
   (quantized positions, phase, carriage, tray, sub-game, alarm
-  fields — target ~2 KB), freeze. Absence simulates NOTHING.
+  fields - target ~2 KB), freeze. Absence simulates NOTHING.
 - Re-entry: restore snapshot, resume stroking from stored phase.
   Visit 1 ≡ visit 80 (owner-locked).
 - Migration: V2 machine states reseed per plan section 8, carrying
@@ -105,12 +105,12 @@ turn-based here.
   (including skill-stop toggles mid-stroke and collects).
 - Idle liveness: the stroking motor IS the idle animation; the
   settled machine must run within the animated-idle budget WITH the
-  liveness counter (carried-sleep is the mechanism — if idle cost is
+  liveness counter (carried-sleep is the mechanism - if idle cost is
   high, fix the sleep discipline, never fake the counter).
 - Save compat: schema-versioned; non-pusher saves untouched; the
   world-map snapshot contract holds.
 - No coin deletion; ceiling refusal preserved end-to-end (a refused
-  DROP refunds its action cost — the player was not served).
+  DROP refunds its action cost - the player was not served).
 - Style: tabs, typed GDScript; `.tmp/` reports; suite timeout =
   max(300s, baseline×1.5).
 

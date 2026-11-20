@@ -1,4 +1,4 @@
-# Agent Prompt — Video Poker: VERIFY Everything Is Done Per Spec (and Finish What Isn't)
+# Agent Prompt - Video Poker: VERIFY Everything Is Done Per Spec (and Finish What Isn't)
 
 Copy everything below this line into the worker agent. Use a capable model.
 
@@ -8,7 +8,7 @@ You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript casino
 roguelike. The video poker rebuild has been merged to `main`
 (`scripts/games/video_poker.gd` + `scripts/games/video_poker_renderer.gd`).
 Your job: INDEPENDENTLY VERIFY that EVERY requirement and feature in the spec
-is actually met, with concrete PROOF — and where any is NOT met, FINISH
+is actually met, with concrete PROOF - and where any is NOT met, FINISH
 implementing it until you can prove it. Do not trust prior claims or commit
 messages. Do not conclude "done" on assumption. Conclude done ONLY when every
 item below is proven with the stated evidence.
@@ -19,7 +19,7 @@ largely implemented and TESTED (multi-hand independence has a test:
 `scripts/tests/foundation/check_table_games.gd` `_check_video_poker_multi_hand`),
 but TWO things were NOT confirmable without running the game: the multi-hand
 DISPLAY actually showing distinct hands on screen, and the ART being
-slot-parity. Verify these especially — capture them.
+slot-parity. Verify these especially - capture them.
 
 ## Rules of this pass
 
@@ -44,7 +44,7 @@ slot-parity. Verify these especially — capture them.
 2. **Betting works.** Interaction test drives coins-per-hand 1→5 and Bet Max;
    assert the total wager and the highlighted paytable column update; never
    stuck at 1. PROOF: test + a capture at bet 5.
-3. **Clarity — how to win.** A first-timer can tell the next step
+3. **Clarity - how to win.** A first-timer can tell the next step
    (DEAL → hold → DRAW) and see WHY they won/lost (winning hand named, paytable
    row flashes). PROOF: a driven walkthrough + capture of a win with the row
    highlighted.
@@ -112,7 +112,7 @@ pass:
    the move.
 3. PUSH to the remote.
 4. Report the full verification table (12 items, each PASS/FIXED with its
-   proof), the RTP table, and a plain verdict: "VIDEO POKER COMPLETE PER SPEC —
+   proof), the RTP table, and a plain verdict: "VIDEO POKER COMPLETE PER SPEC -
    all 12 proven" or the exact list of what remained unmet.
 
 If any checklist item cannot be proven or a gate cannot pass, do NOT declare

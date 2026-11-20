@@ -1,9 +1,9 @@
-# Agent Prompt — Conversation Popup Positioning Rework
+# Agent Prompt - Conversation Popup Positioning Rework
 
 Copy everything below the line into the worker agent. This reworks how the
 conversation dock is positioned relative to the focused object, its info panel,
 and the camera. It is related to the deferred selection-stability fix
-(`tutorial_selection_flash_and_object_teleport_fix_prompt.md`) — the two touch
+(`tutorial_selection_flash_and_object_teleport_fix_prompt.md`) - the two touch
 the same focus/camera seam, so coordinate; do not re-solve the object-teleport
 bug here, but do fix the popup-driven camera/focus churn described below.
 
@@ -21,7 +21,7 @@ highlighted object and its info panel. It needs a stable, legible composition.
    corners.
 2. **Left corner or right corner based on what is pointed at / selected.** The
    dock occupies the bottom-LEFT or bottom-RIGHT corner depending on where the
-   focused object is — never centered, never straddling.
+   focused object is - never centered, never straddling.
 3. **Character representation always toward the OUTER edge of the screen.** The
    portrait sits on the outer side of the dock (against the screen edge), with
    the text/choices toward the interior. Bottom-left dock → portrait on the far
@@ -31,7 +31,7 @@ highlighted object and its info panel. It needs a stable, legible composition.
    both are visible. The highlighted object AND its info/attribute panel must
    remain fully on-screen and **never overlapped** by the dock.
 5. **No constant movement / nonsensical shifts.** The side is decided
-   deterministically and stably — it does not oscillate while the same
+   deterministically and stably - it does not oscillate while the same
    conversation/selection is active, and the camera does not chase the dock.
 
 ## Root-cause direction (fix the churn, not the symptom)
@@ -45,12 +45,12 @@ highlighted object and its info panel. It needs a stable, legible composition.
   Do not recompute side/position on a per-frame or per-jitter basis.
 - **Camera/focus feedback:** the focus/camera pan (`environment_interaction_view_model.gd`
   / `environment_interaction_controller.gd` / `foundation_main.gd`) shifts the
-  view toward the selected object while the dock reserves space at the bottom —
+  view toward the selected object while the dock reserves space at the bottom -
   if the pan target reacts to the dock's occupied rect (or vice-versa) they
   chase each other. Break the loop: the camera settles on a single stable
   target for the active selection; the dock reserves a fixed bottom-corner
   footprint that the focus composition accounts for up front (there is already
-  an `environment_reserved_global_rect()` for exactly this — use it as the
+  an `environment_reserved_global_rect()` for exactly this - use it as the
   source of truth so the object is authored into a safe spot before the dock
   opens, rather than moving things after).
 - **Overlap guarantee:** compute the focused object's rect, its info/attribute
@@ -61,7 +61,7 @@ highlighted object and its info panel. It needs a stable, legible composition.
 
 ## Seams
 
-`scripts/ui/talk_dock.gd` — `_position_panel()`, `_expanded_layout_rects()`,
+`scripts/ui/talk_dock.gd` - `_position_panel()`, `_expanded_layout_rects()`,
 `_preferred_layout_side()`, `set_avoid_global_rect()`, `portrait_panel`,
 `occupied_global_rect()`, `environment_reserved_global_rect()`, `VIEWPORT_MARGIN`,
 `EXPANDED_PORTRAIT_SIZE`. Focus/camera: `environment_interaction_view_model.gd`,
@@ -78,7 +78,7 @@ avoid rect and drives the pan). Info panel: `item_found_popup.gd`,
 2. The focused object and its info/attribute panel are fully visible and never
    overlapped by the dock in any of those cases.
 3. The side does NOT oscillate while a conversation/selection is active; the
-   camera settles and does not chase — capture a short clip/log showing no
+   camera settles and does not chase - capture a short clip/log showing no
    per-frame position churn (position/side change counters do not advance while
    idle in a conversation).
 4. Determinism preserved; no per-frame allocation added to the dock or focus
@@ -91,7 +91,7 @@ avoid rect and drives the pan). Info panel: `item_found_popup.gd`,
   boundaries not wall-clock). Zero-copy per-frame; idle liveness untouched.
   Tabs, typed GDScript, sparse comments. Captures under `.tmp/`. Never revert
   or stage unrelated user-owned work. Do not re-solve the object-teleport/flash
-  bug here — coordinate with its prompt.
+  bug here - coordinate with its prompt.
 - Commit in logical units (dock side/position stabilization; camera/focus
   decoupling; overlap-safe composition).
 
@@ -101,7 +101,7 @@ avoid rect and drives the pan). Info panel: `item_found_popup.gd`,
 - every supported `-FoundationSuite` (systems + ui)
 - `tools\foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10`
 - `tools\foundation_visual_qa.ps1`
-- `tools\foundation_mouse_batch_playtest.ps1` (strict — no churn, no soft-locks)
+- `tools\foundation_mouse_batch_playtest.ps1` (strict - no churn, no soft-locks)
 
 ## On completion
 
@@ -117,20 +117,20 @@ push, and report what remains.
 
 - Date: 2026-08-05
 - Implementation commits:
-  - `9b58e4ce` — pace tutorial blackjack guidance, freeze game logic/Peek time,
+  - `9b58e4ce` - pace tutorial blackjack guidance, freeze game logic/Peek time,
     remove tutorial auto-deal, add the one-time dealer reprieve, cap/intervene
     on tutorial Heat, and retire terminal conversations.
-  - `49df9d9b` — stabilize the TalkDock in deterministic bottom corners with
+  - `49df9d9b` - stabilize the TalkDock in deterministic bottom corners with
     outer-edge portraits and action-boundary side selection.
-  - `e63d59c8` — decouple camera/focus composition, preserve presentation
+  - `e63d59c8` - decouple camera/focus composition, preserve presentation
     animation during Pal-only simulation freezes, and add overlap/churn probes.
-  - `2aacb73f` — keep the baseline world-map detail/confirmation composition
+  - `2aacb73f` - keep the baseline world-map detail/confirmation composition
     clear of the reserved TalkDock footprint without depending on unrelated
     map-controller work.
-  - `f408430c` — preserve the established seen-location map contract while
+  - `f408430c` - preserve the established seen-location map contract while
     retaining the new tutorial and TalkDock regression coverage.
 - Before evidence:
-  - `.tmp/tutorial_rework/captures/03_path_a_xray_pull_tab.png` — prior centered
+  - `.tmp/tutorial_rework/captures/03_path_a_xray_pull_tab.png` - prior centered
     dock overlapped the pull-tab tray/control region.
 - After evidence:
   - `.tmp/tutorial_rework/nonoverlap_1280/01b_xray_focus_opposite_dock.png`

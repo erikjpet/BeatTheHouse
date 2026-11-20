@@ -1,7 +1,7 @@
-Status: DONE — all Family 1 automated gates passed on `af48b531`
+Status: DONE - all Family 1 automated gates passed on `af48b531`
 Board row: `game06_8` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — 0.6 game06_8: Games Depth Release Gate
+# Agent Prompt - 0.6 game06_8: Games Depth Release Gate
 
 Copy everything below this line into the agent.
 
@@ -18,15 +18,15 @@ wrong agent for this row.
 
 ## Acceptance audit
 
-1. Account for every game id in `data/games/games.json` — `scratch_tickets`,
+1. Account for every game id in `data/games/games.json` - `scratch_tickets`,
    `pull_tabs`, `slot`, `bar_dice`, `blackjack`, `baccarat`, `craps`,
-   `roulette`, `crew_draw_poker`, `video_poker`, `coin_pusher` — plus the Grand
+   `roulette`, `crew_draw_poker`, `video_poker`, `coin_pusher` - plus the Grand
    Casino duel and showdown surfaces. Reject any surface that still resolves as
    a control panel, whose only change is art, text or sound, or whose "ritual"
    is a delay before the same result line.
 2. Play each game to a real conclusion: commitment, correction, resolution,
    settlement, repeat play, acceleration on repeat, and exit. Confirm staged
-   commitment actually prevents the failure it exists to prevent — try to
+   commitment actually prevents the failure it exists to prevent - try to
    double-commit, double-settle, act out of phase, and charge a rejected verb.
 3. Verify every tactile verb has a working keyboard, controller and
    reduced-motion equivalent producing identical outcomes and fair timing.

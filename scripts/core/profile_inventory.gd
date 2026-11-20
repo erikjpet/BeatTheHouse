@@ -97,7 +97,7 @@ func from_dict(data: Dictionary) -> void:
 	loaded_schema_version = int(data.get("schema_version", 0))
 	tutorial_field_present = data.has("tutorial_completed")
 	# Copy only genuinely unknown forward-compatible fields. The old path first
-	# deep-copied the complete profile—including every retained run—and then erased
+	# deep-copied the complete profile-including every retained run-and then erased
 	# all known fields, so startup paid for history once here and again below.
 	_unknown_fields = _copy_unknown_fields(data, PROFILE_STORAGE_KEYS)
 	items = []

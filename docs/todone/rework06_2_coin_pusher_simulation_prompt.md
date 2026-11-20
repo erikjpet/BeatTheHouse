@@ -8,7 +8,7 @@ Board row: `rework06_2` in `docs/todo/README_0_6_board.md`
 - **Verification:** PM scope/design review complete. Coin Pusher and Baccarat focused suites, the complete UI matrix, determinism twice (10 seeds, 590 checkpoints, hash `3543536704`), canonical visual QA (zero warnings), shipped-cap performance at 48 bodies, EV harnesses, all six feel captures, and exact 200-action Windows/Web export parity passed. Systems assertions and stderr checks were all green; final wall time was baseline-equivalent under the same load (`45.549s` versus `45.377s`) and was accepted under the owner's environmental-timing rule.
 - **Deviations:** The accepted simulation cap is 48. The owner-confirmed density/presentation gap belongs to `pusher06_2`, not this solver rework. No assertion, budget, liveness floor, or deterministic check was weakened.
 
-# Agent Prompt — 0.6 rework06_2: Real Coin Pusher Simulation (replaces the coarse pile model)
+# Agent Prompt - 0.6 rework06_2: Real Coin Pusher Simulation (replaces the coarse pile model)
 
 Copy everything below this line into the agent.
 
@@ -16,7 +16,7 @@ Copy everything below this line into the agent.
 
 You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript
 casino roguelike (Web/itch.io + Windows, 1280×720). Binding design
-contract: `docs/plans/0.6_living_world_roadmap.md` — read the
+contract: `docs/plans/0.6_living_world_roadmap.md` - read the
 **Coin Pusher** section of Pillar 4 in full, including the superseded
 design note, before anything else.
 
@@ -63,7 +63,7 @@ Replace the height-grid with a **discrete-coin simulation**:
 - **Stacking.** Coins rest on the field and on each other. Piles
   build unevenly, lean, and topple. A coin landing on a leaning stack
   disturbs it. Overhangs form naturally at the ledge because coins
-  are physically there — not because a boolean says so.
+  are physically there - not because a boolean says so.
 - **Levels and gravity.** The cabinet has tiers. Coins pushed off the
   **upper shelf fall onto the lower field**, landing among and
   disturbing the coins already there. Coins pushed off the lower
@@ -91,7 +91,7 @@ Replace the height-grid with a **discrete-coin simulation**:
   disturbance, step the solver only while the machine is active, and
   budget the render like the other game surfaces. Idle attract state
   must animate and satisfy the liveness counter-gate (a 0.000 idle
-  number without its counter is an automatic FAIL — this project's
+  number without its counter is an automatic FAIL - this project's
   recurring regression).
 - If you cannot hit budget at your first coin cap, lower the cap and
   report the number. Do not re-abstract the simulation.
@@ -100,19 +100,19 @@ Replace the height-grid with a **discrete-coin simulation**:
 
 Each variation keeps its identity and gains a **distinct sub-game
 that affects bonus payout**. They must be genuinely different
-mechanics — a player should describe them as three different machines:
+mechanics - a player should describe them as three different machines:
 
-- **Quarter Falls** — the pure pusher. Its bonus layer is the
+- **Quarter Falls** - the pure pusher. Its bonus layer is the
   **prize riders**: physical objects sitting *in* the pile (chip
   stacks, a watch, a ticket roll, scenario-seeded real inventory
   items) that are pushed and fall with the coins because they are
   simulated alongside them. Skill = reading the physical pile.
-- **Jackpot Ridge** — **feature pucks** in the pile: multipliers,
+- **Jackpot Ridge** - **feature pucks** in the pile: multipliers,
   shelf locks, dud jams. They are physical objects that must be
   *pushed off* to bank them, so the sub-game is a sequencing/physics
   puzzle: which puck to work loose first, and what the pile does when
   you do. Ridge Run cascade on three multipliers banked in a cycle.
-- **The Vault Drop** — **key fragments** in the pile bank toward a
+- **The Vault Drop** - **key fragments** in the pile bank toward a
   vault round: a pick-and-reveal bonus behind a door on the
   playfield, paying from a **town-fed progressive meter** (TownState
   driven, growing on action boundaries, faster in crowded scenarios).
@@ -121,20 +121,20 @@ mechanics — a player should describe them as three different machines:
 
 ### 4. Keep (do not rebuild)
 
-These landed correctly and the owner did not reject them — carry them
+These landed correctly and the owner did not reject them - carry them
 onto the new core:
 
 - The **universal nudge system**: force (tap/shove/slam) × direction ×
   timing, hidden per-node alarm tolerance modified by venue security,
   scenario overrides, and the swept-window; the **tell ladder** (rock,
   chirp, attendant glance); clean-drop skill windows. Nudges now act
-  on **real coins** — a nudge shifts and topples the physical pile,
+  on **real coins** - a nudge shifts and topples the physical pile,
   which is what makes the mechanic honest.
 - The **alarm contract**: hard alarm locks that machine for the night,
   lands a significant heat spike, writes node memory (staff watch
-  you) — and **never forces the player out of the environment**
+  you) - and **never forces the player out of the environment**
   (owner decision 23). Smash-and-grab stays a viable strategy.
-- Cheat items: `cold_quarters` (denser/heavier coins — now a real
+- Cheat items: `cold_quarters` (denser/heavier coins - now a real
   physical property), `coin_return_shim` (gutter recovery),
   `weighted_keyring` (heavier nudge within tolerance), the Mags
   dampener hook, `xray_glasses` for the vault.

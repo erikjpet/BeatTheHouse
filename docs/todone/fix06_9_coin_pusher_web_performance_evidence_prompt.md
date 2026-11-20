@@ -1,7 +1,7 @@
-Status: DONE — evidence path accepted; red product result remains in fix06_13
+Status: DONE - evidence path accepted; red product result remains in fix06_13
 Board row: `fix06_9` in `docs/todo/README_0_6_board.md`
 
-# Agent Prompt — fix06_9: shipped-cap Coin Pusher Web performance evidence
+# Agent Prompt - fix06_9: shipped-cap Coin Pusher Web performance evidence
 
 Work in `D:\Projects\Beat-The-House` on a clean branch from the exact current
 `main`. Read the current landing contract, pusherv3_11 closure report, V3 plan

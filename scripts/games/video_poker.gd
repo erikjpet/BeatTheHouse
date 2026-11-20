@@ -3692,17 +3692,17 @@ func _hand_blurb(descriptor: Dictionary, pay_row: Dictionary, variant: Dictionar
 		return label
 	match str(descriptor.get("base", "")):
 		"royal_flush", "straight_flush", "flush":
-			return "%s — %s" % [label, _suit_word(int(descriptor.get("suit", 0)))]
+			return "%s - %s" % [label, _suit_word(int(descriptor.get("suit", 0)))]
 		"full_house":
 			var counts: Dictionary = _copy_dict(descriptor.get("rank_counts", {}))
-			return "%s — %s over %s" % [label, _rank_word(_rank_with_count(counts, 3)), _rank_word(_rank_with_count(counts, 2))]
+			return "%s - %s over %s" % [label, _rank_word(_rank_with_count(counts, 3)), _rank_word(_rank_with_count(counts, 2))]
 		"four_kind", "three_kind", "one_pair":
-			return "%s — %s" % [label, _rank_word(_rank_with_count(_copy_dict(descriptor.get("rank_counts", {})), _max_count(_copy_dict(descriptor.get("rank_counts", {})))))]
+			return "%s - %s" % [label, _rank_word(_rank_with_count(_copy_dict(descriptor.get("rank_counts", {})), _max_count(_copy_dict(descriptor.get("rank_counts", {})))))]
 		"two_pair":
 			var pair_counts: Dictionary = _copy_dict(descriptor.get("rank_counts", {}))
-			return "%s — %s and %s" % [label, _rank_word(_high_two_pair(pair_counts, true)), _rank_word(_high_two_pair(pair_counts, false))]
+			return "%s - %s and %s" % [label, _rank_word(_high_two_pair(pair_counts, true)), _rank_word(_high_two_pair(pair_counts, false))]
 		"straight":
-			return "%s — %s high" % [label, _rank_word(int(descriptor.get("straight_high", 0)))]
+			return "%s - %s high" % [label, _rank_word(int(descriptor.get("straight_high", 0)))]
 		_:
 			return label
 
@@ -3739,7 +3739,7 @@ func _outcome_message(options: FunctionOptions.VideoPokerOutcomeOptions) -> Stri
 		var slot_text := "slot %d" % (int(holdout_challenge.get("target_slot", -1)) + 1)
 		var verb := str(cabinet.get("cheat_verb", "slipped in"))
 		if holdout_applied:
-			lead = "%s %s: you %s the %s into %s — RESULT: %s." % [
+			lead = "%s %s: you %s the %s into %s - RESULT: %s." % [
 				str(cabinet.get("cheat_name", "Holdout")).to_upper(),
 				grade_text.to_upper(),
 				verb,
@@ -3778,8 +3778,8 @@ func _info_text(phase: String, hand: Array, holds: Array, last_result: Dictionar
 		var mult := int(last_result.get("pay_mult", 0))
 		var blurb := str(last_result.get("blurb", ""))
 		if mult > 0:
-			return "%s — pays %dx (bet %d)" % [blurb, mult, bet]
-		return "%s — no pay" % blurb
+			return "%s - pays %dx (bet %d)" % [blurb, mult, bet]
+		return "%s - no pay" % blurb
 	if marked:
 		var grade := str(holdout_challenge.get("skill_grade", ""))
 		if not grade.is_empty():

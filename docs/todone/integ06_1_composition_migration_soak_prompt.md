@@ -1,4 +1,4 @@
-Status: DONE — owner-directed migration-only closeout on 2026-09-07; release-gating composition and soak deferred
+Status: DONE - owner-directed migration-only closeout on 2026-09-07; release-gating composition and soak deferred
 Board row: `integ06_1` in `docs/todo/README_0_6_board.md`
 
 Execution record: exact synchronized main `f9851e98377619e0e92643e469985e59c1abbb34`
@@ -8,7 +8,7 @@ explicitly deferred the exhaustive composition matrix and native/Web terminal
 soak to refinement for this playtest-build fast path. See
 `docs/plans/integ06_1_composition_migration_soak_report.md`.
 
-# Agent Prompt — 0.6 integ06_1: Composition, Migration and Soak Umbrella
+# Agent Prompt - 0.6 integ06_1: Composition, Migration and Soak Umbrella
 
 Copy everything below this line into the agent.
 
@@ -38,7 +38,7 @@ exactly the condition the owner's playtest will run in.
 Follow the active board protocol. Claim `integ06_1`. This row requires Families 1
 and 2 to be merged; running it earlier produces a report about a build that no
 longer exists. You own the integration harness and its tests. You do not fix
-product code — findings route as `fix06_*` rows or back to the owning row.
+product code - findings route as `fix06_*` rows or back to the owning row.
 
 ## 1. The migration matrix
 
@@ -91,7 +91,7 @@ product code — findings route as `fix06_*` rows or back to the owning row.
 - The harness lives with the other test harnesses, does not slow the default
   suites, and long runs are opt-in.
 - Do not fix product code in this branch. If you find a P0, report it
-  immediately rather than at the end — the other programs may still be running
+  immediately rather than at the end - the other programs may still be running
   and can absorb the fix at its source.
 - Determinism problems are diagnosed, never worked around by rerunning or
   loosening a threshold.

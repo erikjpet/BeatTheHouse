@@ -1,4 +1,4 @@
-# Agent Prompt — Scratch Ticket Refinement Pass (Finalize the Game)
+# Agent Prompt - Scratch Ticket Refinement Pass (Finalize the Game)
 
 Copy everything below this line into the agent.
 
@@ -13,17 +13,17 @@ WORK ORDER for the already-shipped scratch-ticket game (renovation landed
 in commit `c0fa142e`). The mechanics work but read like a rough draft:
 tickets look flat, text is unreadable, symbols reveal in whole sections,
 scratch masks misalign with the art, and there is no result moment or
-multi-buy. This pass finalizes the game — execute every phase, satisfy
+multi-buy. This pass finalizes the game - execute every phase, satisfy
 every checklist item, keep the determinism/zero-copy/save contracts.
 
 ## What exists (audit before editing; code reality wins)
 
-- Module: `scripts/games/scratch_tickets.gd` (~2,085 lines) — free-form
+- Module: `scripts/games/scratch_tickets.gd` (~2,085 lines) - free-form
   mask scratching, per-section reveal.
-- Data: `data/games/scratch_tickets.json` — seven tickets: `two_fer`
+- Data: `data/games/scratch_tickets.json` - seven tickets: `two_fer`
   ($2), `lucky_7s` ($5), `tic_tac_gold` ($10), `crossword_corner` ($15),
   `bonus_bingo` ($20), `high_roller_holdem` ($50), `golden_vault`
-  ($100). Roster, prices, mechanics, sizes, and RTP bands are LOCKED —
+  ($100). Roster, prices, mechanics, sizes, and RTP bands are LOCKED -
   do not change gameplay outcomes; this pass is presentation, feel, and
   flow.
 - Sound: `sfx_player.gd` scratch synth (soft foley from the renovation).
@@ -33,24 +33,24 @@ every checklist item, keep the determinism/zero-copy/save contracts.
 
 ---
 
-## PHASE A — Unique themed ticket art (make them pop)
+## PHASE A - Unique themed ticket art (make them pop)
 
 Each of the seven tickets currently looks generic. Give each a distinct,
-exciting visual identity drawn immediate-mode in the game's pixel style —
+exciting visual identity drawn immediate-mode in the game's pixel style -
 real-scratch-ticket energy: bold, colorful, graphical.
 
 - [ ] Every ticket has its OWN theme: a dedicated palette, border/frame
   treatment, title banner, background motif, and symbol art that matches
   its mechanic and name. No two tickets share a look.
-  - `two_fer` — cheap-and-cheerful cherries/fruit, red/green.
-  - `lucky_7s` — hot Vegas sevens, gold/red, lucky-number motif.
-  - `tic_tac_gold` — gold grid, X/O/nugget symbols.
-  - `crossword_corner` — newsprint/puzzle look, ink on cream.
-  - `bonus_bingo` — bingo-hall dauber colors, playful multi-card board.
-  - `high_roller_holdem` — green felt, playing-card suits, classy.
-  - `golden_vault` — premium black/gold, vault/bars, the flagship.
+  - `two_fer` - cheap-and-cheerful cherries/fruit, red/green.
+  - `lucky_7s` - hot Vegas sevens, gold/red, lucky-number motif.
+  - `tic_tac_gold` - gold grid, X/O/nugget symbols.
+  - `crossword_corner` - newsprint/puzzle look, ink on cream.
+  - `bonus_bingo` - bingo-hall dauber colors, playful multi-card board.
+  - `high_roller_holdem` - green felt, playing-card suits, classy.
+  - `golden_vault` - premium black/gold, vault/bars, the flagship.
 - [ ] Use color and contrast so tickets read as vibrant objects, not
-  flat rectangles — background, symbols, prize legend, and frame are
+  flat rectangles - background, symbols, prize legend, and frame are
   clearly distinct layers.
 - [ ] Price and size scale visually (the $100 Golden Vault must LOOK
   premium next to the $2 2-fer).
@@ -59,7 +59,7 @@ real-scratch-ticket energy: bold, colorful, graphical.
 
 ---
 
-## PHASE B — Per-symbol scratch regions + individual reveal
+## PHASE B - Per-symbol scratch regions + individual reveal
 
 Scratching currently clears whole sections. Change it so EACH SYMBOL /
 scratch box has its OWN independent scratch region.
@@ -68,7 +68,7 @@ scratch box has its OWN independent scratch region.
   each grid square, each card, each ladder rung) is its own scratch
   region with its own coverage tracking.
 - [ ] A symbol box pops to its FULLY-REVEALED state only when its own
-  region reaches 80% scratched *(tunable)* — not when the section does.
+  region reaches 80% scratched *(tunable)* - not when the section does.
 - [ ] At that 80% moment, per box: play a short, satisfying POP reveal
   ANIMATION that clears the box's remaining latex, plus a small POP
   sound effect (new soft synth cue in `sfx_player.gd`, distinct from the
@@ -80,17 +80,17 @@ scratch box has its OWN independent scratch region.
 
 ---
 
-## PHASE C — Mask-to-art alignment
+## PHASE C - Mask-to-art alignment
 
 Many tickets misalign: latex covers areas that shouldn't be covered and
 leaves printed areas exposed that should be under scratch.
 
 - [ ] Every scratch region's geometry EXACTLY matches the printed symbol
-  box beneath it — the latex covers precisely the scratchable art and
+  box beneath it - the latex covers precisely the scratchable art and
   nothing else (titles, prize legends, borders, and instructions stay
   permanently visible and uncovered).
 - [ ] Verify per ticket, per size (small rectangle / medium square /
-  large rectangle / tall) at 1280×720 and small-screen scaling — no
+  large rectangle / tall) at 1280×720 and small-screen scaling - no
   drift between the mask and the art at any size.
 - [ ] Fix the region-layout so it is data-derived from the ticket's own
   art layout (single source of truth), not a separately-authored mask
@@ -98,23 +98,23 @@ leaves printed areas exposed that should be under scratch.
 
 ---
 
-## PHASE D — Readability + win clarity
+## PHASE D - Readability + win clarity
 
 Text is too small and prizes/conditions are unclear.
 
 - [ ] Prize amounts, symbols, and numbers are rendered LARGE and
-  high-contrast — legible at a glance at 1280×720 and small-screen.
+  high-contrast - legible at a glance at 1280×720 and small-screen.
 - [ ] Each ticket shows a clear, always-visible HOW-TO-WIN line and its
   prize legend in plain language (e.g. "Match 2 symbols to win",
-  "Match your numbers to the winning numbers — any 7 wins it all").
+  "Match your numbers to the winning numbers - any 7 wins it all").
 - [ ] On resolution, the ticket clearly states WHETHER the player won
-  and WHY (which line/match/hand paid, and how much) — not a bare number.
+  and WHY (which line/match/hand paid, and how much) - not a bare number.
 - [ ] Instruction copy per `docs/plans/content_style_guide.md`: short,
   second person, unmistakable.
 
 ---
 
-## PHASE E — The result moment (don't auto-file)
+## PHASE E - The result moment (don't auto-file)
 
 Currently a finished ticket drops straight to the pile.
 
@@ -130,7 +130,7 @@ Currently a finished ticket drops straight to the pile.
 
 ---
 
-## PHASE F — Multi-buy + scratch queue
+## PHASE F - Multi-buy + scratch queue
 
 - [ ] The machine lets the player BUY SEVERAL TICKETS AT ONCE (choose a
   quantity, or buy multiple before scratching), charged cash per ticket
@@ -150,7 +150,7 @@ Currently a finished ticket drops straight to the pile.
 ## Hard rules (binding)
 
 - Gameplay outcomes, roster, prices, mechanics, sizes, and RTP bands are
-  UNCHANGED — this pass is art, feel, readability, and flow only.
+  UNCHANGED - this pass is art, feel, readability, and flow only.
 - Determinism: outcomes fixed at purchase; per-box reveal order/coverage
   never change results; multi-buy rolls each ticket at its own purchase
   from named seeded forks; the determinism probe stays self-consistent.
@@ -184,7 +184,7 @@ Currently a finished ticket drops straight to the pile.
 7. Sound: the per-box pop maps to the new pop cue; the scratch loop is
    the soft foley; no metallic path.
 8. FEEL/READABILITY ACCEPTANCE (manual, report in words): buy a stack of
-   mixed tickets, scratch each — every ticket looks distinctly themed and
+   mixed tickets, scratch each - every ticket looks distinctly themed and
    vibrant, text and prizes are instantly readable, each box pops
    satisfyingly at 80%, the win/loss result is unmistakable, and filing
    + queue advance feels clean.

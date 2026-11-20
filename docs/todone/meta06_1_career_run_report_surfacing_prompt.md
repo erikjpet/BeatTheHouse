@@ -8,7 +8,7 @@ Board row: `meta06_1` in `docs/todo/README_0_6_board.md`
 - **Verification:** exact integration Contract passed 16/16 checks and Foundation `all` passed 24/24 checks with zero functional failures or stderr. Their wrappers retained timing-only reds at 264.852s versus 230.391s and 291.395s versus 230.652s; no cap changed. UI reached the inherited inactive-delivery hermetic baseline mismatch. A clean-parent control at `ff2d4e14` produced the byte-identical expected/actual payload, proving the merge introduced no digest change; the outstanding env06_6/P1 owns that red.
 - **Preservation:** primary dirty `run_state.gd` and lender-save test bytes retained identical SHA-256 values before and after the local main ref advance. No `.tmp/`, `.tools/`, `review_artifacts/`, remote, release, version or packaging state was modified by the landing.
 
-# Agent Prompt — 0.6 meta06_1: Career, Run Report and Meta Surfacing of 0.6
+# Agent Prompt - 0.6 meta06_1: Career, Run Report and Meta Surfacing of 0.6
 
 Copy everything below this line into the agent.
 
@@ -26,8 +26,8 @@ the between-run surfaces. It adds reporting, not progression. Read
 
 `career_stats_view_model.gd` builds its `routes` list from two hardcoded entries:
 `players_card_cashout` and `showdown`. `profile_inventory.gd` records victories
-generically — `victories[route] = ...` keyed on whatever route string the run
-entry carries — so the `crew_heist` victory route added by `crew06_8` is counted
+generically - `victories[route] = ...` keyed on whatever route string the run
+entry carries - so the `crew_heist` victory route added by `crew06_8` is counted
 in the profile dictionary and displayed nowhere. A player can finish 0.6's
 flagship path and see no evidence of it on the career screen.
 
@@ -44,7 +44,7 @@ Follow the active board protocol. Claim `meta06_1`. This row has no dependency o
 the depth programs and can start immediately. You own the career and run-report
 view models and screens, and the profile stats path, plus their tests.
 
-## 1. Roadmap constraint — read before designing
+## 1. Roadmap constraint - read before designing
 
 Owner decision #1 makes the Players Card the only cross-run system in 0.6, and
 the `content06_1` ruling confirmed no new cross-run progress may be added. This
@@ -70,7 +70,7 @@ Extend the end-of-run report and lifetime stats with the update's actual
 content, keeping every existing field's meaning intact:
 
 - Crew: whether the path was walked, standing reached, members met, jobs
-  completed and abandoned, and how the Turn resolved — the last only in terms
+  completed and abandoned, and how the Turn resolved - the last only in terms
   the Turn's contract permits after resolution.
 - World: nights and scenarios experienced, notable outcomes carried into
   aftermath, sweeps encountered, rumors that proved true.
@@ -80,7 +80,7 @@ content, keeping every existing field's meaning intact:
   parallel system where possible.
 - Deliveries: runs completed, packages lost.
 
-Keep the `missing_stats` honesty note current — if something still is not
+Keep the `missing_stats` honesty note current - if something still is not
 recorded, say so there rather than implying coverage.
 
 ## 4. Discipline
@@ -106,7 +106,7 @@ recorded, say so there rather than implying coverage.
 - UI tests for the career screen and run report at 1280×720, small screen,
   reduced motion and colorblind settings, with no text overlap and no
   truncation of a value the player needs.
-- Confirm no new cross-run progression was introduced — an explicit assertion
+- Confirm no new cross-run progression was introduced - an explicit assertion
   that the added fields are read-only reporting.
 
 Run project validation, the relevant foundation suites including
