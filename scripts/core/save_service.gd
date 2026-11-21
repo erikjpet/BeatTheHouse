@@ -34,6 +34,7 @@ var io_mutex := Mutex.new()
 var last_save_outcome: Dictionary = {"ok": true, "error": OK, "error_code": ""}
 # An explicit operation may succeed after draining an older failed generation.
 var last_async_failure_outcome: Dictionary = {}
+var _web_manual_durability_fence: Dictionary = {}
 
 
 # Checks whether a run save exists.
@@ -52,6 +53,9 @@ func save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
 	if run_state == null:
 		last_save_outcome = {"ok": false, "error": ERR_INVALID_PARAMETER, "error_code": "invalid_run_state"}
 		return ERR_INVALID_PARAMETER
+	if not _web_manual_durability_fence.is_empty():
+		last_save_outcome = {"ok": false, "error": ERR_BUSY, "error_code": "manual_browser_sync_pending"}
+		return ERR_BUSY
 	if async_save_in_flight():
 		var async_error := wait_for_async_save()
 		if async_error != OK:
@@ -90,6 +94,8 @@ func save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
 func begin_save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
 	if run_state == null:
 		return ERR_INVALID_PARAMETER
+	if not _web_manual_durability_fence.is_empty():
+		return ERR_BUSY
 	if async_save_in_flight():
 		return ERR_BUSY
 	var clean_slot := _slot_id(slot_id)
@@ -365,6 +371,8 @@ func load_run(slot_id: String = "autosave") -> Variant:
 
 # Removes both generations of a slot so a deliberately skipped tutorial cannot resume.
 func clear_run(slot_id: String = "autosave") -> Error:
+	if not _web_manual_durability_fence.is_empty():
+		return ERR_BUSY
 	if async_save_in_flight():
 		var async_error := wait_for_async_save()
 		if async_error != OK:
@@ -380,6 +388,37 @@ func clear_run(slot_id: String = "autosave") -> Error:
 				return remove_error
 	trusted_primary_fingerprints.erase(clean_slot)
 	return OK
+
+
+# Keep the exact installed Resume Slot bytes stable until their own Web sync
+# callback, including after the UI stops waiting. All SaveService writes/clears
+# respect this fence, including terminal receipt writes outside the Run Menu.
+func begin_web_manual_durability_fence(slot_id: String) -> String:
+	if not OS.has_feature("web") or not _web_manual_durability_fence.is_empty():
+		return ""
+	var clean_slot := _slot_id(slot_id)
+	var path := run_save_path(clean_slot)
+	var validated_sha256 := _trusted_primary_digest(clean_slot, path)
+	if validated_sha256.is_empty():
+		return ""
+	var absolute_path := ProjectSettings.globalize_path(path)
+	if not FileAccess.file_exists(absolute_path) or FileAccess.get_sha256(absolute_path) != validated_sha256:
+		return ""
+	_web_manual_durability_fence = {"slot_id": clean_slot, "validated_sha256": validated_sha256}
+	return validated_sha256
+
+
+func web_manual_durability_fence_matches(slot_id: String, validated_sha256: String) -> bool:
+	if _web_manual_durability_fence.is_empty() \
+			or str(_web_manual_durability_fence.get("slot_id", "")) != _slot_id(slot_id) \
+			or str(_web_manual_durability_fence.get("validated_sha256", "")) != validated_sha256:
+		return false
+	var absolute_path := ProjectSettings.globalize_path(run_save_path(slot_id))
+	return FileAccess.file_exists(absolute_path) and FileAccess.get_sha256(absolute_path) == validated_sha256
+
+
+func end_web_manual_durability_fence() -> void:
+	_web_manual_durability_fence.clear()
 
 
 func last_load_result() -> Dictionary:

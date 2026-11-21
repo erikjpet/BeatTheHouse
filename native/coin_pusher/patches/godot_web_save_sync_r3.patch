@@ -1,0 +1,138 @@
+diff --git a/platform/web/js/libs/library_godot_os.js b/platform/web/js/libs/library_godot_os.js
+index 0e931b7..32cb01b 100644
+--- a/platform/web/js/libs/library_godot_os.js
++++ b/platform/web/js/libs/library_godot_os.js
+@@ -120,6 +120,7 @@ const GodotFS = {
+ 		ENOENT: 44,
+ 		_idbfs: false,
+ 		_syncing: false,
++		_sync_tail: null,
+ 		_mount_points: [],
+ 
+ 		is_persistent: function () {
+@@ -186,23 +187,35 @@ const GodotFS = {
+ 			GodotFS._mount_points = [];
+ 			GodotFS._idbfs = false;
+ 			GodotFS._syncing = false;
++			GodotFS._sync_tail = Promise.resolve();
+ 		},
+ 
+ 		sync: function () {
+-			if (GodotFS._syncing) {
+-				GodotRuntime.error('Already syncing!');
+-				return Promise.resolve();
++			// Every caller receives a distinct physical sync, even when another
++			// caller is active. Preserve the legacy Promise<error|null> contract.
++			if (!GodotFS._sync_tail) {
++				GodotFS._sync_tail = Promise.resolve();
+ 			}
+-			GodotFS._syncing = true;
+-			return new Promise(function (resolve, reject) {
+-				FS.syncfs(false, function (error) {
+-					if (error) {
+-						GodotRuntime.error(`Failed to save IDB file system: ${error.message}`);
++			const operation = GodotFS._sync_tail.then(function () {
++				GodotFS._syncing = true;
++				return new Promise(function (resolve) {
++					try {
++						FS.syncfs(false, function (error) {
++							if (error) {
++								GodotRuntime.error(`Failed to save IDB file system: ${error.message}`);
++							}
++							GodotFS._syncing = false;
++							resolve(error);
++						});
++					} catch (error) {
++						GodotFS._syncing = false;
++						GodotRuntime.error(`Failed to start IDB file system sync: ${error.message}`);
++						resolve(error);
+ 					}
+-					GodotFS._syncing = false;
+-					resolve(error);
+ 				});
+ 			});
++			GodotFS._sync_tail = operation.then(function () {}, function () {});
++			return operation;
+ 		},
+ 
+ 		// Copies a buffer to the internal file system. Creating directories recursively.
+@@ -233,11 +246,60 @@ const GodotOS = {
+ 		'Module["request_quit"] = function() { GodotOS.request_quit() };',
+ 		'Module["onExit"] = GodotOS.cleanup;',
+ 		'GodotOS._fs_sync_promise = Promise.resolve();',
++		'Module["bthSaveSyncV1"] = { begin: GodotOS.bth_save_begin, poll: GodotOS.bth_save_poll, consume: GodotOS.bth_save_consume, lifecycle: GodotOS.bth_save_lifecycle };',
+ 	].join(''),
+ 	$GodotOS: {
+ 		request_quit: function () {},
+ 		_async_cbs: [],
+ 		_fs_sync_promise: null,
++		_bth_save_sequence: 0,
++		_bth_save_requests: {},
++		_bth_save_shutdown: false,
++
++		// Called after the game's synchronous VFS write. The game must still
++		// check run, slot and write generation before reporting Saved.
++		bth_save_begin: function (generation) {
++			if (GodotOS._bth_save_shutdown || !GodotFS.is_persistent() || !generation) {
++				return JSON.stringify({ protocol: 1, request_id: 0, status: 'failed', error_code: 'browser_sync_unavailable' });
++			}
++			const id = ++GodotOS._bth_save_sequence;
++			const state = { protocol: 1, request_id: id, generation: String(generation), status: 'pending', error_code: '' };
++			GodotOS._bth_save_requests[id] = state;
++			const operation = GodotFS.sync();
++			GodotOS._fs_sync_promise = operation;
++			operation.then(function (error) {
++				state.status = error ? 'failed' : 'succeeded';
++				state.error_code = error ? 'browser_sync_failed' : '';
++			}, function () {
++				state.status = 'failed';
++				state.error_code = 'browser_sync_failed';
++			});
++			return JSON.stringify(state);
++		},
++
++		bth_save_poll: function (id) {
++			const state = GodotOS._bth_save_requests[id];
++			return JSON.stringify(state || { protocol: 1, request_id: id, status: 'failed', error_code: 'browser_sync_request_missing' });
++		},
++
++		bth_save_consume: function (id) {
++			const state = GodotOS._bth_save_requests[id];
++			if (state && state.status !== 'pending') {
++				delete GodotOS._bth_save_requests[id];
++				return true;
++			}
++			return false;
++		},
++
++		// Queue the existing pagehide/background sync on the same physical
++		// writer. Acceptance means queued, not committed.
++		bth_save_lifecycle: function () {
++			if (GodotOS._bth_save_shutdown || !GodotFS.is_persistent()) {
++				return false;
++			}
++			GodotOS._fs_sync_promise = GodotFS.sync();
++			return true;
++		},
+ 
+ 		atexit: function (p_promise_cb) {
+ 			GodotOS._async_cbs.push(p_promise_cb);
+@@ -246,6 +308,7 @@ const GodotOS = {
+ 		cleanup: function (exit_code) {
+ 			const cb = GodotConfig.on_exit;
+ 			GodotFS.deinit();
++			GodotOS._bth_save_requests = {};
+ 			GodotConfig.clear();
+ 			if (cb) {
+ 				cb(exit_code);
+@@ -253,7 +316,9 @@ const GodotOS = {
+ 		},
+ 
+ 		finish_async: function (callback) {
+-			GodotOS._fs_sync_promise.then(function (err) {
++			GodotOS._bth_save_shutdown = true;
++			const tail = GodotFS._sync_tail || Promise.resolve();
++			tail.then(function () {
+ 				const promises = [];
+ 				GodotOS._async_cbs.forEach(function (cb) {
+ 					promises.push(new Promise(cb));

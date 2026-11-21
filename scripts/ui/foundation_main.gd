@@ -623,6 +623,8 @@ var run_menu_main_menu_button: Button
 var run_menu_skip_tutorial_button: Button
 var run_menu_family_repay_button: Button
 var _web_manual_save_pending := false
+var _web_manual_save_slow := false
+var _web_manual_save_reconciling := false
 var _manual_save_error := ""
 var _web_save_durability_bridge: Variant = null
 var _web_lifecycle_callback: Variant = null
@@ -996,6 +998,23 @@ func _input(event: InputEvent) -> void:
 	if (new_run_confirmation != null and new_run_confirmation.visible) or (first_lesson_choice != null and first_lesson_choice.visible):
 		return
 	if _web_manual_save_pending:
+		if event.is_action_pressed("ui_cancel"):
+			_cancel_web_manual_save_wait()
+			get_viewport().set_input_as_handled()
+			return
+		# Keep the room blocked, but let the one visible Cancel Waiting button
+		# receive ordinary pointer and controller activation in the Run Menu.
+		if run_menu_save_button != null and run_menu_save_button.visible \
+				and not run_menu_save_button.disabled:
+			var cancel_pointer := false
+			if event is InputEventMouseButton:
+				cancel_pointer = run_menu_save_button.get_global_rect().has_point((event as InputEventMouseButton).position)
+			elif event is InputEventScreenTouch:
+				cancel_pointer = run_menu_save_button.get_global_rect().has_point((event as InputEventScreenTouch).position)
+			if cancel_pointer:
+				return
+			if event.is_action("ui_accept") and run_menu_save_button.has_focus():
+				return
 		get_viewport().set_input_as_handled()
 		return
 	# The HUD disclosure owns its own focused controls. Do not let a response
@@ -1075,6 +1094,11 @@ func _notification(what: int) -> void:
 
 func _flush_pending_autosave_for_lifecycle() -> bool:
 	if _lifecycle_save_flush_active or save_service == null:
+		return false
+	# The manual request already owns a physical sync and fences its saved bytes.
+	# A newer dirty generation must wait; trying to write it here would report
+	# a false autosave failure while the browser is backgrounding.
+	if _web_manual_save_pending or _web_manual_save_reconciling:
 		return false
 	if not pending_autosave and not save_service.async_save_in_flight():
 		return false
@@ -7229,6 +7253,8 @@ func _write_foundation_run_save(status_text: String = "Autosaved.", synchronous:
 func _flush_pending_autosave_if_ready() -> void:
 	if _crt_practice_active():
 		return
+	if _web_manual_save_pending or _web_manual_save_reconciling:
+		return
 	_poll_async_foundation_save()
 	if not pending_autosave:
 		return
@@ -7653,6 +7679,12 @@ func save_run_from_menu() -> void:
 	if _crt_practice_active():
 		return
 	if _web_manual_save_pending:
+		_cancel_web_manual_save_wait()
+		return
+	if _web_manual_save_reconciling:
+		_manual_save_error = "Previous Save is not confirmed. Wait for storage to settle before retrying."
+		save_status_message = _manual_save_error
+		_refresh_run_menu()
 		return
 	_manual_save_error = ""
 	if run_state == null:
@@ -7674,18 +7706,55 @@ func save_run_from_menu() -> void:
 	if web_save:
 		var saved_run := run_state
 		var saved_slot := autosave_slot_id
+		var saved_dirty_generation := autosave_dirty_generation
+		var saved_digest := save_service.begin_web_manual_durability_fence(saved_slot)
+		if saved_digest.is_empty():
+			_manual_save_error = "Could not confirm this save. Keep this tab open and choose Save to retry."
+			save_status_message = _manual_save_error
+			_refresh_run_menu()
+			_show_message(save_status_message)
+			return
+		var saved_generation := "%s:%s:%s:%s" % [saved_slot, str(saved_run.get_instance_id()),
+			str(saved_dirty_generation), saved_digest]
 		_web_manual_save_pending = true
+		_web_manual_save_slow = false
 		_refresh_run_menu()
 		if _web_save_durability_bridge == null:
 			_web_save_durability_bridge = WebSaveDurabilityBridgeScript.new()
-		var result: Dictionary = _web_save_durability_bridge.begin()
+		var result: Dictionary = _web_save_durability_bridge.begin(saved_generation)
 		while bool(result.get("pending", false)):
 			await get_tree().process_frame
 			if not is_inside_tree():
+				_web_save_durability_bridge.cancel()
+				save_service.end_web_manual_durability_fence()
+				_web_manual_save_pending = false
+				_web_manual_save_slow = false
 				return
 			result = _web_save_durability_bridge.poll()
+			if bool(result.get("cancelled", false)) and not _web_manual_save_reconciling:
+				_web_manual_save_pending = false
+				_web_manual_save_reconciling = true
+				_manual_save_error = "Save not confirmed. Storage is still finishing; retry when it settles."
+				save_status_message = _manual_save_error
+				_refresh_run_menu()
+			if bool(result.get("pending", false)) and bool(result.get("slow", false)) \
+					and not _web_manual_save_slow and not _web_manual_save_reconciling:
+				_web_manual_save_slow = true
+				_refresh_run_menu()
+		var fenced_bytes_unchanged := save_service.web_manual_durability_fence_matches(saved_slot, saved_digest)
+		save_service.end_web_manual_durability_fence()
 		_web_manual_save_pending = false
-		if run_state != saved_run or autosave_slot_id != saved_slot:
+		_web_manual_save_slow = false
+		_web_manual_save_reconciling = false
+		if bool(result.get("cancelled", false)):
+			_manual_save_error = "Save not confirmed. Storage settled; choose Save to retry."
+			save_status_message = _manual_save_error
+			_refresh_run_menu()
+			return
+		if run_state != saved_run or autosave_slot_id != saved_slot \
+				or autosave_dirty_generation != saved_dirty_generation \
+				or (bool(result.get("ok", false)) \
+					and (str(result.get("generation", "")) != saved_generation or not fenced_bytes_unchanged)):
 			_manual_save_error = "Save was interrupted. Choose Save to retry."
 			save_status_message = _manual_save_error
 			_refresh_run_menu()
@@ -7700,6 +7769,11 @@ func save_run_from_menu() -> void:
 		save_status_message = "Saved to Resume Slot."
 	_clear_input_guard_modal_state()
 	_refresh()
+
+
+func _cancel_web_manual_save_wait() -> void:
+	if _web_manual_save_pending and _web_save_durability_bridge != null:
+		_web_save_durability_bridge.cancel()
 
 
 func load_run_from_menu() -> void:
@@ -21862,7 +21936,12 @@ func _refresh_run_menu() -> void:
 			if action_control is BaseButton:
 				(action_control as BaseButton).disabled = true
 		if run_menu_status_label != null:
-			run_menu_status_label.text = "Saving to Resume Slot... Keep this tab open."
+			run_menu_status_label.text = "Save not confirmed yet. Still waiting for browser storage." if _web_manual_save_slow else "Saving to Resume Slot... Keep this tab open."
+		if run_menu_save_button != null:
+			run_menu_save_button.text = "Cancel Waiting"
+			run_menu_save_button.tooltip_text = "Stop waiting without claiming this Save finished. You can retry afterward."
+			run_menu_save_button.disabled = false
+			run_menu_save_button.grab_focus()
 		return
 	var has_save := _has_foundation_save()
 	var meta_context := _is_meta_session()
@@ -21891,8 +21970,9 @@ func _refresh_run_menu() -> void:
 	if run_menu_resume_button != null:
 		run_menu_resume_button.disabled = false
 	if run_menu_save_button != null:
-		run_menu_save_button.disabled = not can_save
-		run_menu_save_button.tooltip_text = "Progress here saves automatically." if meta_context else ("Overwrite the Resume Slot with this run." if can_save else "No active savable run.")
+		run_menu_save_button.text = "Save"
+		run_menu_save_button.disabled = not can_save or _web_manual_save_reconciling
+		run_menu_save_button.tooltip_text = "Wait for the earlier Save to settle before retrying." if _web_manual_save_reconciling else ("Progress here saves automatically." if meta_context else ("Overwrite the Resume Slot with this run." if can_save else "No active savable run."))
 	if run_menu_load_button != null:
 		run_menu_load_button.disabled = not has_save or _crt_practice_active()
 		run_menu_load_button.tooltip_text = "Load the Resume Slot and replace this run." if has_save else "No saved run in the Resume Slot."

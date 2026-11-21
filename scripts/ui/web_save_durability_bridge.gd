@@ -1,80 +1,96 @@
 class_name WebSaveDurabilityBridge
 extends RefCounted
 
-# Godot 4.6's public force_fs_sync marks a pending sync; it does not acknowledge
-# persistence. Manual Save observes its next engine-owned promise. Lifecycle
-# requests queue the same engine sync directly because hidden-page RAF can stop.
-# Serialize automatic engine callers too, preserving a distinct promise per call.
-# Neither path calls FS.syncfs directly or depends on the IndexedDB schema.
+# This bridge requires the separately pinned BTH Web template capability.
+# The template binds each manual request ID to its own FS.syncfs callback;
+# a changed or already-resolved engine Promise is never treated as an ack.
 const SUPPORTED_ENGINE_HASH_PREFIX := "89cea1439"
 const TIMEOUT_MSEC := 15000
 const WEB_ADAPTER_SCRIPT := """
 (() => {
-    const supported = () => typeof GodotOS !== 'undefined'
-        && typeof GodotFS !== 'undefined'
-        && typeof GodotFS.is_persistent === 'function'
-        && GodotFS.is_persistent()
-        && GodotOS._fs_sync_promise
-        && typeof GodotOS._fs_sync_promise.then === 'function';
+    const engine = () => typeof Module !== 'undefined' && Module['bthSaveSyncV1'];
+    const supported = () => engine() && typeof engine().begin === 'function'
+        && typeof engine().poll === 'function' && typeof engine().consume === 'function'
+        && typeof engine().lifecycle === 'function';
     if (!supported()) return false;
-    if (globalThis.BTHWebSaveDurability) return globalThis.BTHWebSaveDurability.protocol === 1;
-    let sequence = 0;
+    if (globalThis.BTHWebSaveDurability) return globalThis.BTHWebSaveDurability.protocol === 4;
     let request = null;
-    let syncQueueInstalled = false;
     const result = (state) => JSON.stringify({
-        request_id: state.id, status: state.status, error_code: state.error || ''
+        request_id: state.id, generation: state.generation,
+        status: state.status, slow: !!state.slow, cancelled: !!state.cancelled,
+        error_code: state.error || ''
     });
     const fail = (state, code) => {
         if (state.status === 'pending') { state.status = 'failed'; state.error = code; }
     };
     globalThis.BTHWebSaveDurability = {
-        protocol: 1,
+        protocol: 4,
         request_lifecycle_sync() {
-            if (!supported() || typeof GodotFS.sync !== 'function') return false;
-            if (!syncQueueInstalled) {
-                const engineSync = GodotFS.sync.bind(GodotFS);
-                let tail = GodotOS._fs_sync_promise;
-                GodotFS.sync = () => {
-                    const next = Promise.resolve(tail)
-                        .catch(() => undefined)
-                        .then(() => engineSync());
-                    tail = next;
-                    return next;
-                };
-                syncQueueInstalled = true;
-            }
-            GodotOS._fs_sync_promise = GodotFS.sync();
-            return true;
+            return !!(supported() && engine().lifecycle());
         },
-        begin(timeout) {
+        begin(generation, timeout) {
             if (request && request.status === 'pending')
-                return JSON.stringify({request_id: 0, status: 'failed', error_code: 'browser_sync_busy'});
+                return JSON.stringify({request_id: 0, status: 'failed',
+                    error_code: request.cancelled ? 'browser_sync_prior_unconfirmed' : 'browser_sync_busy'});
             if (!supported())
                 return JSON.stringify({request_id: 0, status: 'failed', error_code: 'browser_sync_unsupported'});
+            let started;
+            try { started = JSON.parse(engine().begin(generation)); }
+            catch (_) { return JSON.stringify({request_id: 0, status: 'failed', error_code: 'browser_sync_invalid_response'}); }
+            if (started && started.protocol === 1 && started.status === 'failed')
+                return JSON.stringify({request_id: 0, generation: generation, status: 'failed',
+                    error_code: started.error_code || 'browser_sync_failed'});
+            if (!started || started.protocol !== 1 || started.status !== 'pending'
+                || !Number.isInteger(started.request_id) || started.request_id <= 0
+                || started.generation !== generation)
+                return JSON.stringify({request_id: 0, status: 'failed', error_code: 'browser_sync_invalid_response'});
             request = {
-                id: ++sequence, status: 'pending', error: '',
-                baseline: GodotOS._fs_sync_promise, observed: null,
-                started: performance.now(), timeout: timeout
+                id: started.request_id, generation: generation, status: 'pending', error: '',
+                started: performance.now(), timeout: timeout, slow: false, cancelled: false
             };
             return result(request);
+        },
+        cancel(id) {
+            const state = request;
+            if (!state || state.id !== id || state.status !== 'pending')
+                return JSON.stringify({request_id: id, status: 'failed', error_code: 'browser_sync_request_missing'});
+            // The physical operation cannot be canceled. Keep it identifiable
+            // and prevent another manual generation until its callback settles.
+            state.cancelled = true;
+            return result(state);
         },
         poll(id) {
             const state = request;
             if (!state || state.id !== id)
                 return JSON.stringify({request_id: id, status: 'failed', error_code: 'browser_sync_request_missing'});
             if (state.status !== 'pending') return result(state);
-            if (performance.now() - state.started >= state.timeout) {
-                fail(state, 'browser_sync_timeout');
-            } else if (!supported()) {
-                fail(state, 'browser_sync_unsupported');
-            } else if (!state.observed && GodotOS._fs_sync_promise !== state.baseline) {
-                state.observed = GodotOS._fs_sync_promise;
-                state.observed.then((error) => {
-                    if (state.status !== 'pending') return;
-                    if (error !== null && error !== undefined) fail(state, 'browser_sync_failed');
-                    else state.status = 'succeeded';
-                }, () => fail(state, 'browser_sync_failed'));
+            if (!supported()) {
+                state.slow = true;
+                return result(state); // Unknown physical outcome: fail closed.
+            } else {
+                let observed;
+                try { observed = JSON.parse(engine().poll(id)); }
+                catch (_) { state.slow = true; return result(state); }
+                if (!observed || observed.protocol !== 1 || observed.request_id !== id
+                    || observed.generation !== state.generation) {
+                    state.slow = true; // Cannot prove the physical callback ended.
+                } else if (observed.status === 'succeeded') {
+                    if (engine().consume(id)) {
+                        state.status = state.cancelled ? 'failed' : 'succeeded';
+                        if (state.cancelled) state.error = 'browser_sync_unconfirmed';
+                    } else state.slow = true;
+                } else if (observed.status === 'failed') {
+                    if (engine().consume(id))
+                        fail(state, state.cancelled ? 'browser_sync_unconfirmed' : observed.error_code || 'browser_sync_failed');
+                    else state.slow = true;
+                } else if (observed.status !== 'pending') {
+                    state.slow = true;
+                }
             }
+            // The 15-second marker is only an honest pending UI state. Check the
+            // exact engine result first, including a callback settled this frame.
+            if (state.status === 'pending' && performance.now() - state.started >= state.timeout)
+                state.slow = true;
             return result(state);
         }
     };
@@ -86,7 +102,9 @@ var _interface: Variant = null
 var _request_id := 0
 
 
-func begin() -> Dictionary:
+func begin(generation: String) -> Dictionary:
+	if generation.is_empty():
+		return _failure("browser_sync_invalid_request")
 	var version := Engine.get_version_info()
 	if not OS.has_feature("web") or int(version.get("major", -1)) != 4 \
 			or int(version.get("minor", -1)) != 6 or int(version.get("patch", -1)) != 0 \
@@ -99,13 +117,10 @@ func begin() -> Dictionary:
 	_interface = JavaScriptBridge.get_interface("BTHWebSaveDurability")
 	if _interface == null:
 		return _failure("browser_sync_unsupported")
-	var result := _decode(_interface.begin(TIMEOUT_MSEC))
+	var result := _decode(_interface.begin(generation, TIMEOUT_MSEC))
 	if not bool(result.get("pending", false)):
 		return result
 	_request_id = int(result.get("request_id", 0))
-	# Capture above occurs after VFS installation. Require a distinct future
-	# promise, so an older in-flight sync cannot acknowledge this Save.
-	JavaScriptBridge.force_fs_sync()
 	return result
 
 
@@ -124,6 +139,12 @@ func poll() -> Dictionary:
 	return _decode(_interface.poll(_request_id))
 
 
+func cancel() -> Dictionary:
+	if _interface == null or _request_id <= 0:
+		return _failure("browser_sync_request_missing")
+	return _decode(_interface.cancel(_request_id))
+
+
 func _decode(value: Variant) -> Dictionary:
 	var parsed: Variant = JSON.parse_string(str(value))
 	if typeof(parsed) != TYPE_DICTIONARY:
@@ -133,8 +154,11 @@ func _decode(value: Variant) -> Dictionary:
 		return _failure("browser_sync_invalid_response")
 	return {
 		"ok": status == "succeeded", "pending": status == "pending",
+		"slow": bool(parsed.get("slow", false)),
+		"cancelled": bool(parsed.get("cancelled", false)),
 		"error_code": str(parsed.get("error_code", "")),
 		"request_id": int(parsed.get("request_id", 0)),
+		"generation": str(parsed.get("generation", "")),
 	}
 
 

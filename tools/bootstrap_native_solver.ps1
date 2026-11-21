@@ -93,8 +93,8 @@ function Assert-NativeToolchainLock {
         web_compiler_commit = "6913738ec5371a88c4af5a80db0ab42bad3de681"
         web_repository = "https://github.com/emscripten-core/emsdk.git"
         web_commit = "e4fe26ef59168ff44f4c23c466e497bf60b3411e"
-        web_template = "web_dlink_nothreads_release.zip"
-        web_template_sha256 = "cf371f607aa9cb18e690bd595976c1baaf00c8cec24078e4a307fd515ad07913"
+        web_template = "web_dlink_nothreads_release_d0e967af99ba13e1.zip"
+        web_template_sha256 = "d0e967af99ba13e1d11a765b29e9cb809bacd9a4ce30b3d62ca4b3108bdfe438"
     }
     $actual = @{
         godot_version = [string]$Value.godot.version

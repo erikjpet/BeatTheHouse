@@ -1,12 +1,12 @@
 {
   "schema": "bth.web_gl_handles.lock/v1",
-  "policy_version": 1,
+  "policy_version": 2,
   "profile": "godot-4.6-emscripten-4.0.20-dlink-nothreads-release",
   "godot_commit": "89cea143987d564363e15d207438530651d943ac",
   "emscripten_version": "4.0.20",
-  "template_sha256": "cf371f607aa9cb18e690bd595976c1baaf00c8cec24078e4a307fd515ad07913",
-  "input_sha256": "8cf4a21cded9270718a67c6f1aab3d794eca91e3903ad866532c925565dd1fc4",
-  "output_sha256": "0c8aacc2bab394c10845a65d3b6624df7f4678a1aea87f80612a554b28d04c8c",
+  "template_sha256": "d0e967af99ba13e1d11a765b29e9cb809bacd9a4ce30b3d62ca4b3108bdfe438",
+  "input_sha256": "47266112cc7c0b0db5cc17fb7fa6b86b06976c95a932d093f24d34a96033e460",
+  "output_sha256": "f839f5e754f66dfc67fc71774651a6430abde406fe0e81e01b1638c83c1e878b",
   "allocator_file": "web_gl_handles_allocator.txt",
   "allocator_sha256": "e07f1157319c45dce251b06ad9cb73cae20c96745f689ee1b7f8332390be4da8",
   "tables": [

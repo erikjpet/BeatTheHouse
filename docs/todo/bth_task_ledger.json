@@ -47711,6 +47711,75 @@
       "implementation_batches": [
         "BTH061-EMDASH-CLEANUP-001-BATCH-001"
       ]
+    },
+    {
+      "id": "BTH061-SAVE-OVERLAP-001",
+      "name": "Confirm overlapping Web manual Save across slow browser sync",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "state": "open",
+      "status": "Private R3 changed-generation Save and cold Continue passed; game commit, paired site intake and served NEXT acceptance pending",
+      "owner": {
+        "name": "Beat the House 0.6.1 integration",
+        "task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c",
+        "assignment_state": "assigned"
+      },
+      "objective": {
+        "text": "Bind manual Web Save acknowledgement to its exact completed physical sync and unchanged run-slot generation, keep slow work explicitly pending, and prove changed state after full cold Continue.",
+        "source": "0.6.1 release close-out and reproduced guarded browser Save failures on exact NEXT; private R3 acceptance recorded separately.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "private-boundary",
+            "description": "Exact pinned template and game source positively acknowledge the same changed generation and restore it after a full private browser restart.",
+            "required": true,
+            "state": "passed_private_only",
+            "evidence": ["docs/testing/BTH061_SAVE_OVERLAP_R3_integration_20261121.md"]
+          },
+          {
+            "id": "delivery",
+            "description": "Review paired game/site pins, commit and deploy exact source through existing NEXT watcher without replacing the historical template.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "served-cold",
+            "description": "On exact served NEXT, an acknowledged manual Save of changed state survives full browser close/reopen and ordinary Continue.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ]
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "kind": "private_browser_qualification",
+          "reference": "docs/testing/BTH061_SAVE_OVERLAP_R3_integration_20261121.md",
+          "summary": "R3 manual Save succeeded after 33.7 seconds on its exact generation; full private cold Continue restored changed state. This does not qualify NEXT."
+        }
+      ],
+      "next_action": "Review and admit the side-by-side site-owned R3 template and exact game/site pins, then commit/push through the authorized paired workflow and verify served changed-state cold Continue.",
+      "blocker": {
+        "state": "active",
+        "kind": "paired_site_intake_pending",
+        "description": "The site owner-side exact source and immutable template handoff are being prepared; no production change or denied retry is implied.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-21T00:39:50Z",
+        "evidence": ["docs/testing/BTH061_SAVE_OVERLAP_R3_integration_20261121.md"]
+      },
+      "updated_at": "2026-11-21T00:39:50Z",
+      "implementation_batches": [],
+      "planned_app_changes": []
     }
   ],
   "batches": [

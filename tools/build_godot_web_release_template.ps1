@@ -51,7 +51,7 @@ if ($LASTEXITCODE -ne 0 -or $actualCommit -cne $godotCommit) {
 }
 $changedTrackedFiles = @(& git -C $SourcePath diff --name-only)
 foreach ($changedFile in $changedTrackedFiles) {
-    if ($changedFile -cne "platform/web/detect.py") {
+    if ($changedFile -cne "platform/web/detect.py" -and $changedFile -cne "platform/web/js/libs/library_godot_os.js") {
         throw "Pinned Godot source contains an unrelated tracked change: $changedFile"
     }
 }
@@ -69,9 +69,31 @@ if ($detectText.Contains($forcedAssertions)) {
 elseif (-not $detectText.Contains($assertionsDisabled)) {
     throw "Pinned Web assertions patch no longer matches platform/web/detect.py."
 }
+$savePatch = Join-Path $root "native/coin_pusher/patches/godot_web_save_sync_r3.patch"
+$savePatchSha = "3eb5ccb23cd9e6cd0c9ca8bf5e5595fa561bf21de268b108bbe5701f2397b7d6"
+if ((Get-FileHash -LiteralPath $savePatch -Algorithm SHA256).Hash.ToLowerInvariant() -cne $savePatchSha) {
+    throw "Reviewed Web Save engine patch hash drift."
+}
+$saveSource = "platform/web/js/libs/library_godot_os.js"
+$saveSourcePath = Join-Path $SourcePath $saveSource
+$saveBlob = (& git -C $SourcePath hash-object -- $saveSource).Trim()
+if ($LASTEXITCODE -ne 0) { throw "Could not identify pinned Web Save engine source blob." }
+if ($saveBlob -ceq "0e931b794e91ac35c5ba57795de10168bb958e33") {
+    & git -C $SourcePath apply --check -- $savePatch
+    if ($LASTEXITCODE -ne 0) { throw "Reviewed Web Save engine patch does not apply to pinned source." }
+    & git -C $SourcePath apply -- $savePatch
+    if ($LASTEXITCODE -ne 0) { throw "Could not apply reviewed Web Save engine patch." }
+}
+elseif ($saveBlob -cne "32cb01b566bd44f26246720f29492e73d753c7fa") {
+    throw "Pinned Web Save engine source is neither original nor exact reviewed candidate: $saveBlob"
+}
+$saveBlob = (& git -C $SourcePath hash-object -- $saveSource).Trim()
+if ($LASTEXITCODE -ne 0 -or $saveBlob -cne "32cb01b566bd44f26246720f29492e73d753c7fa") {
+    throw "Reviewed Web Save engine source blob drift: $saveBlob"
+}
 $patchNames = @(& git -C $SourcePath diff --name-only)
-if ($patchNames.Count -ne 1 -or $patchNames[0] -cne "platform/web/detect.py") {
-    throw "Godot source patch scope is not exactly platform/web/detect.py."
+if ($patchNames.Count -ne 2 -or $patchNames[0] -cne "platform/web/detect.py" -or $patchNames[1] -cne $saveSource) {
+    throw "Godot source patch scope is not exactly the reviewed assertions and Web Save files."
 }
 $patchText = (& git -C $SourcePath diff -- platform/web/detect.py) -join "`n"
 if ($patchText -notmatch '(?m)^-\s*else:' -or $patchText -notmatch 'env\["use_assertions"\] = True') {
@@ -87,7 +109,7 @@ try {
     $arguments = @(
         "-m", "SCons",
         "-C", $SourcePath,
-        "-j", "15",
+        "-j", "1",
         "platform=web",
         "target=template_release",
         "arch=wasm32",
