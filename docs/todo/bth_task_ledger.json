@@ -53942,6 +53942,54 @@
         "evidence": []
       },
       "updated_at": "2026-11-20T04:32:17.837128+00:00"
+    },
+    {
+      "id": "BTH061-CRT-SCAN-UP-001",
+      "name": "Visible upward CRT scanline sweeps",
+      "aliases": [],
+      "group": "current",
+      "parent_id": "BTH061-CRT-MOUSE-SCAN-001",
+      "state": "open",
+      "commits": [
+        {
+          "sha": "1c778496e1fc9097af5b7d368def6f16354cba7b"
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": "",
+        "evidence": []
+      },
+      "scope": [
+        "Erik requests clearer horizontal CRT scanlines and an intermittent uneven dark band with several pronounced lines sweeping bottom to top, promptly on entry, with quiet intervals. Preserve glass/input geometry, mouse selection, music and all unrelated features."
+      ],
+      "acceptance_scope": "One actual rendered pass and quiet interval, small-screen readability, mouse selection and Reduce Motion; narrow source/main delivery and exact NEXT only if newly qualified.",
+      "status": "COMMITTED_NATIVE_QUALIFIED_NEXT_PROFILE_REQUIRED",
+      "owner": {
+        "name": "CRT scanline focused delivery",
+        "task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c:delegated-crt-scan-up:/root",
+        "assignment_state": "assigned"
+      },
+      "evidence": [
+        {
+          "kind": "qualification",
+          "reference": "docs/testing/CRT_scan_up_20261122.md",
+          "summary": "One fresh D-only native job passed actual upward sweep/quiet frame photometry, visible text and two semantic mouse hover changes. Job exit0/active0. Compact640x360 and reduced-motion shader telemetry retained; no Web delivery claim."
+        }
+      ],
+      "next_action": "Qualify a descendant-specific isolated export/native provenance and promotion profile against current2e8 fallback after exact scoped main delivery; preserve old claims.",
+      "blocker": {
+        "state": "blocked",
+        "kind": "tooling",
+        "description": "Existing isolated exporter/transport/provenance pins accept only exact2e8; promotion also pins old80b baseline. New main needs a reviewed descendant-specific profile before NEXT.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-22T06:37:09.928493+00:00",
+        "evidence": [
+          "docs/testing/CRT_scan_up_20261122.md"
+        ]
+      },
+      "updated_at": "2026-11-22T06:37:09.928493+00:00"
     }
   ]
 }
