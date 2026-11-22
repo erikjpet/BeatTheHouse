@@ -48073,6 +48073,194 @@
         },
         "scope": "Historical pre-delivery dispositions preserved; invalid private-only state is normalized only for this now-verified objective."
       }
+    },
+    {
+      "id": "BTH-LAND04-RUN-CONTENT-COLD-EMPTY-001",
+      "name": "Cold Run Content pack catalog",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "state": "open",
+      "status": "Loader25 passed; exact NEXT Web acceptance pending",
+      "owner": {
+        "assignment_state": "assigned",
+        "name": "LAND-04 sidebar worker",
+        "task_ref": "6afa505b-e2f8-8191-ba91-3ab99726f001"
+      },
+      "objective": {
+        "text": "A fresh player can open Run Setup then Run Content before Games and see all content packs with unchanged defaults; menu loading remains lightweight and named challenge behavior is preserved.",
+        "source": "Parent LAND-04 delegated fix request,2026-11-22; actual exact e2b ordinary Web menu reproduction in land04-vp-only-hat-e2b-20261122-01.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "cold-metadata",
+            "description": "Real cold ContentLibrary load exposes the complete content-group catalog and unchanged defaults without loading full run-only packs.",
+            "required": true,
+            "state": "complete",
+            "evidence": [
+              "docs/testing/LAND-04_run_content_cold_catalog_2026-11-22.md"
+            ]
+          },
+          {
+            "id": "cold-web-drawer",
+            "description": "Fresh exact-candidate Web startup→RunSetup→RunContent shows all pack rows before Games; preserve Home/named-challenge behavior.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "commits": [
+        {
+          "sha": "fba08a816bfb499f04fea786f8fe73bef139e611",
+          "evidence": [
+            "docs/testing/LAND-04_run_content_cold_catalog_2026-11-22.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/testing/LAND-04_run_content_cold_catalog_2026-11-22.md",
+          "kind": "exact_deployed_repro_and_source_cause",
+          "summary": "e2b cold drawer has Home but no pack rows. Same-Job reload/Games-first exposes16labels. No campaign or paid actions; guard exit0/zero."
+        },
+        {
+          "reference": "docs/testing/LAND-04_run_content_cold_catalog_2026-11-22.md",
+          "kind": "focused_loader_and_static_feedback",
+          "summary": "Guarded fresh import and realContentLibrary25checks pass; static text-state/default/challenge invariants pass; no renderedWeb claim."
+        }
+      ],
+      "next_action": "Follow exact main/NEXT delivery for fba08a816bfb499f04fea786f8fe73bef139e611; verify fresh Web pack rows and selected-state labels through ordinary controls. Keep20hintedhands separate and Open.",
+      "blocker": {
+        "state": "active",
+        "kind": "deployed_Web_acceptance_pending",
+        "description": "Focused real-loader25 and static feedback checks passed with zero owned processes. Exact candidate delivery/rendered Web selected-state acceptance remain pending.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-22T13:50:40.135263+00:00",
+        "evidence": [
+          "docs/testing/LAND-04_run_content_cold_catalog_2026-11-22.md"
+        ]
+      },
+      "implementation_batches": [],
+      "planned_app_changes": [
+        "Hydrate only content-group metadata in load_start_menu; preserve deferred full catalog and named challenge/default logic."
+      ],
+      "updated_at": "2026-11-22T13:57:59.535138+00:00",
+      "landing_061": {
+        "proposed_bucket": "LAND-04",
+        "actual_bucket": "LAND-04",
+        "state": "actual_routing_recorded",
+        "receipt": "docs/testing/LAND-04_run_content_cold_catalog_2026-11-22.md",
+        "remaining_gate": "Follow exact main/NEXT delivery for fba08a816bfb499f04fea786f8fe73bef139e611; verify fresh Web pack rows and selected-state labels through ordinary controls. Keep20hintedhands separate and Open.",
+        "recorded_at": "2026-11-22T13:32:23.370393+00:00",
+        "acceptance_unchanged": true,
+        "work_authorization_unchanged": true
+      }
+    },
+    {
+      "id": "BTH-LAND04-RUN-CONTENT-STATE-VISIBILITY-001",
+      "name": "Visible Run Content pack selection",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "state": "open",
+      "status": "Visible-state source qualified; exact NEXT Web acceptance pending",
+      "owner": {
+        "assignment_state": "assigned",
+        "name": "LAND-04 sidebar worker",
+        "task_ref": "6afa505b-e2f8-8191-ba91-3ab99726f001"
+      },
+      "objective": {
+        "text": "Show each Run Content checkbox selected state visibly in the locked Web theme, using the existing Settings [X]/[ ] text pattern without changing toggle, default, Home or named-challenge behavior. Keep the unproved count-layout cause separate.",
+        "source": "Parent LAND-04 delegated follow-through approval,2026-11-22; exacte2b rendered labels without readable checkmarks in land04-vp-only-hat-e2b-20261122-01.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "text-state-semantics",
+            "description": "Creation and every refresh display [X] or [ ] from the real pressed/selected state, preserving original labels and existing selection/default/challenge logic.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "visible-Web-state",
+            "description": "Fresh exact-candidate Web drawer visibly distinguishes selected/unselected packs and allows onlyVideoPoker to be verified through ordinary controls.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "commits": [
+        {
+          "sha": "fba08a816bfb499f04fea786f8fe73bef139e611",
+          "evidence": [
+            "docs/testing/LAND-04_run_content_cold_catalog_2026-11-22.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": []
+      },
+      "evidence": [
+        {
+          "reference": "docs/testing/LAND-04_run_content_cold_catalog_2026-11-22.md",
+          "kind": "rendered_observation_and_existing_Settings_pattern",
+          "summary": "All16labels fit; click geometry valid; no disabledpath. Settings documents absentWebcheckboxicons and alreadyusesexplicittext. Missingcountlayoutnotdiagnosed."
+        },
+        {
+          "reference": "docs/testing/LAND-04_run_content_cold_catalog_2026-11-22.md",
+          "kind": "focused_loader_and_static_feedback",
+          "summary": "Guarded fresh import and realContentLibrary25checks pass; static text-state/default/challenge invariants pass; no renderedWeb claim."
+        }
+      ],
+      "next_action": "Follow exact main/NEXT delivery for fba08a816bfb499f04fea786f8fe73bef139e611; verify fresh Web pack rows and selected-state labels through ordinary controls. Keep20hintedhands separate and Open.",
+      "blocker": {
+        "state": "active",
+        "kind": "deployed_Web_acceptance_pending",
+        "description": "Focused real-loader25 and static feedback checks passed with zero owned processes. Exact candidate delivery/rendered Web selected-state acceptance remain pending.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-22T13:50:40.150885+00:00",
+        "evidence": [
+          "docs/testing/LAND-04_run_content_cold_catalog_2026-11-22.md"
+        ]
+      },
+      "implementation_batches": [],
+      "planned_app_changes": [
+        "Retainbasepacklabelmetadata; renderSettings-style[X]/[ ]fromrealpressedstate atcreationandeveryrefresh."
+      ],
+      "updated_at": "2026-11-22T13:57:59.535138+00:00",
+      "landing_061": {
+        "proposed_bucket": "LAND-04",
+        "actual_bucket": "LAND-04",
+        "state": "actual_routing_recorded",
+        "receipt": "docs/testing/LAND-04_run_content_cold_catalog_2026-11-22.md",
+        "remaining_gate": "Follow exact main/NEXT delivery for fba08a816bfb499f04fea786f8fe73bef139e611; verify fresh Web pack rows and selected-state labels through ordinary controls. Keep20hintedhands separate and Open.",
+        "recorded_at": "2026-11-22T13:43:39.152002+00:00",
+        "acceptance_unchanged": true,
+        "work_authorization_unchanged": true
+      }
     }
   ],
   "batches": [
