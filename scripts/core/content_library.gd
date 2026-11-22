@@ -206,18 +206,19 @@ func load(run_validation: bool = true) -> Dictionary:
 	}
 
 
-# The start screen consumes only room art and challenge metadata. Keeping the
+# The start screen consumes only room art, pack choices and challenge metadata. Keeping the
 # run-only packs out of the cold boot makes the first interactive screen honest
 # and fast; the complete library is loaded at the first run/load boundary.
 func load_start_menu() -> Dictionary:
 	if _fully_loaded:
-		return {"environment_archetypes": environment_archetypes, "challenges": challenges}
+		return {"environment_archetypes": environment_archetypes, "content_groups": content_groups, "challenges": challenges}
 	var load_started_usec := Time.get_ticks_usec()
 	_runtime_validated_scenario_definition_cache.clear()
 	_load_errors = []
 	_load_pack_timings = []
 	validation_complete = false
 	environment_archetypes = _load_array(ENVIRONMENT_ARCHETYPES_PATH, true)
+	content_groups = _load_array(CONTENT_GROUPS_PATH, true)
 	challenges = _load_array(CHALLENGES_PATH, false)
 	var parse_complete_usec := Time.get_ticks_usec()
 	rebuild_content_indexes()
@@ -233,7 +234,7 @@ func load_start_menu() -> Dictionary:
 		"start_menu_only": true,
 		"packs": _load_pack_timings.duplicate(true),
 	}
-	return {"environment_archetypes": environment_archetypes, "challenges": challenges}
+	return {"environment_archetypes": environment_archetypes, "content_groups": content_groups, "challenges": challenges}
 
 
 func is_fully_loaded() -> bool:

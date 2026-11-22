@@ -10644,9 +10644,11 @@ func _rebuild_content_group_toggles() -> void:
 		if group_id.is_empty():
 			continue
 		var check := CheckBox.new()
-		check.text = str(option.get("display_name", group_id.capitalize()))
+		var label := str(option.get("display_name", group_id.capitalize()))
+		check.set_meta("content_group_label", label)
 		check.tooltip_text = str(option.get("description", ""))
 		check.button_pressed = bool(option.get("selected", false))
+		check.text = "%s %s" % ["[X]" if check.button_pressed else "[ ]", label]
 		check.custom_minimum_size = Vector2(0, 30)
 		check.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		_set_control_font_color(check, VisualStyle.WHITE)
@@ -10689,6 +10691,9 @@ func _refresh_content_group_controls() -> void:
 		var should_press := bool(selected.get(str(group_id), false))
 		if check.button_pressed != should_press:
 			check.set_pressed_no_signal(should_press)
+		# The locked Web theme omits checkbox icons; keep state visible in text.
+		var label := str(check.get_meta("content_group_label", str(group_id).capitalize()))
+		check.text = "%s %s" % ["[X]" if should_press else "[ ]", label]
 	if content_group_status_label != null:
 		var selected_count := selected_content_group_ids.size()
 		var total_count := library.content_groups.size()
