@@ -51,6 +51,7 @@ var state: Dictionary = {}
 var view_data: Dictionary = {}
 var selected_view_index: int = -1
 var uses_foundation_snapshot := false
+var surface_exit_pending := false
 var flicker: float = 0.0
 var hit_regions: Array = []
 var surface_state_revision := 0
@@ -159,7 +160,15 @@ func handle_application_lifecycle(active: bool) -> void:
 	_cancel_captured_surface_pointer()
 
 
+func set_surface_exit_pending(pending: bool) -> void:
+	if surface_exit_pending == pending:
+		return
+	surface_exit_pending = pending
+	queue_redraw()
+
+
 func clear_runtime_state() -> void:
+	surface_exit_pending = false
 	_cancel_captured_surface_pointer()
 	stop_surface_audio()
 	set_game_module(null)
@@ -1936,6 +1945,9 @@ func _surface_action_blocked(action: String) -> bool:
 
 
 func _surface_action_block_reason(action: String) -> String:
+	# An old hit region can still exist until the pending label redraws.
+	if surface_exit_pending and action == "surface_back":
+		return "Leaving..."
 	for block_value in JsonCoerceScript._dictionary_array(state.get("surface_action_blocks", [])):
 		var block: Dictionary = block_value
 		var blocked_action := str(block.get("action", ""))
@@ -2019,6 +2031,11 @@ func _draw_foundation_play_overlay() -> void:
 
 
 func _draw_surface_back_control(rect: Rect2) -> void:
+	if surface_exit_pending:
+		draw_rect(rect, Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.14))
+		draw_rect(rect, C_SOFT, false, 1)
+		surface_label_centered("LEAVING...", rect, 14, C_SOFT)
+		return
 	var hovered := surface_region_hovered("surface_back")
 	var fill := Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.24 if hovered else 0.14)
 	draw_rect(rect, fill)

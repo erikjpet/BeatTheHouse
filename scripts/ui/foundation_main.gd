@@ -1734,22 +1734,28 @@ func back_to_environment() -> void:
 		# few rendered settle frames. A queued action refresh must not execute
 		# into that exit-only presentation window.
 		_invalidate_deferred_embedded_action_refresh()
-		game_exit_settle_active = true
+		_set_game_exit_settle_active(true)
 		_show_message("Leaving...")
 		last_game_exit_final_projection_rendered = false
 		var begin := current_game.begin_chunked_exit_settle(run_state, run_state.current_environment)
 		if not bool(begin.get("done", false)):
 			call_deferred("_finish_chunked_game_exit")
 			return
-		game_exit_settle_active = false
+		_set_game_exit_settle_active(false)
 	_complete_back_to_environment()
+
+
+func _set_game_exit_settle_active(active: bool) -> void:
+	game_exit_settle_active = active
+	if game_surface_canvas != null:
+		game_surface_canvas.set_surface_exit_pending(active)
 
 
 func _finish_chunked_game_exit() -> void:
 	var settling_game := current_game
 	var settling_run_state := run_state
 	if settling_game == null or settling_run_state == null:
-		game_exit_settle_active = false
+		_set_game_exit_settle_active(false)
 		return
 	while game_exit_settle_active and current_game == settling_game and run_state == settling_run_state:
 		var result := settling_game.advance_chunked_exit_settle(settling_run_state, settling_run_state.current_environment, 8)
@@ -1770,10 +1776,10 @@ func _finish_chunked_game_exit() -> void:
 	# yielding (main menu, a new run, or scene teardown). Do not finalize or
 	# navigate through a replacement/cleared session.
 	if not game_exit_settle_active or current_game != settling_game or run_state != settling_run_state:
-		game_exit_settle_active = false
+		_set_game_exit_settle_active(false)
 		return
 	settling_game.finalize_chunked_exit_settle(settling_run_state, settling_run_state.current_environment)
-	game_exit_settle_active = false
+	_set_game_exit_settle_active(false)
 	_complete_back_to_environment()
 
 
@@ -3616,7 +3622,7 @@ func _reset_game_surface_runtime_state(checkpoint_source: bool = true, preserve_
 	if game_exit_settle_active:
 		if current_game != null:
 			current_game.cancel_chunked_exit_settle()
-		game_exit_settle_active = false
+		_set_game_exit_settle_active(false)
 	if current_game != null:
 		current_game.set_transient_state_key_context("")
 	if game_surface_canvas != null:
@@ -7936,6 +7942,8 @@ func _restore_foundation_lifecycle_snapshot(snapshot: Dictionary) -> void:
 		var field_name := str(field_name_value)
 		var value: Variant = fields.get(field_name)
 		set(field_name, value.duplicate(true) if typeof(value) == TYPE_DICTIONARY or typeof(value) == TYPE_ARRAY else value)
+	# Pending presentation is derived from the restored host authority.
+	_set_game_exit_settle_active(game_exit_settle_active)
 	var visibility := JsonCoerceScript._copy_dict(snapshot.get("visibility", {}))
 	for control_name_value in visibility.keys():
 		var control_name := str(control_name_value)
@@ -19974,7 +19982,7 @@ func _save_foundation_run_before_leaving(status_text: String) -> bool:
 	_invalidate_deferred_embedded_action_refresh()
 	var settling_game := current_game
 	var was_settling := game_exit_settle_active
-	game_exit_settle_active = false
+	_set_game_exit_settle_active(false)
 	_checkpoint_current_game_surface_ui_state()
 	if current_game != null and not current_game.foundation_save_ready(run_state, run_state.current_environment):
 		# A live machine may exist before a retained UI projection is installed.
