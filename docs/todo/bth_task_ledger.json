@@ -47884,8 +47884,8 @@
       "kind": "objective",
       "parent_ids": [],
       "group": "current",
-      "state": "open",
-      "status": "Private R3 changed-generation Save and cold Continue passed; game commit, paired site intake and served NEXT acceptance pending",
+      "state": "complete",
+      "status": "Verified private boundary, exact NEXT delivery and served cold Continue",
       "owner": {
         "name": "Beat the House 0.6.1 integration",
         "task_ref": "6afc9600-f7f0-8191-926d-d8ae551e500c",
@@ -47900,51 +47900,121 @@
             "id": "private-boundary",
             "description": "Exact pinned template and game source positively acknowledge the same changed generation and restore it after a full private browser restart.",
             "required": true,
-            "state": "passed_private_only",
-            "evidence": ["docs/testing/BTH061_SAVE_OVERLAP_R3_integration_20261121.md"]
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH061_SAVE_OVERLAP_R3_integration_20261121.md",
+              "docs/testing/BTH061_SAVE_OVERLAP_NEXT_closeout_20261122.md"
+            ]
           },
           {
             "id": "delivery",
             "description": "Review paired game/site pins, commit and deploy exact source through existing NEXT watcher without replacing the historical template.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH061_SAVE_OVERLAP_NEXT_closeout_20261122.md"
+            ]
           },
           {
             "id": "served-cold",
             "description": "On exact served NEXT, an acknowledged manual Save of changed state survives full browser close/reopen and ordinary Continue.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/BTH061_SAVE_OVERLAP_NEXT_closeout_20261122.md"
+            ]
           }
-        ]
+        ],
+        "coverage": {
+          "required": true,
+          "complete": true,
+          "areas": [
+            {
+              "name": "Scoped private slow changed-generation Save and cold Continue boundary",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/BTH061_SAVE_OVERLAP_NEXT_closeout_20261122.md"
+              ]
+            },
+            {
+              "name": "Paired exact f91 game source / R3 template delivery on NEXT2e8",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/BTH061_SAVE_OVERLAP_NEXT_closeout_20261122.md"
+              ]
+            },
+            {
+              "name": "Served NEXT changed-state manual Save and full cold browser Continue",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/BTH061_SAVE_OVERLAP_NEXT_closeout_20261122.md"
+              ]
+            }
+          ]
+        }
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "f91ad2ca70723062c0c472fdc101328b624247ba",
+          "evidence": [
+            "docs/testing/BTH061_SAVE_OVERLAP_NEXT_closeout_20261122.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": []
+        "state": "verified",
+        "commit": "2e8f337a1fd467087e962457519bcffef27c0422",
+        "evidence": [
+          "docs/testing/BTH061_SAVE_OVERLAP_NEXT_closeout_20261122.md"
+        ]
       },
       "evidence": [
         {
           "kind": "private_browser_qualification",
           "reference": "docs/testing/BTH061_SAVE_OVERLAP_R3_integration_20261121.md",
           "summary": "R3 manual Save succeeded after 33.7 seconds on its exact generation; full private cold Continue restored changed state. This does not qualify NEXT."
+        },
+        {
+          "kind": "exact_next_save_cold_closeout",
+          "reference": "docs/testing/BTH061_SAVE_OVERLAP_NEXT_closeout_20261122.md",
+          "summary": "Game fix f91 is delivered in served2e8. Manifest f6a0936e... recorded2026-11-22T04:14:25.307155+00:00: trusted TLS/five assets, actual manual ACK request1 after39.6854s, full cold same-profile Continue restored before-close92cash/Heat1/Day1 12:30/drink result; browser Job0owned0. Private33.7314s/12:15 remains separate. No LAND-03 money-matrix closure."
         }
       ],
-      "next_action": "Review and admit the side-by-side site-owned R3 template and exact game/site pins, then commit/push through the authorized paired workflow and verify served changed-state cold Continue.",
+      "next_action": "None within this Save-overlap objective. Preserve earlier private results and failures; this closeout does not advance the separate LAND-03 native/Web money matrix or later release gates.",
       "blocker": {
-        "state": "active",
-        "kind": "paired_site_intake_pending",
-        "description": "The site owner-side exact source and immutable template handoff are being prepared; no production change or denied retry is implied.",
+        "state": "none",
+        "kind": null,
+        "description": "Scoped private-boundary, paired exact delivery and served changed-state cold Continue acceptance passed. Historical intake blocker is retained in closeout_history.",
         "requires_user_input": false,
-        "observed_at": "2026-11-21T00:39:50Z",
-        "evidence": ["docs/testing/BTH061_SAVE_OVERLAP_R3_integration_20261121.md"]
+        "observed_at": "2026-11-22T07:20:14Z",
+        "evidence": [
+          "docs/testing/BTH061_SAVE_OVERLAP_NEXT_closeout_20261122.md"
+        ]
       },
-      "updated_at": "2026-11-21T00:39:50Z",
+      "updated_at": "2026-11-22T07:20:14Z",
       "implementation_batches": [],
-      "planned_app_changes": []
+      "planned_app_changes": [],
+      "closeout_history": {
+        "previous_state": "open",
+        "previous_status": "Private R3 changed-generation Save and cold Continue passed; game commit, paired site intake and served NEXT acceptance pending",
+        "previous_blocker": {
+          "state": "active",
+          "kind": "paired_site_intake_pending",
+          "description": "The site owner-side exact source and immutable template handoff are being prepared; no production change or denied retry is implied.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-21T00:39:50Z",
+          "evidence": [
+            "docs/testing/BTH061_SAVE_OVERLAP_R3_integration_20261121.md"
+          ]
+        },
+        "previous_acceptance_states": {
+          "private-boundary": "passed_private_only",
+          "delivery": "open",
+          "served-cold": "open"
+        },
+        "scope": "Historical pre-delivery dispositions preserved; invalid private-only state is normalized only for this now-verified objective."
+      }
     }
   ],
   "batches": [
