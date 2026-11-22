@@ -9,8 +9,8 @@ uniform bool reduce_motion = false;
 uniform vec2 jitter = vec2(0.0);
 uniform float ripple_phase = 0.0;
 uniform float ripple_strength = 0.0;
-uniform float scan_phase = 0.0;
-uniform float roll_phase = 0.0;
+uniform float roll_position = 1.18;
+uniform float roll_strength = 0.0;
 
 void fragment() {
 	vec2 centered = UV * 2.0 - 1.0;
@@ -23,15 +23,22 @@ void fragment() {
 	float rounded = length(max(corner, vec2(0.0)));
 	bool outside = rounded > corner_radius || sample_uv.x < 0.0 || sample_uv.x > 1.0 || sample_uv.y < 0.0 || sample_uv.y > 1.0;
 	vec3 image = texture(TEXTURE, clamp(sample_uv, vec2(0.0), vec2(1.0))).rgb;
-	// Restrained phosphor fringe and slowly drifting lines keep captions clear.
+	// Restrained phosphor fringe keeps captions clear.
 	float red = texture(TEXTURE, clamp(sample_uv + vec2(0.00035, 0.0), vec2(0.0), vec2(1.0))).r;
 	float blue = texture(TEXTURE, clamp(sample_uv - vec2(0.00035, 0.0), vec2(0.0), vec2(1.0))).b;
 	image = mix(image, vec3(red, image.g, blue), 0.35);
-	float scanline = 0.94 + 0.06 * cos(sample_uv.y * 576.0 * 3.14159265 - (reduce_motion ? 0.0 : scan_phase));
-	// A broad, low-contrast roll travels down the glass every 8.3 seconds.
-	// Periodic distance wraps smoothly; no flash, hard edge or geometry shift.
-	float roll_distance = abs(fract(sample_uv.y - roll_phase + 0.5) - 0.5);
-	float roll = reduce_motion ? 1.0 : 1.0 - 0.035 * (1.0 - smoothstep(0.0, 0.16, roll_distance));
+	// Keep at least three output pixels per phosphor line, including small TVs.
+	// Fixed subpixel lines averaged away when the glass was scaled down.
+	float line_count = min(192.0, 1.0 / max(fwidth(sample_uv.y) * 3.0, 0.0001));
+	float scanline = 0.91 + 0.09 * cos(sample_uv.y * line_count * 6.2831853);
+	// A soft camera-like dark roll carries several uneven pronounced lines.
+	// The CPU moves it completely off either edge between intermittent passes.
+	// Luminance alone changes: text, curved clipping and hit targets do not move.
+	float roll_distance = sample_uv.y - roll_position;
+	float envelope = 1.0 - smoothstep(0.055, 0.15, abs(roll_distance));
+	float band_lines = 0.5 + 0.5 * cos(roll_distance * 24.0 * 6.2831853);
+	float uneven = 0.82 + 0.18 * cos(roll_distance * 13.0 * 6.2831853 + 0.7);
+	float roll = 1.0 - (reduce_motion ? 0.0 : roll_strength) * envelope * (0.12 + 0.30 * band_lines * uneven);
 	float vignette = 1.0 - 0.16 * dot(centered * 0.70, centered * 0.70);
 	float reflection = 0.025 * pow(max(0.0, 1.0 - length((UV - vec2(0.28, 0.15)) * vec2(1.3, 2.0))), 3.0);
 	COLOR = outside ? vec4(0.025, 0.018, 0.035, 1.0) : vec4(image * scanline * roll * vignette + reflection, 1.0);

@@ -12,6 +12,8 @@ const CORNER_RADIUS := 0.065
 const SCREEN_FILL := Color("#101024")
 const PANEL_FILL := Color("#201b39")
 const GLASS_SHADER := preload("res://scripts/ui/crt_practice_screen.gdshader")
+const SCAN_SWEEP_SECONDS := 3.4
+const SCAN_CYCLE_SECONDS := 9.0
 
 class TelevisionCabinet extends Control:
 	var glass_rect := Rect2()
@@ -147,6 +149,7 @@ var _await_pointer_release := false
 var _display_mouse_inside := false
 var _restoring_selection := false
 var _forwarding_real_mouse_motion := false
+var _glass_entry_msec := 0
 
 
 func configure(host: Variant) -> void:
@@ -442,9 +445,11 @@ func _process(_delta: float) -> void:
 	_shader_material.set_shader_parameter("jitter", _jitter)
 	_shader_material.set_shader_parameter("ripple_phase", _ripple_phase)
 	_shader_material.set_shader_parameter("ripple_strength", _ripple_strength)
-	# Luminance-only motion does not change the shared visual/input warp.
-	_shader_material.set_shader_parameter("scan_phase", 0.0 if _reduce_motion else fmod(seconds * 0.8, TAU))
-	_shader_material.set_shader_parameter("roll_phase", 0.0 if _reduce_motion else fmod(seconds * 0.12, 1.0))
+	# A prompt upward pass, then quiet glass. This changes luminance only;
+	# the visual/input warp and idle redraw scheduling remain shared and intact.
+	var sweep_time := fmod(float(Time.get_ticks_msec() - _glass_entry_msec) / 1000.0, SCAN_CYCLE_SECONDS)
+	_shader_material.set_shader_parameter("roll_position", lerpf(1.18, -0.18, minf(sweep_time / SCAN_SWEEP_SECONDS, 1.0)))
+	_shader_material.set_shader_parameter("roll_strength", 0.0 if _reduce_motion or sweep_time >= SCAN_SWEEP_SECONDS else 1.0)
 	if _await_pointer_release and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 		_await_pointer_release = false
 
@@ -472,6 +477,7 @@ func _on_visibility_changed() -> void:
 		_display_viewport.gui_disable_input = true
 		_display_mouse_inside = false
 	else:
+		_glass_entry_msec = Time.get_ticks_msec()
 		_display_viewport.gui_disable_input = false
 
 
