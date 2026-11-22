@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-19T23:13:34.811781+00:00",
+  "updated_at": "2026-11-22T08:36:06.215349+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -2347,7 +2347,7 @@
         }
       },
       "state": "open",
-      "status": "SCOPED_FIX_MAIN_NEXT_IDENTITY_STARTUP_VERIFIED; NORMAL_PLAY_PERF_OPEN",
+      "status": "Merged fix retained; exact e2b scoped nozzle/rail observations; performance Open",
       "owner": {
         "name": "Dedicated performance audit / task-18",
         "task_ref": "01a1a3e8-562c-7169-a765-f4b4f9ae60cc",
@@ -2388,10 +2388,15 @@
           "kind": "supplemental_native_probe",
           "reference": "docs/testing/NEXT_coin_pusher_native_QA_20261115.md",
           "summary": "Current native_v3 bounded synthetic-clock input, retained-state and rollback contracts pass; no rendered/Web or original objective closure."
+        },
+        {
+          "kind": "scoped_deployed_web_observation",
+          "reference": "docs/testing/LAND-04_browser_pass_2026-11-22.md",
+          "summary": "Actual e2b Ridge nozzle1-to2-to3 and QuarterFalls rail640-to400; QuarterFalls retained134.199s minimum. Zero purchased drops. No full three-cabinet performance, conservation, cadence or exit-acceptance inference."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Fixea136553ce3f33236aa3ea22d23921e6f957e7a2 is merged via PR28. Verify exact existing NEXT identity and ordinary pointer/touch/current-Web behavior plus actual native runtime acceptance. Preserve module/synthetic measurements and partial rendered sweep as their stated scopes; keep parent Open.",
+      "next_action": "Reuse these exact e2b free-control observations; preserve existing synthetic/native attribution. Full three-cabinet, paid/hold/conservation and comparable performance scope remains Open; do not repeat passed rail/nozzle proof.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -2401,7 +2406,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T13:23:50.313407+00:00",
+      "updated_at": "2026-11-22T08:36:06.215349+00:00",
       "candidate_qualification_20261111": {
         "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
         "proof": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
@@ -2415,7 +2420,7 @@
         "reason": "LAND-04",
         "acceptance_unchanged": true,
         "actual_bucket": "LAND-04",
-        "remaining_gate": "Fixea136553ce3f33236aa3ea22d23921e6f957e7a2 is merged via PR28. Verify exact existing NEXT identity and ordinary pointer/touch/current-Web behavior plus actual native runtime acceptance. Preserve module/synthetic measurements and partial rendered sweep as their stated scopes; keep parent Open.",
+        "remaining_gate": "Reuse these exact e2b free-control observations; preserve existing synthetic/native attribution. Full three-cabinet, paid/hold/conservation and comparable performance scope remains Open; do not repeat passed rail/nozzle proof.",
         "recorded_at": "2026-11-19T18:36:05.938731+00:00",
         "work_authorization_unchanged": true
       }
@@ -2635,7 +2640,7 @@
         }
       },
       "state": "open",
-      "status": "RETENTION_FIX_NATIVE_WEB_TESTED; NEXT_NORMAL_PLAY_ACCEPTANCE_OPEN",
+      "status": "Retention fix retained; exact e2b scoped control observations; sustained acceptance Open",
       "owner": {
         "name": "Dedicated performance audit / task-18",
         "task_ref": "01a1a3e8-562c-7169-a765-f4b4f9ae60cc",
@@ -2675,10 +2680,15 @@
           "kind": "supplemental_native_probe",
           "reference": "docs/testing/NEXT_coin_pusher_native_QA_20261115.md",
           "summary": "Current native_v3 bounded synthetic-clock input, retained-state and rollback contracts pass; no rendered/Web or original objective closure."
+        },
+        {
+          "kind": "scoped_deployed_web_observation",
+          "reference": "docs/testing/LAND-04_browser_pass_2026-11-22.md",
+          "summary": "Exact e2b pusher control frames retained; no growing-stutter, trace-retention or settlement-completion measurement was established. Correctly targeted Leave remained visible in bounded observations; acceptance versus pending settle unresolved."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Finish merged-source ordering, settlement, rollback and liveness checks; then verify exact main/NEXT delivery. Broader play acceptance remains Open.",
+      "next_action": "Preserve merged retention/order/rollback/liveness proof and reuse scoped e2b frames. If later assigned, one unpaid Leave/wait/Menu case can distinguish an opened Menu from active exit settle; failure to open remains inconclusive. No broad performance closure.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -2688,7 +2698,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-11T13:23:50.313407+00:00",
+      "updated_at": "2026-11-22T08:36:06.215349+00:00",
       "candidate_qualification_20261111": {
         "commit": "fcfe0204d4d04089ac23d615eef1ab9f9ea1d1cc",
         "proof": "docs/testing/AUD061-11_candidate_acceptance_2026-11-11.md",
@@ -2702,7 +2712,7 @@
         "reason": "LAND-04",
         "acceptance_unchanged": true,
         "actual_bucket": "LAND-04",
-        "remaining_gate": "Finish merged-source ordering, settlement, rollback and liveness checks; then verify exact main/NEXT delivery. Broader play acceptance remains Open.",
+        "remaining_gate": "Preserve merged retention/order/rollback/liveness proof and reuse scoped e2b frames. If later assigned, one unpaid Leave/wait/Menu case can distinguish an opened Menu from active exit settle; failure to open remains inconclusive. No broad performance closure.",
         "recorded_at": "2026-11-19T18:36:05.938731+00:00",
         "work_authorization_unchanged": true
       }
@@ -26536,7 +26546,7 @@
         }
       },
       "state": "open",
-      "status": "Source on NEXT; prior required acceptance retained",
+      "status": "Exact e2b price glance/control frames recorded; held-total scope Open",
       "owner": {
         "name": "Fix Back Alley travel / Quarter Falls visible terms",
         "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
@@ -26608,10 +26618,15 @@
           "kind": "proven_served_source_ancestry",
           "reference": "docs/testing/LAND-01_ledger_reconciliation_2026-11-19.md",
           "summary": "All named commits proven ancestral to served NEXT 89403f389; no fresh gameplay or frozen-candidate pass and no acceptance waiver."
+        },
+        {
+          "kind": "scoped_deployed_web_observation",
+          "reference": "docs/testing/LAND-04_browser_pass_2026-11-22.md",
+          "summary": "Exact e2b actual QuarterFalls cabinet/rail and idle Drop-price control frames retained; zero purchased drops. No live held-total, affordable clamp, cancel or paid-queue acceptance was observed."
         }
       ],
       "implementation_batches": [],
-      "next_action": "LAND-04: Exact NEXT delivery/startup disposition and planned cabinet glance remain. Preserve original acceptance and explicit pauses.",
+      "next_action": "Reuse exact e2b identity and cabinet glance. Live held-price/total and remaining original compatibility scope stay Open; no repeat paid action or original profile use is authorized.",
       "blocker": {
         "state": "active",
         "kind": "pipeline_disk_reserve",
@@ -26629,7 +26644,7 @@
           "description": "Expose/read-only canonical Drop and Hold terms in existing surface/control geometry; no charging, paused gameplay, viewport/touch or storage guard change."
         }
       ],
-      "updated_at": "2026-11-19T10:46:46.276936+00:00",
+      "updated_at": "2026-11-22T08:36:06.215349+00:00",
       "landing_061": {
         "proposed_bucket": "Closed delivered proposal",
         "state": "actual_routing_recorded",
@@ -26684,7 +26699,7 @@
           "scope": "Read-only source ancestry; required acceptance and existing deployment state/commit are not changed by this proof"
         },
         "actual_bucket": "LAND-04",
-        "remaining_gate": "Exact NEXT delivery/startup disposition and planned cabinet glance remain.",
+        "remaining_gate": "Reuse exact e2b identity and cabinet glance. Live held-price/total and remaining original compatibility scope stay Open; no repeat paid action or original profile use is authorized.",
         "recorded_at": "2026-11-19T18:36:05.938731+00:00",
         "work_authorization_unchanged": true
       }
@@ -43157,7 +43172,7 @@
         }
       },
       "state": "open",
-      "status": "IMPLEMENTED_FOCUSED_PASS_SMOKE10_OF11_VALIDATOR_RETRY_PASS_NEXT_HELD",
+      "status": "Exact e2b Daily opening/date/hidden-seed observed; full original scope Open",
       "owner": {
         "name": "Work unfinished-features queue",
         "task_ref": "01a1c837-6e51-7c02-8400-a7bf7be21bdf",
@@ -43217,26 +43232,32 @@
           "kind": "qualification_diagnosis_correction",
           "reference": "docs/testing/FEAT-QUEUE_unfinished_features_report_2026-11-12.md",
           "summary": "Exact classifier rows identify only README.md, not the excluded docs CSV, as the pending import-input difference. Prior attribution corrected; pipeline refusal retained."
+        },
+        {
+          "kind": "scoped_deployed_web_observation",
+          "reference": "docs/testing/LAND-04_browser_pass_2026-11-22.md",
+          "summary": "Actual e2b Daily opened House/$55/Day1 noon; browser local2026-11-22 America/Chicago; banner and RunMenu kept seed hidden. No hidden seed read, calendar/year/streak inference or broader closure."
         }
       ],
       "implementation_batches": [
         "FEAT-03-BATCH-001"
       ],
-      "next_action": "Verify the exact promoted Daily run through normal controls after the existing cold-import qualification hold is resolved. Preserve first Smoke failure and separate validator retry.",
+      "next_action": "Reuse exact e2b Daily opening/date/hidden-seed proof; do not replay the opening. Keep original year/calendar/streak and historical Smoke/validator scopes separate and review remaining original criteria only.",
       "blocker": {
-        "state": "active",
-        "kind": "external",
-        "description": "Existing watcher requires exact cold-import qualification for the required root README.md closure note. Exact 1420-row before/after inventories differ only at README.md. Prior CSV attribution was wrong and is corrected in proof.",
+        "state": "none",
+        "kind": null,
+        "description": "Actual e2b Daily startup is observed. Its hidden-seed UI does not independently prove all calendar/year/streak semantics.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T10:05:00.071899+00:00",
+        "observed_at": "2026-11-22T08:36:06.215349+00:00",
         "evidence": [
-          "docs/testing/FEAT-03_daily_local_calendar_seed_2026-11-12.md"
+          "docs/testing/FEAT-03_daily_local_calendar_seed_2026-11-12.md",
+          "docs/testing/LAND-04_browser_pass_2026-11-22.md"
         ]
       },
       "planned_app_changes": [
         "Daily Challenge unique full local-date seed"
       ],
-      "updated_at": "2026-11-12T10:05:00.071899+00:00",
+      "updated_at": "2026-11-22T08:36:06.215349+00:00",
       "landing_061": {
         "proposed_bucket": "LAND-04",
         "state": "actual_routing_recorded",
@@ -43244,7 +43265,7 @@
         "reason": "LAND-04",
         "acceptance_unchanged": true,
         "actual_bucket": "LAND-04",
-        "remaining_gate": "Verify the exact promoted Daily run through normal controls after the existing cold-import qualification hold is resolved. Preserve first Smoke failure and separate validator retry.",
+        "remaining_gate": "Reuse exact e2b Daily opening/date/hidden-seed proof; do not replay the opening. Keep original year/calendar/streak and historical Smoke/validator scopes separate and review remaining original criteria only.",
         "recorded_at": "2026-11-19T18:36:05.938731+00:00",
         "work_authorization_unchanged": true
       }
@@ -44226,7 +44247,7 @@
         }
       },
       "state": "open",
-      "status": "NEXT_DELIVERED_WEB_ACCEPTANCE_UNVERIFIED",
+      "status": "Exact e2b fresh Blackjack Practice feedback pass; original objective retained Open",
       "owner": {
         "name": "Find NEXT game bugs",
         "task_ref": "/root/find_next_game_bugs",
@@ -44264,22 +44285,29 @@
           "kind": "native_regression",
           "reference": "docs/testing/NEXT_ordinary_and_practice_QA_20261115.md",
           "summary": "Red9 stale-ack failure; corrected10/10 includes successful fresh room and failed generation rollback. Native source only."
+        },
+        {
+          "kind": "scoped_deployed_web_observation",
+          "reference": "docs/testing/LAND-04_browser_pass_2026-11-22.md",
+          "summary": "A genuinely settled Blackjack Practice hand was left and a fresh room reopened; dealt cards/result cleared and fresh practice state was visible on exact e2b. No all-game or broader-original closure."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Verify exact NEXT basic Web launch and fresh Practice result with a disposable supported browser profile; native fix and served identity pass.",
+      "next_action": "Retain the actual e2b fresh-Blackjack feedback proof without rerunning it. Reconcile only any distinct original acceptance not covered by that room-specific observation.",
       "blocker": {
         "state": "none",
-        "kind": "none",
-        "description": "",
+        "kind": null,
+        "description": "Fresh disposable e2b browser acceptance is recorded for Blackjack result clearing; no active runtime or browser-control denial is asserted for this checkpoint.",
         "requires_user_input": false,
-        "observed_at": "2026-11-12T09:06:32.024850+00:00",
-        "evidence": []
+        "observed_at": "2026-11-22T08:36:06.215349+00:00",
+        "evidence": [
+          "docs/testing/LAND-04_browser_pass_2026-11-22.md"
+        ]
       },
       "planned_app_changes": [
         "Fresh practice room retains previous result acknowledgement"
       ],
-      "updated_at": "2026-11-15T19:10:03.366999+00:00",
+      "updated_at": "2026-11-22T08:36:06.215349+00:00",
       "landing_061": {
         "proposed_bucket": "LAND-04",
         "state": "actual_routing_recorded",
@@ -44287,7 +44315,7 @@
         "reason": "LAND-04",
         "acceptance_unchanged": true,
         "actual_bucket": "LAND-04",
-        "remaining_gate": "Verify exact NEXT basic Web launch and fresh Practice result with a disposable supported browser profile; native fix and served identity pass.",
+        "remaining_gate": "Retain the actual e2b fresh-Blackjack feedback proof without rerunning it. Reconcile only any distinct original acceptance not covered by that room-specific observation.",
         "recorded_at": "2026-11-19T18:36:05.938731+00:00",
         "work_authorization_unchanged": true
       }
@@ -45438,7 +45466,7 @@
       "parent_ids": [],
       "group": "current",
       "state": "complete",
-      "status": "COMPLETE_NATIVE_QUALIFIED_MAIN_AND_NEXT_HTTP_VERIFIED",
+      "status": "Product delivery Complete; exact e2b scoped Web trip/reload added",
       "owner": {
         "name": "dot, travel implementation",
         "task_ref": "Sentinel_4aab55378f848191b9bd4ed08521ff1c",
@@ -45479,9 +45507,14 @@
           "kind": "served_next_http",
           "reference": "docs/testing/travel_main_integration.md",
           "summary": "Exact-source native changed-behavior qualification plus served NEXT HTTP identity/assets. Browser startup, visual gameplay and save isolation were not run; no browser/WASM gameplay claim."
+        },
+        {
+          "kind": "scoped_deployed_web_observation",
+          "reference": "docs/testing/LAND-04_browser_pass_2026-11-22.md",
+          "summary": "One actual e2b House-to-Bar42game-min/$5 taxi cinematic completed withoutSkip;55-to50 cash and usable room. SameURL reload/Continue restoredBar50 with no secondTravel/fare. No manualSave, Skip or sustained timing claim."
         }
       ],
-      "next_action": "None for the requested main/NEXT product delivery. Preserve the recorded native and HTTP scopes; browser startup/gameplay/save isolation remain unverified. This metadata closure is not a new served-build claim.",
+      "next_action": "None for the already-complete product delivery. Retain scoped e2b ordinary trip/arrival/reload proof; remaining LAND04 Skip/full checklist and LAND05 sustained timing stay separate.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -45492,7 +45525,7 @@
           "docs/testing/travel_main_integration.md"
         ]
       },
-      "updated_at": "2026-11-12T17:06:00.699830+00:00",
+      "updated_at": "2026-11-22T08:36:06.215349+00:00",
       "objective": {
         "text": "Integrate approved shared eight-second travel across fifteen exterior destinations and four canonical methods, using the actual game avatar, layered art and integrated doors/interiors. Only Travel-menu journeys animate; reveal the destination automatically at completion without new incidents/routes/gameplay consequences. Deliver qualified main through existing NEXT.",
         "source": "docs/testing/travel_main_integration.md",
@@ -45994,7 +46027,7 @@
       "name": "Investigate shared NEXT and TEST travel slowdown",
       "group": "current",
       "state": "open",
-      "status": "PARTIAL_FIX_NEXT_TEST_ARTIFACT_DELIVERED_WEB_UNVERIFIED",
+      "status": "One exact e2b natural trip retained; sustained same-session Web comparison Open",
       "owner": {
         "name": "dot gameplay QA and independent performance reviewer",
         "task_ref": "/root/find_next_game_bugs",
@@ -46038,18 +46071,25 @@
           "kind": "delivery",
           "reference": "docs/testing/BTH-TEST-TRAVEL-PERF-001_20261115.md",
           "summary": "NEXTca6c646f and TEST0ef525e0 exact artifact identities verified; browser startup and sustained symptom unverified."
+        },
+        {
+          "kind": "scoped_deployed_web_observation",
+          "reference": "docs/testing/LAND-04_browser_pass_2026-11-22.md",
+          "summary": "One e2b trip has passive clearing bound17.06-to57.59s after dispatch, not exactT0/T1/T2/T3 or cadence. No qualified repeatable funded loop,40completedtrip scope or early/late medians exists within17min inner/20min max."
         }
       ],
-      "next_action": "Seek faithful browser/user verification of remaining sustained slowdown; preserve partial native optimization and continue general gameplay QA.",
+      "next_action": "Keep LAND05 Open. Current receipts do not qualify a40-trip launch under existing limits; establish a genuinely offered/funded/measurable same-session scope first. Do not relax gates, combine sessions or repeat saved functional trip proof.",
       "blocker": {
-        "state": "none",
-        "kind": "none",
-        "description": null,
+        "state": "active",
+        "kind": "measurement_scope_unqualified",
+        "description": "The40-minute branch exceeds the guard;40-trip alternate needs average below25.5s before setup/shutdown. Only one5-dollar route is observed; no affordable repeat loop or required timing instants/medians are qualified.",
         "requires_user_input": false,
-        "observed_at": "2026-11-15T22:42:52.236538+00:00",
-        "evidence": []
+        "observed_at": "2026-11-22T08:36:06.215349+00:00",
+        "evidence": [
+          "docs/testing/LAND-04_browser_pass_2026-11-22.md"
+        ]
       },
-      "updated_at": "2026-11-16T00:23:36.724230+00:00",
+      "updated_at": "2026-11-22T08:36:06.215349+00:00",
       "scope": [
         "Shared travel slowdown diagnosis and scoped correction on main/NEXT and art/TEST if supported.",
         "Preserve immutable save snapshots, exact numeric/packed values, durability, animation and source authority."
@@ -46081,7 +46121,7 @@
         "reason": "LAND-05",
         "acceptance_unchanged": true,
         "actual_bucket": "LAND-05",
-        "remaining_gate": "Seek faithful browser/user verification of remaining sustained slowdown; preserve partial native optimization and continue general gameplay QA.",
+        "remaining_gate": "Keep LAND05 Open. Current receipts do not qualify a40-trip launch under existing limits; establish a genuinely offered/funded/measurable same-session scope first. Do not relax gates, combine sessions or repeat saved functional trip proof.",
         "recorded_at": "2026-11-19T18:36:05.938731+00:00",
         "work_authorization_unchanged": true
       }
@@ -46094,7 +46134,7 @@
       "parent_ids": [],
       "group": "current",
       "state": "open",
-      "status": "MAIN_NEXT_SERVED_215_NATIVE_WEB_STARTUP_UNVERIFIED",
+      "status": "Exact e2b unfunded draft editing observed; original scope retained Open",
       "owner": {
         "assignment_state": "assigned",
         "name": "Sidebar general NEXT gameplay QA",
@@ -46228,20 +46268,26 @@
           "reference": "E:\\CodexQA\\BTH\\runs\\sidebar-slot-next-descendant-20261116-01\\evidence\\next-receipt.json",
           "kind": "trusted_https_docs_only_next_descendant",
           "summary": "Actual promoted/served3cbeefa7/tree0d3bdebf verified04:52:11Z. Intervening155975 documentation build was superseded; no promotion claimed for it. Only docs changed from qualified1240 runtime, preserving215 focused checks and original full-PCK hash evidence. Web startup remains unverified."
+        },
+        {
+          "kind": "scoped_deployed_web_observation",
+          "reference": "docs/testing/LAND-04_browser_pass_2026-11-22.md",
+          "summary": "Actual e2b SETUP wallet6: select20, attemptSpin once, select2. Wallet6/no reel delivery observed; draft controls recovered. No explicit rejection message/transaction acknowledgement captured."
         }
       ],
-      "next_action": "Retain exact-build Web startup/rendered acceptance as open under existing browser-control restriction; exact runtime source is unchanged in verified NEXT43f2ffca.",
+      "next_action": "Retain exact e2b startup and scoped unfunded20-to2 editing proof; review against the original objective without repeating this passed path. Do not infer an unobserved rejection transaction or broaden native/funded-play evidence.",
       "blocker": {
-        "state": "active",
-        "kind": "browser_control_restriction",
-        "description": "Only exact-build browser startup/rendered Web acceptance remains for this delivered fix. It is unverified under the retained browser-control restriction; no browser action or bypass was attempted in this task. Native/HTTP verification is complete within its stated limits.",
+        "state": "none",
+        "kind": null,
+        "description": "Fresh exact e2b browser proof is now recorded. The observed scope is draft editing/no delivery; no explicit rejection message or transaction acknowledgement was captured.",
         "requires_user_input": false,
-        "observed_at": "2026-11-16T07:28:19.147112+00:00",
+        "observed_at": "2026-11-22T08:36:06.215349+00:00",
         "evidence": [
-          "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md"
+          "docs/testing/BTH-SLOT-UNFUNDED-SELECTION-001_20261116.md",
+          "docs/testing/LAND-04_browser_pass_2026-11-22.md"
         ]
       },
-      "updated_at": "2026-11-16T07:28:19.147112+00:00",
+      "updated_at": "2026-11-22T08:36:06.215349+00:00",
       "planned_app_changes": [],
       "landing_061": {
         "proposed_bucket": "LAND-04",
@@ -46250,7 +46296,7 @@
         "reason": "LAND-04",
         "acceptance_unchanged": true,
         "actual_bucket": "LAND-04",
-        "remaining_gate": "Retain exact-build Web startup/rendered acceptance as open under existing browser-control restriction; exact runtime source is unchanged in verified NEXT43f2ffca.",
+        "remaining_gate": "Retain exact e2b startup and scoped unfunded20-to2 editing proof; review against the original objective without repeating this passed path. Do not infer an unobserved rejection transaction or broaden native/funded-play evidence.",
         "recorded_at": "2026-11-19T18:36:05.938731+00:00",
         "work_authorization_unchanged": true
       }
@@ -47397,7 +47443,7 @@
       "parent_ids": [],
       "group": "current",
       "state": "open",
-      "status": "LAND-02 focused46 and delivery verified; Web wording Open",
+      "status": "Delivered formatter retained; e2b ordinary attempts recorded; caught Web wording Open",
       "owner": {
         "assignment_state": "assigned",
         "name": "LAND PM delegated worker",
@@ -47469,23 +47515,29 @@
           "kind": "land02_focused_delivery",
           "reference": "docs/testing/LAND-02_checkpoint_2026-11-19.md",
           "summary": "Only the c667 two-file delta was delivered via 51dcc3e6183f79eef4663808d02c1e118322d0bf, excluding parent19388e732. Existing formatter23cases46checks passed; exact main/NEXT 2e8f337a1fd467087e962457519bcffef27c0422. Original normal-control Web wording acceptance remains Open."
+        },
+        {
+          "kind": "scoped_deployed_web_observation",
+          "reference": "docs/testing/LAND-04_browser_pass_2026-11-22.md",
+          "summary": "Actual e2b legal ordinary off-book Stands with CountOff/noPeek were retained. Required caught scrutiny wording was not observed; Heat+1/risky-play feedback is not D5 acceptance. No additional hand/catch grind."
         }
       ],
-      "next_action": "Complete the original normal-control Web caught-wording acceptance under LAND-04. LAND-02 focused23cases46checks and exact main/NEXT delivery are satisfied; do not repeat the formatter or claim Web wording passed.",
+      "next_action": "Keep the original normal-control caught-wording criterion Open. Reuse focused23cases46checks and delivery proof; do not rerun the formatter or grind/repeat ordinary hands for a catch.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "LAND-01 is committed asdfcf6636 and the sole guarded slot is assigned for this D5 check.",
+        "description": "Scoped ordinary Web attempts finished with zero owned processes; the caught phrase was not observed. This is a branch-coverage gap, not a permission hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-19T19:50:47.426657+00:00",
+        "observed_at": "2026-11-22T08:36:06.215349+00:00",
         "evidence": [
           "docs/testing/LAND-01_ledger_reconciliation_2026-11-19.md",
-          "docs/todo/BTH_0.6.1_land01_06_pm_prompt.md#5-sequence"
+          "docs/todo/BTH_0.6.1_land01_06_pm_prompt.md#5-sequence",
+          "docs/testing/LAND-04_browser_pass_2026-11-22.md"
         ]
       },
       "implementation_batches": [],
       "planned_app_changes": [],
-      "updated_at": "2026-11-22T06:43:29Z",
+      "updated_at": "2026-11-22T08:36:06.215349+00:00",
       "landing_061": {
         "proposed_bucket": "LAND-02",
         "state": "actual_routing_recorded",
@@ -47515,7 +47567,7 @@
           "named_branch_fetch_receipt": "E:\\CodexQA\\BTH\\runs\\land061-d5-inspect-20261119-02\\evidence\\child-launches.json"
         },
         "actual_bucket": "LAND-02",
-        "remaining_gate": "Complete the original normal-control Web caught-wording acceptance under LAND-04. LAND-02 focused23cases46checks and exact main/NEXT delivery are satisfied; do not repeat the formatter or claim Web wording passed.",
+        "remaining_gate": "Keep the original normal-control caught-wording criterion Open. Reuse focused23cases46checks and delivery proof; do not rerun the formatter or grind/repeat ordinary hands for a catch.",
         "recorded_at": "2026-11-19T18:36:05.938731+00:00",
         "acceptance_unchanged": true,
         "work_authorization_unchanged": true,
@@ -47688,7 +47740,7 @@
       "parent_ids": [],
       "group": "current",
       "state": "open",
-      "status": "LAND-04 - acceptance pending",
+      "status": "Exact e2b offered/selected Insurance007 loss verified; winning branch Open",
       "owner": {
         "assignment_state": "assigned",
         "name": "LAND PM delegated worker",
@@ -47739,29 +47791,35 @@
           "reference": "docs/testing/LAND-01_ledger_reconciliation_2026-11-19.md",
           "kind": "fresh_disposable_browser_startup",
           "summary": "ExactNEXT89403 menu plus normal PLAY and explicit START NEW RUN controls pass. Authored fresh First Night/Tutorial entered. No Insurance/Heat/caught-feedback gameplay acceptance."
+        },
+        {
+          "kind": "scoped_deployed_web_observation",
+          "reference": "docs/testing/LAND-04_browser_pass_2026-11-22.md",
+          "summary": "Actual e2b ordinary Web: verified base014/007 text;007 dealerAce/7, selectedInsurance5, main-10/side-5/wallet99985.014 dealerAce/ten already settled before retained offer; positive selection/payout unproved."
         }
       ],
-      "next_action": "After valid LAND-01 commit and authorized LAND-02 main/NEXT delivery, exercise Insurance offered-only behavior in LAND-04. Current startup evidence does not prove Insurance gameplay.",
+      "next_action": "Retain offered/selected/losing007 proof. Winning014 remains Open: current adapter has no proven ordinary route into its finite presentation interval; do not replay that paid seed without a supported acceptance path. Original broader criteria unchanged.",
       "blocker": {
         "state": "active",
-        "kind": "sequence_prerequisite",
-        "description": "Erik expressly authorized the worker to run the checks. This row awaits the documented LAND-01 local milestone and its own unchanged acceptance, not an owner-run procedure.",
+        "kind": "acceptance_window_unverified",
+        "description": "Verified014 settled before its first retained post-Deal view. The adapter captures after every action; no proven ordinary winning-selection path is established. No new runtime is authorized by this record.",
         "requires_user_input": false,
-        "observed_at": "2026-11-19T18:36:05.938731+00:00",
+        "observed_at": "2026-11-22T08:36:06.215349+00:00",
         "evidence": [
           "docs/testing/LAND-01_ledger_reconciliation_2026-11-19.md",
-          "docs/todo/BTH_0.6.1_land01_06_pm_prompt.md#5-sequence"
+          "docs/todo/BTH_0.6.1_land01_06_pm_prompt.md#5-sequence",
+          "docs/testing/LAND-04_browser_pass_2026-11-22.md"
         ]
       },
       "implementation_batches": [],
       "planned_app_changes": [],
-      "updated_at": "2026-11-19T10:30:40.120506+00:00",
+      "updated_at": "2026-11-22T08:36:06.215349+00:00",
       "landing_061": {
         "proposed_bucket": "LAND-04",
         "state": "actual_routing_recorded",
         "receipt": "docs/testing/LAND-01_ledger_reconciliation_2026-11-19.md",
         "actual_bucket": "LAND-04",
-        "remaining_gate": "After valid LAND-01 commit and authorized LAND-02 main/NEXT delivery, exercise Insurance offered-only behavior in LAND-04. Current startup evidence does not prove Insurance gameplay.",
+        "remaining_gate": "Retain offered/selected/losing007 proof. Winning014 remains Open: current adapter has no proven ordinary route into its finite presentation interval; do not replay that paid seed without a supported acceptance path. Original broader criteria unchanged.",
         "recorded_at": "2026-11-19T18:36:05.938731+00:00",
         "acceptance_unchanged": true,
         "work_authorization_unchanged": true

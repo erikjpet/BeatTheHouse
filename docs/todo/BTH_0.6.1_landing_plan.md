@@ -321,6 +321,15 @@ normal controls, and watch the console throughout.
 | Video Poker: 20 hands with hints on; watch for `DataCloneError` / out-of-memory page errors | `BTH-PERF-20261104-002` |
 | Only if reached naturally: Bringer Show arrival, Gold review re-talk, tutorial Bronze collect, Sal pending offer | historical browser-acceptance entries (Appendix B) |
 
+**22 November 2026 scoped Web checkpoint.** Actual approved LAN NEXT
+e2b16ffbff7cc72a57a2664b5f25872aec10e8c9 has two closed, zero-owned
+browser receipts. [Consolidated observations and hashes](../testing/LAND-04_browser_pass_2026-11-22.md)
+record Practice refresh, Daily hidden-seed opening, one natural taxi/arrival
+reload, Insurance007 loss, unfunded Slot draft editing and free pusher controls.
+These are scoped passes; winning Insurance, caught D5, complete cabinet/Hold
+coverage and the remaining rows stay Open. LAND-05 has no qualified sustained
+sample set or currently viable40-trip scope under the existing guard.
+
 **Outcomes.**
 
 - Each row gets pass or fail, with a screenshot and the console log.
