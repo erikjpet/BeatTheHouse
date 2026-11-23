@@ -33,3 +33,18 @@
   (defaults: 4 GiB expected writes plus 20 GiB reserve). Record the manifest and
   launch gate in QA evidence. If validation fails, stop that launch with its exact
   path/capacity error; do not select another drive or change security settings.
+
+## Push authorization
+
+Owner instruction (Erik Petersen, 2026-11-23), effective with no end date:
+
+- Once work is finished and its focused checks pass, ordinary pushes to
+  `erikjpet/BeatTheHouse` `main` and working branches are authorized without
+  asking for individual approval. This covers code fixes, test fixes, docs,
+  ledger updates, reports, and release prep, including the RC freeze commit.
+- Ask Erik first before a force push, rewriting history, deleting branches or
+  tags, creating tags or GitHub releases, or uploading to itch.
+- While `main` is frozen for an RC, ask Erik before other pushes to `main`;
+  only the freeze commit itself and a release-bar fix are already authorized.
+- This records the repository owner's authorization; it does not override
+  platform policy, tool permissions, or an enforced review.
