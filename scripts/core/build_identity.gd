@@ -5,7 +5,7 @@ extends RefCounted
 # and telemetry identity without giving callers mutable manifest authority.
 
 const MANIFEST_PATH := "res://build_manifest.json"
-const RELEASE_VERSION := "0.6.0"
+const RELEASE_VERSION := "0.6.1"
 const REQUIRED_FIELDS := [
 	"build_version",
 	"source_commit",

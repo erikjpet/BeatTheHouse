@@ -2,9 +2,7 @@
 
 All notable public release changes for Beat the House are recorded here.
 
-## 0.6.1 - Unreleased stability candidate
-
-These changes are being qualified on NEXT. The official published release remains 0.6.0.
+## 0.6.1
 
 ### Saving, Continue and leaving a run
 
@@ -86,6 +84,8 @@ These changes are being qualified on NEXT. The official published release remain
 
 ### Tutorial, travel and room recovery
 
+- The first launch lets players start a lesson or skip directly to a run.
+- Inactive rooms reuse their save projection instead of rebuilding it twice.
 - Tutorial travel no longer incurs the penalty for following instructions.
   Coach cards and Pal stay clear of menus and selected destinations; Pull Tabs,
   Blackjack lessons and casino-door fares use the intended machines and routes.
@@ -102,6 +102,8 @@ These changes are being qualified on NEXT. The official published release remain
 
 ### Interface, accessibility and responsiveness
 
+- The CRT practice console supports mouse and keyboard selection, with chiptune,
+  navigation sounds, upward scanlines and a reduced-motion option.
 - Loaded whole numbers display without unwanted decimal suffixes; fractional
   values and meaningful text formatting remain intact.
 - Rejected actions use player-facing explanations. Settings can copy a concise
