@@ -10414,6 +10414,7 @@ func _build_content_group_controls(parent: VBoxContainer) -> void:
 	_set_control_font_color(heading, VisualStyle.YELLOW)
 	heading_row.add_child(heading)
 	content_group_status_label = _label("", 11)
+	content_group_status_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	content_group_status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	content_group_status_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	content_group_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
