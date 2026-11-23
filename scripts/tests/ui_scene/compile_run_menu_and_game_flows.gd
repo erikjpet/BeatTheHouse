@@ -2513,6 +2513,8 @@ func _check_slot_autoplay_button_one_click(app: Control) -> bool:
 		return false
 	app.call("return_to_main_menu")
 	await process_frame
+	if not await _close_practice_fixture_through_crt_exit(app, "Slot autoplay"):
+		return false
 	app.set("run_state", original_run_state)
 	app.set("dev_game_test_mode", original_dev_game_test_mode)
 	app.call("_refresh_run_action_service")
@@ -2641,6 +2643,8 @@ func _check_all_in_wager_confirmation_recovery(app: Control) -> bool:
 		return false
 	app.call("return_to_main_menu")
 	await process_frame
+	if not await _close_practice_fixture_through_crt_exit(app, "Slot all-in recovery"):
+		return false
 	app.set("run_state", original_run_state)
 	app.set("dev_game_test_mode", original_dev_game_test_mode)
 	app.call("_refresh_run_action_service")
@@ -2860,9 +2864,25 @@ func _check_settled_bankroll_visible_during_result_reveal(app: Control) -> bool:
 	app.call("_resolve_game_action", "bankroll_fixture_win", false, false, false)
 	await process_frame
 	var second_settled_bankroll := int((app.call("serialized_run_state") as Dictionary).get("bankroll", -1))
+	print("BANKROLL_LEAVE_DIAGNOSTIC before=%s" % JSON.stringify({
+		"screen":str(app.get("current_screen")), "crt_active":bool(app.call("_crt_practice_active")),
+		"game":str(app.get("current_game")),
+		"same_run":app.get("run_state") == run_state, "actual":run_state.bankroll,
+		"settled":second_settled_bankroll, "hud":app.call("current_objective_hud_snapshot"),
+	}))
 	app.call("back_to_environment")
 	await process_frame
 	var leave_hud: Dictionary = app.call("current_objective_hud_snapshot")
+	print("BANKROLL_LEAVE_DIAGNOSTIC after=%s" % JSON.stringify({
+		"screen":str(app.get("current_screen")), "crt_active":bool(app.call("_crt_practice_active")),
+		"game":str(app.get("current_game")),
+		"same_run":app.get("run_state") == run_state, "actual":run_state.bankroll,
+		"settled":second_settled_bankroll, "hud":leave_hud,
+	}))
+	if app.get("run_state") != run_state or bool(app.call("_crt_practice_active")) \
+			or str(app.get("current_screen")) != FoundationMain.SCREEN_ENVIRONMENT:
+		push_error("Ordinary bankroll fixture Leave did not preserve its same campaign run in ENVIRONMENT outside CRT practice.")
+		return false
 	if int(leave_hud.get("bankroll", -1)) != second_settled_bankroll:
 		push_error("Leaving mid-animation did not snap presented bankroll to actual.")
 		return false
@@ -2917,6 +2937,8 @@ func _check_background_slot_autoplay_isolated_from_active_game(app: Control) -> 
 		return false
 	app.call("return_to_main_menu")
 	await process_frame
+	if not await _close_practice_fixture_through_crt_exit(app, "Background Slot isolation"):
+		return false
 	app.set("run_state", original_run_state)
 	app.set("dev_game_test_mode", original_dev_game_test_mode)
 	app.call("_refresh_run_action_service")
@@ -2967,6 +2989,8 @@ func _check_background_slot_all_in_confirmation(app: Control) -> bool:
 		return false
 	app.call("return_to_main_menu")
 	await process_frame
+	if not await _close_practice_fixture_through_crt_exit(app, "Background Slot all-in"):
+		return false
 	app.set("run_state", original_run_state)
 	app.set("dev_game_test_mode", original_dev_game_test_mode)
 	app.call("_refresh_run_action_service")
