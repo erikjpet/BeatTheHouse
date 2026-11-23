@@ -4552,14 +4552,36 @@ func _run_main_flow(app: Control) -> void:
 		)
 		quit(1)
 		return
+	game_library_button = app.get("game_library_button") as Button
+	start_menu_controls = app.get("start_menu_controls") as Control
+	var games_callback := Callable(app, "_on_portrait_menu_button_pressed").bind(Callable(app, "open_game_test_menu"))
+	if not is_instance_valid(game_library_button) or not is_instance_valid(start_menu_controls) \
+			or not game_library_button.is_visible_in_tree() or game_library_button.disabled \
+			or not start_menu_controls.is_visible_in_tree() \
+			or not game_library_button.is_connected("pressed", games_callback):
+		push_error("Rebuilt main menu did not expose its current visible, enabled, connected Games control.")
+		quit(1)
+		return
 	game_library_button.emit_signal("pressed")
 	await process_frame
 	game_library_page = app.get("game_test_menu")
-	if game_library_page == null or not game_library_page.visible or start_menu_controls.visible:
-		push_error("Games button did not open the main-menu Games page.")
+	start_menu_controls = app.get("start_menu_controls") as Control
+	if not is_instance_valid(game_library_page) or not is_instance_valid(start_menu_controls) \
+			or not game_library_page.is_visible_in_tree() or start_menu_controls.is_visible_in_tree() \
+			or str(app.get("current_screen")) != FoundationMain.SCREEN_CRT:
+		push_error("Games button did not open the main-menu Games page: screen=%s page_valid=%s page_visible=%s controls_valid=%s controls_visible=%s controls_in_tree=%s." % [
+			str(app.get("current_screen")), is_instance_valid(game_library_page),
+			game_library_page.is_visible_in_tree() if is_instance_valid(game_library_page) else false,
+			is_instance_valid(start_menu_controls), start_menu_controls.visible if is_instance_valid(start_menu_controls) else false,
+			start_menu_controls.is_visible_in_tree() if is_instance_valid(start_menu_controls) else false])
 		quit(1)
 		return
-	if not _has_visible_text(game_library_page, "Game Library") or not _has_visible_text(game_library_page, "Practice any available table"):
+	var game_library_title := game_library_page.find_child("GameTitle", true, false) as Label
+	if game_library_title == null or game_library_title.text != "Beat the House" or game_library_title.self_modulate.a != 0.0:
+		push_error("Games page did not retain the canonical hidden CRT title.")
+		quit(1)
+		return
+	if not _has_visible_text(game_library_page, "SELECT YOUR GAME") or not _has_visible_text(game_library_page, "1 PLAYER\nPRACTICE ONLY"):
 		push_error("Games page did not present release-facing practice copy.")
 		quit(1)
 		return
@@ -4567,6 +4589,10 @@ func _run_main_flow(app: Control) -> void:
 	var expected_game_names := _implemented_game_display_names(library_for_games)
 	if expected_game_names.is_empty():
 		push_error("Games page test could not find implemented game modules.")
+		quit(1)
+		return
+	if not _has_visible_text(game_library_page, "%d games · Practice only · Leave returns here" % expected_game_names.size()):
+		push_error("Games page did not report the complete implemented-game count and practice return copy.")
 		quit(1)
 		return
 	for display_name in expected_game_names:
@@ -4578,12 +4604,22 @@ func _run_main_flow(app: Control) -> void:
 		push_error("Opening the Games page should not start or mutate a run.")
 		quit(1)
 		return
-	app.call("close_game_test_menu")
+	var games_exit_button := game_library_page.get("exit_button") as Button
+	if not is_instance_valid(games_exit_button) or not games_exit_button.is_visible_in_tree() \
+			or games_exit_button.disabled or not games_exit_button.is_connected("pressed", Callable(app, "close_game_test_menu")):
+		push_error("Games page did not expose its current visible, enabled, connected Exit TV control.")
+		quit(1)
+		return
+	games_exit_button.pressed.emit()
 	await process_frame
-	if game_library_page.visible or not start_menu_controls.visible:
+	start_menu_controls = app.get("start_menu_controls") as Control
+	if not is_instance_valid(start_menu_controls) or game_library_page.is_visible_in_tree() \
+			or not start_menu_controls.is_visible_in_tree() or str(app.get("current_screen")) != FoundationMain.SCREEN_START \
+			or bool(app.call("_crt_practice_active")):
 		push_error("Games page Back did not return to the main menu controls.")
 		quit(1)
 		return
+	print("GAMES_NAVIGATION_CHECK PASS current_controls=true CRT_copy=true catalog_complete=true run_unchanged=true exit_to_START=true")
 	if not await _check_slot_autoplay_button_one_click(app):
 		quit(1)
 		return
@@ -4609,6 +4645,16 @@ func _run_main_flow(app: Control) -> void:
 		quit(1)
 		return
 	if not await _check_web_travel_cannot_strand_transition(app):
+		quit(1)
+		return
+	settings_button = app.get("settings_button") as Button
+	settings_menu = app.get("settings_menu") as SettingsMenu
+	start_menu_controls = app.get("start_menu_controls") as Control
+	var settings_callback := Callable(app, "_on_portrait_menu_button_pressed").bind(Callable(app, "open_settings_menu"))
+	if not is_instance_valid(settings_button) or not is_instance_valid(settings_menu) or not is_instance_valid(start_menu_controls) \
+			or not settings_button.is_visible_in_tree() or settings_button.disabled \
+			or not start_menu_controls.is_visible_in_tree() or not settings_button.is_connected("pressed", settings_callback):
+		push_error("Rebuilt main menu did not expose its current visible, enabled, connected Settings control.")
 		quit(1)
 		return
 	if settings_menu.visible:
