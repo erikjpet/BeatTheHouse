@@ -6,6 +6,25 @@ extends SceneTree
 
 const MainScene := preload("res://scenes/main.tscn")
 const APPROVED_ROOT := "e:/codexqa/bth/"
+
+# Only the explicitly approved D: root can use the guarded manifest path.
+const D_QA_ROOT := "d:/codexqa/bth"
+const D_QA_ENV := {
+	"BTH_QA_WORKSPACE": ["workspace"],
+	"BTH_QA_RUN_DIR": ["run_root"],
+	"BTH_QA_PROFILE_DIR": ["profile"],
+	"BTH_SAVE_DIR": ["save_dir"],
+	"BTH_USER_SETTINGS_PATH": ["localappdata", "settings.json"],
+	"BTH_PROFILE_INVENTORY_PATH": ["localappdata", "profile-inventory.json"],
+	"BTH_META_COLLECTION_PATH": ["localappdata", "meta-collection.json"],
+	"BTH_QA_EVIDENCE_DIR": ["evidence"],
+	"BTH_QA_TEMP_DIR": ["temp"],
+	"APPDATA": ["appdata"],
+	"LOCALAPPDATA": ["localappdata"],
+	"TEMP": ["temp"],
+	"TMP": ["temp"],
+}
+
 const EXPECTED_LAUNCHERS := [
 	{"id": "scratch_tickets", "label": "Scratch Tickets"},
 	{"id": "pull_tabs", "label": "Pull Tabs"},
@@ -153,6 +172,8 @@ func _guarded_rendered_environment() -> bool:
 	if DisplayServer.get_name() == "headless":
 		_fail("Launcher pointer acceptance requires a rendered native display.")
 		return false
+	if _qa_path(OS.get_environment("BTH_QA_RUN_DIR")).begins_with(D_QA_ROOT + "/"):
+		return _guarded_d_environment()
 	for key in ["BTH_QA_WORKSPACE", "BTH_QA_RUN_DIR", "BTH_QA_PROFILE_DIR", "BTH_SAVE_DIR", "BTH_USER_SETTINGS_PATH", "BTH_PROFILE_INVENTORY_PATH", "BTH_META_COLLECTION_PATH", "BTH_QA_EVIDENCE_DIR"]:
 		if not OS.get_environment(key).replace("\\", "/").simplify_path().to_lower().begins_with(APPROVED_ROOT):
 			_fail("Missing or non-approved disposable QA path: %s." % key)
@@ -161,6 +182,66 @@ func _guarded_rendered_environment() -> bool:
 		_fail("Launcher checkout and engine user data must stay on the admitted E: QA root.")
 		return false
 	return true
+
+
+func _qa_path(value: String) -> String:
+	return value.replace("\\", "/").simplify_path().trim_suffix("/").to_lower()
+
+
+func _guarded_d_environment() -> bool:
+	var run := _qa_path(OS.get_environment("BTH_QA_RUN_DIR"))
+	var evidence := run.path_join("evidence")
+	if run.get_base_dir() != D_QA_ROOT.path_join("runs") or _qa_path(OS.get_environment("BTH_QA_EVIDENCE_DIR")) != evidence:
+		_fail("D: launcher requires the guarded run evidence directory.")
+		return false
+	var manifest_path := evidence.path_join("storage-manifest.json")
+	var manifest_text := FileAccess.get_file_as_string(manifest_path)
+	var manifest: Variant = JSON.parse_string(manifest_text)
+	var claim: Variant = JSON.parse_string(FileAccess.get_file_as_string(evidence.path_join("launch-claim.json")))
+	var env := {}
+	for key: String in D_QA_ENV:
+		env[key] = OS.get_environment(key)
+	if not _matches_d_manifest(manifest, claim, FileAccess.get_sha256(manifest_path), env,
+			ProjectSettings.globalize_path("res://"), OS.get_user_data_dir()):
+		_fail("D: launcher requires a prepared storage manifest and matching guarded launch claim and paths.")
+		return false
+	return true
+
+
+func _matches_d_manifest(manifest: Variant, claim: Variant, digest: String, env: Dictionary,
+		checkout: String, engine_data: String) -> bool:
+	if not manifest is Dictionary or not claim is Dictionary or digest.is_empty():
+		return false
+	if manifest.get("schema") != "bth-qa-storage/v1" or manifest.get("prepared") != true:
+		return false
+	if claim.get("schema") != "bth.qa_launch_claim/v1" or claim.get("manifest_sha256") != digest:
+		return false
+	var paths: Variant = manifest.get("paths")
+	var run_id: Variant = manifest.get("run_id")
+	if not paths is Dictionary or not run_id is String:
+		return false
+	if run_id.is_empty() or run_id.contains("/") or run_id.contains("\\") or run_id == "." or run_id == "..":
+		return false
+	var run := D_QA_ROOT.path_join("runs").path_join(run_id.to_lower())
+	var evidence := run.path_join("evidence")
+	if _qa_path(str(paths.get("root", ""))) != D_QA_ROOT or _qa_path(str(manifest.get("manifest_path", ""))) != evidence.path_join("storage-manifest.json"):
+		return false
+	if _qa_path(str(paths.get("run_root", ""))) != run:
+		return false
+	for name: String in ["profile", "temp", "evidence", "appdata", "localappdata", "home", "cache", "save_dir", "pycache"]:
+		if _qa_path(str(paths.get(name, ""))) != run.path_join(name):
+			return false
+	var workspace := _qa_path(str(paths.get("workspace", "")))
+	if not workspace.begins_with(D_QA_ROOT + "/") or _qa_path(checkout) != workspace:
+		return false
+	for key: String in D_QA_ENV:
+		var binding: Array = D_QA_ENV[key]
+		var expected := _qa_path(str(paths.get(binding[0], "")))
+		if binding.size() == 2:
+			expected = expected.path_join(binding[1])
+		if _qa_path(str(env.get(key, ""))) != expected:
+			return false
+	return _qa_path(engine_data).begins_with(run.path_join("appdata") + "/")
 
 
 func _visible_clip(control: Control) -> Rect2:

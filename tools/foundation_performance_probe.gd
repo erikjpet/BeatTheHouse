@@ -470,7 +470,6 @@ func _probe_slot_autoplay(seed: String, run_index: int, environment_id: String, 
 	if avg_ms > MAX_SEVERE_IDLE_AVG_MS:
 		failures.append("Slot autoplay averaged %.2f ms per frame, above %.2f ms." % [avg_ms, MAX_SEVERE_IDLE_AVG_MS])
 	_assert_draw_budget("Slot autoplay", draw_p95_ms, draw_samples)
-	await _probe_slot_offscreen_autoplay(seed, game_id)
 
 
 func _probe_slot_offscreen_autoplay(seed: String, game_id: String) -> void:
@@ -480,6 +479,9 @@ func _probe_slot_offscreen_autoplay(seed: String, game_id: String) -> void:
 		return
 	app.call("back_to_environment")
 	await _settle(3)
+	if app.get("run_state") != run_state:
+		failures.append("Slot offscreen autoplay must leave into the same live casino run for seed %s." % seed)
+		return
 	var machine_before := _slot_machine_state(run_state, game_id)
 	if not bool(machine_before.get("slot_autoplay_active", false)):
 		failures.append("Slot autoplay was lost after leaving the surface for seed %s." % seed)
@@ -512,7 +514,9 @@ func _probe_slot_offscreen_autoplay(seed: String, game_id: String) -> void:
 		failures.append("Slot environment icon did not expose active runtime state after leaving the surface for seed %s." % seed)
 	if str(runtime_state.get("status_label", "")).strip_edges().is_empty():
 		failures.append("Slot environment icon runtime state did not expose a status label for seed %s." % seed)
-	app.call("enter_game", game_id)
+	if not bool(app.call("enter_game", game_id)):
+		failures.append("Slot offscreen autoplay could not re-enter the same cabinet for seed %s." % seed)
+		return
 	await _settle(3)
 	var reentered_snapshot: Dictionary = app.call("current_game_view_snapshot")
 	if not bool(reentered_snapshot.get("slot_autoplay_active", false)):
@@ -573,8 +577,8 @@ func _probe_coin_pusher_full_cap_performance() -> void:
 	await _probe_game("practice:coin_pusher_full_cap", -1, environment_id, "coin_pusher")
 	_probe_coin_pusher_raw_solver_timing(run_state, game)
 	await _wait_for_coin_pusher_exit("idle full-cap sample")
-	await _probe_coin_pusher_active_sequence(run_state, game, environment_id)
-	await _probe_coin_pusher_ceiling_refusal(run_state, game)
+	await _probe_coin_pusher_active_sequence()
+	await _probe_coin_pusher_ceiling_refusal()
 
 
 func _coin_pusher_machine_definition(game: GameModule) -> Dictionary:
@@ -663,7 +667,21 @@ func _probe_coin_pusher_raw_solver_timing(run_state: RunState, game: GameModule)
 			failures.append("Coin Pusher V3 300-body tick p95 %.3f ms exceeded %.3f ms and left insufficient renderer headroom." % [float(stats.get("p95_ms", 0.0)), COIN_PUSHER_SOLVER_TICK_P95_BUDGET_MS])
 
 
-func _probe_coin_pusher_active_sequence(run_state: RunState, game: GameModule, environment_id: String) -> void:
+func _start_fresh_coin_pusher_practice(context: String) -> bool:
+	# CRT Leave discards the previous practice run; the launcher creates its replacement.
+	var result: Dictionary = app.call("start_game_test_session", "coin_pusher")
+	if not bool(result.get("ok", false)) or app.get("run_state") == null or app.get("current_game") == null:
+		failures.append("Coin Pusher %s fixture could not open a fresh practice session: %s" % [context, JSON.stringify(result.get("errors", []))])
+		return false
+	return true
+
+
+func _probe_coin_pusher_active_sequence() -> void:
+	if not _start_fresh_coin_pusher_practice("active performance"):
+		return
+	var run_state: RunState = app.get("run_state")
+	var game: GameModule = app.get("current_game")
+	var environment_id := str(run_state.current_environment.get("id", "practice_coin_pusher"))
 	# The production action contract is measured in-place. Keep unrelated queued
 	# room events from replacing the practice environment after DROP and making
 	# its otherwise-correct turn boundary appear to have reset to zero.
@@ -687,7 +705,11 @@ func _probe_coin_pusher_active_sequence(run_state: RunState, game: GameModule, e
 	await _wait_for_coin_pusher_exit("active input sequence")
 
 
-func _probe_coin_pusher_ceiling_refusal(run_state: RunState, game: GameModule) -> void:
+func _probe_coin_pusher_ceiling_refusal() -> void:
+	if not _start_fresh_coin_pusher_practice("ceiling-refusal"):
+		return
+	var run_state: RunState = app.get("run_state")
+	var game: GameModule = app.get("current_game")
 	var ceiling := int(_coin_pusher_machine_definition(game).get("ceiling", 0))
 	_install_coin_pusher_fixture(run_state, game, ceiling)
 	if not bool(app.call("enter_game", "coin_pusher")):
@@ -875,6 +897,9 @@ func _coin_pusher_free_controls_present(surface_state: Dictionary) -> bool:
 
 
 func _probe_casino_slot_preview_coverage() -> void:
+	# The practice loop ends on the CRT selector. Close the console so ordinary
+	# casino Leave cannot route back to its selector through the parked origin.
+	app.call("close_game_test_menu")
 	var seed := "%s-slot-preview" % seed_prefix
 	var challenge := RunStateScript.custom_challenge(
 		"foundation_performance_slot_preview",
@@ -884,7 +909,9 @@ func _probe_casino_slot_preview_coverage() -> void:
 			"environment_layer_overrides": {"small_underground_casino": "casino"},
 		}
 	)
-	app.call("start_foundation_run", seed, challenge, false)
+	if not bool(app.call("start_foundation_run", seed, challenge, false)):
+		failures.append("Performance probe could not start the generated casino room for seed %s." % seed)
+		return
 	await _settle(4)
 	var environment_snapshot: Dictionary = app.call("current_environment_view_snapshot")
 	var environment_id := str(environment_snapshot.get("id", "practice_slot"))
@@ -910,6 +937,23 @@ func _probe_casino_slot_preview_coverage() -> void:
 		failures.append("Performance probe did not sample a generated casino room slot preview.")
 	if kind != "casino":
 		failures.append("Generated slot preview room kind was %s, expected casino coverage." % kind)
+	if not casino_slot_preview_checked or kind != "casino":
+		return
+	# Leaving CRT practice disposes of its run. Exercise offscreen autoplay on a
+	# real casino cabinet whose run, machine state, and room icon persist on Leave.
+	if not bool(app.call("enter_game", "slot")):
+		failures.append("Slot offscreen autoplay could not enter the generated casino cabinet for seed %s." % seed)
+		return
+	await _settle(3)
+	var canvas := _game_surface_canvas()
+	if canvas == null:
+		failures.append("Slot offscreen autoplay could not access its casino surface for seed %s." % seed)
+		return
+	canvas.emit_signal("surface_action", "slot_auto_toggle", 0, false)
+	await _settle(4)
+	await _probe_slot_offscreen_autoplay(seed, "slot")
+	app.call("back_to_environment")
+	await _settle(2)
 
 
 func _probe_grand_casino_living_floor_idle() -> void:

@@ -844,9 +844,13 @@ function Invoke-GodotScript {
         [string]$ScriptPath,
         [string[]]$UserArgs = @(),
         [int]$StageTimeoutSec = 0,
-        [switch]$StrictObjectDbLeaks
+        [switch]$StrictObjectDbLeaks,
+        [switch]$Rendered
     )
-    $args = @("--headless", "--verbose", "--path", $root, "--script", $ScriptPath)
+    $args = @("--verbose", "--path", $root, "--script", $ScriptPath)
+    if (-not $Rendered) {
+        $args = @("--headless") + $args
+    }
     if ($UserArgs.Count -gt 0) {
         $args += "--"
         $args += $UserArgs
@@ -1562,7 +1566,7 @@ if ($ExhaustiveParse -or $suiteKey -eq "full") {
 if (-not [string]::IsNullOrWhiteSpace($foundationSuiteKey)) {
     if ($foundationSuiteKey -eq "ui") {
         Invoke-GodotScript -Name "ui_scene_compile" -ScriptPath (Get-UiSceneSplitRunnerPath) -StageTimeoutSec (Get-StageTimeout "ui_scene_compile")
-        Invoke-GodotScript -Name "game_library_launchers" -ScriptPath "res://scripts/tests/ui_scene/check_game_library_launchers.gd" -StageTimeoutSec 180
+        Invoke-GodotScript -Name "game_library_launchers" -ScriptPath "res://scripts/tests/ui_scene/check_game_library_launchers.gd" -StageTimeoutSec 180 -Rendered
         Invoke-GodotScript -Name "dave_bus_encounter" -ScriptPath "res://scripts/tests/ui_scene/check_dave_bus_encounter.gd" -StageTimeoutSec 120
         Invoke-GodotScript -Name "inventory_spatial_ui" -ScriptPath "res://scripts/tests/inventory_spatial_ui_check.gd" -StageTimeoutSec 120
         Invoke-GodotScript -Name "inventory_spatial_main_integration" -ScriptPath "res://scripts/tests/inventory_spatial_main_integration_check.gd" -StageTimeoutSec 180
@@ -1607,7 +1611,7 @@ switch ($suiteKey) {
         ) -StageTimeoutSec 180
         Invoke-GodotScript -Name "ui_scene_compile" -ScriptPath (Get-UiSceneSplitRunnerPath) -StageTimeoutSec 240
         Invoke-GodotScript -Name "cold_continue_room_projection" -ScriptPath "res://scripts/tests/cold_continue_room_projection_contract.gd" -StageTimeoutSec 120
-        Invoke-GodotScript -Name "game_library_launchers" -ScriptPath "res://scripts/tests/ui_scene/check_game_library_launchers.gd" -StageTimeoutSec 180
+        Invoke-GodotScript -Name "game_library_launchers" -ScriptPath "res://scripts/tests/ui_scene/check_game_library_launchers.gd" -StageTimeoutSec 180 -Rendered
         Invoke-GodotScript -Name "dave_bus_encounter" -ScriptPath "res://scripts/tests/ui_scene/check_dave_bus_encounter.gd" -StageTimeoutSec 120
         Invoke-GodotScript -Name "roulette_audio_audit" -ScriptPath "res://tools/roulette_audio_audit.gd" -StageTimeoutSec 120
         Invoke-FoundationPerfSmoke
@@ -1617,7 +1621,7 @@ switch ($suiteKey) {
         Invoke-FoundationSystemsSharded -FoundationSuite "contracts" -StageTimeoutSec (Get-StageTimeout "foundation_contracts") | Out-Null
         Invoke-EnvironmentSlotVerificationGates
         Invoke-GodotScript -Name "ui_scene_compile" -ScriptPath (Get-UiSceneSplitRunnerPath) -StageTimeoutSec 240
-        Invoke-GodotScript -Name "game_library_launchers" -ScriptPath "res://scripts/tests/ui_scene/check_game_library_launchers.gd" -StageTimeoutSec 180
+        Invoke-GodotScript -Name "game_library_launchers" -ScriptPath "res://scripts/tests/ui_scene/check_game_library_launchers.gd" -StageTimeoutSec 180 -Rendered
         # The full 1,622-boundary recovery sweep completes in roughly 185s on
         # the reference Windows runner, so retain headroom for normal variance.
         Invoke-GodotScript -Name "tutorial_guardrail_stress" -ScriptPath "res://scripts/tests/tutorial_guardrail_recovery_stress_check.gd" -StageTimeoutSec 300
@@ -1646,7 +1650,7 @@ switch ($suiteKey) {
         Invoke-FoundationSuite -FoundationSuite "all" -StageTimeoutSec (Get-StageTimeout "foundation_all")
         Invoke-EnvironmentSlotVerificationGates
         Invoke-GodotScript -Name "ui_scene_compile" -ScriptPath (Get-UiSceneSplitRunnerPath) -StageTimeoutSec 300
-        Invoke-GodotScript -Name "game_library_launchers" -ScriptPath "res://scripts/tests/ui_scene/check_game_library_launchers.gd" -StageTimeoutSec 180
+        Invoke-GodotScript -Name "game_library_launchers" -ScriptPath "res://scripts/tests/ui_scene/check_game_library_launchers.gd" -StageTimeoutSec 180 -Rendered
         Invoke-GodotScript -Name "dave_bus_encounter" -ScriptPath "res://scripts/tests/ui_scene/check_dave_bus_encounter.gd" -StageTimeoutSec 120
         Invoke-GodotScript -Name "tutorial_guardrail_stress" -ScriptPath "res://scripts/tests/tutorial_guardrail_recovery_stress_check.gd" -StageTimeoutSec 300
         Invoke-GodotScript -Name "tutorial_guided_run_audit" -ScriptPath "res://tools/tutorial_seed_audit.gd" -StageTimeoutSec 300

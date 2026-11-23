@@ -38,6 +38,8 @@ const TOWN_CONDITIONS_PATH := "res://data/town/conditions.json"
 const CHARACTER_CHAINS_PATH := "res://data/story/character_chains.json"
 const MUSIC_ASSET_ROOT := "res://assets/audio/music"
 const MUSIC_WEB_ASSET_ROOT := "res://assets/audio/music_web"
+const CRT_TITLE_TRACK_ID := "crt_title_v3"
+const CRT_TITLE_MASTER_PATH := "res://assets/audio/music_features/crt_title_v3/master.wav"
 const MUSIC_WEB_SAMPLE_RATE := 22050
 const MIN_AUTHORED_MUSIC_LOOP_SECONDS := 12.0
 const AUTHORED_MUSIC_SAMPLE_RATE := 44100
@@ -3290,7 +3292,8 @@ func _validate_music_loop_asset(label: String, track_id: String, filename: Strin
 	if not filename.to_lower().ends_with(".wav"):
 		return {}
 	var path := _music_delivery_asset_path(track_id, filename)
-	if OS.has_feature("web"):
+	# CRT playback uses this same PCM master on both platforms.
+	if OS.has_feature("web") and path != CRT_TITLE_MASTER_PATH:
 		var web_info := _web_adpcm_info(path, false)
 		if not bool(web_info.get("valid", false)):
 			validation_errors.append("%s has invalid Web ADPCM delivery: %s." % [label, str(web_info.get("error", "unreadable header"))])
@@ -3327,6 +3330,8 @@ func _validate_music_loop_asset(label: String, track_id: String, filename: Strin
 
 
 func _music_delivery_asset_path(track_id: String, filename: String) -> String:
+	if track_id == CRT_TITLE_TRACK_ID and filename == "master.wav":
+		return CRT_TITLE_MASTER_PATH
 	if OS.has_feature("web"):
 		return "%s/%s/%s.bthadpcm.gz" % [MUSIC_WEB_ASSET_ROOT, track_id, filename.get_basename()]
 	return "%s/%s/%s" % [MUSIC_ASSET_ROOT, track_id, filename]
