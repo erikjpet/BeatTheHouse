@@ -12,23 +12,12 @@
 
 ## Requested-work continuity
 
-- Before implementing requested Beat the House work, add or reconcile its stable
-  named ID in `docs/todo/bth_task_ledger.json` and the existing named ledger in
-  `docs/plans/0.6.1_stability_release_plan.md`. Preserve prior IDs and evidence.
-- Retain the full requested parent objective, source and acceptance separately
-  from bounded implementation batches. A completed batch never closes its parent.
-- For each open item record the actual owner/task reference, status and evidence,
-  associated commits/deployment (explicitly empty when absent), concrete next
-  action and factual blocker. Refresh observations from actual task state;
-  do not invent intentional holds, user decisions or missing-save dependencies.
-- At a checkpoint and before reporting completion, update both ledger views and
-  run the manual reconciliation command in `docs/todo/bth_task_ledger_checks.md`
-  with the relevant owner/runtime snapshots. Resolve findings in your assigned
-  scope and report remaining findings explicitly. Never mark an item Complete
-  without an associated commit and its required acceptance/delivery evidence.
-- The user operates the reconciliation checks. These rules do not authorize a
-  coordinator, recurring watcher, task messaging, automatic reassignment, process
-  termination, portrait-mode application updates or any additional permissions.
+- Record each requested item once with a stable ID, status and associated
+  commits in the machine ledger and its readable plan index.
+- An item is Complete when its fix is committed to main and its focused check
+  passes. Batches may close the parent when the parent's fix is done.
+- Do not add acceptance, deployment or evidence requirements beyond this.
+  Keep existing evidence and follow the liveness and QA storage rules.
 
 - New Beat the House QA campaigns/workspaces and launcher adapters must use
   `tools/bth_qa_storage.py` before their first directory/write/subprocess and

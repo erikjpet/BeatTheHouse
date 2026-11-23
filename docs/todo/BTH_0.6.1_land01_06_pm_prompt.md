@@ -1,3 +1,5 @@
+> **2026-11-23: Superseded.** Use [the fast release worker prompt](BTH_0.6.1_fast_release_prompt.md).
+
 # Beat the House 0.6.1 - LAND-01 to LAND-06 (project manager prompt)
 
 Written 2026-11-19. Approved by the owner the same day.
