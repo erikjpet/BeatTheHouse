@@ -3,8 +3,9 @@
 
 This program reads files and reports gaps. It does not schedule checks, assign work,
 contact owners, fetch Git history, change task states, or publish anything. An open
-backlog can correctly produce exit 1. A completed implementation batch never closes
-its parent objective. Historical evidence is not a new app-change request.
+backlog can correctly produce exit 1. Historical evidence is not a new app-change
+request. The explicitly recorded 0.6.1 fast-release policy applies only to its
+reconciled rows.
 
 Exit codes: 0 = no errors (warnings may remain), 1 = actionable findings,
 2 = invalid input or inability to read/write a requested file.
@@ -372,6 +373,20 @@ def check_ledger(
     elif owners is not None and stale(owners["observed_at"]) and any(task["state"] == "open" and task["id"] not in paused_ids for task in selected + selected_batches):
         add("OWNER_SNAPSHOT_STALE", None, "The owner snapshot is older than the configured freshness limit.", [owners["observed_at"]])
 
+    def fast_closeout(item: dict[str, Any]) -> str | None:
+        # Only the dated owner policy can replace these historical closure
+        # requirements. A coverage disposition is not a passed test.
+        policy = ledger["policies"].get("fast_release_061")
+        row = item.get("fast_release_061")
+        if (isinstance(policy, dict) and policy.get("decision_date") == "2026-11-23"
+                and policy.get("requested_by") == "user" and nonempty(policy.get("source"))
+                and item["state"] == "complete" and not item["deployment"]["required"]
+                and isinstance(row, dict) and row.get("version") == "0.6.1"
+                and row.get("blocking") is False
+                and row.get("disposition") in ("coverage", "committed_fix")):
+            return row["disposition"]
+        return None
+
     git_results: dict[str, bool] = {}
 
     def commits_for(item: dict[str, Any], prefix: str = "") -> list[str]:
@@ -383,7 +398,7 @@ def check_ledger(
                 continue
             valid.append(sha.lower())
             verify_commit(sha, item["id"])
-        if item["state"] == "complete" and not valid:
+        if item["state"] == "complete" and not valid and fast_closeout(item) != "coverage":
             add(prefix + "COMPLETE_WITHOUT_COMMIT", item["id"], "Completed work needs an associated full commit SHA.")
         return valid
 
@@ -484,7 +499,7 @@ def check_ledger(
                 add("OBJECTIVE_SOURCE_MISSING", task_id, "Preserve the full requested objective and its source separately from implementation batches.")
             if objective.get("scope_confirmed") is not True:
                 add("OBJECTIVE_SCOPE_UNCONFIRMED", task_id, "Full parent scope is not confirmed; keep it open and reconcile the source request.")
-            if not required_criteria:
+            if not required_criteria and not fast_closeout(task):
                 add("ACCEPTANCE_UNDEFINED", task_id, "At least one required acceptance criterion must describe the requested outcome.")
         workflow_for(task)
         for parent_id in task.get("parent_ids", []):
@@ -499,21 +514,35 @@ def check_ledger(
         commits_for(task)
         deployment_for(task)
         if complete:
-            if any(entry["state"] != "pass" for entry in required_criteria):
-                add("COMPLETE_WITH_OPEN_ACCEPTANCE", task_id, "Required acceptance criteria remain open, unknown, or unavailable.", [str(entry.get("id", "unnamed")) for entry in required_criteria if entry["state"] != "pass"])
-            if any(entry["state"] == "pass" and not entry.get("evidence") for entry in required_criteria):
-                add("COMPLETE_WITHOUT_ACCEPTANCE_EVIDENCE", task_id, "Passing required acceptance needs supporting evidence.")
-            if coverage_gap:
-                add("COVERAGE_INCOMPLETE", task_id, "Full parent coverage is incomplete or lacks review evidence.", [str(entry.get("id", "unnamed")) for entry in remaining_areas])
-            child_gaps = [entry["id"] for entry in ledger["objectives"] if task_id in entry.get("parent_ids", []) and entry["state"] == "open"]
+            discounted_acceptance = bool(fast_closeout(task))
+            if not discounted_acceptance:
+                if any(entry["state"] != "pass" for entry in required_criteria):
+                    add("COMPLETE_WITH_OPEN_ACCEPTANCE", task_id, "Required acceptance criteria remain open, unknown, or unavailable.", [str(entry.get("id", "unnamed")) for entry in required_criteria if entry["state"] != "pass"])
+                if any(entry["state"] == "pass" and not entry.get("evidence") for entry in required_criteria):
+                    add("COMPLETE_WITHOUT_ACCEPTANCE_EVIDENCE", task_id, "Passing required acceptance needs supporting evidence.")
+                if coverage_gap:
+                    add("COVERAGE_INCOMPLETE", task_id, "Full parent coverage is incomplete or lacks review evidence.", [str(entry.get("id", "unnamed")) for entry in remaining_areas])
+
+            def deferred_for_061(entry: dict[str, Any]) -> bool:
+                row = entry.get("fast_release_061", {})
+                return (discounted_acceptance and isinstance(row, dict)
+                        and row.get("version") == "0.6.2"
+                        and row.get("disposition") == "deferred"
+                        and row.get("blocking") is False)
+
+            child_gaps = [entry["id"] for entry in ledger["objectives"]
+                          if task_id in entry.get("parent_ids", []) and entry["state"] == "open"
+                          and not deferred_for_061(entry)]
             if child_gaps:
                 add("COMPLETE_WITH_OPEN_CHILDREN", task_id, "Required child work is still open.", child_gaps)
             linked_batches = [entry for entry in ledger["batches"] if entry["parent_id"] == task_id]
             done_batches = [entry for entry in linked_batches if entry["state"] == "complete"]
-            batch_gaps = [entry["id"] for entry in linked_batches if entry["state"] != "complete"]
+            batch_gaps = [entry["id"] for entry in linked_batches
+                          if entry["state"] != "complete" and not deferred_for_061(entry)]
             if batch_gaps:
                 add("COMPLETE_WITH_OPEN_BATCHES", task_id, "An implementation batch is still open.", batch_gaps)
-            if done_batches and (incomplete_criteria or coverage_gap or not required_criteria or objective.get("scope_confirmed") is not True or child_gaps or batch_gaps):
+            incomplete_parent = (not discounted_acceptance and (incomplete_criteria or coverage_gap or not required_criteria))
+            if done_batches and (incomplete_parent or objective.get("scope_confirmed") is not True or child_gaps or batch_gaps):
                 add("PARENT_BATCH_ONLY_COMPLETION", task_id, "A finished implementation batch is not evidence that the full requested parent objective is complete.", [entry["id"] for entry in done_batches])
 
     for batch in ledger["batches"]:
@@ -563,7 +592,7 @@ def check_ledger(
             for sha in associated:
                 if not any(sha.startswith(reference.lower()) for reference in listed_commits):
                     add("JSON_COMMIT_MISSING_FROM_MARKDOWN", task_id, "An associated structured-ledger commit is absent from the readable ledger's commit cell.", [sha, source])
-            if row["completion"].casefold() == "complete" and not listed_commits:
+            if row["completion"].casefold() == "complete" and not listed_commits and fast_closeout(item) != "coverage":
                 add("MARKDOWN_COMPLETE_WITHOUT_COMMIT", task_id, "A completed readable-ledger item needs an associated commit in its commit cell.", [row["commits"], source])
 
     runtime_report = None

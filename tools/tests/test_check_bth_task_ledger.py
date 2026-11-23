@@ -94,6 +94,34 @@ class ReconciliationTests(unittest.TestCase):
         self.assertEqual(report["summary"]["warnings"], 0)
         self.assertEqual(data, before, "The checker must not change task states or data")
 
+    def test_dated_fast_release_closes_coverage_without_claiming_a_pass(self):
+        item = task(complete=True)
+        item["commits"] = []
+        item["objective"]["acceptance"][0].update(state="open", evidence=[])
+        item["objective"]["coverage"]["complete"] = False
+        item["deployment"] = deployment()
+        item["fast_release_061"] = {"version": "0.6.1", "blocking": False,
+                                    "disposition": "coverage"}
+        data = ledger(item)
+        self.assertIn("COMPLETE_WITHOUT_COMMIT", self.codes(self.run_check(data)))
+        data["policies"]["fast_release_061"] = {
+            "decision_date": "2026-11-23", "requested_by": "user",
+            "source": "BTH_0.6.1_fast_release_prompt.md"}
+        report = self.run_check(data, markdown=markdown(data))
+        self.assertEqual(report["summary"]["errors"], 0)
+        self.assertEqual(item["objective"]["acceptance"][0]["state"], "open")
+
+        source = item["objective"].pop("source")
+        self.assertIn("OBJECTIVE_SOURCE_MISSING", self.codes(self.run_check(data)))
+        item["objective"]["source"] = source
+
+        item["fast_release_061"]["disposition"] = "committed_fix"
+        report = self.run_check(data, markdown=markdown(data))
+        self.assertIn("COMPLETE_WITHOUT_COMMIT", self.codes(report))
+        self.assertIn("MARKDOWN_COMPLETE_WITHOUT_COMMIT", self.codes(report))
+        item["commits"] = [{"sha": COMMIT, "evidence": ["focused pass"]}]
+        self.assertEqual(self.run_check(data, markdown=markdown(data))["summary"]["errors"], 0)
+
     def test_parent_cannot_close_when_only_first_batch_complete(self):
         parent = task(complete=True)
         parent["objective"]["acceptance"][0].update(state="open", evidence=[])
