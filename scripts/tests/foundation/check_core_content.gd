@@ -3082,7 +3082,7 @@ func _check_physical_game_fixture_capacity(library: ContentLibrary, failures: Ar
 		"gas_station_casino": {"logical": 3, "rendered": 3},
 		"jazz_club": {"logical": 1, "rendered": 1},
 		"grand_casino": {"logical": 5, "rendered": 7},
-		"grand_casino_high_limit": {"logical": 4, "rendered": 4},
+		"grand_casino_high_limit": {"logical": 5, "rendered": 5},
 		"grand_casino_back_room": {"logical": 2, "rendered": 2},
 	}
 	var main_environment: Dictionary = {}
@@ -3110,11 +3110,57 @@ func _check_physical_game_fixture_capacity(library: ContentLibrary, failures: Ar
 			failures.append("Environment %s game fixture counts changed: logical=%d physical=%d expected=%s." % [room_id, logical_count, rendered_count, JSON.stringify(expected)])
 		if rendered_count != authored_capacity:
 			failures.append("Environment %s authored game capacity does not match physical fixtures: logical=%d physical=%d spots=%d." % [room_id, logical_count, rendered_count, authored_capacity])
+		if room_id in [RunState.GRAND_CASINO_ARCHETYPE_ID, "grand_casino_high_limit"]:
+			var selected := JsonCoerceScript._raw_string_array(environment.get("game_ids", []))
+			if selected.count("coin_pusher") != 1 or selected.has("pull_tabs"):
+				failures.append("Fresh %s must select exactly one replacement Coin Pusher and no Pull Tabs." % room_id)
+			if room_id == "grand_casino_high_limit":
+				var flags := JsonCoerceScript._copy_dict(environment.get("local_narrative_flags", {}))
+				if int(flags.get("coin_pusher_drop_cost", 0)) != 5 or int(flags.get("coin_pusher_coin_value", 0)) != 5:
+					failures.append("Fresh Grand High Limit must retain the authored $5 Coin Pusher.")
 		if room_id == RunState.GRAND_CASINO_ARCHETYPE_ID:
 			main_environment = environment
 			main_run = run_state
 	if main_environment.is_empty() or main_run == null:
 		return
+	_check_grand_fixture_ownership(library, main_environment, main_run, false, failures)
+	# Use the exact previously qualified pre-change archetype; do not rewrite its
+	# fixture, the shipping catalog, or the production legacy room inverse.
+	const HISTORICAL_GRAND_PATH := "res://scripts/tests/fixtures/pull_tab_grand_historical_89403f389.json"
+	const HISTORICAL_GRAND_SHA := "ceaaed865572cd7f8cd031230b1188f5640ec6fb9e672e0766e370eea644f820"
+	var raw := FileAccess.get_file_as_string(HISTORICAL_GRAND_PATH)
+	if raw.replace("\r\n", "\n").sha256_text() != HISTORICAL_GRAND_SHA:
+		failures.append("Historical Grand Pull Tabs fixture is absent or no longer matches its pinned authored source.")
+		return
+	var historical := JsonCoerceScript._copy_dict(JSON.parse_string(raw))
+	var historic_archetype := JsonCoerceScript._copy_dict(historical.get("archetype", {}))
+	var historic_high_limit := JsonCoerceScript._copy_dict(historical.get("high_limit_archetype", {}))
+	var historic_cases := [
+		{"archetype": historic_archetype, "room": RunState.GRAND_CASINO_ARCHETYPE_ID, "logical": 5, "physical": 7},
+		{"archetype": historic_high_limit, "room": "grand_casino_high_limit", "logical": 4, "physical": 4},
+	]
+	for row: Dictionary in historic_cases:
+		if str(row.archetype.get("id", "")) != str(row.room):
+			failures.append("Historical Grand fixture has the wrong room identity: %s." % row.room)
+			continue
+		var historical_run := RunStateScript.new()
+		historical_run.start_new("GRAND-CASINO-CAPACITY-HISTORICAL-%s" % row.room)
+		var historic_environment := EnvironmentInstance.from_archetype(row.archetype, 5, historical_run.create_rng("grand_casino_capacity"), library).to_dict()
+		var selected := JsonCoerceScript._raw_string_array(historic_environment.get("game_ids", []))
+		var layout := JsonCoerceScript._copy_dict(historic_environment.get("layout", {}))
+		var counts := JsonCoerceScript._copy_dict(layout.get("game_fixture_counts", {}))
+		var physical_count := 0
+		for game_id in selected:
+			physical_count += maxi(1, int(counts.get(game_id, 1)))
+		if selected.size() != int(row.logical) or physical_count != int(row.physical) or physical_count != JsonCoerceScript._copy_array(layout.get("game_spots", [])).size():
+			failures.append("Historical %s changed its authored/physical game count." % row.room)
+		if selected.has("coin_pusher") or selected.has("pull_tabs") != (row.room == RunState.GRAND_CASINO_ARCHETYPE_ID):
+			failures.append("Historical %s changed its pre-replacement cabinet stock." % row.room)
+		if row.room == RunState.GRAND_CASINO_ARCHETYPE_ID:
+			_check_grand_fixture_ownership(library, historic_environment, historical_run, true, failures)
+
+
+func _check_grand_fixture_ownership(library: ContentLibrary, main_environment: Dictionary, main_run: RunState, historical: bool, failures: Array) -> void:
 	main_environment["event_ids"] = [RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID]
 	main_environment["item_offers"] = []
 	main_environment["service_ids"] = []
@@ -3138,7 +3184,8 @@ func _check_physical_game_fixture_capacity(library: ContentLibrary, failures: Ar
 		if not object_rects.has(required_id):
 			failures.append("Grand Casino production-order layout regression is missing %s." % required_id)
 	var counter_host_id := "casino_fixture:host_desk"
-	var counter_machine_id := "game:pull_tabs"
+	var counter_machine_id := "game:pull_tabs" if historical else "game:coin_pusher"
+	var absent_machine_id := "game:coin_pusher" if historical else "game:pull_tabs"
 	var forbidden_counter_objects := ["dialogue:pull_tab_clerk", "game_hook:pull_tabs:ticket_redeemer"]
 	var slot_bindings := JsonCoerceScript._copy_dict(main_layout.get("slot_bindings", {}))
 	var overflow_ids := JsonCoerceScript._copy_array(main_layout.get("slot_overflow_ids", []))
@@ -3146,9 +3193,12 @@ func _check_physical_game_fixture_capacity(library: ContentLibrary, failures: Ar
 	if str(counter_host_binding.get("presentation_mode", "")) != "room" \
 			or overflow_ids.has(counter_host_id) \
 			or not object_rects.has(counter_host_id):
-		failures.append("Grand Casino Pull Tabs counter lost its authenticated host-desk room binding.")
-	if not object_rects.has(counter_machine_id):
-		failures.append("Grand Casino Pull Tabs machine is missing its physical room object.")
+		failures.append("Grand Casino lost its authenticated host-desk room binding (historical=%s)." % historical)
+	if not object_rects.has(counter_machine_id) or object_rects.has(absent_machine_id):
+		failures.append("Grand Casino cabinet physical room objects drifted (historical=%s): expected %s only." % [historical, counter_machine_id])
+	var machine_binding := JsonCoerceScript._copy_dict(slot_bindings.get(counter_machine_id, {}))
+	if str(machine_binding.get("slot_id", "")) != "fixed.game_machine_5" or overflow_ids.has(counter_machine_id):
+		failures.append("Grand Casino cabinet lost the fixed slot binding: %s." % counter_machine_id)
 	for forbidden_id_value in forbidden_counter_objects:
 		var forbidden_id := str(forbidden_id_value)
 		if object_rects.has(forbidden_id) or slot_bindings.has(forbidden_id):
@@ -3165,10 +3215,10 @@ func _check_physical_game_fixture_capacity(library: ContentLibrary, failures: Ar
 	var counter_host_actions := JsonCoerceScript._copy_array(counter_host_row.get("action_ids", []))
 	for action_id_value in forbidden_counter_objects:
 		var action_id := str(action_id_value)
-		if not counter_host_actions.has(action_id):
-			failures.append("Grand Casino host desk does not own Pull Tabs counter action %s." % action_id)
-	if counter_host_actions.has(counter_machine_id):
-		failures.append("Grand Casino host desk still owns the launch action of the stocked Pull Tabs machine.")
+		if counter_host_actions.has(action_id) != historical:
+			failures.append("Grand Casino host desk Pull Tabs action ownership is wrong (historical=%s): %s." % [historical, action_id])
+	if counter_host_actions.has(counter_machine_id) or counter_host_actions.has(absent_machine_id):
+		failures.append("Grand Casino host desk still owns an unexpected cabinet launch action (historical=%s)." % historical)
 	_check_authored_room_geometry(main_environment, failures, "Grand Casino production-order")
 	var object_ids := object_rects.keys()
 	for index in range(object_ids.size()):

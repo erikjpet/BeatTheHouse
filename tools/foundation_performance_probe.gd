@@ -587,6 +587,9 @@ func _coin_pusher_machine_definition(game: GameModule) -> Dictionary:
 
 
 func _install_coin_pusher_fixture(run_state: RunState, game: GameModule, body_count: int) -> void:
+	# CRT launch opens a live cabinet immediately. Retire that unused cabinet
+	# before binding the probe snapshot so surface reads cannot reuse its cache.
+	game.call("finalize_chunked_exit_settle", run_state, run_state.current_environment)
 	var fixture_rng := run_state.create_rng("performance_coin_pusher_full_cap").fork("bodies:%d" % body_count)
 	var simulation := CoinPusherSolverScript.create_machine(fixture_rng, _coin_pusher_machine_definition(game), body_count)
 	var machine := game.call("_ensure_machine_state", run_state, run_state.current_environment, true) as Dictionary

@@ -288,8 +288,8 @@ func _check_normal_coach_lifecycle_rollback(existing_probe: Control = null) -> b
 		push_error("Successful real travel did not commit the queued delivery tip/new Tween while releasing the old normal-tip checkpoint: ok=%s guard=%d refresh_ids=%s active=%s copy=%s queued=%s protected=%s message=%s node=%s selected=%s." % [str(success_ok), int(success_probe.get("lifecycle_guard_count")), JSON.stringify(success_probe.get("lifecycle_refresh_active_ids")), success_coach.active_lesson_id(), success_coach.copy_label.text, JSON.stringify(success_coach.queued_lessons), JSON.stringify(success_coach.lifecycle_protected_attention_tweens), str(success_probe.get("message_label").text), success_run.current_world_node_id(), str(success_probe.get("selected_travel_target_id"))])
 	var success_resumed_exact := true
 	if success_exact and success_cinematic_active:
-		# Only the overlay's connected Skip/Continue controls are driven here.
-		# Neither acknowledgement nor a repeated Continue may settle travel again.
+		# Fresh menu travel auto-acknowledges after Skip. The explicit Continue
+		# control is for recovery/reduced motion, not this deferred boundary.
 		var settled_state := [success_run.bankroll, success_run.game_clock_minutes,
 			success_run.current_world_node_id(), success_run.environment_travel_count(),
 			success_run.rng_seed, success_run.rng_state, success_run.suspicion,
@@ -306,22 +306,25 @@ func _check_normal_coach_lifecycle_rollback(existing_probe: Control = null) -> b
 				and bool(success_run.travel_journey_receipt.get("receipt_pending", false))
 		if controls_ready:
 			skip_button.pressed.emit()
-		var receipt_owned: bool = controls_ready and str(success_cinematic.get("phase")) == "receipt" \
+		var deferred_receipt_owned: bool = controls_ready and str(success_cinematic.get("phase")) == "receipt" \
 				and bool(success_cinematic.get("active")) and success_cinematic.visible \
 				and success_focus_scope.call("active_root") == success_cinematic \
-				and continue_button.is_visible_in_tree() and not continue_button.disabled and continue_button.has_focus() \
+				and not skip_button.is_visible_in_tree() and not skip_button.has_focus() \
+				and not continue_button.is_visible_in_tree() and not continue_button.has_focus() \
+				and bool(success_run.travel_journey_receipt.get("receipt_pending", false)) \
 				and success_coach.presentation_suspended and not success_coach.visible
-		if receipt_owned:
+		if deferred_receipt_owned:
 			await process_frame
 		var automatically_resumed := not bool(success_probe.get("travel_presentation_active"))
-		if receipt_owned:
+		if automatically_resumed and deferred_receipt_owned:
+			# Probe the connected callback for duplicate completion after it closes.
 			continue_button.pressed.emit()
 			continue_button.pressed.emit()
 		var resumed_state := [success_run.bankroll, success_run.game_clock_minutes,
 			success_run.current_world_node_id(), success_run.environment_travel_count(),
 			success_run.rng_seed, success_run.rng_state, success_run.suspicion,
 			success_run.drunk_level, success_run.story_log.duplicate(true)]
-		success_resumed_exact = receipt_owned and automatically_resumed \
+		success_resumed_exact = deferred_receipt_owned and automatically_resumed \
 				and not bool(success_probe.get("travel_presentation_active")) \
 				and not bool(success_cinematic.get("active")) and not success_cinematic.visible \
 				and success_focus_scope.call("active_root") != success_cinematic \
@@ -342,7 +345,8 @@ func _check_normal_coach_lifecycle_rollback(existing_probe: Control = null) -> b
 				and str(success_probe.get("selected_travel_target_id")).is_empty()
 		if not success_resumed_exact:
 			push_error("Coach did not regain normal foreground ownership after automatic Skip completion without a second travel settlement: %s." % JSON.stringify({
-				"controls_ready":controls_ready, "receipt_owned":receipt_owned, "active":success_probe.get("travel_presentation_active"),
+				"controls_ready":controls_ready, "deferred_receipt_owned":deferred_receipt_owned,
+				"automatically_resumed":automatically_resumed, "active":success_probe.get("travel_presentation_active"),
 				"coach_index":success_coach.get_index(), "last_index":success_parent.get_child_count() - 1,
 				"coach_suspended":success_coach.presentation_suspended, "coach_visible":success_coach.visible,
 				"lesson":success_coach.active_lesson_id(), "queued":success_coach.queued_lessons,
@@ -1042,6 +1046,15 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 		navigation_wait_frames += 1
 		await process_frame
 	await process_frame
+	var returned_crt := probe.get("game_test_menu") as Control
+	var returned_display: SubViewport = null
+	if returned_crt != null and returned_crt.has_method("get_display_viewport"):
+		returned_display = returned_crt.call("get_display_viewport") as SubViewport
+	var crt_ready := returned_crt != null and returned_crt.is_visible_in_tree() \
+			and returned_display != null and not returned_display.gui_disable_input \
+			and returned_display.size.x > 0 and returned_display.size.y > 0
+	var practice_disposed: bool = probe.get("run_state") == null and probe.get("current_game") == null
+	# This fixture launched CRT practice; ordinary room Leave checks stay separate.
 	var stale_token_passed := result_identity_stale_passed \
 			and scheduled_generation > result_identity_generation \
 			and navigation_wait_frames < 200 \
@@ -1051,9 +1064,11 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 			and int(probe.get("deferred_embedded_refresh_stale_count")) >= 2 \
 			and int(probe.get("embedded_incremental_snapshot_count")) == incremental_before_stale \
 			and int(probe.get("embedded_full_snapshot_fallback_count")) == fallback_before_stale \
-			and str(probe.get("current_screen")) == "ENVIRONMENT"
+			and str(probe.get("current_screen")) == FoundationMain.SCREEN_CRT \
+			and crt_ready \
+			and practice_disposed
 	if not stale_token_passed:
-		push_error("Coin Pusher deferred refresh token did not stale-no-op after allowed navigation/reset: identity=%s scheduled=%d identity_generation=%d final_generation=%d navigation_frames=%d pending=%s executions=%d stale=%d incremental=%d fallback=%d screen=%s." % [result_identity_stale_passed, scheduled_generation, result_identity_generation, int(probe.get("deferred_embedded_refresh_generation")), navigation_wait_frames, bool(probe.get("deferred_embedded_refresh_pending")), int(probe.get("deferred_embedded_refresh_execution_count")), int(probe.get("deferred_embedded_refresh_stale_count")), int(probe.get("embedded_incremental_snapshot_count")), int(probe.get("embedded_full_snapshot_fallback_count")), str(probe.get("current_screen"))])
+		push_error("Coin Pusher deferred refresh token did not stale-no-op after allowed navigation/reset: identity=%s scheduled=%d identity_generation=%d final_generation=%d navigation_frames=%d pending=%s executions=%d stale=%d incremental=%d fallback=%d screen=%s crt_ready=%s practice_disposed=%s." % [result_identity_stale_passed, scheduled_generation, result_identity_generation, int(probe.get("deferred_embedded_refresh_generation")), navigation_wait_frames, bool(probe.get("deferred_embedded_refresh_pending")), int(probe.get("deferred_embedded_refresh_execution_count")), int(probe.get("deferred_embedded_refresh_stale_count")), int(probe.get("embedded_incremental_snapshot_count")), int(probe.get("embedded_full_snapshot_fallback_count")), str(probe.get("current_screen")), crt_ready, practice_disposed])
 	if canvas.draw.is_connected(observe_draw):
 		canvas.draw.disconnect(observe_draw)
 	probe.queue_free()

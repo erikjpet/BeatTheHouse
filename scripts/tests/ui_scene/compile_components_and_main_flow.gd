@@ -153,6 +153,47 @@ func _ancestor_scroll_container(control: Control) -> ScrollContainer:
 	return null
 
 
+func _launcher_visible_clip(control: Control) -> Rect2:
+	var viewport := control.get_viewport()
+	var clip := viewport.get_visible_rect()
+	var ancestor := control.get_parent()
+	while ancestor != null and ancestor != viewport:
+		if ancestor is Control and (ancestor as Control).clip_contents:
+			clip = clip.intersection((ancestor as Control).get_global_rect())
+		ancestor = ancestor.get_parent()
+	return clip
+
+
+func _launcher_has_cold_pointer_geometry(menu: Control, button: Button) -> bool:
+	if not menu.has_method("get_display_viewport"):
+		var scroll := _ancestor_scroll_container(button)
+		return scroll != null and scroll.get_global_rect().grow(1.0).encloses(button.get_global_rect())
+	var display_viewport := menu.call("get_display_viewport") as SubViewport
+	if display_viewport == null or button.get_viewport() != display_viewport or display_viewport.gui_disable_input:
+		return false
+	if not menu.has_method("display_control_rect") or not menu.has_method("display_hit_point") or not menu.has_method("global_to_display"):
+		return false
+	var face := menu.find_child("CrtDisplayTexture", true, false) as TextureRect
+	if face == null or not face.is_visible_in_tree() or face.mouse_filter != Control.MOUSE_FILTER_STOP \
+			or face.get_signal_connection_list("gui_input").is_empty() or face.texture != display_viewport.get_texture():
+		return false
+	var rect: Rect2 = menu.call("display_control_rect", button)
+	var display_clip := _launcher_visible_clip(button)
+	if not rect.has_area() or not display_clip.grow(1.0).encloses(rect):
+		return false
+	var face_clip := _launcher_visible_clip(face).intersection(face.get_global_rect())
+	# Project the center and four inset corner targets through the production CRT
+	# warp. Each must be visible on the outer face and map back inside this tile.
+	for point: Vector2 in [Vector2(0.5, 0.5), Vector2(0.1, 0.1), Vector2(0.9, 0.1), Vector2(0.1, 0.9), Vector2(0.9, 0.9)]:
+		var hit: Vector2 = menu.call("display_hit_point", button, point)
+		if not hit.is_finite() or not face_clip.has_point(hit):
+			return false
+		var display_hit: Vector2 = menu.call("global_to_display", hit)
+		if not display_hit.is_finite() or not rect.has_point(display_hit) or not display_clip.has_point(display_hit):
+			return false
+	return true
+
+
 # The production boot path intentionally loads only the lightweight start-menu
 # catalog. This probe must open Games before any run/tutorial helper can warm the
 # full catalog, otherwise the test can compare an empty page with the same empty
@@ -204,15 +245,14 @@ func _check_cold_game_library_launchers() -> bool:
 			probe.queue_free()
 			await process_frame
 			return false
-		var scroll := _ancestor_scroll_container(button)
 		if not button.is_visible_in_tree() or button.disabled or button.mouse_filter != Control.MOUSE_FILTER_STOP \
 				or button.get_signal_connection_list("pressed").is_empty() or not button.get_global_rect().has_area() \
-				or scroll == null or not scroll.get_global_rect().grow(1.0).encloses(button.get_global_rect()):
+				or not _launcher_has_cold_pointer_geometry(menu, button):
 			push_error("Games page launcher %s was hidden, disabled, disconnected, clipped, or unable to receive pointer input." % game_id)
 			probe.queue_free()
 			await process_frame
 			return false
-	if probe.get("run_state") != null or not _has_visible_text(menu, "%d games available" % EXPECTED_GAME_LIBRARY_LAUNCHERS.size()):
+	if probe.get("run_state") != null or not _has_visible_text(menu, "%d games · Practice only · Leave returns here" % EXPECTED_GAME_LIBRARY_LAUNCHERS.size()):
 		push_error("Opening the complete Games page mutated a run or did not report all 11 available games.")
 		probe.queue_free()
 		await process_frame

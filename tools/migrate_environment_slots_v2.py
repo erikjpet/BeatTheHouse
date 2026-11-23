@@ -5521,7 +5521,54 @@ def _current_authority_legacy_projection(payload: dict[str, Any]) -> dict[str, A
             values.pop(key)
         else:
             values[key] = copy.deepcopy(before)
+    _remove_reviewed_grand_coin_pusher_overlay(maps)
     return projected
+
+
+def _remove_reviewed_grand_coin_pusher_overlay(maps: dict[str, Any]) -> None:
+    """Check the exact 06efa32 current cabinet overlay before projecting older maps."""
+    pusher_id = "game:coin_pusher"
+    prior_id = "game:pull_tabs"
+    for room_id, slot_id in (
+        ("grand_casino", "fixed.game_machine_5"),
+        ("grand_casino_high_limit", "fixed.game_coin_pusher"),
+    ):
+        room = maps[room_id]
+        slots = [row for row in room["fixed_slots"] if row.get("id") == slot_id]
+        if len(slots) != 1 or slots[0].get("occupant_ids") != [pusher_id] or slots[0].get("physical_role") != "Coin Pusher machine":
+            raise ValueError(f"current authored Coin Pusher slot drift: {room_id}/{slot_id}")
+        for field, expected in (
+            ("class_overrides", "wall_mounted"),
+            ("fixed_object_slot_ids", slot_id),
+            ("object_family_ids", "fixed"),
+        ):
+            mapping = room.get(field, {})
+            if pusher_id not in mapping or mapping[pusher_id] != expected or prior_id in mapping:
+                raise ValueError(f"current authored Coin Pusher pointer drift: {room_id}/{field}")
+            if room_id == "grand_casino":
+                room[field] = {prior_id if key == pusher_id else key: value for key, value in mapping.items()}
+            else:
+                mapping.pop(pusher_id)
+        if room_id == "grand_casino":
+            slots[0]["physical_role"] = "Pull Tabs machine"
+            slots[0]["occupant_ids"] = [prior_id]
+        else:
+            # The added High-Limit row disappears in the historical projection,
+            # so bind its full approved shape before removing it.
+            if slots[0] != {
+                "id": slot_id, "kind": "fixed", "pos": [744.0, 118.0],
+                "footprint_class": "wall_mounted", "physical_role": "Coin Pusher machine",
+                "occupant_ids": [pusher_id], "runtime_reserve": False, "reserve_reason": "",
+                "hit_rect": [722.0, 94.0, 44.0, 48.0], "label_anchor": [744.0, 154.0],
+                "facing": "none", "priority": 50, "zone_id": "room", "support_id": "wall",
+                "walk_lane_ids": [], "occupancy_required": False,
+            }:
+                raise ValueError(f"current authored Coin Pusher geometry drift: {room_id}/{slot_id}")
+            category_slots = room["fixed_category_slot_ids"]
+            if category_slots.get("game_spots:4") != slot_id:
+                raise ValueError(f"current authored Coin Pusher category drift: {room_id}/{slot_id}")
+            category_slots.pop("game_spots:4")
+            room["fixed_slots"].remove(slots[0])
 
 
 def validate(

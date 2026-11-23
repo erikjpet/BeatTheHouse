@@ -195,6 +195,42 @@ class EnvironmentSlotMigrationV2Tests(unittest.TestCase):
                 with self.assertRaises((ValueError, AssertionError)):
                     MIGRATION.validate(hostile)
 
+    def test_current_grand_overlay_is_not_erased_before_authority_validation(self) -> None:
+        payload = self._current_payload()
+        for room_id, slot_id in (
+            ("grand_casino", "fixed.game_machine_5"),
+            ("grand_casino_high_limit", "fixed.game_coin_pusher"),
+        ):
+            for mutation in ("occupant", "role", "pointer", "family", "class", "duplicate"):
+                hostile = copy.deepcopy(payload)
+                room = next(row for row in hostile["maps"] if row["id"] == room_id)
+                slot = next(row for row in room["fixed_slots"] if row["id"] == slot_id)
+                if mutation == "occupant":
+                    slot["occupant_ids"] = ["game:pull_tabs"]
+                elif mutation == "role":
+                    slot["physical_role"] = "Pull Tabs machine"
+                elif mutation == "pointer":
+                    room["fixed_object_slot_ids"]["game:coin_pusher"] = "fixed.game_machine_1"
+                elif mutation == "family":
+                    room["object_family_ids"]["game:coin_pusher"] = "event"
+                elif mutation == "class":
+                    room["class_overrides"]["game:coin_pusher"] = "floor_fixture"
+                else:
+                    room["fixed_slots"].append(copy.deepcopy(slot))
+                with self.subTest(room_id=room_id, mutation=mutation):
+                    with self.assertRaisesRegex(ValueError, "current authored Coin Pusher"):
+                        MIGRATION.validate(hostile)
+        changed = copy.deepcopy(payload)
+        high_limit = next(row for row in changed["maps"] if row["id"] == "grand_casino_high_limit")
+        pusher = next(row for row in high_limit["fixed_slots"] if row["id"] == "fixed.game_coin_pusher")
+        pusher["hit_rect"][0] += 1
+        with self.assertRaisesRegex(ValueError, "current authored Coin Pusher geometry"):
+            MIGRATION.validate(changed)
+        pusher["hit_rect"][0] -= 1
+        high_limit["fixed_category_slot_ids"]["game_spots:4"] = "fixed.game_table_left"
+        with self.assertRaisesRegex(ValueError, "current authored Coin Pusher category"):
+            MIGRATION.validate(changed)
+
     def test_historical_ledger_checks_preserve_both_trusted_targets(self) -> None:
         legacy = MIGRATION.load_json(MIGRATION.LEGACY_LEDGER_PATH)
         consolidation = MIGRATION.load_json(MIGRATION.CONSOLIDATION_LEDGER_PATH)

@@ -53,10 +53,10 @@ Both layout-save actions snapshot the full active context, including hidden fami
 | Reachable base contexts | 20 |
 | Exact scenario contexts | 55 |
 | Total manual save contexts | **75** |
-| Reachable base-scoped slot positions | 381 |
+| Reachable base-scoped slot positions | 382 |
 | Exact scenario-local slot positions | 607 |
-| Unique manual position entries | **988** |
-| Slot appearances across all full save snapshots | 2138 |
+| Unique manual position entries | **989** |
+| Slot appearances across all full save snapshots | 2139 |
 | Exact slots with provisional geometry | 354 |
 
 The unique manual-position count adds each room-scoped shared slot once and each scenario-local slot once. The larger full-snapshot count repeats shared geometry in every scenario snapshot, matching what both layout-save actions validate.
@@ -65,9 +65,9 @@ The unique manual-position count adds each room-scoped shared slot once and each
 
 | Scope | Fixed | Event | Scenario | Exit | Total |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| All 21 raw placement maps | 180 | 110 | 211 | 33 | 534 |
+| All 21 raw placement maps | 181 | 110 | 211 | 33 | 535 |
 | Template-only <code>small_underground_casino</code> | 6 | 0 | 5 | 2 | 13 |
-| Reachable effective base contexts | 174 | 110 | 66 | 31 | 381 |
+| Reachable effective base contexts | 175 | 110 | 66 | 31 | 382 |
 
 The raw inventory includes generic source scenario capacity and the template-only parent. It is not the manual completion total.
 
@@ -89,13 +89,13 @@ The raw inventory includes generic source scenario capacity and the template-onl
 | The Beach<br><code>beach</code> | <code>beach::__base</code> | 2 | 1 | 4 | 1 | 8 | 3 | 38 | 46 |
 | Sal's Pawn Shop<br><code>pawn_shop</code> | <code>pawn_shop::__base</code> | 8 | 4 | 3 | 1 | 16 | 3 | 28 | 44 |
 | Grand Casino Main Floor<br><code>grand_casino</code> | <code>grand_casino::__base</code> | 12 | 11 | 4 | 4 | 31 | 3 | 38 | 69 |
-| Grand Casino High-Limit Room<br><code>grand_casino_high_limit</code> | <code>grand_casino_high_limit::__base</code> | 4 | 6 | 4 | 3 | 17 | 0 | 0 | 17 |
+| Grand Casino High-Limit Room<br><code>grand_casino_high_limit</code> | <code>grand_casino_high_limit::__base</code> | 5 | 6 | 4 | 3 | 18 | 0 | 0 | 18 |
 | Grand Casino Back Room<br><code>grand_casino_back_room</code> | <code>grand_casino_back_room::__base</code> | 2 | 5 | 4 | 1 | 12 | 0 | 0 | 12 |
 | Grand Casino Cage<br><code>grand_casino_cage</code> | <code>grand_casino_cage::__base</code> | 7 | 1 | 4 | 2 | 14 | 0 | 0 | 14 |
 | Motel Room<br><code>motel_room</code> | <code>motel_room::__base</code> | 11 | 0 | 3 | 1 | 15 | 0 | 0 | 15 |
 | Apartment<br><code>apartment</code> | <code>apartment::__base</code> | 11 | 0 | 3 | 1 | 15 | 0 | 0 | 15 |
 | House<br><code>house</code> | <code>house::__base</code> | 11 | 0 | 3 | 1 | 15 | 0 | 0 | 15 |
-| **Reachable total** | **20 bases** | **174** | **110** | **66** | **31** | **381** | **55** | **607** | **988** |
+| **Reachable total** | **20 bases** | **175** | **110** | **66** | **31** | **382** | **55** | **607** | **989** |
 
 ### Exact scenario summary
 
@@ -1571,7 +1571,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>fixed</code> | <code>fixed.game_machine_2</code> | Random game machine | <code>wall_mounted</code> | <code>312, 118</code> | <code>wall</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.game_machine_3</code> | Random game machine | <code>wall_mounted</code> | <code>468, 118</code> | <code>wall</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.game_machine_4</code> | Random game machine | <code>wall_mounted</code> | <code>624, 118</code> | <code>wall</code> | Empty capacity | Optional empty capacity |
-| <code>fixed</code> | <code>fixed.game_machine_5</code> | Pull Tabs machine | <code>wall_mounted</code> | <code>744, 118</code> | <code>wall</code> | Pull Tabs | Mapped capacity |
+| <code>fixed</code> | <code>fixed.game_machine_5</code> | Coin Pusher machine | <code>wall_mounted</code> | <code>744, 118</code> | <code>wall</code> | Quarter Falls | Mapped capacity |
 | <code>fixed</code> | <code>fixed.game_table_left</code> | Random game table | <code>surface_item</code> | <code>218, 258</code> | <code>left_table_felt</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.game_table_right</code> | Random game table | <code>surface_item</code> | <code>682, 258</code> | <code>right_table_felt</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.fixture_host_desk</code> | Casino host desk | <code>floor_fixture</code> | <code>388, 366</code> | <code>floor</code> | Host Desk | Mapped capacity |
@@ -1668,10 +1668,11 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Base / No Scenario - <code>grand_casino_high_limit::__base</code>
 
-**Save snapshot:** 17 slots = 4 fixed + 6 event + 4 shared scenario + 3 exit. Exact scenarios on this map: 0.
+**Save snapshot:** 18 slots = 5 fixed + 6 event + 4 shared scenario + 3 exit. Exact scenarios on this map: 0.
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
+| <code>fixed</code> | <code>fixed.game_coin_pusher</code> | Coin Pusher machine | <code>wall_mounted</code> | <code>744, 118</code> | <code>wall</code> | Quarter Falls | Mapped capacity |
 | <code>fixed</code> | <code>fixed.game_table_1</code> | Random game table | <code>surface_item</code> | <code>156, 258</code> | <code>left_table</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.game_table_2</code> | Random game table | <code>surface_item</code> | <code>310, 258</code> | <code>left_table</code> | Empty capacity | Optional empty capacity |
 | <code>fixed</code> | <code>fixed.game_table_3</code> | Random game table | <code>surface_item</code> | <code>590, 258</code> | <code>right_table</code> | Empty capacity | Optional empty capacity |
