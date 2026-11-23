@@ -238,6 +238,15 @@ func evaluate_at_boundary(context: Dictionary) -> void:
 			queued_ids[lesson_id] = true
 			if not tutorial_lesson:
 				normal_tip_admitted = true
+	# Recovery is a temporary pointer, not an authored lesson. Yield only to the
+	# existing FIFO head when its full trigger matches the player's current state.
+	if bool(active_lesson.get("runtime_recovery", false)) and not queued_lessons.is_empty():
+		var entry: Dictionary = _dict(queued_lessons[0])
+		var candidate: Dictionary = _dict(entry.get("lesson", {}))
+		if str(candidate.get("scope", "")).strip_edges() == "tutorial_run" \
+				and not bool(candidate.get("runtime_recovery", false)) \
+				and CoachViewModelScript.trigger_matches(candidate, observed_context, seen, tips_enabled):
+			_finish_active()
 	# Exact predicates describe the ideal authored beat, but the tutorial must
 	# survive an extra click, an early hand, a closed map, or a reload. If the
 	# player is already on the lesson's surface, keep the real lesson active and
