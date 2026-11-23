@@ -9,7 +9,8 @@ var retained_bytes := 0
 var _source_receipt := PackedByteArray()
 
 
-static func compile(environment: Dictionary, projector: Callable, byte_budget: int) -> RefCounted:
+static func compile(environment: Dictionary, projector: Callable, byte_budget: int, declined_projection: Dictionary = {}) -> RefCounted:
+	declined_projection.clear()
 	if _contains_opaque_value(environment):
 		return null
 	var source_receipt := var_to_bytes(environment)
@@ -23,6 +24,9 @@ static func compile(environment: Dictionary, projector: Callable, byte_budget: i
 	entry._projection = projector.call(owned(environment))
 	entry.retained_bytes = source_bytes + var_to_bytes(entry._projection).size()
 	if entry.retained_bytes > byte_budget:
+		# The working graph is detached and will not enter the cache. Encoding
+		# callers may consume it once instead of projecting this room again.
+		declined_projection["projection"] = entry._projection
 		return null
 	# Compile only plain container/scalar output. Dictionary.duplicate(true)
 	# owns that graph in native code, while packed mutable leaves need the

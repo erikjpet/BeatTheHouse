@@ -1301,8 +1301,14 @@ func _grand_casino_room_states_for_save(deep_copy: bool = true, for_encoding: bo
 		if typeof(room) == TYPE_DICTIONARY and not (room as Dictionary).is_empty():
 			var cache_key: String = _run.INACTIVE_CASINO_STORAGE_PREFIX + room_id
 			present[cache_key] = true
-			var compiled: RefCounted = _run._inactive_storage_projection(cache_key, room) if for_encoding else null
-			result[room_id] = compiled if compiled != null else _run._environment_for_persistent_storage(room as Dictionary, deep_copy)
+			var declined_projection: Dictionary = {}
+			var compiled: RefCounted = _run._inactive_storage_projection(cache_key, room, declined_projection) if for_encoding else null
+			if compiled != null:
+				result[room_id] = compiled
+			elif for_encoding and not deep_copy and declined_projection.has("projection"):
+				result[room_id] = declined_projection["projection"]
+			else:
+				result[room_id] = _run._environment_for_persistent_storage(room as Dictionary, deep_copy)
 	if for_encoding:
 		_run._prune_inactive_storage_projections(present, true)
 	return result

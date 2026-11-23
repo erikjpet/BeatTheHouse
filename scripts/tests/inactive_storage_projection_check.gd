@@ -4,6 +4,16 @@ const ProjectionScript := preload("res://scripts/core/persistent_environment_pro
 const CodecScript := preload("res://scripts/core/run_save_codec.gd")
 
 
+# Observe the real budget/admission path without replacing the projector.
+class DeclinedProjectionRun extends RunState:
+	var observed_decline: Dictionary = {}
+
+	func _inactive_storage_projection(key: String, environment: Dictionary, declined_projection: Dictionary = {}) -> RefCounted:
+		var compiled: RefCounted = super._inactive_storage_projection(key, environment, declined_projection)
+		observed_decline = declined_projection.duplicate(false)
+		return compiled
+
+
 static func check(run: RunState) -> Dictionary:
 	var failures: Array = []
 	var checks: Array = []
@@ -11,6 +21,7 @@ static func check(run: RunState) -> Dictionary:
 		checks.append(label)
 		if not ok: failures.append(label)
 	_check_match_receipts(expect)
+	_check_declined_projection_fallback(expect)
 	var input := ProjectionScript.owned(run.world_map) as Dictionary
 	var before := var_to_bytes(run.to_dict())
 	var rng := [run.rng_seed, run.rng_state]
@@ -211,3 +222,78 @@ static func _check_match_receipts(expect: Callable) -> void:
 	var after_receipts := 0
 	for cached in run._inactive_storage_projections.values(): after_receipts += cached._source_receipt.size()
 	expect.call(run._inactive_storage_projection_bytes == before and after_receipts == receipts, "failed_compile_keeps_existing_receipts")
+
+
+static func _check_declined_projection_fallback(expect: Callable) -> void:
+	var typed: Array[int] = [1, 2]
+	var typed_dict: Dictionary[String, int] = {"n": 3}
+	var negative: float = PackedByteArray([0,0,0,0,0,0,0,128]).decode_double(0)
+	var source := {"nested": [{"packed": PackedByteArray([11,22])}], "typed": typed, "typed_dict": typed_dict, "n": negative, "large_int": 9007199254740993}
+	var calls := [0]
+	var identity := func(body: Dictionary) -> Dictionary:
+		calls[0] += 1
+		return body
+	var declined := {"stale": true}
+	var source_before := var_to_bytes(source)
+	var expected_bytes := var_to_bytes(CodecScript.encode({"room": source}))
+	var rejected := ProjectionScript.compile(source, identity, source_before.size(), declined)
+	expect.call(rejected == null and calls[0] == 1 and declined.has("projection"), "late_decline_exposes_one_projector_result")
+	if not declined.has("projection"): return
+	var captured: Dictionary = declined["projection"]
+	expect.call(var_to_bytes(CodecScript.encode({"room": captured})) == expected_bytes, "declined_typed_packed_numeric_exact_encoded_bytes")
+	captured["nested"][0]["packed"][0] = 99
+	expect.call(var_to_bytes(source) == source_before, "declined_output_owns_mutable_leaves")
+	source["typed"][0] = 7
+	expect.call(captured["typed"][0] == 1, "declined_source_mutation_cannot_change_output")
+	ProjectionScript.compile(source, identity, 1, declined)
+	expect.call(declined.is_empty() and calls[0] == 1, "source_budget_decline_clears_carrier_without_projecting")
+	declined["projection"] = {"stale": true}
+	ProjectionScript.compile({"opaque": RefCounted.new()}, identity, 65536, declined)
+	expect.call(declined.is_empty() and calls[0] == 1, "opaque_decline_clears_carrier_without_projecting")
+	var empty_calls := [0]
+	var empty_projector := func(_body: Dictionary) -> Dictionary:
+		empty_calls[0] += 1
+		return {}
+	var plain := {"id": "declined_empty", "kind": "test", "game_states": {}}
+	var empty_entry := ProjectionScript.compile(plain, empty_projector, var_to_bytes(plain).size(), declined)
+	expect.call(empty_entry == null and empty_calls[0] == 1 and declined.has("projection") and (declined["projection"] as Dictionary).is_empty(), "empty_projection_is_present_not_a_missing_fallback")
+	expect.call(var_to_bytes(CodecScript.encode({"room": declined.get("projection")})) == var_to_bytes(CodecScript.encode({"room": {}})), "empty_projection_keeps_existing_encoding")
+	var plain_identity := func(body: Dictionary) -> Dictionary: return body
+	var admitted := ProjectionScript.compile(plain, plain_identity, var_to_bytes(plain).size() * 2, declined)
+	expect.call(admitted != null and admitted._encoded_projection.is_empty() and declined.is_empty(), "optional_encode_cache_decline_keeps_existing_compilation")
+	var cache_probe := RunState.new()
+	var cached := cache_probe._inactive_storage_projection("hit", plain, declined)
+	declined["projection"] = {"stale": true}
+	var hit := cache_probe._inactive_storage_projection("hit", plain, declined)
+	expect.call(cached != null and is_same(cached, hit) and declined.is_empty(), "cache_hit_clears_stale_declined_projection")
+	expect.call(cache_probe._inactive_storage_projection_bytes == cached.retained_bytes and cache_probe._inactive_storage_projection_bytes <= RunState.INACTIVE_STORAGE_PROJECTION_BUDGET, "admitted_cache_accounting_unchanged")
+	# Exercise both real callers at the real cap. No fabricated cache accounting.
+	var room := {"id": "declined_room", "archetype_id": "back_alley", "kind": "test", "game_states": {}, "description": "x".repeat(RunState.INACTIVE_STORAGE_PROJECTION_BUDGET / 2 + 4096), "nested": [{"packed": PackedByteArray([11,22])}], "typed": typed, "typed_dict": typed_dict, "n": negative}
+	var projected := RunState._environment_for_persistent_storage(room, false)
+	var source_size := var_to_bytes(room).size()
+	var rejected_size := source_size + var_to_bytes(projected).size()
+	var valid_budget_case := source_size <= RunState.INACTIVE_STORAGE_PROJECTION_BUDGET and rejected_size > RunState.INACTIVE_STORAGE_PROJECTION_BUDGET
+	expect.call(valid_budget_case, "real_caller_fixture_measures_post_projection_budget_rejection")
+	if not valid_budget_case: return
+	var probe := DeclinedProjectionRun.new()
+	var rng_before := [probe.rng_seed, probe.rng_state]
+	var map := {"nodes": [{"id": "declined_room", "environment": room}]}
+	var room_before := var_to_bytes(room)
+	var expected_world := RunState._world_map_for_save_snapshot(map)
+	var world := probe._owned_world_map_for_save_snapshot(map, true)
+	expect.call(probe.observed_decline.has("projection") and is_same(world["nodes"][0]["environment"], probe.observed_decline.get("projection")), "world_encoding_consumes_exact_declined_value_without_reprojection")
+	expect.call(var_to_bytes(CodecScript.encode(world)) == var_to_bytes(CodecScript.encode(expected_world)), "declined_world_exact_encoded_bytes")
+	expect.call(var_to_bytes(probe._owned_world_map_for_save_snapshot(map, false)) == var_to_bytes(expected_world), "declined_nonencoding_world_keeps_raw_snapshot_types")
+	world["nodes"][0]["environment"]["nested"][0]["packed"][0] = 33
+	expect.call(var_to_bytes(room) == room_before, "world_declined_projection_has_no_live_mutable_alias")
+	var room_id: String = probe.GRAND_CASINO_ARCHETYPE_IDS[0]
+	probe.grand_casino_room_states[room_id] = room
+	var expected_rooms := probe._grand_casino_room_states_for_save(false)
+	var rooms := probe._grand_casino_room_states_for_save(false, true)
+	expect.call(probe.observed_decline.has("projection") and is_same(rooms[room_id], probe.observed_decline.get("projection")), "grand_encoding_consumes_exact_declined_value_without_reprojection")
+	expect.call(var_to_bytes(CodecScript.encode({"rooms": rooms})) == var_to_bytes(CodecScript.encode({"rooms": expected_rooms})), "declined_grand_exact_encoded_bytes")
+	var deep_rooms := probe._grand_casino_room_states_for_save(true, true)
+	expect.call(not is_same(deep_rooms[room_id], probe.observed_decline.get("projection")) and var_to_bytes(deep_rooms[room_id]) == var_to_bytes(RunState._environment_for_persistent_storage(room, true)), "grand_deep_copy_fallback_unchanged")
+	rooms[room_id]["nested"][0]["packed"][0] = 44
+	expect.call(var_to_bytes(room) == room_before and [probe.rng_seed, probe.rng_state] == rng_before, "grand_declined_projection_preserves_live_state_and_rng")
+	expect.call(probe._inactive_storage_projections.is_empty() and probe._inactive_storage_projection_bytes == 0, "late_declines_retain_zero_cache_entries_and_bytes")

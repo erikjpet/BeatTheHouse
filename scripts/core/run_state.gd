@@ -16612,7 +16612,8 @@ static func _world_map_for_save_snapshot(map_data: Dictionary) -> Dictionary:
 	return snapshot
 
 
-func _inactive_storage_projection(key: String, environment: Dictionary) -> RefCounted:
+func _inactive_storage_projection(key: String, environment: Dictionary, declined_projection: Dictionary = {}) -> RefCounted:
+	declined_projection.clear()
 	var prior: RefCounted = _inactive_storage_projections.get(key)
 	if prior != null and prior.matches(environment):
 		return prior
@@ -16627,7 +16628,7 @@ func _inactive_storage_projection(key: String, environment: Dictionary) -> RefCo
 		return null
 	var projector := func(body: Dictionary) -> Dictionary:
 		return _environment_for_persistent_storage(body, false)
-	var compiled := PersistentEnvironmentProjectionScript.compile(environment, projector, available)
+	var compiled := PersistentEnvironmentProjectionScript.compile(environment, projector, available, declined_projection)
 	if compiled != null:
 		# Core projection/encoding caches take priority over optional match receipts.
 		for cached in _inactive_storage_projections.values():
@@ -16676,9 +16677,12 @@ func _owned_world_map_for_save_snapshot(map_data: Dictionary, for_encoding: bool
 		if typeof(environment_value) == TYPE_DICTIONARY and not (environment_value as Dictionary).is_empty():
 			var key := str(node.get("id", ""))
 			present[key] = true
-			var compiled := _inactive_storage_projection(key, environment_value)
+			var declined_projection: Dictionary = {}
+			var compiled := _inactive_storage_projection(key, environment_value, declined_projection)
 			if compiled != null:
 				node["environment"] = compiled if for_encoding else compiled.snapshot()
+			elif for_encoding and declined_projection.has("projection"):
+				node["environment"] = declined_projection["projection"]
 			else:
 				node["environment"] = _environment_for_persistent_storage(environment_value, false)
 		nodes.append(node)
