@@ -1,0 +1,19 @@
+Grand Casino High-Limit Room
+
+MOOD
+The quiet high-stakes room of the Grand Casino. Hushed velvet, exact attention, fewer lights.
+
+COLORS AND MATERIALS
+The same plum, gold and amber as the main floor, but deeper and quieter: velvet, polished trim.
+
+MUST BE IN THE PICTURE
+- Two card tables
+- A private desk in the middle
+
+DO NOT ADD
+- The machine bank, cocktail shelf or HOST sign from the main floor
+- Hotel-lobby decor
+
+FIX FROM THE CURRENT VERSION
+- The two tables look like upright green panels. Draw real tables with flat felt tops and bases on the floor.
+- Sign glows show as solid rectangles. A glow should follow the letters.

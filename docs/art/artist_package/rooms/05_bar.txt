@@ -1,0 +1,19 @@
+Bar
+
+MOOD
+A worn neighborhood dive bar. Noisy, warm, local gossip. Not a fancy lounge.
+
+COLORS AND MATERIALS
+Deep teal painted wood panels, burgundy wood, amber rippled glass, hot-pink neon. A scarred red-brown bar counter, green pool table felt.
+
+MUST BE IN THE PICTURE
+- The long bar counter with a mirror and bottle shelves behind it
+- A pool table
+- Stools, a booth and a dartboard
+
+DO NOT ADD
+- Drinks on the counter (the game places drinks)
+- A bartender, a band or a crowd
+
+FIX FROM THE CURRENT VERSION
+- The pool table looks like it is standing up like a wall panel. Draw it as a real table: a flat green top seen at an angle, a wooden side below it, and legs on the floor.

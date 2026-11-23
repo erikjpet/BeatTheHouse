@@ -1,0 +1,21 @@
+Grand Casino Cage
+
+MOOD
+The cashier cage. Barred, private, cold light, with Linda's warmth behind the glass.
+
+COLORS AND MATERIALS
+Plum and gold above the window, cold cyan glass, gray bars, warm desk light.
+
+MUST BE IN THE PICTURE
+- Three teller windows with trays
+- A gift case
+- An ATM
+- A return door
+
+DO NOT ADD
+- Linda or any other person (the game draws her)
+- Items in the gift case
+
+FIX FROM THE CURRENT VERSION
+- The counter's depth is unclear. Show its top and its body clearly.
+- Sign glows show as solid rectangles. A glow should follow the letters.

@@ -1,0 +1,18 @@
+DOORWAYS
+
+WHAT THESE ARE
+When the player travels, the game shows the inside of the next place
+through its open front door. Each picture here is that glimpse.
+
+WHAT TO MAKE
+Paint over each picture and save it with the same file name.
+Keep each picture's exact size. Most are 1024 x 1536 (tall). The list
+below gives every size.
+
+RULES
+- The inside of the room only. No door, no door frame, no outside walls,
+  no street. The game draws the door around it.
+- No people, no words, no logos.
+- No transparency. Fill the whole picture.
+- Match the colors of that room's finished painting.
+- The middle matters most. The edges may be cut off by the door.

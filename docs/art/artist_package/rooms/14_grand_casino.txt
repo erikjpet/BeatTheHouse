@@ -1,0 +1,21 @@
+Grand Casino Main Floor
+
+MOOD
+The big final casino. Polished, watched, expensive. Gracious but in control.
+
+COLORS AND MATERIALS
+Plum and magenta panels, gold framing, warm chandelier lights, small cyan edges. Green felt, gold and plum kept clearly separate.
+
+MUST BE IN THE PICTURE
+- Machine bays along the wall
+- Two card tables
+- A host station
+- Doors
+
+DO NOT ADD
+- Machines or staff (the game draws them)
+- A treasure-hall look or an arcade look
+
+FIX FROM THE CURRENT VERSION
+- The two tables look like upright green panels. Draw real tables: a flat felt top seen at an angle, a dark wood or plum side below, and a base on the floor.
+- Sign glows show as solid yellow rectangles. A glow should follow the letters and the lamp shapes.

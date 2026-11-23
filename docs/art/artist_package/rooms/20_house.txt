@@ -1,0 +1,19 @@
+House
+
+MOOD
+An old modest house the player owns but is still paying off. Worn, warm, calm.
+
+COLORS AND MATERIALS
+Weathered plum wood, amber curtain and porch light, orange-brown wood, a little garden green through a window or picture.
+
+MUST BE IN THE PICTURE
+- A sofa
+- A table
+- A cabinet
+- Storage spots
+
+DO NOT ADD
+- Anything that makes it look like a mansion or a casino
+
+FIX FROM THE CURRENT VERSION
+- The furniture and rug sit on the wall. Bring the floor up behind them so everything stands on the floor.

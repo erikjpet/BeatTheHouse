@@ -1,0 +1,56 @@
+BEAT THE HOUSE - ROOM ART
+
+WHAT THIS IS
+Beat the House is a pixel-art casino game with 20 rooms. Each room is one
+background painting. The paintings in this package are rough prototypes.
+Please repaint them. Keep what goes where; improve everything else.
+
+WHAT TO MAKE FOR EACH ROOM
+1. Open the room's folder in "Rooms" and read brief.txt (one page).
+2. Paint one picture, 900 x 430 pixels, pixel-art style.
+3. Save it as background.png in that same folder.
+That's it. Do the rooms one at a time; send us the first one before
+starting the rest.
+
+FILES IN EACH ROOM FOLDER
+- 1 current version.png       The prototype, 900 x 430. Start from it or ignore it.
+- 2 guide layer.png           Put this on a layer above your painting while
+                              you work. Hide it before you save.
+- 3 what goes where.png       The same guide, bigger, with labels. Read this first.
+- reference - outside.png     The outside of the building. Match its colors.
+- brief.txt                   Mood, colors, what to include, what to fix.
+- animations (optional)       Small moving pieces. See below.
+
+WHAT THE GUIDE COLORS MEAN
+- RED box      The game puts something here (a game, a person, an item, the
+               exit). Leave it plain. Don't paint that thing yourself.
+- ORANGE box   Same, but only sometimes.
+- BLUE box     The front of a counter. People stand behind it, so paint it as
+               a solid counter front.
+- PURPLE box   A surface things sit on (table, shelf, stage). The top line is
+               where objects rest. It must look solid: tables need legs,
+               counters need a body down to the floor, stages need a flat top.
+- GREEN box    A doorway or exit. It must look like an opening.
+- YELLOW line  The floor starts here. People stand below this line, so
+               everything below it should look like floor.
+
+RULES
+- Exact size: 900 x 430 pixels. Nothing else.
+- No people, no game machines, no items for sale, no words or labels that
+  the game shows. The game draws all of those on top.
+- No transparency. Fill the whole picture.
+- Signs with words painted into the room are fine.
+
+ANIMATIONS (OPTIONAL)
+Each room has small moving pieces (glowing signs, flickering lights, smoke).
+They are listed at the bottom of brief.txt. You don't have to touch them.
+If you redraw one, keep the exact same file name and pixel size. These
+files are twice the size of the room picture, so 2 pixels = 1 room pixel.
+For glows and lights: draw on pure black. Black shows as nothing in the game.
+
+DOORWAYS (LATER)
+The "Doorways" folder has 12 pictures seen through a front door while
+travelling. Do these after the rooms. Instructions are in that folder.
+
+SENDING IT BACK
+Zip the whole folder and send it back. Questions: ask Erik.

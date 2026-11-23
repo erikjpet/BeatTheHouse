@@ -1,0 +1,20 @@
+Gas Station Casino
+
+MOOD
+A roadside gas station shop turned into a cheap little casino. Bright, cheap and watched. Scratch tickets, machines, road dust. Not run-down, not luxury.
+
+COLORS AND MATERIALS
+Plum and magenta brick walls, a magenta-and-cyan sign band, warm amber tube lights, cool blue glass. A big window looking out at the highway. A gold-barred cashier cage.
+
+MUST BE IN THE PICTURE
+- The highway window on the left
+- Three pillars
+- The cashier cage on the right, with gold bars
+- Tube lights along the ceiling
+
+DO NOT ADD
+- A person inside the cashier cage (the game puts the cashier there)
+- A new desk or counter in front
+
+FIX FROM THE CURRENT VERSION
+- No major problems found. Check every edge where two parts meet and remove visible seams or cut-out outlines.

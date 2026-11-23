@@ -1,0 +1,19 @@
+Grand Casino Back Room
+
+MOOD
+Rourke's private office. Still, polite, final. Not a horror room.
+
+COLORS AND MATERIALS
+Immaculate dark plum and wood, small brass and gold details, one warm lamp. The lowest energy of the Grand rooms.
+
+MUST BE IN THE PICTURE
+- Two tables
+- A desk
+- An OFFICE sign
+
+DO NOT ADD
+- A crowd, trophies, big screens or a dramatic spotlight
+
+FIX FROM THE CURRENT VERSION
+- The two tables look like upright green panels. Draw real tables with flat felt tops and bases on the floor.
+- Sign glows show as solid rectangles. A glow should follow the letters.

@@ -1,0 +1,19 @@
+Pawn Shop
+
+MOOD
+Sal's pawn shop. Quiet, barred windows, fluorescent light. A shop of repairs, second-hand goods and bad decisions. Not a luxury jeweler.
+
+COLORS AND MATERIALS
+Violet and plum brick, cold cyan light through barred glass, old yellow-gold sign frames. Mismatched old wood, dusty glass, dull metal, security mesh.
+
+MUST BE IN THE PICTURE
+- The main counter
+- A wall shelf for estate goods
+- Separate display spots
+
+DO NOT ADD
+- Guitars, cameras or jewelry in the display spots (the game puts items there)
+- Sal (the game draws him)
+
+FIX FROM THE CURRENT VERSION
+- The low wooden counter in front looks like a floating plank under Sal and the slot machine. Give it a real counter body down to the floor.

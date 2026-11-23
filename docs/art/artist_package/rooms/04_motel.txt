@@ -1,0 +1,21 @@
+Motel Lobby
+
+MOOD
+A tired motel lobby where people rest, rent rooms and pass through. Quiet, pink, temporary. Must look different from the private motel room.
+
+COLORS AND MATERIALS
+Faded rose and plum plaster, a brick base, teal metal trim, honey-colored curtains and lamps, a pink VACANCY light. Worn cheap wood, faded fabric, an old TV.
+
+MUST BE IN THE PICTURE
+- A table
+- A merchandise counter
+- A door
+- A small phone shelf
+- An old TV
+
+DO NOT ADD
+- A clerk, a caller or a card dealer
+- Items for sale
+
+FIX FROM THE CURRENT VERSION
+- The merchandise counter on the right looks like it floats. Give it a full body down to the floor.

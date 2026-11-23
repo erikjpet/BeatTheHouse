@@ -1,0 +1,21 @@
+Back Alley
+
+MOOD
+A real service alley behind buildings. Wet, electric, a place for shady deals. Not a movie villain's lair.
+
+COLORS AND MATERIALS
+Dark purple uneven brick, one bare amber light bulb, cyan and magenta light from a passage, wet stone and asphalt, soft reflections.
+
+MUST BE IN THE PICTURE
+- A folding table in the middle
+- A hanging lamp on a wire
+- A crate stand on the right
+- The ground line where the wall meets the street
+
+DO NOT ADD
+- Items for sale on the table or crates (the game places them)
+- Hooded people or a seller
+- Rain lines painted into the picture (rain is animated separately)
+
+FIX FROM THE CURRENT VERSION
+- The crate stand on the right looks like it floats. Give it a solid body that sits on the ground.

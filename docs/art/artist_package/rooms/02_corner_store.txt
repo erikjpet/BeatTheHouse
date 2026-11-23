@@ -1,0 +1,21 @@
+Corner Store
+
+MOOD
+An ordinary small corner shop at night. Fluorescent, quiet, watchful. A real working shop, not a copy of the gas station.
+
+COLORS AND MATERIALS
+Purple brick, cyan and magenta stripes, cool blue glass, mint-white fluorescent lights, cheap cream counter tops and steel.
+
+MUST BE IN THE PICTURE
+- Shelves on the left
+- The clerk counter with the register in the middle
+- A drinks cooler on the right
+- A low phone ledge
+
+DO NOT ADD
+- Products on the shelves (the game puts items for sale there)
+- A clerk (the game draws the clerk)
+- Big bottles, flyers or posters
+
+FIX FROM THE CURRENT VERSION
+- No major problems found. Check every edge where two parts meet and remove visible seams.
