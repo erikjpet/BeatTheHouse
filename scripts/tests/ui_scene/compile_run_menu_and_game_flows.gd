@@ -2328,6 +2328,8 @@ func _check_pull_tab_buy_button_single_activation(app: Control) -> bool:
 		return false
 	app.call("return_to_main_menu")
 	await process_frame
+	if not await _close_practice_fixture_through_crt_exit(app, "Pull Tabs"):
+		return false
 	app.set("run_state", original_run_state)
 	app.set("dev_game_test_mode", original_dev_game_test_mode)
 	app.call("_refresh_run_action_service")
@@ -2411,11 +2413,41 @@ func _check_scratch_ticket_selected_slot_purchase(app: Control) -> bool:
 		return false
 	app.call("return_to_main_menu")
 	await process_frame
+	if not await _close_practice_fixture_through_crt_exit(app, "Scratch Tickets"):
+		return false
 	app.set("run_state", original_run_state)
 	app.set("dev_game_test_mode", original_dev_game_test_mode)
 	app.call("_refresh_run_action_service")
 	app.call("_refresh_start_screen")
 	await process_frame
+	return true
+
+
+func _close_practice_fixture_through_crt_exit(app: Control, context: String) -> bool:
+	var menu := app.get("game_test_menu") as Control
+	if str(app.get("current_screen")) != FoundationMain.SCREEN_CRT \
+			or app.get("run_state") != null or app.get("current_game") != null \
+			or menu == null or not menu.is_visible_in_tree() \
+			or not bool(app.call("_crt_practice_active")):
+		push_error("%s fixture Leave did not restore the active CRT selector before Exit TV." % context)
+		return false
+	var exit_button := menu.get("exit_button") as Button
+	if exit_button == null or not exit_button.is_visible_in_tree() or exit_button.disabled \
+			or not exit_button.is_connected("pressed", Callable(app, "close_game_test_menu")):
+		push_error("%s fixture CRT selector did not expose its connected Exit TV control." % context)
+		return false
+	exit_button.pressed.emit()
+	await process_frame
+	var start_screen := app.get("start_screen") as Control
+	var menu_controls := app.get("start_menu_controls") as Control
+	if str(app.get("current_screen")) != FoundationMain.SCREEN_START \
+			or app.get("run_state") != null or app.get("current_game") != null \
+			or bool(app.call("_crt_practice_active")) or menu.is_visible_in_tree() \
+			or start_screen == null or not start_screen.is_visible_in_tree() \
+			or menu_controls == null or not menu_controls.is_visible_in_tree():
+		push_error("%s fixture Exit TV did not restore the genuine main menu and release its practice origin." % context)
+		return false
+	print("PRACTICE_FIXTURE_EXIT_CHECK PASS fixture=%s from=CRT to=START origin_cleared=true" % context)
 	return true
 
 
