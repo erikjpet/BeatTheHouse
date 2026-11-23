@@ -6,6 +6,7 @@ from unittest.mock import patch
 import bth_qa_storage as g
 import bth_qa_resident as r
 import test_bth_qa_storage as base_tests
+from qa_prepared_temp import prepared_test_temp
 
 class API:
     def ReleaseMutex(self,handle):return True
@@ -165,8 +166,9 @@ class ResidentTests(unittest.TestCase):
 class RealOwnedMetadataTests(unittest.TestCase):
     def test_bounded_plain_qa_json_reader_only_on_engineering_temp(self):
         import tempfile
-        self.assertEqual(Path(tempfile.gettempdir()).drive.upper(),'E:')
-        with tempfile.TemporaryDirectory(prefix='resident-synthetic-') as tmp:
+        temp_root = prepared_test_temp()
+        self.assertEqual(Path(tempfile.gettempdir()).drive.upper(),temp_root.drive.upper())
+        with tempfile.TemporaryDirectory(prefix='resident-synthetic-', dir=temp_root) as tmp:
             p=Path(tmp)/'synthetic.json';p.write_text('{"fixture":true}')
             value,digest=r._owned_json(p)
             self.assertEqual(value,{'fixture':True});self.assertEqual(len(digest),64)
@@ -178,12 +180,13 @@ class RealOwnedMetadataTests(unittest.TestCase):
 
     def test_receipt_growth_after_stat_is_bounded_and_rejected(self):
         import io,tempfile
-        self.assertEqual(Path(tempfile.gettempdir()).drive.upper(),'E:')
+        temp_root = prepared_test_temp()
+        self.assertEqual(Path(tempfile.gettempdir()).drive.upper(),temp_root.drive.upper())
         class Tracking(io.BytesIO):
             def read(self,n=-1):
                 self.requested=n
                 return super().read(n)
-        with tempfile.TemporaryDirectory(prefix='resident-growth-fixture-') as tmp:
+        with tempfile.TemporaryDirectory(prefix='resident-growth-fixture-', dir=temp_root) as tmp:
             p=Path(tmp)/'small-metadata.json';p.write_text('{}')
             stream=Tracking(b' '* (r.MAX_QA_JSON_BYTES+64))
             with patch.object(Path,'open',return_value=stream):

@@ -17,6 +17,7 @@ from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import crew_cj2_failed_inspection as inspection
+from qa_prepared_temp import prepared_test_temp
 
 
 class ArgumentTests(unittest.TestCase):
@@ -213,7 +214,7 @@ class HashBoundTests(unittest.TestCase):
 class ReadLockTests(unittest.TestCase):
     def setUp(self):
         # Reject a missing/default TEMP rather than silently creating C: files.
-        expected_root = Path(r"E:\CodexQA\BTH\runs")
+        expected_root = prepared_test_temp().parent.parent
         run_text = os.environ.get("BTH_QA_RUN_DIR", "")
         temp_text = os.environ.get("BTH_QA_TEMP_DIR", "")
         self.assertTrue(run_text and temp_text, "A prepared guarded-run environment is required")
