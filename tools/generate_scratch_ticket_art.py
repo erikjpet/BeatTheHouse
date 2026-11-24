@@ -2,7 +2,6 @@
 """Generate the nine procedural reveal icons used by current scratch tickets.
 
 The shipped *_background_pro.png faces and pro_* reveal icons are authored art.
-Their runtime geometry is measured by scratch_ticket_alignment_audit.py.
 """
 
 from __future__ import annotations

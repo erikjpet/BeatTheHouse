@@ -1,8 +1,7 @@
 # Beat the House Content Style Guide
 
 This guide defines the release voice and copy guardrails for player-facing text
-in `data/` and obvious release-path script constants. It complements the
-existing compact-copy validators under `scripts/tests/foundation/`.
+in `data/` and obvious release-path script constants.
 
 The [world register](0.6_voice_bible_world_register.md) defines period methodology and narration. This guide carries the compact UI limits and safety guardrails.
 

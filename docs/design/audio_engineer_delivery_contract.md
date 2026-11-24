@@ -142,12 +142,7 @@ fill, stinger, and four-bar outcome boundaries stay in source musical time;
 the shared player ratio makes those boundaries occur at the live BPM. The web
 build deliberately remains at the authored base BPM.
 
-`tools/audio_adaptive_tempo_probe.ps1` is the native stress and acceptance
-fixture. It covers low, rising, high, and falling heat; monotonic mapping;
-slew/deadband behavior; a long up/down ramp with a 0.001-frame phase-error
-ceiling; live beat/bar/phrase math; the four-bar outcome envelope; and exact
-save/load continuation. Final headphone review should use the same four heat
-conditions and listen specifically for stable pitch, drum flamming, transient
+Final headphone review should use low, rising, high, and falling heat and listen specifically for stable pitch, drum flamming, transient
 smear, and artifacts while the ratio is moving.
 
 ## Phrase fills and room-dwell choreography
@@ -174,9 +169,7 @@ scheduled destination. Feature music releases at the next valid phrase
 boundary and resumes that same future. Adaptive tempo changes when the boundary
 is heard but never changes its authored bar number.
 
-Run `tools/audio_jazz_choreography_probe.ps1` for the deterministic native
-timeline, compatibility, arbitration, tempo, save/load, and feature-recovery
-checks. Headphone QA should listen through sparse-to-build, the two-bar drum
+Headphone QA should listen through sparse-to-build, the two-bar drum
 exit and fill, simultaneous section/drum arrival, peak-to-release, the C-form
 instrument rebuild, and feature recovery. Reject doubled fills, incompatible
 harmony, abrupt gain steps, late drums, restarts, or seams at any of those
@@ -211,8 +204,6 @@ clamped to 0.45, and it returns to the live baseline at the declared end.
 The three Jazz outcome definitions are explicitly quiet non-production
 fixtures: small win on a beat, darker loss on a half-bar, and big win on a bar.
 They reuse the labelled fixture recording and are not final engineer audio.
-Run `tools/audio_jazz_outcome_probe.ps1` for boundary, tempo-ramp,
-deduplication, cooldown, voice-cap, reverb, four-bar, and immediate-resolution
-acceptance. Headphone QA should check all three cues, rapid wins, and feature
+Headphone QA should check all three cues, rapid wins, and feature
 start/end while listening for a clear underlying band, exact landings, no
 wash buildup, and a complete return to the room's baseline ambience.
