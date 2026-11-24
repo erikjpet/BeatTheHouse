@@ -1,11 +1,11 @@
 class_name CharacterAvatarView
 extends Control
 
-const Appearance := preload("res://scripts/ui/character_appearance_snapshot.gd")
-const TableVisuals := preload("res://scripts/games/table_game_visuals.gd")
+const AppearanceScript := preload("res://scripts/ui/character_appearance_snapshot.gd")
+const TableVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
 const DESIGN_SIZE := Vector2(112.0, 120.0)
 
-var _appearance: Dictionary = Appearance.from_character({})
+var _appearance: Dictionary = AppearanceScript.from_character({})
 var _pose := "idle"
 var _clock := 0.0
 var _locomotion: Dictionary = {}
@@ -18,7 +18,7 @@ func _init() -> void:
 
 
 func set_appearance(value: Dictionary) -> void:
-	_appearance = Appearance.normalized(value)
+	_appearance = AppearanceScript.normalized(value)
 	queue_redraw()
 
 
@@ -87,11 +87,11 @@ static func draw_avatar(surface, appearance: Dictionary, bounds: Vector2, pose: 
 	var kinds: Array = []
 	for accessory in appearance.get("accessories", []):
 		var kind := str(accessory.get("kind", ""))
-		if kind in Appearance.ACCESSORY_KINDS and not kinds.has(kind):
+		if kind in AppearanceScript.ACCESSORY_KINDS and not kinds.has(kind):
 			kinds.append(kind)
 	# Identity, torso, arms, head, facial features and accessory primitives all
 	# remain in the actual game painter. Only the full-body legs are added here.
-	TableVisuals._draw_table_character(surface, {
+	TableVisualsScript._draw_table_character(surface, {
 		"name": "", "skin": Color(model["skin_color"]),
 		"hair": Color(model["hair_color"]), "jacket": jacket,
 		"accent": Color(model["accent_color"]),
