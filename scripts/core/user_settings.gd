@@ -356,25 +356,39 @@ func _apply_window() -> void:
 			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_FULLSCREEN)
 			DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, true)
 		_:
-			var window_size := _safe_window_size()
-			DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
-			DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, false)
-			DisplayServer.window_set_min_size(Vector2i.ZERO)
-			DisplayServer.window_set_max_size(Vector2i.ZERO)
-			DisplayServer.window_set_size(window_size)
-			DisplayServer.window_set_min_size(window_size)
-			DisplayServer.window_set_max_size(window_size)
-			_center_window(window_size)
+			_apply_windowed_mode()
 
 
-# Centers a windowed display on the current screen.
-func _center_window(window_size: Vector2i) -> void:
-	var screen_size := DisplayServer.screen_get_size()
-	var position := Vector2i(
-		max(0, int((screen_size.x - window_size.x) / 2)),
-		max(0, int((screen_size.y - window_size.y) / 2))
-	)
-	DisplayServer.window_set_position(position)
+func _apply_windowed_mode() -> void:
+	# Godot reports Windows work areas in the same virtual desktop coordinates
+	# that window_set_position expects. Preserve the target before changing modes.
+	var work_area := Rect2i()
+	if DisplayServer.get_name() == "Windows":
+		work_area = DisplayServer.screen_get_usable_rect()
+	var window_size := resolution if work_area.has_area() else _safe_window_size()
+
+	DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
+	DisplayServer.window_set_flag(DisplayServer.WINDOW_FLAG_BORDERLESS, false)
+	DisplayServer.window_set_min_size(Vector2i.ZERO)
+	DisplayServer.window_set_max_size(Vector2i.ZERO)
+
+	var decoration_size := Vector2i.ZERO
+	var client_offset := Vector2i.ZERO
+	if work_area.has_area():
+		decoration_size = (DisplayServer.window_get_size_with_decorations() - DisplayServer.window_get_size()).max(Vector2i.ZERO)
+		client_offset = DisplayServer.window_get_position() - DisplayServer.window_get_position_with_decorations()
+		var available := (work_area.size - decoration_size).max(Vector2i.ONE)
+		var scale := minf(1.0, minf(float(available.x) / resolution.x, float(available.y) / resolution.y))
+		window_size = Vector2i((Vector2(resolution) * scale).floor()).max(Vector2i.ONE)
+
+	DisplayServer.window_set_size(window_size)
+	DisplayServer.window_set_min_size(window_size)
+	DisplayServer.window_set_max_size(window_size)
+
+	if not work_area.has_area():
+		work_area = Rect2i(Vector2i.ZERO, DisplayServer.screen_get_size())
+	var margin := (work_area.size - window_size - decoration_size).max(Vector2i.ZERO) / 2
+	DisplayServer.window_set_position(work_area.position + margin + client_offset)
 
 
 # Keeps the selected 16:9 window inside the usable monitor area.
