@@ -2833,6 +2833,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	# CLOSE-01: pre-closeout f00a686f and candidate full values are identical.
 	# Accepted venue-cycle retirement and authored placement supersede the old
 	# scenario-bearing snapshot; all route/economy/RNG/story checks remain exact.
+	# Canonical replay: forfeit copy 80b9f24a9960c2aaa5c1321a3a71c9876b93ade2; Home TV b9e935c0f16fba81ed14c6a8d5666d5c60ff7056.
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
@@ -2841,13 +2842,13 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"heat_delta": 0,
 		"provenance_commit": "7ddb7685efb21e45979ea10ab89e660d99c6e891",
 		"rng_state": 953559834,
-		"route_choice_sha256": "7bf98146beb16adb121391dafba6a2b316996596359dbc669f68b9af4e497559",
+		"route_choice_sha256": "67c81e5470f4bb9119dcff4c19c687e17d55ad6822f11f8d7449dfb54dbc8eb5",
 		"seed": "DELIVERY-ORDINARY-BASELINE",
 		"target_id": "bar",
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0257877551b37226fd62316ee2af5e047a27387fbb87d5acfa0273d1366a0e81",
-		"world_map_sha256": "56b43eea175ca046e89aff1120695ea2377506208cfae9a94cdb952db525e7ea",
+		"world_map_sha256": "ac809058732cff8cbee13b547384f02cf72c55ba5eabaa255d329000758fa931",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):
