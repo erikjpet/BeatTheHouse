@@ -9,7 +9,7 @@ const GameModuleScript := preload("res://scripts/core/game_module.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const BlackjackScript := preload("res://scripts/games/blackjack.gd")
 const PullTabsScript := preload("res://scripts/games/pull_tabs.gd")
-const BlackjackAuthorityTestDriverScript := preload("res://scripts/tests/foundation/blackjack_authority_test_driver.gd")
+const BlackjackAuthorityTestDriverScript := preload("res://tools/test_support/blackjack_authority_driver.gd")
 
 const DEFAULT_OUTPUT_DIR := "res://.tmp/tutorial_rework"
 # The 100-seed sweep now builds and validates the complete four-family object

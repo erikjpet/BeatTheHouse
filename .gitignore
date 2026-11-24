@@ -21,8 +21,7 @@ builds/
 /native/coin_pusher/**/*.o
 user/
 user://
-# Generated player/test profiles are never release source. Intentional save
-# regression fixtures live under scripts/tests/fixtures instead.
+# Generated player/test profiles are never release source.
 user_data/
 app_userdata/
 saves/

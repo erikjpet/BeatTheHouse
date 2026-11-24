@@ -8,7 +8,7 @@ extends SceneTree
 const MainScene := preload("res://scenes/main.tscn")
 const FoundationActionViewModelScript := preload("res://scripts/ui/foundation_action_view_model.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
-const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
+const HarnessProductionFidelityScript := preload("res://tools/test_support/harness_production_fidelity.gd")
 const OUTPUT_DIR := "res://.tmp/coin_pusher_copy_visual_probe"
 const FIXTURE_SEED := "QUARTER-FALLS-COPY-PROOF"
 const FIXTURE_ID := "coin_pusher_copy_visual_probe"

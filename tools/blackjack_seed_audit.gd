@@ -2,7 +2,7 @@ extends SceneTree
 
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
-const BlackjackAuthorityTestDriverScript := preload("res://scripts/tests/foundation/blackjack_authority_test_driver.gd")
+const BlackjackAuthorityTestDriverScript := preload("res://tools/test_support/blackjack_authority_driver.gd")
 const PAYOUT_DRIFT_HANDS := 1000
 const PAYOUT_DRIFT_MIN_EDGE := -0.35
 const PAYOUT_DRIFT_MAX_EDGE := 0.20

@@ -12,7 +12,7 @@ const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pu
 const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
 const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 const FoundationActionViewModelScript := preload("res://scripts/ui/foundation_action_view_model.gd")
-const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
+const HarnessProductionFidelityScript := preload("res://tools/test_support/harness_production_fidelity.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 
 const DEFAULT_SEED_COUNT := 10

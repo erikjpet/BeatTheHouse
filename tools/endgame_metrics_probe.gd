@@ -14,7 +14,7 @@ const SaveServiceScript := preload("res://scripts/core/save_service.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
-const BlackjackAuthorityTestDriverScript := preload("res://scripts/tests/foundation/blackjack_authority_test_driver.gd")
+const BlackjackAuthorityTestDriverScript := preload("res://tools/test_support/blackjack_authority_driver.gd")
 const RunTerminalEvaluatorScript := preload("res://scripts/core/run_terminal_evaluator.gd")
 
 const DEFAULT_SEEDS_PER_SCENARIO := 2

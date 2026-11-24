@@ -5,7 +5,7 @@ const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
-const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
+const HarnessProductionFidelityScript := preload("res://tools/test_support/harness_production_fidelity.gd")
 
 
 func _init() -> void:

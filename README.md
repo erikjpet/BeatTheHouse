@@ -43,11 +43,16 @@ Packaging does not publish the result.
 
 ## Tests
 
-From a Windows checkout with Godot 4.6 and Python:
+With Godot 4.6 installed, run these commands from the checkout:
 
-```powershell
-.\tools\check_godot.ps1 -Suite Smoke
+```sh
+godot --headless --path . --import
+godot --headless --path . --script res://tests/run_all.gd
 ```
+
+The same tests run on every push and pull request. They use disposable data
+outside the checkout. On Windows, if the system temporary directory is on
+C:, point `BTH_TEST_TMPDIR` to a scratch directory on another drive.
 
 Use [TODO.md](TODO.md) for the work list and
 [docs/design](docs/design/) for design references.
