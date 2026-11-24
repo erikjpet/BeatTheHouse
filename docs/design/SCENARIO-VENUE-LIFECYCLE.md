@@ -55,19 +55,3 @@ town has selected the next opening. Lazy retirement authenticates that saved
 room using its own validated catalog definition and keeps the already-selected
 new cycle, including a no-scenario selection. A failed destination build never
 installs an empty room or evaluates bankruptcy/stranding against it.
-
-## Focused checks
-
-- `scenario_venue_cycle_schedule_check.gd`: exact scheduled/overnight and 24-hour
-  boundaries, skipped dates and unchanged access hours.
-- `scenario_venue_cycle_captured_check.gd`: genuine copied active/completed
-  saves, journals, machines, rewards, RNG, layered floors and Save/Continue;
-  `restore_only` continues an emitted private save in a fresh engine process.
-- `scenario_venue_cycle_edge_check.gd`: skipped cycles, lazy destination
-  installation, strict tamper rollback and accepted delivery preservation on
-  a rejected historical destination. This destination-stage check does not
-  claim an actual paid UI trip.
-- `travel_destination_rejection_check.gd`: the preserved Gas-to-Store revisit
-  through the normal map confirmation, one fare/time boundary, old causal
-  journal and paid machines, repeated publication, Save/fresh-process Continue,
-  synthetic invalid-destination rollback and historical terminal non-revival.
