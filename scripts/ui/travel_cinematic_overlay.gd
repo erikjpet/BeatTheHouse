@@ -5,12 +5,12 @@ extends Control
 signal completed(journey_id: String)
 
 const PRESENTATION_KEY := "back_alley_bar_typical_v1"
-const ArrivalTimeline := preload("res://scripts/ui/travel_arrival_timeline.gd")
-const DURATION_SECONDS := ArrivalTimeline.DURATION_SECONDS
-const AvatarView := preload("res://scripts/ui/character_avatar_view.gd")
-const VehicleView := preload("res://scripts/ui/travel_vehicle_view.gd")
-const Catalog := preload("res://scripts/ui/travel_presentation_catalog.gd")
-const EntranceView := preload("res://scripts/ui/travel_entrance_view.gd")
+const ArrivalTimelineScript := preload("res://scripts/ui/travel_arrival_timeline.gd")
+const DURATION_SECONDS := ArrivalTimelineScript.DURATION_SECONDS
+const AvatarViewScript := preload("res://scripts/ui/character_avatar_view.gd")
+const VehicleViewScript := preload("res://scripts/ui/travel_vehicle_view.gd")
+const CatalogScript := preload("res://scripts/ui/travel_presentation_catalog.gd")
+const EntranceViewScript := preload("res://scripts/ui/travel_entrance_view.gd")
 const CutoutShader := preload("res://scripts/ui/travel_scene_cutout.gdshader")
 const SOURCE_WIDTH_UV := 0.80
 const INK := Color("#060912")
@@ -79,21 +79,21 @@ func _ready() -> void:
 	_main_scene_view.material = _cutout_material
 	_main_scene_view.visible = false
 	add_child(_main_scene_view)
-	_vehicle_view = VehicleView.new()
+	_vehicle_view = VehicleViewScript.new()
 	_vehicle_view.material = _vehicle_material
 	add_child(_vehicle_view)
-	_entrance_back = EntranceView.new()
+	_entrance_back = EntranceViewScript.new()
 	_entrance_back.material = _cutout_material
 	add_child(_entrance_back)
 	_avatar_clip = Control.new()
 	_avatar_clip.clip_contents = true
 	_avatar_clip.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_avatar_clip)
-	_avatar_view = AvatarView.new()
+	_avatar_view = AvatarViewScript.new()
 	_avatar_view.custom_minimum_size = Vector2.ZERO
 	_avatar_view.visible = false
 	_avatar_clip.add_child(_avatar_view)
-	_entrance_front = EntranceView.new()
+	_entrance_front = EntranceViewScript.new()
 	_entrance_front.material = _cutout_material
 	add_child(_entrance_front)
 	_stage_tint = ColorRect.new()
@@ -147,7 +147,7 @@ func _label(font_size: int, color: Color) -> Label:
 func present(receipt: Dictionary, reduced_motion: bool = false, high_contrast: bool = false, text_scale: float = 1.0, receipt_only: bool = false, appearance_snapshot: Dictionary = {}) -> void:
 	cancel()
 	_receipt = receipt.duplicate(true)
-	_scene = Catalog.profile(_receipt)
+	_scene = CatalogScript.profile(_receipt)
 	_mode = str(_scene["mode"])
 	active = true
 	_completion_latched = false
@@ -465,7 +465,7 @@ func _update_scene_views() -> void:
 	if _avatar_view.visible:
 		var foot := _world_point(choreography["player_position_uv"], choreography)
 		var height := float(_scene.get("avatar_height_uv", 0.14)) * _stage.size.y / _source_height_uv() * float(choreography["player_scale"])
-		var bounds := AvatarView.DESIGN_SIZE * height / 107.0
+		var bounds := AvatarViewScript.DESIGN_SIZE * height / 107.0
 		_avatar_view.size = bounds
 		_avatar_view.position = foot - _avatar_clip.position - Vector2(bounds.x * 0.5, bounds.y)
 		_avatar_view.modulate = Color(1, 1, 1, float(choreography["player_alpha"]))
@@ -502,7 +502,7 @@ func layer_window_snapshot(seconds: float) -> Dictionary:
 
 
 func _choreography(seconds: float = -1.0) -> Dictionary:
-	return ArrivalTimeline.sample(elapsed if seconds < 0 else seconds, _mode, _scene.get("motion", {}))
+	return ArrivalTimelineScript.sample(elapsed if seconds < 0 else seconds, _mode, _scene.get("motion", {}))
 
 
 func _has_scene_art() -> bool:
