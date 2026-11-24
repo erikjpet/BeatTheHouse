@@ -26,7 +26,7 @@ PLACEMENT_PATH = ROOT / "data" / "environments" / "placement_surfaces.json"
 LAYOUT_PATH = ROOT / "data" / "environments" / "scenario_slot_layouts.json"
 ARCHETYPE_PATH = ROOT / "data" / "environments" / "archetypes.json"
 SCENARIO_PATH = ROOT / "data" / "environments" / "scenarios.json"
-OUTPUT_PATH = ROOT / "docs" / "plans" / "environment_scenario_layout_breakdown.md"
+OUTPUT_PATH = ROOT / "tools" / "fixtures" / "legacy_checks" / "environment_scenario_layout_breakdown.txt"
 OCCUPANT_CATALOG_PATHS = {
     "character": ROOT / "data" / "characters" / "characters.json",
     "dialogue": ROOT / "data" / "dialogue" / "dialogues.json",

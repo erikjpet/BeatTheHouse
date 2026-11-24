@@ -1,6 +1,6 @@
 extends SceneTree
 
-# BTH061-PULLTABS-SAVE-001: independent unopened-ticket custody boundaries.
+# Independent unopened-ticket custody boundaries.
 # Original campaign/profile/save data are never read. Each case buys one newly
 # generated naturally priced $2 ticket; no ticket result is selected or altered.
 # Grand content is explicitly historical and pinned to 89403f389; fresh Grand

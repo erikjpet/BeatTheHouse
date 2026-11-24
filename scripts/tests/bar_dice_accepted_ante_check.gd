@@ -1,6 +1,6 @@
 extends SceneTree
 
-# BTH061-BAR-DICE-REVEAL-RESTORE-001: focused synthetic contract unit.
+# Focused synthetic contract unit.
 # A normal sealed Host accepts a six-unit cup at floor6. Changing only this
 # unit's current floor to10 models venue terms changing after acceptance; it is
 # not normal travel, a natural-clock reproduction or an original player save.

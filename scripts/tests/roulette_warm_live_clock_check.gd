@@ -1,6 +1,6 @@
 extends SceneTree
 
-# BTH061-ROULETTE-WARM-REVEAL-001. A fresh, explicitly staged independent B
+# Warm Roulette reveal: a fresh, explicitly staged independent B
 # fixture, not normal travel or the original R08 campaign. MainScene, clocks,
 # processing, pauses, authority, outcomes and autonomous redraw stay production.
 # After the single paid Roulette Confirm, observation reads retained scalars only.

@@ -1,6 +1,6 @@
 extends SceneTree
 
-# BTH-32 synthetic native regression. All persistence must be inside a fresh
+# Synthetic native regression. All persistence must be inside a fresh
 # task-private root. Host processing is disabled; each Auto tick is explicit and
 # bounded. This is not a live profile, OS-pointer, or browser acceptance test.
 const Foundation := preload("res://scripts/ui/foundation_main.gd")

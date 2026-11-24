@@ -1,6 +1,6 @@
 extends "res://scripts/tests/bar_dice_reveal_save_restore_check.gd"
 
-# BTH061-BAR-DICE-COVER-DISPLAY-001. Fresh supported Practice only: no Save,
+# Fresh supported Practice only: no Save,
 # Continue, Call, settlement, original fixture, clock rewrite or outcome choice.
 # The existing screen-builder factory constructs this Canvas subclass before
 # its first use. Only the label observer differs; normal drawing, processing,

@@ -822,7 +822,7 @@ $requiredFiles = @(
     "data/environments/placement_surfaces.json",
     "data/environments/scenario_slot_layouts.json",
     "data/environments/developer_placement_overrides.json",
-    "docs/plans/environment_scenario_layout_breakdown.md",
+    "tools/fixtures/legacy_checks/environment_scenario_layout_breakdown.txt",
     "data/environments/scenario_sequences/env06_7_shops_streets.json",
     "data/items/items.json",
     "data/events/events.json",

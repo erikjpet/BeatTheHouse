@@ -1,7 +1,7 @@
 extends SceneTree
 
 # Synthetic presentation contracts; the genuine dealer-ace paid-hand path is
-# retained separately under BTH-BLACKJACK-INSURANCE-CONTROL-001.
+# retained separately from this synthetic check.
 const Blackjack := preload("res://scripts/games/blackjack.gd")
 
 class OfferSurface extends RefCounted:

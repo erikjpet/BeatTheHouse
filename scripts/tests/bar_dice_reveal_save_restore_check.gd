@@ -1,6 +1,6 @@
 extends SceneTree
 
-# BTH061-BAR-DICE-REVEAL-RESTORE-001. A NEW synthetic Practice cup only.
+# A new synthetic Practice cup only.
 # MainScene, the real renderer hit regions and normal Menu Save handle the path.
 # Default noon is retained; this is not the original overnight/scenario route.
 # Warm stops with an UNFUNDED Reveal save. A separate cold process may Lift and

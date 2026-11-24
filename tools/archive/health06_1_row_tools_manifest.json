@@ -24,12 +24,6 @@
                             },
                             {
                                 "row_id":  "env06_7",
-                                "source":  "tools/env06_7_package_a_generate.gd.uid",
-                                "destination":  "tools/archive/env06_7/env06_7_package_a_generate.gd.uid",
-                                "sha256":  "1b3abf635f86262fe3ba4ed6414a6c30749bf6a03d41ed154aad8bf332c9413a"
-                            },
-                            {
-                                "row_id":  "env06_7",
                                 "source":  "tools/env06_7_package_a_platform_probe.gd.uid",
                                 "destination":  "tools/archive/env06_7/env06_7_package_a_platform_probe.gd.uid",
                                 "sha256":  "369bb3497d7c3eaac3c18548c0c769a260caedeb3c48a1e3437996deaed60857"
@@ -45,24 +39,6 @@
                                 "source":  "tools/env06_7_package_b_sign.gd.uid",
                                 "destination":  "tools/archive/env06_7/env06_7_package_b_sign.gd.uid",
                                 "sha256":  "3edba94bd7f6ccbc8de33077f2aef98598f9906f178ce880db09dff9458b85b7"
-                            },
-                            {
-                                "row_id":  "env06_7",
-                                "source":  "tools/env06_7_package_c_author.gd.uid",
-                                "destination":  "tools/archive/env06_7/env06_7_package_c_author.gd.uid",
-                                "sha256":  "18c1dd28726ebc5666d04e45f36c279ffbfd860668f79a70347809302f018965"
-                            },
-                            {
-                                "row_id":  "env06_7",
-                                "source":  "tools/env06_7_package_d_author.gd.uid",
-                                "destination":  "tools/archive/env06_7/env06_7_package_d_author.gd.uid",
-                                "sha256":  "7929d88da46123b8b82afdf69e3e37328ea2f1a2eaed92109dc7b6fe9fd94577"
-                            },
-                            {
-                                "row_id":  "env06_7",
-                                "source":  "tools/env06_7_package_e_author.gd.uid",
-                                "destination":  "tools/archive/env06_7/env06_7_package_e_author.gd.uid",
-                                "sha256":  "cf5b2c23bd53a2b580d4a35d55199ddcae130e785a73de9d54a18c8b6450c9e7"
                             },
                             {
                                 "row_id":  "env06_7",
@@ -137,12 +113,6 @@
                                 "sha256":  "f655648ffafcea6700166dd447d92d7e421462785ab804d8ba7920366b3e5c94"
                             },
                             {
-                                "row_id":  "meta06_1",
-                                "source":  "tools/meta06_1_career_capture.gd.uid",
-                                "destination":  "tools/archive/meta06_1/meta06_1_career_capture.gd.uid",
-                                "sha256":  "6fdf165ea7affe97eca77b3b007c16e2a13e5fb6955cf7fe0d8a1da39e2fa6aa"
-                            },
-                            {
                                 "row_id":  "perf06",
                                 "source":  "tools/perf06_deferred_validation_contract.gd.uid",
                                 "destination":  "tools/archive/perf06/perf06_deferred_validation_contract.gd.uid",
@@ -159,24 +129,6 @@
                                 "source":  "tools/perf06_web_ready_snapshot_contract.gd.uid",
                                 "destination":  "tools/archive/perf06/perf06_web_ready_snapshot_contract.gd.uid",
                                 "sha256":  "5139385ff214122118db58f781c9ee41da82b8917180241c9f5b683d04c8ef10"
-                            },
-                            {
-                                "row_id":  "playtest06_2",
-                                "source":  "tools/playtest06_2_seed_catalog_probe.gd.uid",
-                                "destination":  "tools/archive/playtest06_2/playtest06_2_seed_catalog_probe.gd.uid",
-                                "sha256":  "7b2ea8b85f73b8e9f1bf286853d073503dbc975a2b2aa55be162d9f3e2339e8f"
-                            },
-                            {
-                                "row_id":  "playtest06",
-                                "source":  "tools/playtest06_surface_family_playability_contract.gd.uid",
-                                "destination":  "tools/archive/playtest06/playtest06_surface_family_playability_contract.gd.uid",
-                                "sha256":  "e79282b602ab93e9d6fbe13fc7e35d9995a02d2c573b90ab5e02c299c22973b5"
-                            },
-                            {
-                                "row_id":  "test11",
-                                "source":  "tools/test11_environment_time_screenshots.gd.uid",
-                                "destination":  "tools/archive/test11/test11_environment_time_screenshots.gd.uid",
-                                "sha256":  "0a9ed84f82a1e3684feceff981959cfb11804f4501288772025d6da78a0d4703"
                             },
                             {
                                 "row_id":  "tier1",
@@ -234,12 +186,6 @@
                   },
                   {
                       "row_id":  "env06_7",
-                      "source":  "tools/env06_7_package_a_generate.gd",
-                      "destination":  "tools/archive/env06_7/env06_7_package_a_generate.gd",
-                      "sha256":  "836465129bd1a35a7712349b432e51ca7d1b980661067081d1f6b2960a0ddb79"
-                  },
-                  {
-                      "row_id":  "env06_7",
                       "source":  "tools/env06_7_package_a_platform_probe.gd",
                       "destination":  "tools/archive/env06_7/env06_7_package_a_platform_probe.gd",
                       "sha256":  "12ef78bf1a883b3e1899c6f887f7c8341203efdaed03a2d5dec1c744bdb79adb"
@@ -249,12 +195,6 @@
                       "source":  "tools/env06_7_package_a_platform_probe.tscn",
                       "destination":  "tools/archive/env06_7/env06_7_package_a_platform_probe.tscn",
                       "sha256":  "78ed8ff9f4baadab887be0e9517213f67f5e53e95dea0b9e45132254ce7aeeb0"
-                  },
-                  {
-                      "row_id":  "env06_7",
-                      "source":  "tools/env06_7_package_b_generate.mjs",
-                      "destination":  "tools/archive/env06_7/env06_7_package_b_generate.mjs",
-                      "sha256":  "367071bcee75a9b6e281a085e9805bc9d50f9e6b8259e4712e16e151e8093340"
                   },
                   {
                       "row_id":  "env06_7",
@@ -279,30 +219,6 @@
                       "source":  "tools/env06_7_package_b_web_capture.mjs",
                       "destination":  "tools/archive/env06_7/env06_7_package_b_web_capture.mjs",
                       "sha256":  "ab022aea8faf4cbf5b1c12bc0ba1470b0dc820f21a134b6e81a88d110079ad7a"
-                  },
-                  {
-                      "row_id":  "env06_7",
-                      "source":  "tools/env06_7_package_c_author.gd",
-                      "destination":  "tools/archive/env06_7/env06_7_package_c_author.gd",
-                      "sha256":  "566d5488b7fa26c723ed9820a41381643606e7a2c8dbb6054c21f443283553a0"
-                  },
-                  {
-                      "row_id":  "env06_7",
-                      "source":  "tools/env06_7_package_d_author.gd",
-                      "destination":  "tools/archive/env06_7/env06_7_package_d_author.gd",
-                      "sha256":  "91d037bc9ff25e0a3a5101d13745138ac0078204009a20546527fe73e7f9366c"
-                  },
-                  {
-                      "row_id":  "env06_7",
-                      "source":  "tools/env06_7_package_e_author.gd",
-                      "destination":  "tools/archive/env06_7/env06_7_package_e_author.gd",
-                      "sha256":  "9f3d4d28974c1ecef939453444424dccc27571651e5764555125c6f75ba87cb6"
-                  },
-                  {
-                      "row_id":  "env06_7",
-                      "source":  "tools/env06_7_package_e_author.ps1",
-                      "destination":  "tools/archive/env06_7/env06_7_package_e_author.ps1",
-                      "sha256":  "489882369000da012240a1c24c22a310dfe2a543d1d62aa29ed924b04e5769c7"
                   },
                   {
                       "row_id":  "env06_7",
@@ -339,12 +255,6 @@
                       "source":  "tools/env06_8_unlabeled_contact_sheet_probe.gd",
                       "destination":  "tools/archive/env06_8/env06_8_unlabeled_contact_sheet_probe.gd",
                       "sha256":  "dbbbd4e900938a0af883b167af5bdbbd3850dfe08170868c576edc7298c6a0da"
-                  },
-                  {
-                      "row_id":  "fix06_28",
-                      "source":  "tools/fix06_28_acceptance_authority_contract.ps1",
-                      "destination":  "tools/archive/fix06_28/fix06_28_acceptance_authority_contract.ps1",
-                      "sha256":  "b474da0e7462f606bf0e6e2c6b67199aca1719e75db7c46a7ae9acbc9b068b9a"
                   },
                   {
                       "row_id":  "fix06_28",
@@ -509,12 +419,6 @@
                       "sha256":  "381de1198161480c6fff6db252486606b187801d2d5600f023cb0254c6b80e4c"
                   },
                   {
-                      "row_id":  "meta06_1",
-                      "source":  "tools/meta06_1_career_capture.gd",
-                      "destination":  "tools/archive/meta06_1/meta06_1_career_capture.gd",
-                      "sha256":  "86ce3e25f44aeaccea23e328dd1b4b26e77806ab76933d3d01b45534742dcf01"
-                  },
-                  {
                       "row_id":  "perf06",
                       "source":  "tools/perf06_allocation_call_root_audit.ps1",
                       "destination":  "tools/archive/perf06/perf06_allocation_call_root_audit.ps1",
@@ -599,66 +503,6 @@
                       "sha256":  "a1b3870af9c28fc38f36bef5796c341aaaf3e758663d7fae57c81e04ad25ba0a"
                   },
                   {
-                      "row_id":  "playtest06_2",
-                      "source":  "tools/playtest06_2_candidate_seeds.json",
-                      "destination":  "tools/archive/playtest06_2/playtest06_2_candidate_seeds.json",
-                      "sha256":  "f915741b27e49a41cfc6989139f2325c69bbaab908249408639a2f74cb112ce3"
-                  },
-                  {
-                      "row_id":  "playtest06_2",
-                      "source":  "tools/playtest06_2_seed_catalog_probe.gd",
-                      "destination":  "tools/archive/playtest06_2/playtest06_2_seed_catalog_probe.gd",
-                      "sha256":  "13569e408042ce019e03776071c9a3be105e7e70d67ddc358e603bb23e65a2c5"
-                  },
-                  {
-                      "row_id":  "playtest06_2",
-                      "source":  "tools/playtest06_2_seed_manifest_contract.ps1",
-                      "destination":  "tools/archive/playtest06_2/playtest06_2_seed_manifest_contract.ps1",
-                      "sha256":  "b2c6032e37bc445ab629bc1c0ee114915c4d4c716f73686878315091904d7443"
-                  },
-                  {
-                      "row_id":  "playtest06_2",
-                      "source":  "tools/playtest06_2_seed_manifest_contract_test.ps1",
-                      "destination":  "tools/archive/playtest06_2/playtest06_2_seed_manifest_contract_test.ps1",
-                      "sha256":  "935a850d130c8c17d561ee8dafc0db3a7e37afb9d01da1c2cf07d94dd3b140f1"
-                  },
-                  {
-                      "row_id":  "playtest06",
-                      "source":  "tools/playtest06_owner_build.ps1",
-                      "destination":  "tools/archive/playtest06/playtest06_owner_build.ps1",
-                      "sha256":  "287595c2f3a6975fa77857ffeb8377ef02ef524ada49e18490dd31adabae54f1"
-                  },
-                  {
-                      "row_id":  "playtest06",
-                      "source":  "tools/playtest06_owner_build_contract_test.ps1",
-                      "destination":  "tools/archive/playtest06/playtest06_owner_build_contract_test.ps1",
-                      "sha256":  "18f10ab224192fa0d8deb6ab885b69a1ef51da4cc733e531e2a299465db17469"
-                  },
-                  {
-                      "row_id":  "playtest06",
-                      "source":  "tools/playtest06_owner_evidence_transaction.ps1",
-                      "destination":  "tools/archive/playtest06/playtest06_owner_evidence_transaction.ps1",
-                      "sha256":  "c436d0ad8b8c4d2fa149408e3a932962c7d05ca3e8acc24c8442d5ca6d0d84a3"
-                  },
-                  {
-                      "row_id":  "playtest06",
-                      "source":  "tools/playtest06_owner_evidence_transaction_contract_test.ps1",
-                      "destination":  "tools/archive/playtest06/playtest06_owner_evidence_transaction_contract_test.ps1",
-                      "sha256":  "a62dbdbf263373b3c2c1eaf2a75668be33f0fbbc60b60231140c0ecc884822a8"
-                  },
-                  {
-                      "row_id":  "playtest06",
-                      "source":  "tools/playtest06_surface_family_playability_contract.gd",
-                      "destination":  "tools/archive/playtest06/playtest06_surface_family_playability_contract.gd",
-                      "sha256":  "ab8ccebce97bf52e81ec39a0945189531883b200276e48bb4e12c6336e81035d"
-                  },
-                  {
-                      "row_id":  "test11",
-                      "source":  "tools/test11_environment_time_screenshots.gd",
-                      "destination":  "tools/archive/test11/test11_environment_time_screenshots.gd",
-                      "sha256":  "204fbb5a2c9c309fb26ab61c95fa48262cf6fb687feb2607eae5af5b71db3209"
-                  },
-                  {
                       "row_id":  "tier1",
                       "source":  "tools/tier1_scenario_audit.gd",
                       "destination":  "tools/archive/tier1/tier1_scenario_audit.gd",
@@ -672,21 +516,9 @@
                   },
                   {
                       "row_id":  "ui05",
-                      "source":  "tools/ui05_asset_pipeline_check.ps1",
-                      "destination":  "tools/archive/ui05/ui05_asset_pipeline_check.ps1",
-                      "sha256":  "4a0c6592d8c78d7dd4a79fbdcd339775d11b7724f1fe403adb32b1febaa9dd39"
-                  },
-                  {
-                      "row_id":  "ui05",
                       "source":  "tools/ui05_popup_fit_check.ps1",
                       "destination":  "tools/archive/ui05/ui05_popup_fit_check.ps1",
                       "sha256":  "f1d385abd9a091798040c12378f6b7cc5523de6914c9e9b7d90e94c24a4db188"
-                  },
-                  {
-                      "row_id":  "ui05",
-                      "source":  "tools/ui05_surface_coverage_check.ps1",
-                      "destination":  "tools/archive/ui05/ui05_surface_coverage_check.ps1",
-                      "sha256":  "80f54325f6bc225f580ef166daa29a8ff303a79c25ef2dbe506b1e73066b0ced"
                   },
                   {
                       "row_id":  "ui05",

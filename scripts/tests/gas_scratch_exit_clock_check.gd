@@ -1,6 +1,6 @@
 extends SceneTree
 
-# BTH-GAS-SCRATCHER-EXIT-001: independent generated host fixtures, not an
+# Independent generated host fixtures, not an
 # import/replay of the unavailable reported campaign. Initial time/cash, an
 # authored diagnostic scenario pin and an explicit already-visited stocked-room
 # input are established before manifest construction and authority seals.

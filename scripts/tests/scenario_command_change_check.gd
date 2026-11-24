@@ -1,6 +1,6 @@
 extends SceneTree
 
-# BTH061-AUDIT-COMMAND-CHANGE-DETECTOR-008: public result/receipt contract.
+# Public result and receipt contract.
 const Runtime := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const Contract := preload("res://scripts/tests/foundation/scenario_sequence_contract.gd")
 const Schema := preload("res://scripts/core/scenario_sequence_schema.gd")

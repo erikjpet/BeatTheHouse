@@ -1,6 +1,6 @@
 extends SceneTree
 
-# BTH061-BAR-DICE-SHUTDOWN-001. One fresh native scene and its actual SaveService.
+# Shutdown check: one fresh native scene and its actual SaveService.
 # No game/financial outcomes, original storage, UI Save callback or pool sweep.
 # The test deliberately holds ONLY this known service after Host destruction so
 # it can inspect the outcome BEFORE any optional test-cleanup join.

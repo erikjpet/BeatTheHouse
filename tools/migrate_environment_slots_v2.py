@@ -25,10 +25,10 @@ ARCHETYPE_PATH = ROOT / "data" / "environments" / "archetypes.json"
 SCENARIO_PATH = ROOT / "data" / "environments" / "scenarios.json"
 SEQUENCE_DIR = ROOT / "data" / "environments" / "scenario_sequences"
 LEGACY_LEDGER_PATH = (
-    ROOT / "docs" / "todo" / "environment_slot_family_manifest_legacy_mapping.json"
+    ROOT / "tools" / "fixtures" / "legacy_checks" / "environment_slot_family_manifest_legacy_mapping.json"
 )
 CONSOLIDATION_LEDGER_PATH = (
-    ROOT / "docs" / "todo" / "environment_slot_consolidation_disposition.json"
+    ROOT / "tools" / "fixtures" / "legacy_checks" / "environment_slot_consolidation_disposition.json"
 )
 CONSOLIDATION_SOURCE_REF = "c3d55ffb"
 

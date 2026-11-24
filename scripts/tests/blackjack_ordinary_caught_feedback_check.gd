@@ -1,6 +1,6 @@
 extends SceneTree
 
-# Synthetic source-level regression for BTH-QA-GRAND-LEGAL-CAUGHT-FEEDBACK-001.
+# Synthetic source-level check for ordinary Grand caught feedback.
 # Compile the production formatter, its pure helpers and payout label as-is.
 # This never instantiates BlackjackGame, MainScene, a run, or save services.
 var checks := 0

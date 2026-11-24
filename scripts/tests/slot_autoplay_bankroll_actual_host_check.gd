@@ -1,6 +1,6 @@
 extends SceneTree
 
-# BTH-32 production-host branch regression. This instantiates the exact shipped
+# Production-host branch regression. This instantiates the exact shipped
 # Main scene: no host subclass, overridden clock, altered deadline, RNG/outcome
 # override, captured profile, or production instrumentation. Host processing is
 # disabled so Auto can run only at the explicitly bounded callbacks below.

@@ -1,6 +1,6 @@
 extends RefCounted
 
-# Test-fixture admission for the current fresh bth_qa_storage.py layout. This
+# Test-fixture admission for the fresh QA workspace layout. This
 # reads the launcher's receipt and exact environment; it never changes either,
 # changes a guard, creates directories or admits an old/resident player profile.
 const APPROVED_ROOT := "e:/codexqa/bth"

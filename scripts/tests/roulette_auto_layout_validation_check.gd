@@ -1,6 +1,6 @@
 extends SceneTree
 
-# BTH-ROULETTE-REPAID-DRAFT-001. Controlled module-command fixtures only.
+# Controlled module-command fixtures only.
 # Actual marker/payment/door/timer reproduction remains separate native evidence.
 const Roulette := preload("res://scripts/games/roulette.gd")
 var checks := 0

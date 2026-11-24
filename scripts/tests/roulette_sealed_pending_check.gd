@@ -1,6 +1,6 @@
 extends SceneTree
 
-# BTH061-ROULETTE-SEALED-PENDING-001. Independent explicitly staged cash fixture.
+# Independent explicitly staged cash fixture for sealed Roulette recovery.
 # This is not normal travel, Practice, the original R08 run, or an outcome search.
 # Only fixture inputs are configured before source generation/installation. The
 # actual MainScene retains its production input, clock, publication and authority.
