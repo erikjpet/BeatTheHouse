@@ -19,7 +19,7 @@ FORBIDDEN_PREFIXES = (
     "native/",
     "reports/",
     "review_artifacts/",
-    "scripts/tests/",
+    "tests/",
     "tools/",
 )
 FORBIDDEN_SUFFIXES = (
