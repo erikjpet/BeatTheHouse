@@ -2759,7 +2759,11 @@ function Publish-SummaryPairNoOverwrite {
 
 function Add-SelfTestResult {
     param([System.Collections.Generic.List[object]]$Cases,[string]$Name,[scriptblock]$Body)
-    try{&$Body;[void]$Cases.Add([ordered]@{name=$Name;passed=$true;detail=''})}catch{[void]$Cases.Add([ordered]@{name=$Name;passed=$false;detail=$_.Exception.Message})}
+    try{&$Body;[void]$Cases.Add([ordered]@{name=$Name;passed=$true;detail=''})}catch{
+        $failure=$_
+        [void]$Cases.Add([ordered]@{name=$Name;passed=$false;detail=$failure.Exception.Message})
+        [Console]::Error.WriteLine('RW06_1_VALIDATE_ONLY_CASE_FAILURE '+([ordered]@{name=$Name;detail=$failure.Exception.Message;script_stack=[string]$failure.ScriptStackTrace;constructor_custody_unproven=[bool]$failure.Exception.Data.Contains('held_exclusive_custody_cell')}|ConvertTo-Json -Depth 4 -Compress))
+    }
 }
 
 function New-CrossBindingSelfTestFixture {
@@ -2869,6 +2873,26 @@ function Invoke-ValidateOnlySelfTest {
     $tempRoot=Join-Path $tempParent ('rw06-q009-selftest-'+[guid]::NewGuid().ToString('N'))
     $tempRootIdentity=$null;$selfTestRunContext=$null;$selfTestOwnerReceipt=$null
     $selfTestAttemptId='rw06-1-selftest-'+[guid]::NewGuid().ToString('N')
+    # Only returned synthetic leases prove fixture ownership. Exception.Data is not authority.
+    $closeReturnedHeldLease={
+        param([object]$Lease,[object]$Context,[string]$ExpectedPath)
+        if($null-eq$Lease){return}
+        if(-not(Test-Q009HeldExclusiveLeaseReceiptShape $Lease.receipt $Context)-or[string]$Lease.receipt.path-cne$ExpectedPath){throw 'ValidateOnly held-lease cleanup lacks exact returned context/path authority'}
+        $closable=@($Lease.custody_cell.ClosableSlots())
+        foreach($slot in @($Lease.custody_cell.NonTerminalSlots())){
+            if($slot-cnotin@('lease_parent','exclusive_lease')-or$closable-cnotcontains$slot){throw 'ValidateOnly held-lease cleanup found unproven/nonclosable custody'}
+        }
+        foreach($slot in $closable){
+            if($slot-ceq'lease_parent'){$identity=$Lease.receipt.parent_identity;$directory=$true}
+            elseif($slot-ceq'exclusive_lease'){$identity=$Lease.receipt.file_identity;$directory=$false}
+            else{throw 'ValidateOnly held-lease cleanup found an unexpected captured slot'}
+            $state=Get-Q009HeldHandleState $Lease.custody_cell $slot
+            if(-not(Test-Q009HeldHandleStateShape $state $identity $directory)){throw 'ValidateOnly held-lease cleanup could not prove the captured handle identity/state'}
+        }
+        # Handle-only disposal cannot delete or reacquire a replacement pathname.
+        $cleanup=Close-Q009AllOpenNativeHandles $Lease.custody_cell 'ValidateOnly returned synthetic lease finally'
+        if($cleanup.all_terminal-isnot[bool]-or-not$cleanup.all_terminal-or@($cleanup.errors).Count-ne0-or@($cleanup.nonterminal_slots).Count-ne0){throw ('ValidateOnly returned synthetic lease retained custody: '+(@($cleanup.errors)-join'; '))}
+    }
     try{
         if([string]::IsNullOrWhiteSpace($SelfTestReport)){throw '-SelfTestReport is required with -ValidateOnly'}
         $reportPath=[IO.Path]::GetFullPath($SelfTestReport);$forbiddenRoots=@([IO.Path]::GetFullPath($leaseRoot),[IO.Path]::GetFullPath($projectCacheRoot))
@@ -3118,6 +3142,9 @@ function Invoke-ValidateOnlySelfTest {
         Add-SelfTestResult $cases 'native-exit-strict-types' { $bad=$false;try{[void](Get-StrictNativeExitCode $null)}catch{$bad=$true};Assert-LauncherContract $bad 'null native exit accepted';$bad=$false;try{[void](Get-StrictNativeExitCode '0')}catch{$bad=$true};Assert-LauncherContract $bad 'string native exit accepted' }
         Add-SelfTestResult $cases 'lineage-reused-intermediate-negative-and-exact-cim-ticks' { Assert-LauncherContract (Test-CimCreationMatchesProcessStartTicks 150 159) 'microsecond match rejected';Assert-LauncherContract (-not(Test-CimCreationMatchesProcessStartTicks 1000000 1099999)) '99,999 tick reuse accepted';$root=[ordered]@{pid=1;name='root';start_ticks=[long]100;key='1|100|root'};$intermediate=[ordered]@{pid=2;name='intermediate';start_ticks=[long]150;key='2|150|intermediate'};$reusedIntermediate=[ordered]@{pid=2;name='reused-intermediate';start_ticks=[long]200;key='2|200|reused-intermediate'};$leaf=[ordered]@{pid=3;name='leaf';start_ticks=[long]210;key='3|210|leaf'};$c=@([ordered]@{parent_pid=1;parent_identity=$root;creation_ticks=[long]150;identity=$intermediate},[ordered]@{parent_pid=2;parent_identity=$reusedIntermediate;creation_ticks=[long]210;identity=$leaf});$v=@(Resolve-VerifiedDescendantIdentityRecords $root 300 @() $c);Assert-LauncherContract ($v.Count -eq 1 -and [string]$v[0].key -ceq [string]$intermediate.key -and @($v|Where-Object{[string]$_.key-ceq[string]$leaf.key}).Count-eq0) 'leaf beneath a reused intermediate PID was accepted' }
         Add-SelfTestResult $cases 'lease-create-write-removal-failure-contention-and-replacement' {
+            $rollbackHeld=$null;$collisionHeld=$null;$terminalHeld=$null;$releaseHeld=$null
+            $heldFixtureFailure=$null;$heldFixtureCleanupFailure=$null
+            try{
             $p=Join-Path $tempRoot 'probe.lease';$failed=$false
             $pinnedSibling=Join-Path $tempRoot 'pinned-sibling.txt';[IO.File]::WriteAllText($pinnedSibling,'held',[Text.UTF8Encoding]::new($false));$pinnedSiblingIdentity=Get-Q009FileSystemEntryIdentity $pinnedSibling;$pinnedSiblingStream=$null
             try{$pinnedSiblingStream=[IO.FileStream]::new($pinnedSibling,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::Read);$pinnedPublish=Join-Path $tempRoot 'pinned-parent-publish.txt';$pinnedPublishOwnership=[ordered]@{created=$false;identity=$null;write_complete=$false;removal_failed=$false;removal_error=''};New-OwnedLeaseFile $pinnedPublish 'published beside held sibling' $pinnedPublishOwnership;Assert-LauncherContract ([bool]$pinnedPublishOwnership.write_complete-and(Test-Q009FileSystemIdentityMatch $pinnedPublishOwnership.identity)) 'atomic child publication conflicted with a legitimate held sibling read pin';Remove-Q009ExactOwnedFile $pinnedPublish $pinnedPublishOwnership.identity}finally{if($null-ne$pinnedSiblingStream){$pinnedSiblingStream.Dispose()};if(Test-Q009FileSystemIdentityMatch $pinnedSiblingIdentity){Remove-Q009ExactOwnedFile $pinnedSibling $pinnedSiblingIdentity}}
@@ -3141,10 +3168,10 @@ function Invoke-ValidateOnlySelfTest {
             $saved=[string]$replacement.test_original_path;Assert-LauncherContract (Test-Path -LiteralPath $saved -PathType Leaf) 'exact original partial lease was not retained after replacement hostile'
             $savedIdentity=Copy-Q009FileSystemIdentityToPath $replacement.identity $saved;Remove-Q009ExactOwnedFile $saved $savedIdentity
             $heldPath=Join-Path $selfTestLeaseRoot 'EXCLUSIVE.lease';$heldFailed=$false
-            try{[void](New-Q009HeldExclusiveLease -Path $heldPath -Text 'mode=exclusive' -RunContext $selfTestRunContext -ForcePostCreateFailureForTest -ForceReplacementAttemptBeforeRollbackForTest)}catch{$heldFailed=$true}
+            try{$rollbackHeld=New-Q009HeldExclusiveLease -Path $heldPath -Text 'mode=exclusive' -RunContext $selfTestRunContext -ForcePostCreateFailureForTest -ForceReplacementAttemptBeforeRollbackForTest}catch{if($_.Exception.Data.Contains('held_exclusive_custody_cell')){throw};$heldFailed=$true}
             Assert-LauncherContract ($heldFailed-and-not(Test-Path -LiteralPath $heldPath)) 'held EXCLUSIVE post-create failure did not use exact delete-pending rollback'
             $foreignHeld=[ordered]@{created=$false;identity=$null;write_complete=$false;removal_failed=$false;removal_error=''};New-OwnedLeaseFile $heldPath 'foreign exclusive' $foreignHeld;$heldCollision=$false
-            try{[void](New-Q009HeldExclusiveLease -Path $heldPath -Text 'mode=exclusive' -RunContext $selfTestRunContext)}catch{$heldCollision=$true}
+            try{$collisionHeld=New-Q009HeldExclusiveLease -Path $heldPath -Text 'mode=exclusive' -RunContext $selfTestRunContext}catch{if($_.Exception.Data.Contains('held_exclusive_custody_cell')){throw};$heldCollision=$true}
             Assert-LauncherContract ($heldCollision-and(Test-Q009FileSystemIdentityMatch $foreignHeld.identity)-and[IO.File]::ReadAllText($heldPath)-ceq'foreign exclusive') 'held EXCLUSIVE CreateNew collision deleted or adopted a foreign reservation'
             Remove-Q009ExactOwnedFile $heldPath $foreignHeld.identity
             $terminalHeld=New-Q009HeldExclusiveLease -Path $heldPath -Text 'mode=exclusive' -RunContext $selfTestRunContext;$terminalReplacementRejected=$false
@@ -3226,6 +3253,20 @@ function Invoke-ValidateOnlySelfTest {
             Assert-LauncherContract ((Test-Q009SummaryPublicationReceiptShape $selfTerminalPublication)-and(Test-Q009ExactOwnedTreeManifestShape $selfFinalManifest $terminalEvidenceOwnership.root_identity)-and(Test-Q009TerminalTreeDelta $postSummaryChain.manifest $selfFinalManifest $selfTerminalPublication)) 'terminal completion publication/final exact tree delta readback failed'
             $latePath=Join-Path $terminalEvidencePath 'foreign-after-terminal.txt';$lateOwnership=[ordered]@{created=$false;identity=$null;write_complete=$false;removal_failed=$false;removal_error=''};New-OwnedLeaseFile $latePath 'foreign' $lateOwnership
             Assert-LauncherContract (-not(Test-Q009TerminalTreeDelta $postSummaryChain.manifest (Get-Q009ExactOwnedTreeManifest $terminalEvidencePath) $selfTerminalPublication)) 'late foreign terminal-tree addition was accepted';Remove-Q009ExactOwnedFile $latePath $lateOwnership.identity
+            }catch{
+                $heldFixtureFailure=$_
+                # Retain the original body failure even if exact handle cleanup also fails.
+                [Console]::Error.WriteLine('RW06_1_VALIDATE_ONLY_HELD_FIXTURE_FAILURE '+([ordered]@{name='lease-create-write-removal-failure-contention-and-replacement';detail=$heldFixtureFailure.Exception.Message;script_stack=[string]$heldFixtureFailure.ScriptStackTrace;constructor_custody_unproven=[bool]$heldFixtureFailure.Exception.Data.Contains('held_exclusive_custody_cell')}|ConvertTo-Json -Depth 4 -Compress))
+            }finally{
+                foreach($returnedLease in @($rollbackHeld,$collisionHeld,$terminalHeld,$releaseHeld)){
+                    try{&$closeReturnedHeldLease $returnedLease $selfTestRunContext $heldPath}catch{
+                        if($null-eq$heldFixtureCleanupFailure){$heldFixtureCleanupFailure=$_}
+                        [Console]::Error.WriteLine('RW06_1_VALIDATE_ONLY_HELD_FIXTURE_CLEANUP_FAILURE '+([ordered]@{name='lease-create-write-removal-failure-contention-and-replacement';detail=$_.Exception.Message;script_stack=[string]$_.ScriptStackTrace}|ConvertTo-Json -Depth 4 -Compress))
+                    }
+                }
+            }
+            if($null-ne$heldFixtureFailure){throw $heldFixtureFailure}
+            if($null-ne$heldFixtureCleanupFailure){throw $heldFixtureCleanupFailure}
         }
         Add-SelfTestResult $cases 'exclusive-reservation-waits-for-focused-lease-or-godot' {
             Assert-LauncherContract ((Get-ExclusiveWaitDisposition 0 0 0)-ceq'ready') 'empty EXCLUSIVE census was not ready'
