@@ -302,7 +302,9 @@ def import_delivery(source: Path, dry_run: bool) -> int:
             new, old = Image.open(path), Image.open(target)
             if new.size != old.size:
                 problems.append(f"{room_id}: animation {path.name} is {new.size}, must stay {old.size}")
-            elif ImageChops.difference(new.convert("RGBA"), old.convert("RGBA")).getbbox() is not None:
+            # RGBA getbbox() defaults to alpha-only on recent Pillow.
+            elif any(channel.getbbox() is not None for channel in
+                     ImageChops.difference(new.convert("RGBA"), old.convert("RGBA")).split()):
                 changes.append(f"{room_id}: animation {path.name}")
                 if not dry_run:
                     shutil.copy2(path, target)
