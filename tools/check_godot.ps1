@@ -1537,7 +1537,7 @@ if ($PostLand -and -not (Add-PostLandIdentityStage -Phase "start")) {
     Write-TestSummary
     exit 1
 }
-Invoke-ProcessStage -Name "validate_project" -FilePath $powerShellExe -Arguments @("-ExecutionPolicy", "Bypass", "-File", (Join-Path $PSScriptRoot "validate_project.ps1"), "-Quiet") -StageTimeoutSec (Get-StageTimeout "validate_project") | Out-Null
+Invoke-ProcessStage -Name "validate_project" -FilePath $powerShellExe -Arguments @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", (Join-Path $PSScriptRoot "validate_project.ps1"), "-Quiet") -StageTimeoutSec (Get-StageTimeout "validate_project") | Out-Null
 
 if (-not $script:Godot) {
     if ($RequireGodot) {

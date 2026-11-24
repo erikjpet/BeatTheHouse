@@ -3,6 +3,11 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+# Windows PowerShell exports Get-FileHash from this inbox module's script layer.
+Import-Module (Join-Path $PSHOME "Modules/Microsoft.PowerShell.Utility/Microsoft.PowerShell.Utility.psd1") -ErrorAction Stop
+if ((Get-Command Get-FileHash -ErrorAction Stop).ModuleName -cne "Microsoft.PowerShell.Utility") {
+    throw "Validator requires the inbox Microsoft.PowerShell.Utility Get-FileHash command."
+}
 $root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot "split_test_runner_helpers.ps1")
 . (Join-Path $PSScriptRoot "health06_1_static_source_rules.ps1")
