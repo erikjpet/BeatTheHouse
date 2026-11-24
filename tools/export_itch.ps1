@@ -121,10 +121,10 @@ function Assert-NativeSolverExport([string]$Directory, [string]$ExportTarget) {
     return $native[0]
 }
 
-function Invoke-WebExportWithLockedTemplate([string]$GodotPath, [string]$ExportFlag, [string]$PresetName, [string]$OutputPath) {
+function Invoke-WebExportWithLockedTemplate([string]$GodotPath, [string]$ExportFlag, [string]$PresetName, [string]$OutputPath, [string]$ProjectRoot) {
     $lock = Get-Content -LiteralPath (Join-Path $root "native/coin_pusher/toolchain.lock.json") -Raw | ConvertFrom-Json
     $templatePath = Join-Path $env:APPDATA "Godot/export_templates/$(([string]$lock.godot.version).Replace('-', '.'))/$([string]$lock.web.template)"
-    $presetPath = Join-Path $root "export_presets.cfg"
+    $presetPath = Join-Path $ProjectRoot "export_presets.cfg"
     $originalBytes = [IO.File]::ReadAllBytes($presetPath)
     $presetText = [Text.Encoding]::UTF8.GetString($originalBytes)
     $pattern = '(?ms)(\[preset\.3\.options\]\s*.*?^custom_template/release=)"[^"]*"'
@@ -132,9 +132,46 @@ function Invoke-WebExportWithLockedTemplate([string]$GodotPath, [string]$ExportF
     $patched = [Text.RegularExpressions.Regex]::Replace($presetText, $pattern, ('$1"' + $templatePath.Replace('\','/') + '"'), 1)
     try {
         [IO.File]::WriteAllText($presetPath, $patched, [Text.UTF8Encoding]::new($false))
-        return [int](Invoke-TypedConsoleProcess -FilePath $GodotPath -ArgumentList @("--headless", "--path", $root, $ExportFlag, $PresetName, $OutputPath))
+        return [int](Invoke-TypedConsoleProcess -FilePath $GodotPath -ArgumentList @("--headless", "--path", $ProjectRoot, $ExportFlag, $PresetName, $OutputPath))
     }
     finally { [IO.File]::WriteAllBytes($presetPath, $originalBytes) }
+}
+
+function Invoke-WebExportWithTravelCompression([string]$GodotPath, [string]$ExportFlag, [string]$PresetName, [string]$OutputPath, $Manifest, [switch]$UseLockedTemplate) {
+    $python = Get-Command python -ErrorAction Stop
+    $helper = Join-Path $PSScriptRoot "stage_web_texture_import.py"
+    # Keep the independent import project short enough for Windows file and Godot paths.
+    $project = Join-Path $root ("builds/.web-import-" + [Guid]::NewGuid().ToString("N"))
+    if (-not (Test-PathInside $project (Join-Path $root "builds"))) { throw "Web import project escapes its owned build root." }
+    if (Test-Path -LiteralPath $project) { throw "Fresh Web import project destination is occupied." }
+    try {
+        & $python.Source $helper stage $root $project
+        if ($LASTEXITCODE -ne 0) { throw "Could not prepare the isolated Web import project." }
+        [IO.File]::WriteAllText((Join-Path $project "build_manifest.json"), ($Manifest | ConvertTo-Json -Depth 12), [Text.UTF8Encoding]::new($false))
+        $importExit = Invoke-TypedConsoleProcess -FilePath $GodotPath -ArgumentList @("--headless", "--path", $project, "--import")
+        if ($importExit -ne 0) { throw "Isolated Web texture import failed with exit $importExit." }
+        & $python.Source $helper verify $project
+        if ($LASTEXITCODE -ne 0) { throw "Isolated Web texture compression could not be verified." }
+        if ($UseLockedTemplate) {
+            return [int](Invoke-WebExportWithLockedTemplate $GodotPath $ExportFlag $PresetName $OutputPath $project)
+        }
+        return [int](Invoke-TypedConsoleProcess -FilePath $GodotPath -ArgumentList @("--headless", "--path", $project, $ExportFlag, $PresetName, $OutputPath))
+    }
+    finally {
+        if (Test-Path -LiteralPath $project -PathType Container) {
+            if ((Get-Item -LiteralPath $project -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw "Refusing redirected Web import cleanup." }
+            Remove-Item -LiteralPath $project -Recurse -Force
+        }
+    }
+}
+
+function Assert-WebPayloadBudget([string]$Stage) {
+    $pck = (Get-Item -LiteralPath (Join-Path $Stage "index.pck") -ErrorAction Stop).Length
+    $total = (Get-ChildItem -LiteralPath $Stage -File -Recurse -Force | Measure-Object -Property Length -Sum).Sum
+    if ($pck -gt 150000000 -or $total -gt 400000000) {
+        throw "Web payload exceeds extracted size budget: PCK $pck / 150000000 bytes; total $total / 400000000 bytes."
+    }
+    Write-Host "Web payload: PCK $pck bytes (target 120000000); total $total bytes."
 }
 
 function Invoke-WithEmbeddedManifest($Manifest, [scriptblock]$Action) {
@@ -319,6 +356,7 @@ foreach ($platform in $targets) {
             throw "$platform staging tree changed after candidate registration."
         }
         Invoke-WebGlHandlesStage -Platform $platform -Mode verify -Stage $registeredAttempt.final_stage -ToolPath (Join-Path $PSScriptRoot "web_gl_handles.mjs")
+        if ($platform -eq "web") { Assert-WebPayloadBudget $registeredAttempt.final_stage }
         Write-Host "Reusing registered immutable $platform candidate: $($registeredAttempt.final_stage)"
         continue
     }
@@ -354,6 +392,7 @@ foreach ($platform in $targets) {
         $pckPath = if ($platform -eq "web") { Join-Path $stage "index.pck" } else { $outFile }
         $pipelineState.audit_path = [string]$attempt.attempt_audit
         Invoke-PckAudit $pckPath $pipelineState.audit_path
+        if ($platform -eq "web") { Assert-WebPayloadBudget $stage }
     }
     $custodyAction = {
         $treeIdentity = Get-ExportTreeIdentityFromDirectory $stage
@@ -396,11 +435,15 @@ foreach ($platform in $targets) {
         $flag = if ($Debug) { "--export-debug" } else { "--export-release" }
         if ($platform -eq "web" -and -not $Debug) {
             Invoke-WebExportPipeline `
-                -ExportAction { Invoke-WithEmbeddedManifest $buildManifest { Invoke-WebExportWithLockedTemplate $godot $flag $preset $outFile } } `
+                -ExportAction { Invoke-WebExportWithTravelCompression $godot $flag $preset $outFile $buildManifest -UseLockedTemplate } `
                 -AuditAction $auditAction `
                 -CustodyAction $custodyAction `
                 -RegistrationAction $registrationAction
             $downstreamComplete = $true
+        }
+        elseif ($platform -eq "web") {
+            $webExit = Invoke-WebExportWithTravelCompression $godot $flag $preset $outFile $buildManifest
+            if ($webExit -ne 0) { throw "Godot Web export failed with exit $webExit." }
         }
         else {
             Invoke-WithEmbeddedManifest $buildManifest {
@@ -427,6 +470,7 @@ foreach ($required in @("windows", "web")) {
     $stage = Join-Path $root ([string]$entry.staging_root)
     $actual = Get-ExportTreeIdentityFromDirectory $stage
     if ([string]$actual.aggregate_sha256 -cne [string]$entry.export_identity_sha256) { throw "$required staging tree changed after candidate registration." }
+    if ($required -eq "web" -and $required -notin $targets) { Assert-WebPayloadBudget $stage }
     Invoke-WebGlHandlesStage -Platform $required -Mode verify -Stage $stage -ToolPath (Join-Path $PSScriptRoot "web_gl_handles.mjs")
 }
 
