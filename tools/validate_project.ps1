@@ -1484,7 +1484,16 @@ if ($exportPresets -notmatch $windowsPresetPattern) {
 }
 
 $authoredMusicRoot = Join-Path $root "assets/audio/music"
-foreach ($wavFile in Get-ChildItem -LiteralPath $authoredMusicRoot -Filter "*.wav" -File -Recurse -ErrorAction SilentlyContinue) {
+$authoredMusicFiles = @(Get-ChildItem -LiteralPath $authoredMusicRoot -Filter "*.wav" -File -Recurse -ErrorAction SilentlyContinue)
+# Exact PCM Keep contract authored in c598049a5c703b8793ad0d02012411a10bd97f18.
+$crtTitleMasterPath = Join-Path $root "assets/audio/music_features/crt_title_v3/master.wav"
+if (Test-Path -LiteralPath $crtTitleMasterPath -PathType Leaf) {
+    $authoredMusicFiles += Get-Item -LiteralPath $crtTitleMasterPath
+}
+else {
+    $failures.Add("Authored CRT music source is missing: assets/audio/music_features/crt_title_v3/master.wav")
+}
+foreach ($wavFile in $authoredMusicFiles) {
     $importPath = "$($wavFile.FullName).import"
     if (-not (Test-Path -LiteralPath $importPath)) {
         $failures.Add("Authored music source is missing its portable Keep File import contract: $(Get-ProjectRelativePath $wavFile.FullName)")
@@ -1555,7 +1564,7 @@ else {
 }
 foreach ($trackedGeneratedFile in $trackedGeneratedFiles) {
     $relativeGeneratedPath = ([string]$trackedGeneratedFile).Trim().Replace('\', '/')
-    $isAuthoredMusicKeepContract = $relativeGeneratedPath -match '^assets/audio/music/.+\.wav\.import$'
+    $isAuthoredMusicKeepContract = $relativeGeneratedPath -match '^assets/audio/music/.+\.wav\.import$' -or $relativeGeneratedPath -ceq 'assets/audio/music_features/crt_title_v3/master.wav.import'
     $isReviewedArchivedUid = $reviewedArchivedUidPaths.ContainsKey($relativeGeneratedPath)
     if (-not [string]::IsNullOrWhiteSpace($relativeGeneratedPath) -and -not $isAuthoredMusicKeepContract -and -not $isReviewedArchivedUid) {
         $failures.Add("Generated Godot metadata must not be git-tracked: $relativeGeneratedPath")
