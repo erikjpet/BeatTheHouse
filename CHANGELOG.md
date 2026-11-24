@@ -2,6 +2,12 @@
 
 All notable public release changes for Beat the House are recorded here.
 
+## 0.6.2
+
+- The game, Windows executable properties, and Windows and Web downloads now
+  report the same release version.
+- Reduced the Web download size.
+
 ## 0.6.1
 
 ### Saving, Continue and leaving a run
