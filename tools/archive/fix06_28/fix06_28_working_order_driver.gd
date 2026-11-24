@@ -6,7 +6,7 @@ extends SceneTree
 # EnvironmentInstance and never calls a host's private action callback.
 
 const MainScene := preload("res://scenes/main.tscn")
-const Fidelity := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
+const Fidelity := preload("res://tools/test_support/harness_production_fidelity.gd")
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const ProfileInventoryScript := preload("res://scripts/core/profile_inventory.gd")
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")

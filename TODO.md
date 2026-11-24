@@ -23,7 +23,6 @@ it into Now.
 
 ## Now
 
-- Replace the old test suite with a small core set that runs on every push.
 - Check the 16 unreviewed room briefs in the artist package, then send it to
   the artist.
 

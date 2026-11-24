@@ -107,7 +107,7 @@ function Assert-CleanDistributionOutput([string]$Directory) {
     $forbiddenExtensions = @(".key", ".log", ".pem", ".pfx", ".ps1", ".py")
     $leaks = @(Get-ChildItem -LiteralPath $Directory -File -Recurse -Force | Where-Object {
         $relative = $_.FullName.Substring($Directory.Length).TrimStart([char[]]@('\','/')).Replace('\','/').ToLowerInvariant()
-        $forbiddenNames -contains $_.Name -or $forbiddenExtensions -contains $_.Extension.ToLowerInvariant() -or $relative.StartsWith("reports/") -or $relative.StartsWith("native/") -or $relative.StartsWith("scripts/tests/") -or $relative.StartsWith("tools/")
+        $forbiddenNames -contains $_.Name -or $forbiddenExtensions -contains $_.Extension.ToLowerInvariant() -or $relative.StartsWith("reports/") -or $relative.StartsWith("native/") -or $relative.StartsWith("tests/") -or $relative.StartsWith("tools/")
     })
     if ($leaks.Count -gt 0) { throw "Refusing development-only or persistent content in distribution output: $(@($leaks.FullName) -join ', ')" }
 }

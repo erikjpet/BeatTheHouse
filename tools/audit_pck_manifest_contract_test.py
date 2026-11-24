@@ -68,7 +68,7 @@ def check_godot_shader_paths() -> None:
         raise AssertionError(f"Shipped Godot shaders were rejected: {failures}")
     rejected = [
         "tools/preview.gdshader",
-        "scripts/tests/fixture.gdshader",
+        "tests/fixture.gdshader",
         "native/solver.gdshader",
         "reports/private/capture.gdshader",
         "assets/shaders/credentials.gdshader",

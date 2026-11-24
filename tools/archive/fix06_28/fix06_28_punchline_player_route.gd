@@ -6,7 +6,7 @@ extends SceneTree
 # Parking Lot Tip; it does not alter run state or install a fixture.
 
 const MainScene := preload("res://scenes/main.tscn")
-const Fidelity := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
+const Fidelity := preload("res://tools/test_support/harness_production_fidelity.gd")
 const SaveServiceScript := preload("res://scripts/core/save_service.gd")
 const UserSettingsScript := preload("res://scripts/core/user_settings.gd")
 

@@ -9,7 +9,7 @@ const MainScene := preload("res://scenes/main.tscn")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const GameModuleScript := preload("res://scripts/core/game_module.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
-const BlackjackAuthorityTestDriverScript := preload("res://scripts/tests/foundation/blackjack_authority_test_driver.gd")
+const BlackjackAuthorityTestDriverScript := preload("res://tools/test_support/blackjack_authority_driver.gd")
 
 var app: Control
 var out_dir := "res://.tmp/tutorial_rework/captures"
