@@ -24,7 +24,7 @@ $actualPorts = @(Get-Perf06BindingPorts)
 if (($actualPorts -join ",") -cne ($expectedPorts -join ",")) {
     throw "Binding port inventory drifted. expected=$($expectedPorts -join ',') actual=$($actualPorts -join ',')"
 }
-$runbook = Get-Content -LiteralPath (Join-Path $root "docs/plans/perf06_1_final_runtime_runbook.md") -Raw
+$runbook = Get-Content -LiteralPath (Join-Path $root "tools/fixtures/legacy_checks/performance_runbook.txt") -Raw
 $lowEndLauncher = Get-Content -LiteralPath (Join-Path $root "tools/archive/perf06/perf06_low_end_matrix.ps1") -Raw
 $terminalLauncher = Get-Content -LiteralPath (Join-Path $root "tools/archive/integ06_1/integ06_1_terminal_soak.ps1") -Raw
 foreach ($port in @(18730, 18731, 18732, 18733, 18734, 18735)) {

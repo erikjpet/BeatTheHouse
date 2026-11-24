@@ -4,7 +4,7 @@ $ErrorActionPreference = "Stop"
 
 $repoRoot = Split-Path -Parent $PSScriptRoot
 $catalogPath = Join-Path $repoRoot "data/games/games.json"
-$referencePath = Join-Path $repoRoot "docs/game_reference.md"
+$referencePath = Join-Path $repoRoot "docs/design/game_reference.md"
 $readmePath = Join-Path $repoRoot "README.md"
 $projectPath = Join-Path $repoRoot "project.godot"
 $exportPath = Join-Path $repoRoot "export_presets.cfg"
@@ -47,7 +47,7 @@ foreach ($game in $games) {
     }
     foreach ($requiredText in @($id, $displayName, $relativeModule)) {
         if (-not $reference.Contains($requiredText)) {
-            Add-DocumentationError "docs/game_reference.md does not mention '$requiredText'."
+            Add-DocumentationError "docs/design/game_reference.md does not mention '$requiredText'."
         }
     }
     if (-not $readme.Contains($relativeModule)) {
@@ -59,7 +59,7 @@ $gameScripts = Get-ChildItem -LiteralPath (Join-Path $repoRoot "scripts/games") 
 foreach ($script in $gameScripts) {
     $relativePath = $script.FullName.Substring($repoRoot.Length + 1).Replace("\", "/")
     if (-not $reference.Contains($relativePath)) {
-        Add-DocumentationError "docs/game_reference.md does not account for $relativePath."
+        Add-DocumentationError "docs/design/game_reference.md does not account for $relativePath."
     }
 }
 
@@ -71,7 +71,7 @@ $gameDataFiles = Get-ChildItem -LiteralPath (Join-Path $repoRoot "data/games") -
 foreach ($dataFile in $gameDataFiles) {
     $relativePath = $dataFile.FullName.Substring($repoRoot.Length + 1).Replace("\", "/")
     if (-not $reference.Contains($relativePath)) {
-        Add-DocumentationError "docs/game_reference.md does not account for $relativePath."
+        Add-DocumentationError "docs/design/game_reference.md does not account for $relativePath."
     }
 }
 

@@ -9,7 +9,7 @@ const SequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_run
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const AdapterScript := preload("res://scripts/core/crew_world_sequence_adapter.gd")
 
-const DOC_PATH := "res://docs/plans/world06_1_crew_sequence_adapter_contract.md"
+const DOC_PATH := "res://tools/fixtures/legacy_checks/world_sequence_adapter_spec.txt"
 const EVENT_MODULE_PATH := "res://scripts/core/event_module.gd"
 const EVENTS_PATH := "res://data/events/events.json"
 

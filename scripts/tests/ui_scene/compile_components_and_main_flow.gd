@@ -2935,7 +2935,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	# Independent release replays with pinned Godot 4.6 and a freshly built native
 	# solver reproduced these hashes on Linux and Windows. A full state comparison
 	# with 637a8f8 found only removal of numbers:book and numbers:silas from immutable
-	# base geometry; see docs/releases/0.6.0_candidate_review.md.
+	# base geometry.
 	# CLOSE-01: pre-closeout f00a686f and candidate full values are identical.
 	# Accepted venue-cycle retirement and authored placement supersede the old
 	# scenario-bearing snapshot; all route/economy/RNG/story checks remain exact.

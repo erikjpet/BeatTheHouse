@@ -1,6 +1,6 @@
 extends "res://scripts/tests/bar_dice_reveal_save_restore_check.gd"
 
-# BTH061-BAR-DICE-REVEAL-RESTORE-001: independent CATALOG venue control.
+# Independent catalog venue control.
 # This is a declared synthetic initial bankroll/clock/scenario/town condition,
 # not Practice, normal travel, an original save or a no-forced-clock claim.
 # Production generation owns all room/terms/game/outcome/seal construction.

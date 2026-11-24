@@ -1,7 +1,7 @@
 extends SceneTree
 
 # Synthetic authority/cadence boundaries. Actual cold/native first-draft
-# reproduction is retained separately under BTH-BLACKJACK-FIRST-DRAFT-001.
+# ordinary case is separate from this synthetic check.
 const Blackjack := preload("res://scripts/games/blackjack.gd")
 const Run := preload("res://scripts/core/run_state.gd")
 const Library := preload("res://scripts/core/content_library.gd")

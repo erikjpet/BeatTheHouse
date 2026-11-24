@@ -1,6 +1,6 @@
 extends RefCounted
 
-# LAND-02 additive synthetic unit snippet, not a standalone runtime launcher.
+# Additive synthetic unit snippet, not a standalone runtime launcher.
 # Call exercise() from the admitted harness and append its checks/failures.
 # No meta store, player profile, save, route offer or fare is accessed here.
 const Run := preload("res://scripts/core/run_state.gd")

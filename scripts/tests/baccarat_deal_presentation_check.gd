@@ -208,7 +208,7 @@ func _check_hand(game, canvas, fixture: Dictionary) -> void:
 	host.free()
 
 
-# Synthetic regression for BTH061-LAND03-BACCARAT-RECOVERY-001, not normal UI proof.
+# Synthetic recovery regression, not normal UI proof.
 # The first fixture mirrors the observed working110 loss to cash33/chips15.
 func _check_fresh_deal_funding(game, canvas) -> void:
 	for fixture in [
