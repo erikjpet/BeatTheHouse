@@ -18,6 +18,11 @@ param(
 )
 
 $ErrorActionPreference = 'Stop'
+# Windows PowerShell exports Get-FileHash from this inbox module's script layer.
+Import-Module (Join-Path $PSHOME "Modules/Microsoft.PowerShell.Utility/Microsoft.PowerShell.Utility.psd1") -ErrorAction Stop
+if ((Get-Command Get-FileHash -ErrorAction Stop).ModuleName -cne "Microsoft.PowerShell.Utility") {
+    throw "Launcher requires the inbox Microsoft.PowerShell.Utility Get-FileHash command."
+}
 $projectRoot = if ([string]::IsNullOrWhiteSpace($ProjectRoot)) {
     [System.IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
 }
