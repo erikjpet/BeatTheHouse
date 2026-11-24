@@ -1174,6 +1174,12 @@ $objectJsonFiles = @(
     "data/environments/scenario_sequence_compatibility/grand_casino_gala_night_v1.json",
     "data/art/art_manifest.json",
     "data/art/attribute_glyphs.json",
+    # Authored dictionary-root travel catalogs: f35ba137b7607c1efd4d9e061be21077451cd863.
+    "data/art/travel_back_alley_bar.json",
+    "data/art/travel_standard_vehicles.json",
+    "data/art/travel_exteriors_urban.json",
+    "data/art/travel_exteriors_residential_music.json",
+    "data/art/travel_exteriors_landmark_outdoor.json",
     "data/games/bar_dice_game_ritual_v1.json",
     "data/games/showdown_duel_game_ritual_v1.json",
     "data/games/showdown_duel_ritual_v1.json",
