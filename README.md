@@ -54,5 +54,28 @@ The same tests run on every push and pull request. They use disposable data
 outside the checkout. On Windows, if the system temporary directory is on
 C:, point `BTH_TEST_TMPDIR` to a scratch directory on another drive.
 
+The travel case uses the normal game actions to take one trip, settle one paid
+Slot round and save. A second headless source process uses Continue and checks
+that the same run, venue, bankroll, items and settled spin survived the quit.
+
+To also check an extracted Windows package, keep its DLL alongside the EXE.
+Use a disposable shell with a scratch directory outside the checkout and off C:.
+
+```powershell
+$bthTestRoot = 'D:\CodexQA\BTH\test-scratch'
+$env:BTH_TEST_TMPDIR = $bthTestRoot
+$env:APPDATA = Join-Path $bthTestRoot 'runner-appdata'
+$env:LOCALAPPDATA = Join-Path $bthTestRoot 'runner-localappdata'
+$env:TEMP = $bthTestRoot
+$env:TMP = $bthTestRoot
+New-Item -ItemType Directory -Force -Path $env:APPDATA,$env:LOCALAPPDATA | Out-Null
+godot --headless --path . --script res://tests/run_all.gd -- --windows-exe 'D:\path\to\extracted\BeatTheHouse.exe'
+```
+
+The extra check starts the exact packaged EXE without a window and checks its
+startup log and exit status. Gameplay and cold Continue run against the source
+checkout. Headless checks do not verify physical display placement or rendered
+gameplay.
+
 Use [TODO.md](TODO.md) for the work list and
 [docs/design](docs/design/) for design references.
