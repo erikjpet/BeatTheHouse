@@ -2508,6 +2508,7 @@ func _complete_crew_fixture_presentation(app: Control, run_state: RunState, targ
 	if app.get("run_state") != run_state or run_state.current_world_node_id() != target_id or bool(app.get("travel_transition_active")):
 		push_error("Crew route presentation did not begin from its same settled destination.")
 		return false
+	var journey_id := str(run_state.travel_journey_receipt.get("journey_id", ""))
 	var settled := [run_state.bankroll, run_state.grand_casino_chips, run_state.game_clock_minutes,
 		run_state.current_world_node_id(), run_state.environment_travel_count(), run_state.rng_seed,
 		run_state.rng_state, run_state.suspicion, run_state.drunk_level, run_state.inventory.duplicate(true)]
@@ -2538,6 +2539,43 @@ func _complete_crew_fixture_presentation(app: Control, run_state: RunState, targ
 		if not bool(app.get("travel_presentation_active")) and not bool(run_state.travel_journey_receipt.get("receipt_pending", false)):
 			break
 	var preparation: Dictionary = app.get("travel_destination_preparation")
+	# Result Back cancels only an already-completed presentation and replaces its
+	# preparation dictionary. Retain the completed record for the final checks.
+	var destination_canvas := app.get("environment_canvas") as Control
+	if not is_instance_valid(destination_canvas) or not destination_canvas.is_visible_in_tree() \
+			or not bool(destination_canvas.get("uses_foundation_snapshot")):
+		push_error("Crew result did not retain its visible live destination canvas before Back.")
+		return false
+	var destination_snapshot: Dictionary = destination_canvas.get("foundation_snapshot")
+	var live_objects := 0
+	for object_value in destination_canvas.get("foundation_scene_objects"):
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data := object_value as Dictionary
+		if bool(object_data.get("interactive", false)) and not bool(object_data.get("decorative", false)) \
+				and not bool(object_data.get("disabled", false)):
+			live_objects += 1
+	var focus_scope: RefCounted = app.get("modal_focus_scope")
+	var focus_owner := app.get_viewport().gui_get_focus_owner()
+	if app.get("run_state") != run_state or app.get("current_game") != null \
+			or str(app.get("current_screen")) != FoundationMain.SCREEN_RESULT \
+			or bool(app.get("travel_transition_active")) or bool(app.get("travel_presentation_active")) \
+			or journey_id.is_empty() or str(run_state.travel_journey_receipt.get("journey_id", "")) != journey_id \
+			or bool(run_state.travel_journey_receipt.get("receipt_pending", false)) \
+			or (cinematic != null and (bool(cinematic.get("active")) or cinematic.is_visible_in_tree())) \
+			or not bool(preparation.get("ready", false)) \
+			or str(destination_snapshot.get("id", "")) != str(run_state.current_environment.get("id", "")) \
+			or str(destination_snapshot.get("world_node_id", "")) != target_id or live_objects <= 0 \
+			or bool(app.call("_environment_canvas_snapshot_is_stale")) \
+			or int(app.get("room_publication_generation")) > int(app.get("room_publication_checked_generation")) \
+			or bool(app.call("_room_recovery_active_for_current_room")) \
+			or focus_scope == null or focus_scope.call("active_root") != null \
+			or (focus_owner != null and cinematic != null and (focus_owner == cinematic or cinematic.is_ancestor_of(focus_owner))) \
+			or not str(app.call("_blocking_modal_message")).is_empty():
+		push_error("Crew cinematic did not restore its same ready result, destination and receipt without another modal before normal Back.")
+		return false
+	app.call("back_to_environment")
+	await process_frame
 	var after := [run_state.bankroll, run_state.grand_casino_chips, run_state.game_clock_minutes,
 		run_state.current_world_node_id(), run_state.environment_travel_count(), run_state.rng_seed,
 		run_state.rng_state, run_state.suspicion, run_state.drunk_level, run_state.inventory.duplicate(true)]
@@ -2672,8 +2710,6 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 			return false
 		if not await _complete_crew_fixture_presentation(app, run_state, segment_id):
 			return false
-		app.call("back_to_environment")
-		await process_frame
 	var generated_environment: Dictionary = run_state.current_environment
 	if run_state.current_world_node_id() != target_id or run_state.environment_travel_count() != travel_count_before + delivery_path.size() - 1 \
 		or str(generated_environment.get("world_node_id", "")) != target_id \
