@@ -1,7 +1,6 @@
 # Grand Casino Endgame Design Lock
 
-Status: **IMPLEMENTED AND ACTIVE in the current 0.6 source.** This document is
-the authoritative description of the Grand Casino Act 1 endgame. The canonical
+This document describes the Grand Casino Act 1 endgame. The canonical
 ids and save-compatible state names below are binding. The earlier 0.4
 single-room and single-roll finale contracts are explicitly superseded at the
 end of this document.

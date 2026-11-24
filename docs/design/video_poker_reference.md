@@ -1,6 +1,5 @@
 # Video Poker Reference: Real-Machine Spec
 
-Status: **IMPLEMENTED AND ACTIVE in the current 0.6 source.** Reviewed against
 all three production cabinets on 2026-10-08.
 
 This document is the implementation spec for the complete video-poker rebuild. It records the real casino-machine rhythm the game preserves in code, tests, captures, and manual acceptance.
@@ -162,24 +161,3 @@ RTP; it is not misrepresented as perfect-strategy theoretical RTP.
 Reduce motion keeps state ordering and sound hooks but removes spatial
 movement and lengthens the holdout input window. Rendering reads the module
 snapshot; it does not copy decks or rebuild result data every frame.
-
-## Proof matrix
-
-The rebuild is accepted only when these are proven:
-
-| Deliverable | Required proof |
-| --- | --- |
-| Order of operations | Driven bet -> deal -> hold -> draw -> pay test, with held cards unchanged and non-held cards replaced. |
-| Multi-hand independence | Many-seed test showing two- and three-hand cabinets do not copy a shared draw; hand results report deck rule and pool size. |
-| Controls | Surface-command and mouse-playtest coverage for deal/draw, holds, bet controls, cheat controls, and double-up picks. |
-| Hand evaluation | Fixture tests for Jacks-or-Better, Deuces Wild, and Double Double Bonus kicker rows. |
-| RTP | Per-cabinet RTP audit inside declared sanity bands. |
-| Determinism | Same seed + holds + inputs produces identical hands, payouts, and holdout outcome across replays. |
-| Art parity | Captures show each cabinet as a unique full machine using the same visual footprint as slot cabinets. |
-| Feel | Manual playthrough confirms the rhythm is obvious, hands differ, controls respond, wins land, and the holdout reads as a real video-poker cheat. |
-
-The live proof capture must include, for every cabinet, idle, hold-guidance,
-and settled-result frames. The three-play settled capture must contain three
-different visible card signatures. A slot reference must be captured by the
-same running-game harness; static sketches or empty wireframes are not valid
-art evidence.

@@ -1,13 +1,12 @@
 # World Map Design Lock
 
-Status: **IMPLEMENTED AND ACTIVE in the current 0.6 source.** This file records
-the original Act 1 graph/revisit design lock. Travel dispatch still enters
+This file records the Act 1 graph and revisit rules. Travel dispatch still enters
 through `FoundationMain._travel_to`, while map presentation/state helpers live
 in focused modules under `scripts/ui/`. Later Living Town scenarios, Crew
 routes, weather, and destination tradeoffs extend this contract without
 replacing its persistent seeded graph.
 
-T4.8 replaces per-room destination props with a persistent seeded world map. This
+The world map replaces per-room destination props with a persistent seeded world map. This
 document is the implementation contract for the Act 1 map; it intentionally
 leaves no open design questions.
 

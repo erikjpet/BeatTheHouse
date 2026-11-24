@@ -1,12 +1,6 @@
 # Item Collection Meta System - Design Plan
 
-Date: 2026-07-06 (rev 2 - owner decisions incorporated)
-Status: **LOCAL SYSTEM IMPLEMENTED AND ACTIVE in the current 0.6 source.** The
-collection schema, bags, storage/loadouts, meta home, housing, trade-up, run-end
-drops, pawn selling, and Gold Players Card rewards have landed. Steam
-Inventory/community-market work remains explicitly deferred. Proposed
-rent/upkeep and the removed `data/prestige/purchases.json` path are superseded
-by gold-purchased housing with no rent.
+The collection, home, housing, loadouts and trade-up systems use gold separately from run money. Housing is purchased without rent. Steam Inventory and the community market are deferred.
 
 Owner reference model: Counter-Strike item system (collections, rarity
 tiers, float values, trade-up contracts), adapted to the game - and designed
@@ -139,16 +133,13 @@ flavor).
   floats), gold balance, backpack loadout, meta-home state (housing, container
   furniture, placements), collection progress, trade-up/sale history.
 - **Strictly outside RunState.** Loadout injected once at run start; drops
-  and usage decay applied once at run end. No mid-run meta writes - SB.3
-  save fuzz and SB.5 determinism contracts stay untouched inside runs.
+  and usage decay applied once at run end. No mid-run meta writes.
 - The old `data/prestige/purchases.json` stub was removed. Prestige remains
   deferred rather than forming a second live meta system.
 
 ## 7. Meta-home (overarching home, outside the run)
 
-- The earlier run-side home work is archived at
-  `docs/todone/home_environment_feature_prompt.md`. The implemented meta home
-  is entered from the main menu and uses the shared environment rendering path.
+- Enter the meta home from the main menu. It uses the shared environment rendering path.
 - Interactions: browse collection, open bags (§5), pack backpack, trade-up
   station, and **pawn shop counter** (§9), plus one-time housing upgrades.
 - Housing upgrades are purchased once with gold. There is no rent or upkeep in
@@ -186,8 +177,7 @@ run bankroll. Gold buys housing upgrades (§7) and can fund future meta sinks.
 
 ## 10. Inventory rework
 
-- Builds on the extracted `RunInventoryScreen` + view model (verify in
-  docs/todone first) and the attribute glyph system (tier colors join the
+- Builds on the extracted `RunInventoryScreen` + view model and the attribute glyph system (tier colors join the
   glyph registry as class badges; float bands render as badges; bags render
   their collection + tier badges unopened).
 - One inventory component, two model sources: run inventory (existing view

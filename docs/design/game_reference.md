@@ -1,9 +1,6 @@
 # 0.6 Game Reference
 
-Updated 2026-10-08 from the feature-complete 0.6 source. This is the maintained
-reference for the playable game roster and every script under `scripts/games/`.
-It supersedes mechanic summaries in dated gate reports; those reports remain
-valid evidence for the source boundary they recorded.
+This is the reference for the playable game roster and the scripts under `scripts/games/`.
 
 The production catalog contains exactly 11 games, all marked
 `full_simulation` in `data/games/games.json`. Every game extends the shared

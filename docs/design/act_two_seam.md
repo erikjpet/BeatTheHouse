@@ -1,6 +1,6 @@
 # Act Two Seam Contract
 
-Status: **IMPLEMENTED AND ACTIVE in the current 0.6 source.** Runtime ownership remains in
+Runtime ownership remains in
 `scripts/core/run_state.gd`, `scripts/core/profile_inventory.gd`, and the
 terminal/profile handoff path. Act 2 content itself remains deferred.
 

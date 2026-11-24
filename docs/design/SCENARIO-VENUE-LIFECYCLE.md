@@ -71,6 +71,3 @@ installs an empty room or evaluates bankruptcy/stranding against it.
   through the normal map confirmation, one fare/time boundary, old causal
   journal and paid machines, repeated publication, Save/fresh-process Continue,
   synthetic invalid-destination rollback and historical terminal non-revival.
-
-The tests use isolated saves and authority companions. Original QA profiles
-and private authority material are not repository test fixtures.

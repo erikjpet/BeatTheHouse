@@ -1,15 +1,10 @@
 # Beat the House Content Style Guide
 
-Status: **ACTIVE for the current 0.6 development line.**
-
 This guide defines the release voice and copy guardrails for player-facing text
 in `data/` and obvious release-path script constants. It complements the
 existing compact-copy validators under `scripts/tests/foundation/`.
 
-The binding creative references are `docs/archive/0.5/plans/0.5_voice_bible.md` for the
-base cast/world voice and `docs/plans/0.6_voice_bible_world_register.md` for
-period methodology, narration registers, and the measurable brevity rule. This
-guide carries the compact UI limits and safety guardrails.
+The [world register](0.6_voice_bible_world_register.md) defines period methodology and narration. This guide carries the compact UI limits and safety guardrails.
 
 ## Release Voice
 
@@ -157,14 +152,3 @@ Public and in-game safety copy should stay consistent:
 
 Use "bankroll", "stake", "debt", "heat", and "run" for fiction. Avoid "deposit",
 "withdraw", "cash prize", "real-money", and similar product language.
-
-## Audit Checklist
-
-Before release:
-
-1. Run `rg` for TODO, placeholder, not implemented, coming soon, debug-only,
-   dev-only, and test-only in `data/` and release-path scripts.
-2. Confirm only documented follow-ups remain.
-3. Run `tools/validate_project.ps1`.
-4. Run the relevant `check_godot.ps1` foundation suites.
-5. Archive the owning prompt with the exact gate evidence.

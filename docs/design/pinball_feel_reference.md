@@ -1,11 +1,6 @@
 # Pinball Feel Reference - Ballionaire
 
-Status: **ACTIVE IMPLEMENTED FEEL REFERENCE** for the current 0.6 pinball
-feature. External storefront counts below are historical research
-snapshots from 2026-07-01, not current claims about another product.
-
-Date: 2026-07-01
-Binding phase: Phase 0 of `docs/plans/pinball_feature_rework_plan.md`
+External storefront counts below are historical research snapshots, not current claims.
 
 This document is the feel contract for the pinball feature rework. Later phase
 decisions should cite this file when tuning physics, pacing, event density,
