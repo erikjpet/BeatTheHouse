@@ -143,6 +143,7 @@ function Invoke-WebExportWithTravelCompression([string]$GodotPath, [string]$Expo
     # Keep the independent import project short enough for Windows file and Godot paths.
     $project = Join-Path $root ("builds/.web-import-" + [Guid]::NewGuid().ToString("N"))
     if (-not (Test-PathInside $project (Join-Path $root "builds"))) { throw "Web import project escapes its owned build root." }
+    if (Test-Path -LiteralPath $project) { throw "Fresh Web import project destination is occupied." }
     try {
         & $python.Source $helper stage $root $project
         if ($LASTEXITCODE -ne 0) { throw "Could not prepare the isolated Web import project." }
@@ -157,7 +158,10 @@ function Invoke-WebExportWithTravelCompression([string]$GodotPath, [string]$Expo
         return [int](Invoke-TypedConsoleProcess -FilePath $GodotPath -ArgumentList @("--headless", "--path", $project, $ExportFlag, $PresetName, $OutputPath))
     }
     finally {
-        if (Test-Path -LiteralPath $project -PathType Container) { Remove-Item -LiteralPath $project -Recurse -Force }
+        if (Test-Path -LiteralPath $project -PathType Container) {
+            if ((Get-Item -LiteralPath $project -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw "Refusing redirected Web import cleanup." }
+            Remove-Item -LiteralPath $project -Recurse -Force
+        }
     }
 }
 
