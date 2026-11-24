@@ -2163,8 +2163,13 @@ func _travel_to_first_game_environment_depth(app: Control, depth: int, visited_t
 		visited_targets[waypoint_id] = true
 		if not bool(app.call("select_travel_option", waypoint_id)):
 			continue
-		app.call("confirm_selected_travel")
-		await process_frame
+		var waypoint_run: RunState = app.get("run_state")
+		if waypoint_run == null:
+			return false
+		var waypoint_travel_count := waypoint_run.environment_travel_count()
+		if not bool(app.call("confirm_selected_travel")) \
+				or not await _complete_ui_test_travel(app, waypoint_run, waypoint_id, waypoint_travel_count):
+			return false
 		if await _travel_to_first_game_environment_depth(app, depth + 1, visited_targets):
 			return true
 		return false
@@ -2175,9 +2180,15 @@ func _travel_to_target_and_check_games(app: Control, target_id: String) -> bool:
 	if not bool(app.call("select_travel_option", target_id)):
 		return false
 	await process_frame
-	app.call("confirm_selected_travel")
-	await process_frame
-	app.call("select_action_category", "games")
+	var travel_run: RunState = app.get("run_state")
+	if travel_run == null:
+		return false
+	var travel_count_before := travel_run.environment_travel_count()
+	if not bool(app.call("confirm_selected_travel")) \
+			or not await _complete_ui_test_travel(app, travel_run, target_id, travel_count_before):
+		return false
+	if not bool(app.call("select_action_category", "games")):
+		return false
 	await process_frame
 	var traveled_snapshot: Dictionary = app.call("current_environment_view_snapshot")
 	var traveled_game_ids_value: Variant = traveled_snapshot.get("game_ids", [])
@@ -2185,6 +2196,25 @@ func _travel_to_target_and_check_games(app: Control, target_id: String) -> bool:
 	if typeof(traveled_game_ids_value) == TYPE_ARRAY:
 		traveled_game_ids = traveled_game_ids_value
 	return not traveled_game_ids.is_empty()
+
+
+func _complete_ui_test_travel(app: Control, expected_run: RunState, target_id: String, travel_count_before: int) -> bool:
+	for _travel_frame in range(24):
+		await process_frame
+		if app.get("run_state") != expected_run:
+			push_error("UI game travel replaced its captured run before arrival.")
+			return false
+		if expected_run.current_world_node_id() == target_id and not bool(app.get("travel_transition_active")):
+			break
+	if bool(app.get("travel_transition_active")) or expected_run.current_world_node_id() != target_id \
+			or expected_run.environment_travel_count() != travel_count_before + 1:
+		push_error("UI game travel did not commit its selected destination exactly once: target=%s actual=%s travels=%d/%d." % [target_id, expected_run.current_world_node_id(), expected_run.environment_travel_count(), travel_count_before + 1])
+		return false
+	# A real menu trip owns connected cinematic controls until its receipt closes.
+	# Reuse the same settlement and destination checks as the real Crew route.
+	if bool(app.get("travel_presentation_active")) or bool(expected_run.travel_journey_receipt.get("receipt_pending", false)):
+		return await _complete_crew_fixture_presentation(app, expected_run, expected_run.current_world_node_id())
+	return true
 
 
 func _check_web_travel_cannot_strand_transition(app: Control) -> bool:
@@ -3476,10 +3506,10 @@ func _enter_ui_test_game(app: Control) -> bool:
 		return false
 	for preferred_id in ["bar_dice", "blackjack", "video_poker", "pull_tabs"]:
 		if game_ids.has(preferred_id):
-			app.call("enter_game", preferred_id)
-			return true
+			return bool(app.call("enter_game", preferred_id))
+	# The fallback is a void production command; observe its actual result.
 	app.call("enter_first_available_game")
-	return true
+	return str(app.get("current_screen")) == FoundationMain.SCREEN_GAME and app.get("current_game") != null
 
 
 func _archetype_has_game(app: Control, archetype_id: String, game_id: String) -> bool:
