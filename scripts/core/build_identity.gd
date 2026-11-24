@@ -5,7 +5,6 @@ extends RefCounted
 # and telemetry identity without giving callers mutable manifest authority.
 
 const MANIFEST_PATH := "res://build_manifest.json"
-const RELEASE_VERSION := "0.6.1"
 const REQUIRED_FIELDS := [
 	"build_version",
 	"source_commit",
@@ -44,12 +43,17 @@ static func manifest_is_valid(value: Dictionary = {}) -> bool:
 	return true
 
 
+static func release_version() -> String:
+	return str(ProjectSettings.get_setting("application/config/version"))
+
+
 static func display_version() -> String:
+	var version := release_version()
 	if not _distribution_build():
-		return RELEASE_VERSION
+		return version
 	var value := manifest()
 	if manifest_is_valid(value):
-		return "%s (%s)" % [RELEASE_VERSION, str(value.get("source_commit", "")).left(12)]
+		return "%s (%s)" % [version, str(value.get("source_commit", "")).left(12)]
 	return "UNBOUND-DISTRIBUTION-BUILD"
 
 
