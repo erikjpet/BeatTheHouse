@@ -164,5 +164,5 @@ favor count, and default consequence-from `data/debt/lenders.json`. This keeps
 personality and visual design reusable while lender mechanics stay
 authoritative.
 
-Run `tools/validate_project.ps1` and the supported `ui` and `systems`
-Foundation suites after changing character content or rendering.
+After changing character content, run the core game tests in
+`tests/run_all.gd` and check the affected character in game.

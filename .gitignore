@@ -3,7 +3,6 @@
 .godot/
 *.translation
 *.uid
-!tools/archive/**/*.gd.uid
 *.import
 !assets/audio/music/**/*.wav.import
 .tmp/
@@ -38,7 +37,3 @@ Thumbs.db
 *.p12
 *.mobileprovision
 secrets/
-
-# Keep the native CJ2 custody pointer and failed atomic receipts in local QA storage.
-/evidence/crew-fresh-cj2-261116-native-custody.json
-/evidence/crew-fresh-cj2-261116-native-custody.json.*.pending

@@ -144,24 +144,10 @@ rechecks the plan and runs claim, wait and comped canonical travel under one
 lifecycle rollback boundary. The travel path checks the expected active home
 before installing it and before autosaving. There is no generic-home fallback.
 
-## Focused qualification
+## Checking offer changes
 
-Run in the qualified Godot 4.6.0 environment:
+Run `tests/run_all.gd`, then check the changed offer in game. For claim or
+travel changes, verify that an accepted offer applies exactly once and that a
+rejected action leaves the prior state intact.
 
-```text
-godot --headless --path . --script res://scripts/tests/character_offers_check.gd
-godot --headless --path . --script res://scripts/tests/character_offers_batch_two_check.gd
-godot --headless --path . --script res://scripts/tests/character_offers_roads_and_ride_check.gd
-godot --headless --path . --script res://scripts/tests/character_offer_canvas_actions_check.gd
-godot --headless --path . --script res://scripts/tests/character_offers_cache_check.gd
-godot --headless --path . --script res://scripts/tests/animation_liveness_without_pointer_check.gd
-```
-
-This contract exercises deterministic saved successes/misses, eligibility,
-expiry, shared Dot cycles, exactly-once action effects, stale responses,
-inventory ownership and canonical clock consequences, including Iris forecast
-and arrival safety. The roads-and-ride contract covers Ox's scouting gate,
-shared host cycles, Rafi's persisted alternative selection, invalid routes,
-the exact offered fare and rejected-travel rollback. Source-only parsing does
-not replace native qualification.
 No animation scheduling or rendering cadence is changed by the offer layer.
