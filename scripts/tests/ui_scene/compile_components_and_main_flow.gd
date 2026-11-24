@@ -2504,6 +2504,53 @@ func _check_family_loan_unknown_caller(app: Control) -> bool:
 	return await _check_crew_favor_conversation(app)
 
 
+func _complete_crew_fixture_presentation(app: Control, run_state: RunState, target_id: String) -> bool:
+	if app.get("run_state") != run_state or run_state.current_world_node_id() != target_id or bool(app.get("travel_transition_active")):
+		push_error("Crew route presentation did not begin from its same settled destination.")
+		return false
+	var settled := [run_state.bankroll, run_state.grand_casino_chips, run_state.game_clock_minutes,
+		run_state.current_world_node_id(), run_state.environment_travel_count(), run_state.rng_seed,
+		run_state.rng_state, run_state.suspicion, run_state.drunk_level, run_state.inventory.duplicate(true)]
+	var cinematic := app.get("travel_cinematic_overlay") as Control
+	if bool(app.get("travel_presentation_active")):
+		if cinematic == null or not cinematic.is_visible_in_tree() or not bool(cinematic.get("active")) \
+				or not cinematic.is_connected("completed", Callable(app, "_on_travel_presentation_completed")):
+			push_error("Crew route did not expose its active connected cinematic.")
+			return false
+		if str(cinematic.get("phase")) != "receipt":
+			var skip_button := cinematic.get("_skip") as Button
+			if skip_button == null or not skip_button.is_visible_in_tree() or skip_button.disabled \
+					or not skip_button.is_connected("pressed", Callable(cinematic, "skip_to_receipt")):
+				push_error("Crew route did not expose its visible enabled connected Skip control.")
+				return false
+			skip_button.pressed.emit()
+		else:
+			var continue_button := cinematic.get("_continue") as Button
+			if continue_button != null and continue_button.is_visible_in_tree():
+				if continue_button.disabled or not continue_button.is_connected("pressed", Callable(cinematic, "acknowledge")):
+					push_error("Crew receipt did not expose its enabled connected Continue control.")
+					return false
+				continue_button.pressed.emit()
+			# Fresh full-motion receipt completion is already deferred when no
+			# Continue is visible; await that existing callback without forcing it.
+	for _completion_frame in range(24):
+		await process_frame
+		if not bool(app.get("travel_presentation_active")) and not bool(run_state.travel_journey_receipt.get("receipt_pending", false)):
+			break
+	var preparation: Dictionary = app.get("travel_destination_preparation")
+	var after := [run_state.bankroll, run_state.grand_casino_chips, run_state.game_clock_minutes,
+		run_state.current_world_node_id(), run_state.environment_travel_count(), run_state.rng_seed,
+		run_state.rng_state, run_state.suspicion, run_state.drunk_level, run_state.inventory.duplicate(true)]
+	if app.get("run_state") != run_state or settled != after or bool(app.get("travel_transition_active")) \
+			or bool(app.get("travel_presentation_active")) or bool(run_state.travel_journey_receipt.get("receipt_pending", false)) \
+			or str(app.get("current_screen")) != FoundationMain.SCREEN_ENVIRONMENT \
+			or (cinematic != null and (bool(cinematic.get("active")) or cinematic.is_visible_in_tree())) \
+			or not bool(preparation.get("ready", false)):
+		push_error("Crew cinematic did not acknowledge and publish its same destination without a second settlement.")
+		return false
+	return true
+
+
 func _check_crew_favor_conversation(app: Control) -> bool:
 	if not await _check_delivery_ordinary_travel_baseline(app, "before delivery lifecycle"):
 		return false
@@ -2623,6 +2670,8 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 		if run_state.current_world_node_id() != segment_id:
 			push_error("Crew-favor route did not arrive at real segment %s: result=%s message=%s delivery=%s world_sequences=%s lifecycle_errors=%s." % [segment_id, JSON.stringify(segment_result), str(app.get("message_label").text), JSON.stringify(run_state.delivery_snapshot()), JSON.stringify(run_state.world_sequence_registrations), JSON.stringify(run_state.current_environment.get("scenario_sequence_lifecycle_errors", []))])
 			return false
+		if not await _complete_crew_fixture_presentation(app, run_state, segment_id):
+			return false
 		app.call("back_to_environment")
 		await process_frame
 	var generated_environment: Dictionary = run_state.current_environment
@@ -2632,6 +2681,24 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 		or (generated_environment.get("layout", {}) as Dictionary).is_empty() \
 		or run_state.game_clock_minutes <= clock_before:
 		push_error("Crew favor did not use normal travel and RunGenerator for its marked destination: %s" % JSON.stringify(generated_environment))
+		return false
+	var appointment := CrewDeliverySchedule.window_for(run_state.active_delivery_run, target_id)
+	if appointment.is_empty():
+		push_error("Crew conversation target has no authored appointment.")
+		return false
+	var opens := int(appointment.get("opens", -1))
+	if run_state.game_clock_minutes < opens:
+		var early_account := [run_state.bankroll, run_state.grand_casino_chips, run_state.suspicion_level(), run_state.rng_state, run_state.inventory.duplicate(true), run_state.crew_delivery_obligation_count()]
+		if bool(app.call("_complete_delivery_handoff", target_id)) or early_account != [run_state.bankroll, run_state.grand_casino_chips, run_state.suspicion_level(), run_state.rng_state, run_state.inventory, run_state.crew_delivery_obligation_count()]:
+			push_error("Early Crew handoff settled or changed the account.")
+			return false
+		var clock_result := run_state.advance_game_clock_minutes(opens - run_state.game_clock_minutes)
+		if not bool(clock_result.get("ok", false)):
+			push_error("Crew conversation could not advance to its actual appointment.")
+			return false
+		app.call("_refresh")
+	if not bool(run_state.delivery_arrival_interaction().get("available", false)):
+		push_error("Crew recipient did not become available at the authored opening.")
 		return false
 	var mounted_handoff_owner := run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", target_id)
 	var abstract_handoff_marker_visible := false
@@ -2678,24 +2745,6 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 			or str((contact_actions[0] as Dictionary).get("label", "")) != "Hand Over The Package":
 		push_error("Delivery arrival did not attach its owner-scoped handoff dialogue option to a destination person: active=%s delivery=%s owner=%s interaction=%s contact=%s registrations=%s lifecycle_errors=%s layout_audit=%s manifest_errors=%s objects=%s" % [str(run_state.delivery_has_active_run()), JSON.stringify(run_state.delivery_snapshot()), mounted_handoff_owner, JSON.stringify(arrival_interaction), JSON.stringify(delivery_contact), JSON.stringify(run_state.world_sequence_registrations), JSON.stringify(run_state.current_environment.get("scenario_sequence_lifecycle_errors", [])), JSON.stringify(run_state.current_environment.get("scenario_layout_audit", {})), JSON.stringify(run_state.current_environment.get("object_manifest_errors", [])), JSON.stringify(delivery_object_summary)])
 		return false
-	var appointment := CrewDeliverySchedule.window_for(run_state.active_delivery_run, target_id)
-	if appointment.is_empty():
-		push_error("Crew conversation target has no authored appointment.")
-		return false
-	var opens := int(appointment.get("opens", -1))
-	if run_state.game_clock_minutes < opens:
-		var early_account := [run_state.bankroll, run_state.grand_casino_chips, run_state.suspicion_level(), run_state.rng_state, run_state.inventory.duplicate(true), run_state.crew_delivery_obligation_count()]
-		if bool(app.call("_complete_delivery_handoff", target_id)) or early_account != [run_state.bankroll, run_state.grand_casino_chips, run_state.suspicion_level(), run_state.rng_state, run_state.inventory, run_state.crew_delivery_obligation_count()]:
-			push_error("Early Crew handoff settled or changed the account.")
-			return false
-		var clock_result := run_state.advance_game_clock_minutes(opens - run_state.game_clock_minutes)
-		if not bool(clock_result.get("ok", false)):
-			push_error("Crew conversation could not advance to its actual appointment.")
-			return false
-		app.call("_refresh")
-	if not bool(run_state.delivery_arrival_interaction().get("available", false)):
-		push_error("Crew recipient did not become available at the authored opening.")
-		return false
 	var bankroll_before_handoff := run_state.bankroll
 	var heat_before_handoff := run_state.suspicion_level()
 	if not bool(app.call("_complete_delivery_handoff", target_id)) or run_state.delivery_has_active_run() \
@@ -2703,6 +2752,27 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 			or run_state.crew_delivery_obligation_count() != 0 or not run_state.debt.is_empty() or not bool(run_state.narrative_flags.get("crew_marker_clear", false)) \
 			or run_state.bankroll != bankroll_before_handoff + 22 or run_state.suspicion_level() != heat_before_handoff + 4:
 		push_error("Physical handoff did not atomically clear its final Crew obligation/marker with the exact shipped rewards: bankroll=%d/%d heat=%d/%d debt=%s flags=%s." % [run_state.bankroll, bankroll_before_handoff, run_state.suspicion_level(), heat_before_handoff, JSON.stringify(run_state.debt), JSON.stringify(run_state.narrative_flags)])
+		return false
+	var remaining_handoff_contacts := 0
+	for object_value in app.call("_interactable_object_view_list"):
+		if typeof(object_value) == TYPE_DICTIONARY and bool((object_value as Dictionary).get("delivery_contact", false)):
+			remaining_handoff_contacts += 1
+	if run_state.inventory.has("crew_package") or remaining_handoff_contacts != 0:
+		push_error("Completed Crew handoff retained its package or repeatable delivery contact.")
+		return false
+	var settled_handoff := [run_state.bankroll, run_state.grand_casino_chips, run_state.suspicion_level(),
+		run_state.inventory.duplicate(true), run_state.crew_delivery_obligation_count(),
+		run_state.narrative_flags.duplicate(true), run_state.debt.duplicate(true), remaining_handoff_contacts]
+	var duplicate_handoff := bool(app.call("_complete_delivery_handoff", target_id))
+	var duplicate_handoff_contacts := 0
+	for object_value in app.call("_interactable_object_view_list"):
+		if typeof(object_value) == TYPE_DICTIONARY and bool((object_value as Dictionary).get("delivery_contact", false)):
+			duplicate_handoff_contacts += 1
+	var duplicate_account := [run_state.bankroll, run_state.grand_casino_chips, run_state.suspicion_level(),
+		run_state.inventory.duplicate(true), run_state.crew_delivery_obligation_count(),
+		run_state.narrative_flags.duplicate(true), run_state.debt.duplicate(true), duplicate_handoff_contacts]
+	if duplicate_handoff or duplicate_account != settled_handoff:
+		push_error("Duplicate Crew handoff did not reject without changing settled cash, Heat, package, obligation, flags, debt or contacts.")
 		return false
 	var inactive_snapshot: Dictionary = app.call("_world_map_snapshot")
 	if inactive_snapshot.has("courier_layer"):
