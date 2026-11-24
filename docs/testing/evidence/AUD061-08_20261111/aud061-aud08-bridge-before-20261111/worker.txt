@@ -1,1 +1,0 @@
-AUD061_08_BRIDGE {"checks":2,"failures":["Actual adapter has immediate lifecycle request API"],"scope":"Actual shipping adapter JavaScript, controlled engine promises; not IndexedDB or exported runtime evidence."}

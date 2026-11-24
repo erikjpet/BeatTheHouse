@@ -1,2 +1,0 @@
-To https://github.com/erikjpet/BeatTheHouse.git
-   e1f78f0c..15a3077f  main -> main
