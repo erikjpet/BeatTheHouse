@@ -140,7 +140,9 @@ function Invoke-WebExportWithLockedTemplate([string]$GodotPath, [string]$ExportF
 function Invoke-WebExportWithTravelCompression([string]$GodotPath, [string]$ExportFlag, [string]$PresetName, [string]$OutputPath, $Manifest, [switch]$UseLockedTemplate) {
     $python = Get-Command python -ErrorAction Stop
     $helper = Join-Path $PSScriptRoot "stage_web_texture_import.py"
-    $project = Join-Path (Split-Path -Parent (Split-Path -Parent $OutputPath)) ("web-import-" + [Guid]::NewGuid().ToString("N"))
+    # Keep the independent import project short enough for Windows file and Godot paths.
+    $project = Join-Path $root ("builds/.web-import-" + [Guid]::NewGuid().ToString("N"))
+    if (-not (Test-PathInside $project (Join-Path $root "builds"))) { throw "Web import project escapes its owned build root." }
     try {
         & $python.Source $helper stage $root $project
         if ($LASTEXITCODE -ne 0) { throw "Could not prepare the isolated Web import project." }
