@@ -52,7 +52,7 @@ function Get-ProjectVersion {
     throw "Could not read application/config version from project.godot."
 }
 
-function Get-SourceIdentity {
+function Get-SourceIdentity([string]$ProjectVersion) {
     $commit = (& git -C $root rev-parse HEAD).Trim().ToLowerInvariant()
     $tree = (& git -C $root rev-parse 'HEAD^{tree}').Trim().ToLowerInvariant()
     if ($LASTEXITCODE -ne 0 -or $commit -notmatch '^[0-9a-f]{40}$' -or $tree -notmatch '^[0-9a-f]{40}$') { throw "Could not resolve source commit/tree identity." }
@@ -68,7 +68,9 @@ function Get-SourceIdentity {
     $dirtyDigest = Get-StringSha256 $dirtyCanonical
     $short = $commit.Substring(0, 12)
     $dirtyShort = $dirtyDigest.Substring(0, 12)
-    $buildVersion = "0.6.0-dev+$short"
+    # Preserve the historical 0.5.1 packaging compatibility lane.
+    $buildBaseVersion = if ($ProjectVersion -eq "0.5.1") { "0.6.0" } else { $ProjectVersion }
+    $buildVersion = "$buildBaseVersion-dev+$short"
     return [ordered]@{
         source_commit = $commit
         source_tree = $tree
@@ -272,8 +274,11 @@ if ($QuarantineLegacyOnly) {
 if ($NoPackage -and $Push) { throw "-NoPackage cannot be combined with -Push." }
 if ($Push -and -not $ItchTarget) { throw "-Push requires -ItchTarget user/game-slug." }
 
-$identity = Get-SourceIdentity
 $projectVersion = Get-ProjectVersion
+if ($projectVersion -notmatch '^[0-9]+\.[0-9]+\.[0-9]+$') {
+    throw "Unexpected project version '$projectVersion'; expected a numeric major.minor.patch."
+}
+$identity = Get-SourceIdentity -ProjectVersion $projectVersion
 if ($identity.build_version -ceq $projectVersion) { throw "Refusing to package development source with immutable published identity $projectVersion." }
 if ($projectVersion -eq "0.5.1" -and $identity.build_version -notlike "0.6.0-dev+*") { throw "Published 0.5.1 source requires its immutable release record; this tool only creates 0.6 development identities." }
 $godot = Resolve-Godot
