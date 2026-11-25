@@ -28,6 +28,12 @@ it into Now.
 
 ## Bugs
 
+- Bringing a container home after a win can give it twice (it is offered again
+  after Continue) or lose it while still saying "Brought home" if a save fails.
+- A finished run can be counted twice in career totals if the game closes after
+  the profile saves but before the run does, and the player then continues.
+- Shipped builds show a Developer section in Settings: placement modes, Game
+  Library and Environment Library.
 - 9 items promise an effect that never applies: Foil Sleeve and Mags' Lined
   Sleeve (Slot odds), Wedding Ribbon Favor and Rent-Party Hat Pin (luck when a
   scene grants them; check the other 11 souvenirs), Creased Luck Card, Lucky
@@ -41,9 +47,8 @@ it into Now.
 - Crew Back Room door demands Made rank or an escort even after the Crew offer;
   check The Count can still be reached the intended way.
 - Roulette can rarely stay stuck on SEALED ACTION after Confirm and a reload.
-- 0.6.1 builds still say 0.6.0 outside the game menu (project.godot, exe file
-  properties, exporter package names). Fix the version source and exporter.
-- The performance test harness can be opened in shipped builds.
+- Release packages still carry a "-dev" build name, and the Windows exe has no
+  file or product version. Make the exporter and presets use the release version.
 - Video Poker: the first strategy hint takes over a second.
 - Blackjack and Scratch use about twice the frame time of 0.6.0. The CRT menu
   (and possibly Bar Dice, Video Poker, Buffalo Slots) allocates every frame.
