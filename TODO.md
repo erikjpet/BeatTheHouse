@@ -28,10 +28,7 @@ it into Now.
 
 ## Bugs
 
-- Crew Back Room door demands Made rank or an escort even after the Crew offer;
-  check The Count can still be reached the intended way.
-- Gas Station Casino storm-shelter props and people vanish after Continue or
-  after "Follow the tip".
+- The Gas Station can still advertise an active storm shelter after it closes.
 - Release packages still carry a "-dev" build name, and the Windows exe has no
   file or product version. Make the exporter and presets use the release version.
 - Video Poker: the first strategy hint takes over a second.
@@ -58,6 +55,8 @@ it into Now.
 
 ## Later
 
+- Decide how long the Gas Station storm shelter should stay open. It currently
+  closes after one town action, including "Follow the tip".
 - For the full 1.0.0 release, remove the Developer section, placement tools,
   and debug library links from player builds.
 - Voice and copy pass on all 0.6 text (Erik, by hand).

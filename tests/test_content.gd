@@ -13,6 +13,7 @@ func _run() -> void:
 	for failure in library.validation_errors:
 		failures.append(str(failure))
 	_check_crew_escort(library, failures)
+	_check_shelter_signage(library, failures)
 	if count == 0 or library.games.is_empty() or not library.validation_complete:
 		failures.append("The authored data catalog did not load.")
 	for failure in failures:
@@ -69,3 +70,17 @@ func _check_crew_escort(library: ContentLibrary, failures: Array[String]) -> voi
 	if restored.crew_reputation() != run.crew_reputation() \
 			or bool(restored.crew_standing().get("heist_eligibility", {}).get("the_count", false)):
 		failures.append("Entering with an escort granted rank or Count eligibility.")
+
+
+func _check_shelter_signage(library: ContentLibrary, failures: Array[String]) -> void:
+	var shelter_data := library.scenario("gas_station_storm_shelter")
+	var mutations: Dictionary = shelter_data.get("mutations", {})
+	var environment := {
+		"scenario_presentation": mutations.get("presentation", {}),
+		"scenario_sequence_state": {"status": "active"},
+	}
+	if not ScenarioEngine.active_presentation(environment).has("signage_line"):
+		failures.append("An active shelter lost its scenario sign.")
+	environment["scenario_sequence_state"] = {"status": "cleaned"}
+	if ScenarioEngine.active_presentation(environment).has("signage_line"):
+		failures.append("An expired shelter still advertised its active situation.")

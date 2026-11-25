@@ -13442,7 +13442,7 @@ func _render_prepared_environment_header() -> void:
 		structured_hud.set_compact_mode(_compact_run_hud_enabled())
 		structured_hud.render(hud_model)
 	if environment_header != null:
-		var scenario_presentation := JsonCoerceScript._copy_dict(run_state.current_environment.get("scenario_presentation", {}))
+		var scenario_presentation := ScenarioEngine.active_presentation(run_state.current_environment)
 		environment_header.render(
 			run_state.current_environment,
 			str(hud_model.get("goal_text", "")),
@@ -18702,6 +18702,7 @@ func _environment_view_snapshot() -> Dictionary:
 	})
 	# Interaction projection runs while the snapshot is assembled, so attach the
 	# resulting audit after that atomic projection has completed.
+	snapshot["scenario_presentation"] = ScenarioEngine.active_presentation(run_state.current_environment)
 	snapshot["scenario_layout_audit"] = JsonCoerceScript._copy_dict(run_state.current_environment.get("scenario_layout_audit", {}))
 	snapshot["scenario_layout_authority_digest"] = str(run_state.current_environment.get("scenario_layout_authority_digest", ""))
 	if user_settings != null and bool(user_settings.developer_slot_placement_mode):

@@ -1562,6 +1562,14 @@ static func reconcile_environment(environment: Dictionary, state_value: Variant)
 	_apply_exclusive_opportunity(environment)
 
 
+static func active_presentation(environment: Dictionary) -> Dictionary:
+	var presentation := JsonCoerceScript._copy_dict(environment.get("scenario_presentation", {}))
+	var sequence: Variant = environment.get("scenario_sequence_state", {})
+	if sequence is Dictionary and str(sequence.get("status", "")) == SequenceRuntimeScript.STATUS_CLEANED:
+		presentation.erase("signage_line")
+	return presentation
+
+
 static func public_snapshot(state_value: Variant) -> Dictionary:
 	var state := normalize_state(state_value)
 	if state.is_empty():
