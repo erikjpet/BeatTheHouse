@@ -33,9 +33,6 @@ it into Now.
 - Video Poker: the first strategy hint takes over a second.
 - Blackjack and Scratch use about twice the frame time of 0.6.0. The CRT menu
   (and possibly Bar Dice, Video Poker, Buffalo Slots) allocates every frame.
-- Scenario Souvenirs and Mags' Bench Gear packs are off by default, so players
-  get nothing from those rewards. Turning them on also adds 18 items to normal
-  shops; stop that first.
 - 9 items promise an effect that never applies: Foil Sleeve and Mags' Lined
   Sleeve (Slot odds), Wedding Ribbon Favor and Rent-Party Hat Pin (luck when a
   scene grants them; check the other 11 souvenirs), Creased Luck Card, Lucky
