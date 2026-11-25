@@ -32,26 +32,24 @@ it into Now.
   after Continue) or lose it while still saying "Brought home" if a save fails.
 - A finished run can be counted twice in career totals if the game closes after
   the profile saves but before the run does, and the player then continues.
-- Shipped builds show a Developer section in Settings: placement modes, Game
-  Library and Environment Library.
-- 9 items promise an effect that never applies: Foil Sleeve and Mags' Lined
-  Sleeve (Slot odds), Wedding Ribbon Favor and Rent-Party Hat Pin (luck when a
-  scene grants them; check the other 11 souvenirs), Creased Luck Card, Lucky
-  Keychain, Rabbit's Foot, Golden Motel Token (luck when equipped from home),
-  Cooler's Cufflinks (peek shield). Waits on the item review below.
-- Scenario Souvenirs and Mags' Bench Gear packs are off by default, so players
-  get nothing from those rewards. Turning them on also adds 18 items to normal
-  shops; stop that first.
-- Gas Station Casino storm-shelter props and people vanish after Continue or
-  after "Follow the tip".
+- Roulette can rarely stay stuck on SEALED ACTION after Confirm and a reload.
 - Crew Back Room door demands Made rank or an escort even after the Crew offer;
   check The Count can still be reached the intended way.
-- Roulette can rarely stay stuck on SEALED ACTION after Confirm and a reload.
+- Gas Station Casino storm-shelter props and people vanish after Continue or
+  after "Follow the tip".
 - Release packages still carry a "-dev" build name, and the Windows exe has no
   file or product version. Make the exporter and presets use the release version.
 - Video Poker: the first strategy hint takes over a second.
 - Blackjack and Scratch use about twice the frame time of 0.6.0. The CRT menu
   (and possibly Bar Dice, Video Poker, Buffalo Slots) allocates every frame.
+- Scenario Souvenirs and Mags' Bench Gear packs are off by default, so players
+  get nothing from those rewards. Turning them on also adds 18 items to normal
+  shops; stop that first.
+- 9 items promise an effect that never applies: Foil Sleeve and Mags' Lined
+  Sleeve (Slot odds), Wedding Ribbon Favor and Rent-Party Hat Pin (luck when a
+  scene grants them; check the other 11 souvenirs), Creased Luck Card, Lucky
+  Keychain, Rabbit's Foot, Golden Motel Token (luck when equipped from home),
+  Cooler's Cufflinks (peek shield). Waits on the item review below.
 
 ## Decide (Erik)
 
@@ -65,6 +63,8 @@ it into Now.
 
 ## Later
 
+- For the full 1.0.0 release, remove the Developer section, placement tools,
+  and debug library links from player builds.
 - Voice and copy pass on all 0.6 text (Erik, by hand).
 - Daily Challenge leaderboard, in the game only.
 - Heist plans C "The Jackpot Job" and D "Lights Out" are designed but not
