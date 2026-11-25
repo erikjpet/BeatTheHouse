@@ -515,6 +515,7 @@
       "id": "gas_station_storm_shelter",
       "archetype_id": "gas_station_casino",
       "display_name": "Storm Shelter",
+      "venue_window_minutes": 120,
       "weight": 7,
       "town_weight_tags": ["weather:rain", "weather:storm"],
       "mutations": {

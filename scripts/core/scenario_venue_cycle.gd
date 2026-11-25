@@ -6,6 +6,17 @@ const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const RuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const InstanceScript := preload("res://scripts/core/environment_instance.gd")
 
+static func window_minutes(definition: Dictionary) -> int:
+	return int(definition.get("venue_window_minutes", 0))
+
+
+static func with_scenario_deadline(cycle: Dictionary, record: Dictionary, now: int) -> Dictionary:
+	if str(record.get("cycle_id", "")) == str(cycle.cycle_id) and record.has("scenario_closes_at"):
+		cycle["closes_at"] = int(record["scenario_closes_at"])
+		cycle["active"] = bool(cycle.active) and now < int(cycle.closes_at)
+	return cycle
+
+
 static func cycle_for_existing_room(environment: Dictionary, archetype: Dictionary, now: int) -> Dictionary:
 	var stamp := str(environment.get("environment_situation_cycle_id", ""))
 	if stamp.begins_with("venue:v1:"):

@@ -51,8 +51,6 @@ it into Now.
 
 ## Later
 
-- Decide how long the Gas Station storm shelter should stay open. It currently
-  closes after one town action, including "Follow the tip".
 - For the full 1.0.0 release, remove the Developer section, placement tools,
   and debug library links from player builds.
 - Voice and copy pass on all 0.6 text (Erik, by hand).

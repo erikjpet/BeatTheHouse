@@ -5107,7 +5107,12 @@ func scenario_sequence_present() -> bool:
 
 func _scenario_sequence_uses_expiry_boundary(boundary: String) -> bool:
 	if not scenario_sequence_present(): return false
-	var sequence := ScenarioSequenceSchemaScript.sequence(_scenario_sequence_definition_readonly())
+	var definition := _scenario_sequence_definition_readonly()
+	# Keep the authored action expiry for replay of older save journals.
+	# Live timed situations retire through the venue clock.
+	if boundary == "town_action" and ScenarioVenueCycle.window_minutes(definition) > 0:
+		return false
+	var sequence := ScenarioSequenceSchemaScript.sequence(definition)
 	var expiry_value: Variant = sequence.get("expiry", {})
 	return typeof(expiry_value) == TYPE_DICTIONARY and str((expiry_value as Dictionary).get("boundary", "none")) == boundary
 
@@ -13680,7 +13685,7 @@ func _advance_environment_turns_candidate(amount: int) -> Dictionary:
 	if town_state != null:
 		if scenario_facts_active:
 			var town_after := town_state.public_snapshot()
-			if town_after != town_before:
+			if town_after != town_before and ScenarioVenueCycle.window_minutes(_scenario_sequence_definition_readonly()) == 0:
 				var happening_ids: Array = []
 				for happening_value in JsonCoerceScript._copy_array(town_after.get("active_happenings", [])):
 					if typeof(happening_value) != TYPE_DICTIONARY:
@@ -17801,7 +17806,7 @@ static func _normalize_environment_situation_cycles(value: Dictionary) -> Dictio
 			"cycle_id": cycle_id,
 			"scenario_id": str(record.get("scenario_id", "")).strip_edges(),
 		}
-		for key in ["schedule_version", "phase", "opened_at", "closes_at", "history", "base_profiles"]:
+		for key in ["schedule_version", "phase", "opened_at", "closes_at", "scenario_closes_at", "history", "base_profiles"]:
 			if record.has(key):
 				var retained: Variant = record.get(key)
 				result[node_id][key] = retained.duplicate(true) if typeof(retained) in [TYPE_ARRAY, TYPE_DICTIONARY] else retained

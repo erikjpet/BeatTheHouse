@@ -5,6 +5,8 @@ All notable public release changes for Beat the House are recorded here.
 ## Unreleased
 
 - Prevented the QA performance overlay from opening in player builds.
+- The Gas Station storm shelter lasts two in-game hours. Casino access follows
+  the station's normal hours throughout.
 
 ## 0.6.2
 

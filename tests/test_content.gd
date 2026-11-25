@@ -14,6 +14,7 @@ func _run() -> void:
 		failures.append(str(failure))
 	_check_crew_escort(library, failures)
 	_check_shelter_signage(library, failures)
+	_check_shelter_window(library, failures)
 	_check_reward_packs_stay_out_of_ordinary_shops(library, failures)
 	if count == 0 or library.games.is_empty() or not library.validation_complete:
 		failures.append("The authored data catalog did not load.")
@@ -85,6 +86,60 @@ func _check_shelter_signage(library: ContentLibrary, failures: Array[String]) ->
 	environment["scenario_sequence_state"] = {"status": "cleaned"}
 	if ScenarioEngine.active_presentation(environment).has("signage_line"):
 		failures.append("An expired shelter still advertised its active situation.")
+
+
+func _check_shelter_window(library: ContentLibrary, failures: Array[String]) -> void:
+	const VENUE := "gas_station_casino"
+	const SHELTER := "gas_station_storm_shelter"
+	var run := RunState.new()
+	run.start_new("CORE-STORM-SHELTER")
+	run.challenge_config["modifiers"] = {"scenario_pins": {VENUE: SHELTER}}
+	var generator := RunGenerator.new(library)
+	generator.next_environment(run, VENUE, true)
+	if str(run.current_environment.get("scenario_id", "")) != SHELTER:
+		failures.append("Could not enter the pinned Gas Station shelter: %s" % str(generator.environment_install_failure_snapshot()))
+		return
+	var started := run.game_clock_minutes
+	var deadline := int(run.environment_situation_cycle(VENUE).get("closes_at", -1))
+	if deadline != started + 120:
+		failures.append("The shelter did not receive a two-hour window.")
+		return
+	var games: Array = run.current_environment.get("game_ids", []).duplicate()
+	if games.is_empty():
+		failures.append("The open shelter left the Gas Station with no casino games.")
+		return
+	var turn := run.advance_environment_turns(1)
+	var sequence: Dictionary = run.current_environment.get("scenario_sequence_state", {})
+	if not bool(turn.get("ok", false)) or str(sequence.get("status", "")) != "active":
+		failures.append("One town action ended the shelter or failed: %s" % str(turn))
+		return
+	var restored := RunState.new()
+	restored.from_dict(run.to_dict())
+	var finalized := restored.scenario_finalize_installed_environment(library)
+	if not bool(finalized.get("ok", false)):
+		failures.append("Could not restore the shelter before its deadline: %s" % str(finalized))
+		return
+	restored.advance_game_clock_minutes(deadline - restored.game_clock_minutes - 1)
+	var before := generator.refresh_current_venue_scenario_cycle(restored)
+	if not bool(before.get("ok", false)) or str(restored.current_environment.get("scenario_id", "")) != SHELTER \
+			or int(restored.environment_situation_cycle(VENUE).get("closes_at", -1)) != deadline:
+		failures.append("Continue changed or ended the shelter window before its deadline: %s" % str(before))
+		return
+	restored.advance_game_clock_minutes(1)
+	var expired := generator.refresh_current_venue_scenario_cycle(restored)
+	var archetype := library.environment_archetype(VENUE)
+	if not bool(expired.get("ok", false)) or not str(restored.current_environment.get("scenario_id", "")).is_empty() \
+			or not restored.scenario_for_node(VENUE).is_empty():
+		failures.append("Shelter stayed available at its deadline: %s" % str(expired))
+	if not EnvironmentHours.environment_open_at(archetype, restored.game_minute_of_day()) \
+			or restored.current_environment.get("game_ids", []) != games:
+		failures.append("The shelter deadline changed ordinary casino access.")
+	if not generator._select_scenario(restored, VENUE, restored.create_rng("same_day")).is_empty():
+		failures.append("The shelter could reopen in the same daily cycle.")
+	restored.advance_game_clock_minutes(1440 - 120)
+	var next := generator._select_scenario(restored, VENUE, restored.create_rng("next_day"))
+	if str(next.get("id", "")) != SHELTER:
+		failures.append("The shelter could not be selected again the next day.")
 
 
 func _check_reward_packs_stay_out_of_ordinary_shops(library: ContentLibrary, failures: Array[String]) -> void:

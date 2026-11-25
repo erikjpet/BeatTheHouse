@@ -1068,6 +1068,8 @@ func _legacy_next_environment(run_state: RunState, target_archetype_id: String, 
 	var scenario := _select_scenario(run_state, str(archetype.get("id", "")), rng)
 	var environment := EnvironmentInstance.from_archetype(archetype, depth, rng, library, run_state.challenge_config, scenario)
 	var environment_data := environment.to_dict()
+	if ScenarioVenueCycleScript.window_minutes(scenario) > 0:
+		environment_data[ENVIRONMENT_SITUATION_CYCLE_KEY] = _environment_situation_cycle_id(run_state, str(archetype.get("id", "")))
 	var destination_id := str(environment_data.get("world_node_id", "")).strip_edges()
 	if destination_id.is_empty():
 		destination_id = str(environment_data.get("archetype_id", "")).strip_edges()
@@ -1243,15 +1245,30 @@ func refresh_current_venue_scenario_cycle(run_state: RunState, persist_world_roo
 	var now := run_state.game_clock_minutes
 	var cycle := EnvironmentHours.scenario_cycle_status(archetype, now)
 	var record := run_state.environment_situation_cycle(archetype_id)
-	var phase := "active" if bool(cycle.active) else "closed"
 	var stamp := str(source.get(ENVIRONMENT_SITUATION_CYCLE_KEY, ""))
+	var old_cycle := ScenarioVenueCycleScript.cycle_for_existing_room(source, archetype, now)
+	# Saves from before the timed window anchor it to the accepted room entry.
+	var installed_id := str(source.get("scenario_id", ""))
+	if not record.has("scenario_closes_at") and not installed_id.is_empty() \
+			and str(old_cycle.cycle_id) == str(cycle.cycle_id):
+		var window := ScenarioVenueCycleScript.window_minutes(library._scenario_readonly(installed_id))
+		if window > 0:
+			record = record.duplicate(false)
+			record["cycle_id"] = cycle.cycle_id
+			record["scenario_id"] = installed_id
+			var entered_at := int(source.get("entered_game_clock_minutes", now))
+			record["scenario_closes_at"] = mini(int(cycle.closes_at), entered_at + window)
+			# Require a publication even if the room's opening stamp is current.
+			record["schedule_version"] = 0
+	cycle = ScenarioVenueCycleScript.with_scenario_deadline(cycle, record, now)
+	old_cycle = ScenarioVenueCycleScript.with_scenario_deadline(old_cycle, record, now)
+	var phase := "active" if bool(cycle.active) else "closed"
 	# Town-wide priming can close this selection before its stored room is
 	# revisited. The opening stamp stays the same at close, so the global phase
 	# alone cannot prove that every retained room body has retired its scenario.
 	if stamp == str(cycle.cycle_id) and int(record.get("schedule_version", 0)) == 1 and str(record.get("phase", "")) == phase \
 			and (bool(cycle.active) or not _venue_cycle_room_has_retained_scenario(source)):
 		return {"ok": true, "changed": false}
-	var old_cycle := ScenarioVenueCycleScript.cycle_for_existing_room(source, archetype, now)
 	# Adopt a legacy accepted situation only while its recorded opening is still
 	# current. Closed/dead-zone and elapsed-cycle saves retire before rendering.
 	if int(record.get("schedule_version", 0)) != 1 and bool(cycle.active) and str(old_cycle.cycle_id) == str(cycle.cycle_id):
@@ -1351,6 +1368,7 @@ func _refresh_venue_scenario_cycle_candidate(run_state: RunState, archetype: Dic
 	# Keep that selection (including None) instead of rolling again with a changed
 	# recent-scenario history when a previously visited room is retired lazily.
 	if str(record.get("cycle_id", "")) != str(cycle.cycle_id):
+		record.erase("scenario_closes_at")
 		record.merge({"cycle_id": "retired:%s" % str(old_cycle.cycle_id), "scenario_id": "", "schedule_version": 1,
 			"phase": "closed", "opened_at": cycle.opened_at, "closes_at": cycle.closes_at}, true)
 	run_state.environment_situation_cycles_by_node[archetype_id] = record
@@ -1364,6 +1382,7 @@ func _refresh_venue_scenario_cycle_candidate(run_state: RunState, archetype: Dic
 	else:
 		_remember_scenario_situation(run_state, archetype_id, str(cycle.cycle_id), "")
 	record = run_state.environment_situation_cycle(archetype_id).duplicate(true)
+	cycle = ScenarioVenueCycleScript.with_scenario_deadline(cycle, record, run_state.game_clock_minutes)
 	record.merge({"schedule_version": 1, "phase": "active" if bool(cycle.active) else "closed", "opened_at": cycle.opened_at, "closes_at": cycle.closes_at}, true)
 	run_state.environment_situation_cycles_by_node[archetype_id] = record
 	var finished: Dictionary = {}
@@ -1723,7 +1742,15 @@ func _prime_town_scenarios(run_state: RunState, map_data: Dictionary) -> void:
 func _remember_scenario_situation(run_state: RunState, archetype_id: String, cycle_id: String, scenario_id: String) -> void:
 	run_state.remember_environment_situation_cycle(archetype_id, cycle_id, scenario_id)
 	var record := run_state.environment_situation_cycle(archetype_id).duplicate(true)
-	var cycle := EnvironmentHours.scenario_cycle_status(_archetype_by_id(archetype_id), run_state.game_clock_minutes)
+	var now := run_state.game_clock_minutes
+	var cycle := EnvironmentHours.scenario_cycle_status(_archetype_by_id(archetype_id), now)
+	if int(record.get("opened_at", cycle.opened_at)) != int(cycle.opened_at):
+		record.erase("scenario_closes_at")
+	if not scenario_id.is_empty() and not record.has("scenario_closes_at"):
+		var window := ScenarioVenueCycleScript.window_minutes(library._scenario_readonly(scenario_id))
+		if window > 0:
+			record["scenario_closes_at"] = mini(int(cycle.closes_at), now + window)
+	cycle = ScenarioVenueCycleScript.with_scenario_deadline(cycle, record, now)
 	record.merge({"schedule_version": 1, "phase": "active" if bool(cycle.active) else "closed", "opened_at": cycle.opened_at, "closes_at": cycle.closes_at}, true)
 	run_state.environment_situation_cycles_by_node[archetype_id] = record
 
@@ -1749,11 +1776,15 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 		if _world_environment_timing_enabled:
 			_world_scenario_select_stages_usec[archetype_id] = perf_stages
 		return {}
-	var cycle_id := _environment_situation_cycle_id(run_state, archetype_id)
-	if not bool(EnvironmentHours.scenario_cycle_status(_archetype_by_id(archetype_id), run_state.game_clock_minutes).get("active", false)):
+	var now := run_state.game_clock_minutes
+	var lifecycle := run_state.environment_situation_cycle(archetype_id)
+	var cycle := EnvironmentHours.scenario_cycle_status(_archetype_by_id(archetype_id), now)
+	var cycle_id := str(cycle.cycle_id)
+	cycle = ScenarioVenueCycleScript.with_scenario_deadline(cycle, lifecycle, now)
+	if not bool(cycle.active):
 		_remember_scenario_situation(run_state, archetype_id, cycle_id, "")
 		return {}
-	var lifecycle := run_state.environment_situation_cycle(archetype_id)
+	var minutes_remaining := int(cycle.closes_at) - now
 	if str(lifecycle.get("cycle_id", "")) == cycle_id:
 		var retained_id := str(lifecycle.get("scenario_id", "")).strip_edges()
 		if retained_id.is_empty():
@@ -1764,7 +1795,7 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 	if lifecycle.is_empty():
 		var legacy_seeded := run_state._seeded_scenario_definition_for_node_readonly(archetype_id)
 		var legacy_id := str(legacy_seeded.get("id", "")).strip_edges()
-		if not legacy_id.is_empty():
+		if not legacy_id.is_empty() and ScenarioVenueCycleScript.window_minutes(legacy_seeded) <= minutes_remaining:
 			_remember_scenario_situation(run_state, archetype_id, cycle_id, legacy_id)
 			var resolved_legacy := library._runtime_validated_scenario_definition(legacy_seeded) if validate_runtime else legacy_seeded
 			return _apply_scenario_pin_suppression(run_state, archetype_id, resolved_legacy)
@@ -1777,7 +1808,7 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 			if typeof(definition_value) != TYPE_DICTIONARY:
 				continue
 			var pinned: Dictionary = definition_value
-			if str(pinned.get("id", "")) == pinned_id:
+			if str(pinned.get("id", "")) == pinned_id and ScenarioVenueCycleScript.window_minutes(pinned) <= minutes_remaining:
 				run_state.remember_scenario_selection(archetype_id, pinned_id)
 				_remember_scenario_situation(run_state, archetype_id, cycle_id, pinned_id)
 				var resolved_pinned := library._runtime_validated_scenario_definition(pinned) if validate_runtime else library._runtime_scenario_definition_unvalidated(pinned)
@@ -1792,7 +1823,7 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 			continue
 		var definition: Dictionary = definition_value
 		var scenario_id := str(definition.get("id", "")).strip_edges()
-		if scenario_id.is_empty() or excluded_ids.has(scenario_id):
+		if scenario_id.is_empty() or excluded_ids.has(scenario_id) or ScenarioVenueCycleScript.window_minutes(definition) > minutes_remaining:
 			continue
 		candidates.append(definition)
 	if candidates.is_empty():

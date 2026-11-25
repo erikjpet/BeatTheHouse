@@ -3702,6 +3702,10 @@ func _validate_scenario_definitions() -> void:
 				validation_errors.append("environment_scenarios %s references unknown layer_id: %s" % [scenario_id, declared_layer_id])
 			if str(definition.get("display_name", "")).strip_edges().is_empty():
 				validation_errors.append("environment_scenarios %s is missing display_name." % scenario_id)
+			if definition.has("venue_window_minutes"):
+				var window: Variant = definition["venue_window_minutes"]
+				if not _variant_is_number(window) or float(window) != floor(float(window)) or float(window) < 1.0 or float(window) > 1440.0:
+					validation_errors.append("environment_scenarios %s venue_window_minutes must be a whole number from 1 to 1440." % scenario_id)
 			var weight_value: Variant = definition.get("weight", null)
 			if not _variant_is_number(weight_value) or float(weight_value) <= 0.0:
 				validation_errors.append("environment_scenarios %s weight must be positive." % scenario_id)

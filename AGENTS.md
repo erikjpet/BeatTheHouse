@@ -50,6 +50,7 @@ Nobody is watching to tell you to continue. Work until the request is done.
   what was done, what is left (and that it is in TODO.md).
 - Follow the rules at the top of TODO.md.
 - Scratch and QA output goes outside the repository and never on drive C:.
+- Use the approved `D:\CodexQA\BTH` root for local Windows QA runs.
 - These rules do not authorize extra permissions or portrait-mode app updates.
 
 ## Pushing (Erik, 2026-11-23)
