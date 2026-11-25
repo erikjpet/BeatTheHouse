@@ -67,6 +67,8 @@ func _run_source_case(project: String, test: String) -> bool:
 	var arguments := PackedStringArray([
 		"--headless", "--path", project, "--script", "res://tests/test_%s.gd" % test,
 	])
+	if test == "boot":
+		arguments.append_array(["--", "--bth_perf=1"])
 	var output: Array = []
 	var exit_code := OS.execute(executable, arguments, output, true)
 	var log_text := "".join(output)

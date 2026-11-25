@@ -1357,7 +1357,7 @@ func _consume_run_ui_script_prewarm_result(script_path: String) -> Variant:
 
 
 func _initialize_perf_telemetry() -> void:
-	if perf_telemetry_overlay != null or not _perf_telemetry_requested():
+	if PersistencePathsScript.distribution_build() or perf_telemetry_overlay != null or not _perf_telemetry_requested():
 		return
 	var overlay_script: Script = load(PERF_TELEMETRY_OVERLAY_PATH)
 	if overlay_script == null or not bool(overlay_script.call("runtime_enabled")):

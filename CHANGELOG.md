@@ -2,6 +2,10 @@
 
 All notable public release changes for Beat the House are recorded here.
 
+## Unreleased
+
+- Prevented the QA performance overlay from opening in player builds.
+
 ## 0.6.2
 
 - Fixed Windows startup positioning so the game opens on-screen in multi-monitor
