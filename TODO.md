@@ -28,7 +28,6 @@ it into Now.
 
 ## Bugs
 
-- Roulette can rarely stay stuck on SEALED ACTION after Confirm and a reload.
 - Crew Back Room door demands Made rank or an escort even after the Crew offer;
   check The Count can still be reached the intended way.
 - Gas Station Casino storm-shelter props and people vanish after Continue or

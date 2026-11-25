@@ -12,6 +12,7 @@ func _run() -> void:
 	library.load()
 	for failure in library.validation_errors:
 		failures.append(str(failure))
+	_check_crew_escort(library, failures)
 	if count == 0 or library.games.is_empty() or not library.validation_complete:
 		failures.append("The authored data catalog did not load.")
 	for failure in failures:
@@ -43,3 +44,28 @@ func _check_directory(path: String, failures: Array[String]) -> int:
 			if ResourceLoader.load(file) == null:
 				failures.append("Cannot load " + file)
 	return count
+
+
+func _check_crew_escort(library: ContentLibrary, failures: Array[String]) -> void:
+	var run := RunState.new()
+	run.start_new("CORE-ROOK-ESCORT")
+	var archetype := library.environment_archetype("small_underground_casino")
+	var casino := EnvironmentInstance.from_archetype_layer(archetype, "casino", 2, run.create_rng("casino"), library)
+	run.set_environment(casino.to_dict())
+	run.discover_environment_layer("back_room", "remembered")
+	var generator := RunGenerator.new(library)
+	if bool(generator.enter_environment_layer(run, "back_room", false).get("ok", false)):
+		failures.append("Remembering the Crew door granted access without a credential.")
+		return
+
+	# Rook's explicit invitation is an independent credential for this door.
+	run.story_flags["rook_escort_punchline_back_room"] = true
+	var restored := RunState.new()
+	restored.from_dict(run.to_dict())
+	var entered := generator.enter_environment_layer(restored, "back_room", false)
+	if not bool(entered.get("ok", false)) or str(entered.get("access_method", "")) != "rook_escort":
+		failures.append("The Crew door rejected a saved Rook escort: %s" % str(entered))
+		return
+	if restored.crew_reputation() != run.crew_reputation() \
+			or bool(restored.crew_standing().get("heist_eligibility", {}).get("the_count", false)):
+		failures.append("Entering with an escort granted rank or Count eligibility.")

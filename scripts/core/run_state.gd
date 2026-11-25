@@ -6048,8 +6048,6 @@ func install_environment_layer_state(layer_id: String, layer_state: Dictionary, 
 
 
 func _environment_layer_access_path_allows(path: Dictionary, discovery: Dictionary, target_id: String) -> bool:
-	if target_id == "back_room" and str(current_environment.get("archetype_id", "")) == "small_underground_casino" and crew_reputation() < CrewStateModelScript.rank_threshold("made"):
-		return false
 	if bool(path.get("requires_discovered", false)) and not bool(discovery.get(target_id, false)):
 		return false
 	var minimum_rank := str(path.get("min_crew_rank", "")).strip_edges()
