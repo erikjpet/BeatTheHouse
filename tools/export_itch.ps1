@@ -1,4 +1,4 @@
-# Produces manifest-bound development exports. Packaging always reads an
+# Produces manifest-bound development and release exports. Packaging always reads an
 # immutable commit/tree-keyed staging root; it never packages legacy loose
 # output and never deletes opaque artifacts under builds/.
 
@@ -6,6 +6,7 @@ param(
     [ValidateSet("all", "web", "windows")]
     [string]$Target = "all",
     [switch]$Debug,
+    [switch]$Release,
     [switch]$SkipExport,
     [switch]$NoPackage,
     [switch]$Push,
@@ -52,7 +53,7 @@ function Get-ProjectVersion {
     throw "Could not read application/config version from project.godot."
 }
 
-function Get-SourceIdentity([string]$ProjectVersion) {
+function Get-SourceIdentity([string]$ProjectVersion, [switch]$ReleaseBuild) {
     $commit = (& git -C $root rev-parse HEAD).Trim().ToLowerInvariant()
     $tree = (& git -C $root rev-parse 'HEAD^{tree}').Trim().ToLowerInvariant()
     if ($LASTEXITCODE -ne 0 -or $commit -notmatch '^[0-9a-f]{40}$' -or $tree -notmatch '^[0-9a-f]{40}$') { throw "Could not resolve source commit/tree identity." }
@@ -70,7 +71,8 @@ function Get-SourceIdentity([string]$ProjectVersion) {
     $dirtyShort = $dirtyDigest.Substring(0, 12)
     # Preserve the historical 0.5.1 packaging compatibility lane.
     $buildBaseVersion = if ($ProjectVersion -eq "0.5.1") { "0.6.0" } else { $ProjectVersion }
-    $buildVersion = "$buildBaseVersion-dev+$short"
+    if ($ReleaseBuild -and $dirty) { throw "Release builds require a clean source checkout." }
+    $buildVersion = if ($ReleaseBuild) { $ProjectVersion } else { "$buildBaseVersion-dev+$short" }
     return [ordered]@{
         source_commit = $commit
         source_tree = $tree
@@ -102,6 +104,17 @@ function Get-ExportPresetOption([string]$PresetName, [string]$OptionName) {
         if ($activeName -eq $PresetName -and $line -match "^$escaped=(.+)$") { return $Matches[1] }
     }
     throw "Could not read option '$OptionName' for export preset '$PresetName'."
+}
+
+function Assert-WindowsReleaseVersion([string]$ExecutablePath, [string]$ExpectedVersion) {
+    $versions = (Get-Item -LiteralPath $ExecutablePath).VersionInfo
+    $acceptedVersions = @($ExpectedVersion, "$ExpectedVersion.0")
+    foreach ($field in @("FileVersion", "ProductVersion")) {
+        $actual = ([string]$versions.$field).Trim()
+        if ($actual -cnotin $acceptedVersions) {
+            throw "Windows $field is '$actual', expected '$ExpectedVersion' (or '$ExpectedVersion.0'): $ExecutablePath"
+        }
+    }
 }
 
 function Assert-CleanDistributionOutput([string]$Directory) {
@@ -308,6 +321,7 @@ if ($QuarantineLegacyOnly) {
     Write-Host "BUILD QUARANTINE PASS moved=$($moved.Count)"
     return
 }
+if ($Release -and $Debug) { throw "-Release cannot be combined with -Debug." }
 if ($NoPackage -and $Push) { throw "-NoPackage cannot be combined with -Push." }
 if ($Push -and -not $ItchTarget) { throw "-Push requires -ItchTarget user/game-slug." }
 
@@ -315,8 +329,7 @@ $projectVersion = Get-ProjectVersion
 if ($projectVersion -notmatch '^[0-9]+\.[0-9]+\.[0-9]+$') {
     throw "Unexpected project version '$projectVersion'; expected a numeric major.minor.patch."
 }
-$identity = Get-SourceIdentity -ProjectVersion $projectVersion
-if ($identity.build_version -ceq $projectVersion) { throw "Refusing to package development source with immutable published identity $projectVersion." }
+$identity = Get-SourceIdentity -ProjectVersion $projectVersion -ReleaseBuild:$Release
 if ($projectVersion -eq "0.5.1" -and $identity.build_version -notlike "0.6.0-dev+*") { throw "Published 0.5.1 source requires its immutable release record; this tool only creates 0.6 development identities." }
 $godot = Resolve-Godot
 $engineHash = Get-Sha256 $godot
@@ -325,6 +338,7 @@ $candidateRoot = Join-Path $root "builds/staging/$($identity.candidate_key)"
 $candidateWorkRoot = Join-Path $root "builds/staging/.work/$($identity.candidate_key)"
 New-Item -ItemType Directory -Force -Path $candidateRoot | Out-Null
 $targets = if ($Target -eq "all") { @("windows", "web") } else { @($Target) }
+$exeName = "BeatTheHouse-$($identity.build_version)-windows-$($identity.source_short_commit)-$($identity.source_dirty_short).exe"
 $platforms = @{}
 $existingCandidate = Join-Path $candidateRoot "candidate_manifest.json"
 if (Test-Path -LiteralPath $existingCandidate) {
@@ -368,7 +382,6 @@ foreach ($platform in $targets) {
         -FinalAuditPath $auditPath `
         -UseExistingStage:$SkipExport
     $stage = [string]$attempt.attempt_stage
-    $exeName = "BeatTheHouse-$($identity.build_version)-windows-$($identity.source_short_commit)-$($identity.source_dirty_short).exe"
     $outFile = if ($platform -eq "web") { Join-Path $stage "index.html" } else { Join-Path $stage $exeName }
     $pipelineState = @{}
     $auditAction = {
@@ -386,6 +399,9 @@ foreach ($platform in $targets) {
             else {
                 Invoke-WebGlHandlesStage -Platform web -Mode apply -Stage $stage -OwnedRoot (Split-Path -Parent $stage) -ToolPath (Join-Path $PSScriptRoot "web_gl_handles.mjs")
             }
+        }
+        if ($Release -and $platform -eq "windows") {
+            Assert-WindowsReleaseVersion $outFile $projectVersion
         }
         Assert-CleanDistributionOutput $stage
         $pipelineState.native_output = Assert-NativeSolverExport $stage $platform
@@ -460,7 +476,7 @@ foreach ($platform in $targets) {
 }
 
 if ($NoPackage) {
-    Write-Host "Manifest-bound development export ready: $candidateRoot (no package or upload created)." -ForegroundColor Green
+    Write-Host "Manifest-bound export ready: $candidateRoot (no package or upload created)." -ForegroundColor Green
     return
 }
 $candidate = Read-CandidateManifest $candidateRoot $identity
@@ -471,6 +487,9 @@ foreach ($required in @("windows", "web")) {
     $actual = Get-ExportTreeIdentityFromDirectory $stage
     if ([string]$actual.aggregate_sha256 -cne [string]$entry.export_identity_sha256) { throw "$required staging tree changed after candidate registration." }
     if ($required -eq "web" -and $required -notin $targets) { Assert-WebPayloadBudget $stage }
+    if ($Release -and $required -eq "windows") {
+        Assert-WindowsReleaseVersion (Join-Path $stage $exeName) $projectVersion
+    }
     Invoke-WebGlHandlesStage -Platform $required -Mode verify -Stage $stage -ToolPath (Join-Path $PSScriptRoot "web_gl_handles.mjs")
 }
 

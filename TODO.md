@@ -28,7 +28,6 @@ it into Now.
 
 ## Bugs
 
-- The Gas Station can still advertise an active storm shelter after it closes.
 - Release packages still carry a "-dev" build name, and the Windows exe has no
   file or product version. Make the exporter and presets use the release version.
 - Video Poker: the first strategy hint takes over a second.
