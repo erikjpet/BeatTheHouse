@@ -33,7 +33,9 @@ func _check_container_recovery(app: FoundationMain) -> String:
 	app.library = ContentLibrary.new()
 	app.library.load(false)
 	app.run_state = RunState.new()
-	app.run_state.start_new("CORE-TERMINAL", {"modifiers": {"meta_collection_enabled": true}})
+	app.run_state.start_new("CORE-TERMINAL", {"mode": "standard", "modifiers": {"meta_collection_enabled": true}})
+	if not app.run_state.meta_collection_enabled_for_run():
+		return "The terminal reward fixture could not enable the Home collection."
 	app.run_state.run_status = RunState.RUN_STATUS_ENDED
 	app.run_state.add_item("backpack")
 	app.run_state.add_item("suitcase")
@@ -51,7 +53,7 @@ func _check_container_recovery(app: FoundationMain) -> String:
 	var interrupted := app._persist_victory_container_claim("backpack")
 	if bool(interrupted.get("ok", false)) or _container_count(app.meta_collection_service) != original_count + 1 \
 			or bool(app.run_state.narrative_flags.get(REPORT.TAKE_HOME_ITEM_EXTRACTED_FLAG, false)):
-		return "An interrupted acknowledgement did not leave one paid claim pending."
+		return "The run write did not leave one saved Home claim pending: %s" % str(interrupted)
 
 	app.save_service = SaveService.new()
 	app.run_state = app.save_service.load_run(app.autosave_slot_id) as RunState
