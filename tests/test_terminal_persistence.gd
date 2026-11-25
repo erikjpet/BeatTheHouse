@@ -22,6 +22,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	var app := MAIN.new()
+	app.RunReportViewModelScript = REPORT
 	var failure := _check_container_recovery(app)
 	app.free()
 	if not failure.is_empty():
