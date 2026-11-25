@@ -74,8 +74,8 @@ it into Now.
 - More object spots per room.
 - Cross-system balance review before any item change ships.
 - Tutorial test with five players who have never seen the game.
-- Play a run on a real phone: touch selection, 16:9 framing and the new
-  inventory icons were fixed but never tried on one.
+- Play a run on a real phone in landscape to check touch selection and the new
+  inventory icons.
 - Act 2: the hand-off from Act 1 is saved at victory; nothing else exists.
 
 ## Not now
