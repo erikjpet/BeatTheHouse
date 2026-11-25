@@ -14,6 +14,7 @@ func _run() -> void:
 		failures.append(str(failure))
 	_check_crew_escort(library, failures)
 	_check_shelter_signage(library, failures)
+	_check_reward_packs_stay_out_of_ordinary_shops(library, failures)
 	if count == 0 or library.games.is_empty() or not library.validation_complete:
 		failures.append("The authored data catalog did not load.")
 	for failure in failures:
@@ -84,3 +85,14 @@ func _check_shelter_signage(library: ContentLibrary, failures: Array[String]) ->
 	environment["scenario_sequence_state"] = {"status": "cleaned"}
 	if ScenarioEngine.active_presentation(environment).has("signage_line"):
 		failures.append("An expired shelter still advertised its active situation.")
+
+
+func _check_reward_packs_stay_out_of_ordinary_shops(library: ContentLibrary, failures: Array[String]) -> void:
+	var stock := library.shop_item_pool_for_challenge([])
+	if stock.is_empty():
+		failures.append("Reward-only items left ordinary shops with no stock.")
+	for group_id in ["scenario_souvenirs", "crew_gear"]:
+		var pack := library.content_group(group_id)
+		for item_id in pack.get("item_ids", []):
+			if not library.item_enabled_for_challenge(str(item_id)) or stock.has(item_id):
+				failures.append("Reward-only item %s is disabled or offered in ordinary shops." % str(item_id))

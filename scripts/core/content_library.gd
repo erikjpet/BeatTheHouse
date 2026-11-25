@@ -1025,12 +1025,17 @@ func shop_item_pool_for_challenge(archetype_item_pool: Variant, challenge_config
 		return result
 	var seen := _string_set(result)
 	var enabled := enabled_content_group_ids(challenge_config)
+	var reward_only_items := {}
+	for group_value in content_groups:
+		if group_value is Dictionary and not bool(group_value.get("random_shop_stock", true)):
+			for item_id in JsonCoerceScript._unique_string_array(group_value.get("item_ids", [])):
+				reward_only_items[item_id] = true
 	for item_value in items:
 		if typeof(item_value) != TYPE_DICTIONARY:
 			continue
 		var item_def: Dictionary = item_value
 		var item_id := str(item_def.get("id", "")).strip_edges()
-		if item_id.is_empty() or bool(seen.get(item_id, false)):
+		if item_id.is_empty() or seen.has(item_id) or reward_only_items.has(item_id):
 			continue
 		if not bool(item_def.get("sellable", true)):
 			continue
@@ -1946,6 +1951,8 @@ func _validate_content_group_definitions() -> void:
 		var group_id := str(group_def.get("id", "")).strip_edges()
 		if typeof(group_def.get("default_enabled", true)) != TYPE_BOOL:
 			validation_errors.append("content_groups %s default_enabled must be a boolean." % group_id)
+		if typeof(group_def.get("random_shop_stock", true)) != TYPE_BOOL:
+			validation_errors.append("content_groups %s random_shop_stock must be a boolean." % group_id)
 		_validate_id_references("content_groups %s game_ids" % group_id, group_def.get("game_ids", []), game_ids)
 		_validate_id_references("content_groups %s item_ids" % group_id, group_def.get("item_ids", []), item_ids)
 		for game_id in JsonCoerceScript._unique_string_array(group_def.get("game_ids", [])):
