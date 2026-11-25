@@ -28,8 +28,8 @@ it into Now.
 
 ## Bugs
 
-- Release packages still carry a "-dev" build name, and the Windows exe has no
-  file or product version. Make the exporter and presets use the release version.
+- Release packages still carry a "-dev" build name. The Windows and Web ZIPs
+  and Windows executable properties should use the release version.
 - Video Poker: the first strategy hint takes over a second.
 - Blackjack and Scratch use about twice the frame time of 0.6.0. The CRT menu
   (and possibly Bar Dice, Video Poker, Buffalo Slots) allocates every frame.

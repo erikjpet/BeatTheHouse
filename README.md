@@ -38,10 +38,8 @@ native Coin Pusher libraries for the export targets:
 .\tools\export_itch.ps1 -Target all
 ```
 
-For a public release, run `.\tools\export_itch.ps1 -Target all -Release` from a clean
-checkout. This uses the project version in the archive names and checks the
-Windows executable's file and product versions. The command above produces
-development candidates. Packaging does not publish the result.
+To export just one package, use `-Target windows` or `-Target web`.
+Packaging does not publish the result.
 
 ## Tests
 
