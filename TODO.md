@@ -28,8 +28,6 @@ it into Now.
 
 ## Bugs
 
-- Bringing a container home after a win can give it twice (it is offered again
-  after Continue) or lose it while still saying "Brought home" if a save fails.
 - A finished run can be counted twice in career totals if the game closes after
   the profile saves but before the run does, and the player then continues.
 - Roulette can rarely stay stuck on SEALED ACTION after Confirm and a reload.

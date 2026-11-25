@@ -22936,18 +22936,22 @@ func _record_profile_run_result_once(terminal_result: Dictionary = {}) -> void:
 		return
 	if profile_inventory == null:
 		_initialize_profile_inventory()
-	if run_state.run_status == RunState.RUN_STATUS_ENDED:
-		var seam_payload: Dictionary = run_state.act_two_seam_payload()
-		if not seam_payload.is_empty():
-			profile_inventory.record_act_seam(seam_payload)
-	var record_result: Dictionary = profile_inventory.record_run_result(_profile_run_result_snapshot(terminal_result))
-	if not bool(record_result.get("ok", false)):
+	var receipt := _terminal_persistence_receipt()
+	if receipt.is_empty():
 		return
-	var save_error := profile_inventory.save()
-	if save_error == OK:
-		run_state.narrative_flags["profile_run_result_recorded"] = true
-		if save_status_message.strip_edges().is_empty() or save_status_message == "Run not saved yet.":
-			save_status_message = "Profile updated."
+	if not profile_inventory.has_recorded_run_receipt(receipt):
+		# A cold Continue must be able to recover the receipt before the
+		# profile records this result, including after an interrupted exit.
+		if save_service == null or save_service.save_run(run_state, autosave_slot_id) != OK:
+			save_status_message = "Career result pending. The completed run could not be saved."
+			return
+		var seam := run_state.act_two_seam_payload() if run_state.run_status == RunState.RUN_STATUS_ENDED else {}
+		if profile_inventory.commit_run_result(receipt, _profile_run_result_snapshot(terminal_result), seam) != OK:
+			save_status_message = "Career result pending. The profile could not be saved."
+			return
+	run_state.narrative_flags["profile_run_result_recorded"] = true
+	if save_status_message.strip_edges().is_empty() or save_status_message == "Run not saved yet.":
+		save_status_message = "Profile updated."
 
 
 func _profile_run_result_snapshot(terminal_result: Dictionary = {}) -> Dictionary:

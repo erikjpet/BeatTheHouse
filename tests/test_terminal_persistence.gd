@@ -9,6 +9,11 @@ class CollectionWriteFailure extends MetaCollectionService:
 		return ERR_CANT_CREATE
 
 
+class ProfileWriteFailure extends ProfileInventory:
+	func save() -> Error:
+		return ERR_CANT_CREATE
+
+
 class RunAcknowledgementFailure extends SaveService:
 	func save_run(state: RunState, slot_id: String = "autosave") -> Error:
 		if bool(state.narrative_flags.get(REPORT.TAKE_HOME_ITEM_EXTRACTED_FLAG, false)):
@@ -24,6 +29,8 @@ func _run() -> void:
 	var app := MAIN.new()
 	app.RunReportViewModelScript = REPORT
 	var failure := _check_container_recovery(app)
+	if failure.is_empty():
+		failure = _check_profile_recovery(app)
 	app.free()
 	if not failure.is_empty():
 		push_error(failure)
@@ -74,3 +81,32 @@ func _check_container_recovery(app: FoundationMain) -> String:
 func _container_count(collection: MetaCollectionService) -> int:
 	var containers: Array = collection.snapshot()["owned_containers"]
 	return containers.size()
+
+
+func _check_profile_recovery(app: FoundationMain) -> String:
+	app.run_state = RunState.new()
+	app.run_state.start_new("CORE-CAREER")
+	app.run_state.run_status = RunState.RUN_STATUS_FAILED
+	app.run_state.run_failure_reason = RunState.FAILURE_BANKROLL_ZERO
+	app.autosave_slot_id = "terminal-career"
+	app.save_service = SaveService.new()
+	app.profile_inventory = ProfileWriteFailure.new()
+	app._record_profile_run_result_once()
+	if not app.profile_inventory.run_history.is_empty() or not app.profile_inventory.lifetime_stats.is_empty():
+		return "A failed profile write left a staged career result in memory."
+
+	app.profile_inventory = ProfileInventory.new()
+	app._record_profile_run_result_once()
+	if not bool(app.run_state.narrative_flags.get("profile_run_result_recorded", false)):
+		return "The terminal career result was not recorded."
+	# The run acknowledgement in memory intentionally has not been saved.
+	app.save_service = SaveService.new()
+	app.run_state = app.save_service.load_run(app.autosave_slot_id) as RunState
+	if app.run_state == null or bool(app.run_state.narrative_flags.get("profile_run_result_recorded", false)):
+		return "The test failed to restore the pre-acknowledgement generation."
+	app.profile_inventory = ProfileInventory.new()
+	app.profile_inventory.load()
+	app._record_profile_run_result_once()
+	if app.profile_inventory.run_history.size() != 1 or int(app.profile_inventory.lifetime_stats.get("total_runs", 0)) != 1:
+		return "Cold Continue recorded a career result twice."
+	return ""

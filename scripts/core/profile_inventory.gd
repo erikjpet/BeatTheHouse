@@ -18,7 +18,7 @@ const PROFILE_STORAGE_KEYS := [
 	"completed_challenge_flags", "run_history", "daily_runs",
 	"lifetime_stats", "act_seam", "scratch_ticket_types_discovered",
 	"scratch_ticket_collection_acknowledged", "tips_seen",
-	"tutorial_completed",
+	"tutorial_completed", "recorded_run_receipts",
 ]
 const CREW_STANDING_IDS := ["stranger", "marker", "associate", "made", "inner_circle"]
 const REFERENCE_CHIP_ID := "profile_poker_chip"
@@ -34,6 +34,7 @@ const REFERENCE_CHIP := {
 var items: Array = []
 var challenge_completions: Dictionary = {}
 var run_history: Array = []
+var _recorded_run_receipts: Dictionary = {}
 var daily_runs: Dictionary = {}
 var lifetime_stats: Dictionary = {}
 var act_seam: Dictionary = {}
@@ -82,6 +83,7 @@ func to_dict() -> Dictionary:
 		"items": items.duplicate(true),
 		"challenge_completions": challenge_completions.duplicate(true),
 		"run_history": run_history.duplicate(true),
+		"recorded_run_receipts": _recorded_run_receipts.duplicate(),
 		"daily_runs": daily_runs.duplicate(true),
 		"lifetime_stats": lifetime_stats.duplicate(true),
 		"act_seam": act_seam.duplicate(true),
@@ -103,6 +105,7 @@ func from_dict(data: Dictionary) -> void:
 	items = []
 	challenge_completions = _normalize_challenge_completions(data.get("challenge_completions", data.get("completed_challenge_flags", {})))
 	run_history = _normalize_run_history(data.get("run_history", []))
+	_recorded_run_receipts = _normalize_seen_map(data.get("recorded_run_receipts", {}))
 	daily_runs = _normalize_daily_runs(data.get("daily_runs", {}))
 	lifetime_stats = _normalize_lifetime_stats(data.get("lifetime_stats", {}))
 	act_seam = _normalize_act_seam(data.get("act_seam", {}))
@@ -247,6 +250,34 @@ func completed_challenge_rows() -> Array:
 			"completed_unix": maxi(0, int(entry.get("completed_unix", 0))),
 		})
 	return rows
+
+
+func has_recorded_run_receipt(receipt: String) -> bool:
+	return not receipt.is_empty() and _recorded_run_receipts.has(receipt)
+
+
+func commit_run_result(receipt: String, snapshot: Dictionary, seam: Dictionary = {}) -> Error:
+	if receipt.is_empty():
+		return ERR_INVALID_PARAMETER
+	if has_recorded_run_receipt(receipt):
+		return OK
+	var previous_history := run_history.duplicate(true)
+	var previous_stats := lifetime_stats.duplicate(true)
+	var previous_daily := daily_runs.duplicate(true)
+	var previous_seam := act_seam.duplicate(true)
+	if not bool(record_run_result(snapshot).get("ok", false)):
+		return ERR_INVALID_DATA
+	if not seam.is_empty():
+		record_act_seam(seam)
+	_recorded_run_receipts[receipt] = true
+	var error := save()
+	if error != OK:
+		run_history = previous_history
+		lifetime_stats = previous_stats
+		daily_runs = previous_daily
+		act_seam = previous_seam
+		_recorded_run_receipts.erase(receipt)
+	return error
 
 
 func record_run_result(snapshot: Dictionary) -> Dictionary:
