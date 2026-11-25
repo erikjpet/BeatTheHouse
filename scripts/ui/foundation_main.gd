@@ -27,6 +27,7 @@ const DEFAULT_SEED := "FOUNDATION-UI-SEED"
 const GENERATED_RUN_START_ATTEMPTS := 8
 const AUTOSAVE_SLOT := "foundation_ui_autosave"
 const TERMINAL_RESUME_CHECKPOINT_FLAG := "terminal_resume_checkpoint_saved"
+const TERMINAL_PERSISTENCE_RECEIPT_FLAG := "_terminal_persistence_receipt"
 const RELEASE_MENU_FRAMING := "Fictional casino roguelike. Simulated gambling only; no real-money wagering or cash prizes."
 const ACTION_CATEGORY_GAMES := "games"
 const ACTION_CATEGORY_EVENTS := "events"
@@ -7587,6 +7588,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 		run_report_model_key = ""
 		if run_state.run_status == RunState.RUN_STATUS_ENDED:
 			_persist_victory_bag_claim("", true)
+			_persist_victory_container_claim("", true)
 			_route_ended_run_if_needed()
 		else:
 			_route_failed_run_if_needed()
@@ -22844,45 +22846,72 @@ func _persist_victory_bag_claim(marker_id: String, recover_only: bool = false) -
 
 
 func claim_victory_container_item(item_id: String) -> void:
-	if _crt_practice_active():
+	if _crt_practice_active() or run_state == null or run_state.run_status != RunState.RUN_STATUS_ENDED:
 		return
-	if run_state == null or run_state.run_status != RunState.RUN_STATUS_ENDED:
-		return
+	var result := _persist_victory_container_claim(item_id)
+	_show_message(str(result.get("message", "Collection choice updated.")))
+	run_report_model_key = ""
+	_render_run_report()
+
+
+func _persist_victory_container_claim(item_id: String, recover_only: bool = false) -> Dictionary:
+	if _crt_practice_active() or run_state == null or run_state.run_status != RunState.RUN_STATUS_ENDED:
+		return {"ok": false}
 	if not run_state.meta_collection_enabled_for_run():
-		_show_message("Items cannot be brought home from this run type.")
-		return
-	if bool(run_state.narrative_flags.get(RunReportViewModelScript.TAKE_HOME_ITEM_EXTRACTED_FLAG, false)):
-		_show_message("A container was already brought home.")
-		return
-	var clean_id := item_id.strip_edges()
-	var choices := _victory_container_item_choices()
+		return {"ok": false, "message": "Items cannot be brought home from this run type."}
+	var flags := run_state.narrative_flags
+	if bool(flags.get(RunReportViewModelScript.TAKE_HOME_ITEM_EXTRACTED_FLAG, false)):
+		return {"ok": true, "message": "A container was already brought home."}
+	var receipt := str(flags.get(TERMINAL_PERSISTENCE_RECEIPT_FLAG, ""))
+	if recover_only and receipt.is_empty():
+		return {"ok": true}
+	if save_service == null:
+		return {"ok": false, "message": "Run storage is unavailable. The container remains pending."}
+	if meta_collection_service == null:
+		_initialize_meta_collection()
+	var grant := meta_collection_service.terminal_container_claim(receipt)
+	if recover_only and grant.is_empty():
+		return {"ok": true}
+
+	var selected_id := str(grant.get("item_id", item_id.strip_edges()))
 	var selected := {}
-	for choice_value in choices:
-		var choice := JsonCoerceScript._copy_dict(choice_value)
-		if str(choice.get("id", "")) == clean_id:
+	for choice: Dictionary in _victory_container_item_choices():
+		if str(choice.get("id", "")) == selected_id:
 			selected = choice
 			break
 	if selected.is_empty():
-		_show_message("That container is no longer available.")
-		return
-	if meta_collection_service == null:
-		_initialize_meta_collection()
-	var grant: Dictionary = meta_collection_service.grant_container(clean_id)
+		return {"ok": false, "message": "That container is no longer available."}
+
 	if grant.is_empty():
-		_show_message("That container cannot be brought home.")
-		return
-	var display_name := str(selected.get("display_name", _label_from_id(clean_id)))
-	run_state.narrative_flags[RunReportViewModelScript.TAKE_HOME_ITEM_EXTRACTED_FLAG] = true
-	run_state.narrative_flags[RunReportViewModelScript.TAKE_HOME_ITEM_ID_FLAG] = clean_id
-	run_state.narrative_flags[RunReportViewModelScript.TAKE_HOME_ITEM_LINE_FLAG] = "Brought home %s." % display_name
-	var save_error := meta_collection_service.save()
-	if save_error == OK:
-		save_status_message = "Container stored at home."
-		if save_service != null:
-			save_service.save_run(run_state, autosave_slot_id)
-	_show_message("Brought home %s." % display_name)
-	run_report_model_key = ""
-	_render_run_report()
+		receipt = _terminal_persistence_receipt()
+		if receipt.is_empty() or save_service.save_run(run_state, autosave_slot_id) != OK:
+			return {"ok": false, "message": "The reward could not be prepared. Choose the container to retry."}
+		var committed := meta_collection_service.commit_terminal_container_claim(receipt, selected_id)
+		if not bool(committed.get("ok", false)):
+			return committed
+
+	var display_name := str(selected.get("display_name", _label_from_id(selected_id)))
+	var summary := "Brought home %s." % display_name
+	flags[RunReportViewModelScript.TAKE_HOME_ITEM_EXTRACTED_FLAG] = true
+	flags[RunReportViewModelScript.TAKE_HOME_ITEM_ID_FLAG] = selected_id
+	flags[RunReportViewModelScript.TAKE_HOME_ITEM_LINE_FLAG] = summary
+	if save_service.save_run(run_state, autosave_slot_id) != OK:
+		flags.erase(RunReportViewModelScript.TAKE_HOME_ITEM_EXTRACTED_FLAG)
+		flags.erase(RunReportViewModelScript.TAKE_HOME_ITEM_ID_FLAG)
+		flags.erase(RunReportViewModelScript.TAKE_HOME_ITEM_LINE_FLAG)
+		save_status_message = "Container stored; run receipt save failed. Please retry."
+		return {"ok": false, "message": save_status_message}
+	save_status_message = "Container stored at home."
+	return {"ok": true, "resolved": true, "message": summary}
+
+
+func _terminal_persistence_receipt() -> String:
+	var receipt := str(run_state.narrative_flags.get(TERMINAL_PERSISTENCE_RECEIPT_FLAG, ""))
+	if receipt.is_empty():
+		receipt = Crypto.new().generate_random_bytes(16).hex_encode()
+		if not receipt.is_empty():
+			run_state.narrative_flags[TERMINAL_PERSISTENCE_RECEIPT_FLAG] = receipt
+	return receipt
 
 
 func _terminal_reward_selection_pending() -> bool:

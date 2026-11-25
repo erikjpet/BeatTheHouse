@@ -52,7 +52,7 @@ const STORE_STORAGE_KEYS := [
 	"housing_tier", "owned_containers", "loadout",
 	"starter_card_home_grant_applied", "meta_home", "trade_up_history",
 	"sale_history", "pending_sale", "pending_trade_up", "meta_rng",
-	"next_instance_id", "sal_resale", "terminal_bag_claims",
+	"next_instance_id", "sal_resale", "terminal_bag_claims", "terminal_container_claims",
 	"terminal_special_outcomes", "next_terminal_special_receipt_id",
 ]
 
@@ -449,6 +449,31 @@ func can_accept_owned_instance() -> bool:
 func trade_up_unlocked() -> bool:
 	var definition := housing_definition()
 	return bool(definition.get("trade_up", false))
+
+
+func terminal_container_claim(run_receipt: String) -> Dictionary:
+	var claims: Dictionary = _store.get("terminal_container_claims", {})
+	return JsonCoerceScript._copy_dict(claims.get(run_receipt, {}))
+
+
+func commit_terminal_container_claim(run_receipt: String, item_id: String) -> Dictionary:
+	if run_receipt.is_empty():
+		return {"ok": false, "message": "The completed run's reward receipt is unavailable."}
+	var existing := terminal_container_claim(run_receipt)
+	if not existing.is_empty():
+		return {"ok": true, "container": existing}
+	var before := snapshot()
+	var container := grant_container(item_id)
+	if container.is_empty():
+		return {"ok": false, "message": "That container cannot be brought home."}
+	var claims: Dictionary = _store["terminal_container_claims"]
+	claims[run_receipt] = container
+	if save() != OK:
+		_store = before
+		_rebuild_owned_instance_index()
+		_state_revision += 1
+		return {"ok": false, "message": "The container could not be saved. Choose it again to retry."}
+	return {"ok": true, "container": container}
 
 
 func grant_container(item_id: String) -> Dictionary:
@@ -1479,6 +1504,7 @@ func _normalize_store(data: Dictionary) -> Dictionary:
 	normalized["pending_sale"] = JsonCoerceScript._copy_dict(normalized.get("pending_sale", {}))
 	normalized["pending_trade_up"] = JsonCoerceScript._copy_dict(normalized.get("pending_trade_up", {}))
 	normalized["terminal_bag_claims"] = JsonCoerceScript._copy_dict(normalized.get("terminal_bag_claims", {}))
+	normalized["terminal_container_claims"] = JsonCoerceScript._copy_dict(normalized.get("terminal_container_claims", {}))
 	normalized["terminal_special_outcomes"] = JsonCoerceScript._copy_dict(normalized.get("terminal_special_outcomes", {}))
 	var next_receipt_id := maxi(1, int(normalized.get("next_terminal_special_receipt_id", 1)))
 	for receipt_value in normalized["terminal_special_outcomes"]:
