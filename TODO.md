@@ -28,8 +28,6 @@ it into Now.
 
 ## Bugs
 
-- A finished run can be counted twice in career totals if the game closes after
-  the profile saves but before the run does, and the player then continues.
 - Roulette can rarely stay stuck on SEALED ACTION after Confirm and a reload.
 - Crew Back Room door demands Made rank or an escort even after the Crew offer;
   check The Count can still be reached the intended way.

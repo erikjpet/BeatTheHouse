@@ -51,6 +51,8 @@ func _run() -> void:
 		var restored := await _play(game_id, true)
 		if not uninterrupted.is_empty() and not restored.is_empty() and uninterrupted != restored:
 			_fail(game_id, "settlement differs after restore: %s vs %s" % [uninterrupted, restored])
+		if game_id == "roulette":
+			await _check_interrupted_roulette_confirmation()
 	app.pending_autosave = false
 	app.save_service.wait_for_async_save()
 	for _frame in range(5):
@@ -112,9 +114,51 @@ func _play(game_id: String, reload: bool) -> Dictionary:
 	return settled
 
 
+func _check_interrupted_roulette_confirmation() -> void:
+	const SLOT := "roulette-confirm"
+	app.close_game_test_menu()
+	app.test_game = "roulette"
+	if not bool(app.start_game_test_session("roulette").get("ok", false)):
+		_fail("roulette", "could not enter the test wheel")
+		return
+	app.game_surface_canvas.set_process(false)
+	await _tick()
+	var offered := app.current_game.actions(app.run_state, app.run_state.current_environment)
+	if not await _stage_table_bet("roulette", offered):
+		return
+	var before := _account()
+	var command := app._sealed_action_host_surface_intent("roulette_spin", 0, true, app.test_time)
+	if (command.get("_sealed_action_host_delivery", {}) as Dictionary).is_empty():
+		_fail("roulette", "confirm did not stage a delivery")
+		return
+	app._prepare_foundation_run_save()
+	if app.save_service.save_run(app.run_state, SLOT) != OK:
+		_fail("roulette", "could not save the interrupted confirmation")
+		return
+	var restored := SaveService.new().load_run(SLOT) as RunState
+	if restored == null:
+		_fail("roulette", "could not load the interrupted confirmation")
+		return
+	app.test_time = 1000
+	if not await _resume_cabinet("roulette", restored, before):
+		return
+	var ledger := app._sealed_action_host_ledger(app.run_state, false, false)
+	if ledger.is_empty() or not (ledger.get("pending_delivery", {}) as Dictionary).is_empty():
+		_fail("roulette", "Continue left a sealed wager pending")
+		return
+	await _click("roulette_spin")
+	await _finish("roulette", {})
+	if _account()["entries"] <= int(before["entries"]):
+		_fail("roulette", "recovered table could not settle a wager")
+
+
 func _restore(game_id: String, snapshot: Dictionary, expected: Dictionary) -> bool:
 	var fresh := RunState.new()
 	fresh.from_dict(snapshot)
+	return await _resume_cabinet(game_id, fresh, expected)
+
+
+func _resume_cabinet(game_id: String, fresh: RunState, expected: Dictionary) -> bool:
 	if _account(fresh) != expected:
 		_fail(game_id, "fresh RunState changed cash, chips, items, or history")
 		return false
@@ -131,25 +175,31 @@ func _restore(game_id: String, snapshot: Dictionary, expected: Dictionary) -> bo
 	return true
 
 
+func _stage_table_bet(game_id: String, offered: Dictionary) -> bool:
+	var target := "red" if game_id == "roulette" else "banker"
+	var index := _target_index(game_id, target)
+	if index < 0:
+		_fail(game_id, "could not find legal target " + target)
+		return false
+	var view: Dictionary = app.game_surface_canvas.state
+	var stake := int(view.get("table_minimum", view.get("rules", {}).get("outside_min_each", offered.get("stake_floor", 1))))
+	var chips: Array = app.game_surface_canvas.state.get("chip_denominations", [])
+	var chip_index := chips.find(stake)
+	if chip_index < 0:
+		chip_index = 0
+	if chips.is_empty():
+		_fail(game_id, "could not find legal chip")
+		return false
+	await _click(game_id + "_chip", chip_index)
+	for _step in range(ceili(float(stake) / float(chips[chip_index]))):
+		await _click(game_id + "_bet", index)
+	return true
+
+
 func _begin(game_id: String, offered: Dictionary) -> Dictionary:
 	if game_id in ["roulette", "baccarat"]:
-		var target := "red" if game_id == "roulette" else "banker"
-		var index := _target_index(game_id, target)
-		if index < 0:
-			_fail(game_id, "could not find legal target " + target)
+		if not await _stage_table_bet(game_id, offered):
 			return {}
-		var view: Dictionary = app.game_surface_canvas.state
-		var stake := int(view.get("table_minimum", view.get("rules", {}).get("outside_min_each", offered.get("stake_floor", 1))))
-		var chips: Array = app.game_surface_canvas.state.get("chip_denominations", [])
-		var chip_index := chips.find(stake)
-		if chip_index < 0:
-			chip_index = 0
-		if chips.is_empty():
-			_fail(game_id, "could not find legal chip")
-			return {}
-		await _click(game_id + "_chip", chip_index)
-		for _step in range(ceili(float(stake) / float(chips[chip_index]))):
-			await _click(game_id + "_bet", index)
 		if game_id == "roulette":
 			await _click("roulette_spin")
 		return {"paid_on_finish": true}
