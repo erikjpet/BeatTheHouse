@@ -4,6 +4,8 @@ All notable public release changes for Beat the House are recorded here.
 
 ## 0.6.2
 
+- Fixed Windows startup positioning so the game opens on-screen in multi-monitor
+  setups.
 - The game, Windows executable properties, and Windows and Web downloads now
   report the same release version.
 - Reduced the Web download size.

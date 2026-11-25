@@ -9,9 +9,9 @@ that affect the odds.
 
 ## Download
 
-Get the [0.6.1 release](https://github.com/erikjpet/BeatTheHouse/releases/tag/v0.6.1).
-On Windows, extract the entire ZIP and open `BeatTheHouse.exe`. For the Web
-build, serve the extracted folder over HTTP and open `index.html`.
+Get the [latest release](https://github.com/erikjpet/BeatTheHouse/releases/latest).
+On Windows, extract the entire Windows ZIP and open the game executable inside.
+For the Web build, serve the extracted folder over HTTP and open `index.html`.
 
 ## Run from source
 
