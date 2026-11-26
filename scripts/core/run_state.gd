@@ -1646,7 +1646,7 @@ func reconcile_current_environment_object_manifest(refresh_layout: bool = false)
 # Runtime removals/additions must cross this seam before a detached candidate is
 # published or a room snapshot is persisted; a manifest without the matching
 # slot bindings is not a complete room state.
-func reconcile_environment_object_membership(environment: Dictionary) -> Dictionary:
+func reconcile_environment_object_membership(environment: Dictionary, publish_current: bool = true) -> Dictionary:
 	var legacy_rejection := _scratch_scalper_legacy_rejection_errors(environment)
 	if not legacy_rejection.is_empty():
 		return {"ok": false, "errors": legacy_rejection, "manifest": JsonCoerceScript._copy_dict(environment.get("object_manifest", {}))}
@@ -1661,8 +1661,10 @@ func reconcile_environment_object_membership(environment: Dictionary) -> Diction
 		if not message.is_empty() and not errors.has(message):
 			errors.append(message)
 	if is_same(environment, current_environment):
-		if errors.is_empty(): publish_room_presentation()
-		else: _room_presentation_publication = null
+		if not errors.is_empty():
+			_room_presentation_publication = null
+		elif publish_current:
+			publish_room_presentation()
 	return {
 		"ok": errors.is_empty(),
 		"errors": errors,
@@ -1817,8 +1819,17 @@ func _resolve_terminal_scenario_action_aliases(candidate: Dictionary) -> void:
 # Seals the current room and every durable alias that can restore it. Call this
 # on detached action candidates after changing manifest-backed source state and
 # before publication. The live RunState remains untouched if validation fails.
-func prepare_current_environment_object_membership_for_publication() -> Dictionary:
-	var reconciled := reconcile_environment_object_membership(current_environment)
+func prepare_current_environment_object_membership_for_publication(reuse_accepted_membership: bool = false) -> Dictionary:
+	if reuse_accepted_membership and _room_presentation_publication != null \
+			and not is_layered_environment() and not _is_grand_casino_environment(current_environment) \
+			and not _room_presentation_publication.proof_for_live_environment(current_environment).is_empty():
+		# A machine-only checkpoint can change stock or a visit token without
+		# changing geometry. Retain the exact matching proof, but update its
+		# durable room aliases with the newly settled machine.
+		return _store_current_published_environment_membership({
+			"ok": true, "errors": [], "manifest": JsonCoerceScript._copy_dict(current_environment.get("object_manifest", {})),
+		})
+	var reconciled := reconcile_environment_object_membership(current_environment, false)
 	if not bool(reconciled.get("ok", false)):
 		return reconciled
 	# Physical membership alone is not a published room. A completed loan or
@@ -1828,6 +1839,10 @@ func prepare_current_environment_object_membership_for_publication() -> Dictiona
 	var publication := publish_room_presentation()
 	if not bool(publication.get("ok", false)):
 		return publication
+	return _store_current_published_environment_membership(reconciled)
+
+
+func _store_current_published_environment_membership(reconciled: Dictionary) -> Dictionary:
 	if is_layered_environment():
 		_store_current_environment_layer_state_reconciled()
 	if _is_grand_casino_environment(current_environment):
@@ -3828,7 +3843,7 @@ func scenario_finalize_installed_environment(library: ContentLibrary, layout_con
 		if not bool(publication.get("ok", false)):
 			return publication
 		return finalized
-	return _scenario_finalize_trusted_base_semantics(JsonCoerceScript._copy_array(bound.get("records", [])), library, finalization_context)
+	return _scenario_finalize_trusted_base_semantics(JsonCoerceScript._copy_array(bound.get("records", [])), library, finalization_context, authoritative_environment)
 
 
 func _scenario_event_choice_authority(definition: Dictionary, library: ContentLibrary, environment_override: Dictionary = {}) -> Dictionary:
@@ -4134,7 +4149,7 @@ func scenario_finalize_base_semantics(interactable_records: Array, library: Cont
 	return _scenario_finalize_trusted_base_semantics(interactable_records, library, layout_context)
 
 
-func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: ContentLibrary, layout_context: Dictionary = {}) -> Dictionary:
+func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: ContentLibrary, layout_context: Dictionary = {}, authenticated_baseline: Dictionary = {}) -> Dictionary:
 	var legacy_rejection := _scratch_scalper_legacy_rejection_errors(current_environment)
 	if not legacy_rejection.is_empty():
 		return {"ok": false, "inactive": false, "errors": legacy_rejection}
@@ -4160,20 +4175,19 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	# remains part of that baseline seal. Authenticate the records against the
 	# same authoritative environment that produced them; checking the consumed
 	# live event list instead made an otherwise valid departure fail closed.
-	var semantic_environment := _scenario_authoritative_environment_for_finalization(definition)
+	var semantic_environment := authenticated_baseline.duplicate(false)
+	if semantic_environment.is_empty():
+		# The direct finalization entry has no previously validated envelope.
+		semantic_environment = _scenario_authoritative_environment_for_finalization(definition)
+		semantic_environment["layout"] = _scenario_refresh_authoritative_baseline_layout(semantic_environment, library)
+		var physical_errors := JsonCoerceScript._copy_array(EnvironmentInstance.object_manifest_errors(semantic_environment))
+		for error_value in JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(semantic_environment.get("layout", {})).get("placement_errors", [])):
+			var message := str(error_value).strip_edges()
+			if not message.is_empty() and not physical_errors.has(message):
+				physical_errors.append(message)
+		if not physical_errors.is_empty():
+			return _scenario_semantic_finalization_failure(physical_errors, refresh_attempt)
 	semantic_environment["scenario_base_producer_context"] = producer_context.duplicate(true)
-	# Rebuild the detached authority envelope before deriving its immutable
-	# inventory. A refresh may arrive with a missing or stale manifest even when
-	# its source selections are valid; hashing that incomplete envelope first
-	# would manufacture a different proof and only reconcile it afterward.
-	semantic_environment["layout"] = _scenario_refresh_authoritative_baseline_layout(semantic_environment, library)
-	var semantic_physical_errors := JsonCoerceScript._copy_array(EnvironmentInstance.object_manifest_errors(semantic_environment))
-	for error_value in JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(semantic_environment.get("layout", {})).get("placement_errors", [])):
-		var message := str(error_value).strip_edges()
-		if not message.is_empty() and not semantic_physical_errors.has(message):
-			semantic_physical_errors.append(message)
-	if not semantic_physical_errors.is_empty():
-		return _scenario_semantic_finalization_failure(semantic_physical_errors, refresh_attempt)
 	# `trusted_records` were produced from this detached pre-sequence baseline just
 	# above. Use that same authenticated slot envelope on the initial seal too: a
 	# layer-opening event can already be resolved before the destination layer gets
@@ -13755,8 +13769,43 @@ func _environment_turn_test_failure(stage: String) -> Dictionary:
 
 func _detached_environment_turn_candidate() -> RunState:
 	var candidate := get_script().new() as RunState
+	# These opaque capabilities identify the owner of a transaction. They carry
+	# no mutable state. Restore the detached models with the same owner so a
+	# settled trip or game action keeps the live sweep and Numbers bindings.
+	candidate._world1_host_capability = _world1_host_capability
+	candidate._numbers_host_capability = _numbers_host_capability
+	candidate._crew_job_host_capability = _crew_job_host_capability
+	candidate._crew_recruitment_host_capability = _crew_recruitment_host_capability
+	candidate._crew_heist_host_capability = _crew_heist_host_capability
 	candidate._apply_environment_turn_snapshot(_environment_turn_snapshot(), false)
 	return candidate
+
+
+func detached_world_travel_candidate() -> RunState:
+	# The queued clock boundary can change the source before it is stored.
+	# Detach its opaque machines in addition to the normal room transaction.
+	var candidate := _detached_environment_turn_candidate()
+	var source_states: Variant = current_environment.get("game_states")
+	if source_states is Dictionary:
+		candidate.current_environment["game_states"] = (source_states as Dictionary).duplicate(true)
+	candidate._room_event_membership_pending_context = _room_event_membership_pending_context.duplicate(true)
+	candidate._inventory_presentation_revision = _inventory_presentation_revision
+	return candidate
+
+
+func publish_world_travel_candidate(candidate: RunState) -> void:
+	# Travel installs a new room, including any aliases the destination owns.
+	# Keep the host's RunState and the bound town and numbers models in place.
+	_apply_environment_turn_snapshot(candidate._environment_turn_publish_snapshot(), true, true)
+	_room_event_membership_pending_context = candidate._room_event_membership_pending_context
+	_inventory_presentation_revision = candidate._inventory_presentation_revision
+	for key in candidate._inactive_storage_projections:
+		var prepared: RefCounted = candidate._inactive_storage_projections[key]
+		var prior: RefCounted = _inactive_storage_projections.get(key)
+		var retained := _inactive_storage_projection_bytes - (int(prior.retained_bytes) if prior != null else 0)
+		if retained + int(prepared.retained_bytes) <= INACTIVE_STORAGE_PROJECTION_BUDGET:
+			_inactive_storage_projections[key] = prepared
+			_inactive_storage_projection_bytes = retained + int(prepared.retained_bytes)
 
 
 # Sealed game actions begin from trusted live state, not hostile save bytes. Reuse
@@ -13982,12 +14031,12 @@ func _environment_turn_snapshot() -> Dictionary:
 	return snapshot
 
 
-func _apply_environment_turn_snapshot(snapshot: Dictionary, preserve_live_aliases: bool) -> void:
+func _apply_environment_turn_snapshot(snapshot: Dictionary, preserve_live_aliases: bool, replace_travel_roots: bool = false) -> void:
 	for field_name in TURN_TRANSACTION_SCALAR_FIELDS:
 		set(field_name, snapshot.get(field_name))
 	for field_name in TURN_TRANSACTION_COLLECTION_FIELDS:
 		var incoming: Variant = snapshot.get(field_name)
-		if not preserve_live_aliases:
+		if not preserve_live_aliases or (replace_travel_roots and field_name in ["current_environment", "world_map", "grand_casino_room_states"]):
 			# The snapshot already owns a detached graph. Installing its roots
 			# directly retains cross-field aliases inside the transaction candidate.
 			set(field_name, incoming)
@@ -16643,13 +16692,20 @@ func _inactive_storage_projection(key: String, environment: Dictionary, declined
 	return compiled
 
 
-func _prime_inactive_storage_projections() -> void:
+func prime_world_room_storage_projections(node_ids: Array[String] = []) -> void:
 	for node_value in world_map.get("nodes", []):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
+		var node_id := str(node_value.get("id", ""))
+		if not node_ids.is_empty() and not node_ids.has(node_id):
+			continue
 		var environment_value: Variant = node_value.get("environment", {})
 		if typeof(environment_value) == TYPE_DICTIONARY and not (environment_value as Dictionary).is_empty():
-			_inactive_storage_projection(str(node_value.get("id", "")), environment_value)
+			_inactive_storage_projection(node_id, environment_value)
+
+
+func _prime_inactive_storage_projections() -> void:
+	prime_world_room_storage_projections()
 	_grand_casino_room_states_for_save(false, true)
 
 

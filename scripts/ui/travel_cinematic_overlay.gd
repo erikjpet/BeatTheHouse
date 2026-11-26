@@ -19,6 +19,7 @@ const PAPER := Color("#f6edcc")
 
 var force_missing_art_for_test := false
 var focus_scope: RefCounted
+var completion_ready: Callable
 var active := false
 var phase := "idle"
 var elapsed := 0.0
@@ -28,6 +29,7 @@ var _mode := "bus"
 var _frame_choreography: Dictionary = {}
 var _sampled_elapsed := -1.0
 var _completion_latched := false
+var _room_acknowledgement_waiting := false
 var _presentation_generation := 0
 var _street: Texture2D
 var _backdrop: Texture2D
@@ -58,6 +60,11 @@ var _stage := Rect2()
 var _static := false
 var _auto_complete := false
 var _high_contrast := false
+var _departure_pending := false
+var _departure_skip_requested := false
+var _departure_art_thread: Thread
+var _wanted_departure_art: Array[String] = []
+var _departure_art: Dictionary = {}
 
 
 func _ready() -> void:
@@ -146,8 +153,72 @@ func _label(font_size: int, color: Color) -> Label:
 	return label
 
 
-func present(receipt: Dictionary, reduced_motion: bool = false, high_contrast: bool = false, text_scale: float = 1.0, receipt_only: bool = false, appearance_snapshot: Dictionary = {}) -> void:
+func present_departure(quote: Dictionary, high_contrast: bool, text_scale: float, appearance_snapshot: Dictionary) -> bool:
+	present(quote, false, high_contrast, text_scale, false, appearance_snapshot, true)
+	if _static:
+		cancel()
+		return false
+	return true
+
+
+func queue_departure_art(quote: Dictionary) -> void:
+	if OS.has_feature("web"):
+		return
+	var profile := CatalogScript.profile(quote)
+	var vehicle: Dictionary = profile.get("vehicle", {})
+	var paths: Array[String] = []
+	if bool(profile.get("supported", false)):
+		for path_value in [profile.get("street_path", ""), profile.get("background_path", ""),
+				profile.get("doorway_path", ""), vehicle.get("texture", ""), vehicle.get("interior_texture", "")]:
+			var path := str(path_value)
+			if not path.is_empty() and not paths.has(path):
+				paths.append(path)
+	_wanted_departure_art = paths
+	poll_departure_art()
+
+
+func poll_departure_art() -> bool:
+	if _departure_art_thread != null:
+		if _departure_art_thread.is_alive():
+			return false
+		var loaded: Variant = _departure_art_thread.wait_to_finish()
+		if loaded is Dictionary:
+			_departure_art.merge(loaded, true)
+		_departure_art_thread = null
+	for path in _departure_art.keys():
+		if not _wanted_departure_art.has(path):
+			_departure_art.erase(path)
+	var missing: Array[String] = []
+	for path in _wanted_departure_art:
+		if not _departure_art.has(path):
+			missing.append(path)
+	if missing.is_empty():
+		return true
+	_departure_art_thread = Thread.new()
+	if _departure_art_thread.start(_load_departure_art.bind(missing), Thread.PRIORITY_LOW) == OK:
+		return false
+	_departure_art_thread = null
+	# Thread startup can fail. The normal art loader remains available.
+	_wanted_departure_art.clear()
+	return true
+
+
+static func _load_departure_art(paths: Array[String]) -> Dictionary:
+	var art := {}
+	for path in paths:
+		art[path] = ResourceLoader.load(path, "Texture2D") if ResourceLoader.exists(path, "Texture2D") else null
+	return art
+
+
+func _exit_tree() -> void:
+	if _departure_art_thread != null:
+		_departure_art_thread.wait_to_finish()
+		_departure_art_thread = null
+
+
+func present(receipt: Dictionary, reduced_motion: bool = false, high_contrast: bool = false, text_scale: float = 1.0, receipt_only: bool = false, appearance_snapshot: Dictionary = {}, departure_pending: bool = false) -> void:
 	cancel()
+	_departure_pending = departure_pending
 	_receipt = receipt.duplicate(true)
 	_scene = CatalogScript.profile(_receipt)
 	_mode = str(_scene["mode"])
@@ -180,7 +251,7 @@ func present(receipt: Dictionary, reduced_motion: bool = false, high_contrast: b
 	_main_scene_atlas.atlas = _street
 	_main_scene_view.texture = _main_scene_atlas if _street != null else null
 	_title.text = str(_scene["title"])
-	_details.text = "%s  |  %d game min  |  %s" % [str(receipt.get("travel_method_label", "Travel")), int(receipt.get("base_minutes", 0)), _fare_text(int(receipt.get("quoted_departure_fare", 0)))]
+	_details.text = _journey_details(receipt)
 	if not receipt.has("base_minutes"):
 		_title.text = "JOURNEY RECEIPT"
 		_details.text = "Saved journey summary"
@@ -205,19 +276,54 @@ func present(receipt: Dictionary, reduced_motion: bool = false, high_contrast: b
 	move_to_front()
 	_layout()
 	if _static:
-		skip_to_receipt()
+		if not _departure_pending:
+			skip_to_receipt()
 	else:
 		set_process(true)
 		_focus_action(_skip)
 
+
+func confirm_departure(receipt: Dictionary) -> bool:
+	if not _departure_pending:
+		return false
+	for field in ["presentation_key", "effective_destination_archetype_id", "travel_method_kind"]:
+		if str(_receipt.get(field, "")) != str(receipt.get(field, "")):
+			cancel()
+			return false
+	if bool(receipt.get("route_risk", {}).get("triggered", false)):
+		cancel()
+		return false
+	_receipt = receipt.duplicate(true)
+	_departure_pending = false
+	_details.text = _journey_details(receipt)
+	_summary.text = str(receipt.get("receipt_text", "Journey complete."))
+	if _departure_skip_requested:
+		skip_to_receipt()
+	return true
+
+
+func departure_pending() -> bool:
+	return _departure_pending
+
+
 func _load_art(path: String) -> Texture2D:
 	if force_missing_art_for_test or path.is_empty() or not ResourceLoader.exists(path, "Texture2D"):
 		return null
+	if _departure_art.has(path):
+		return _departure_art[path] as Texture2D
 	return load(path) as Texture2D
 
 
 func _fare_text(fare: int) -> String:
 	return "No fare" if fare <= 0 else "$%d fare" % fare
+
+
+func _journey_details(receipt: Dictionary) -> String:
+	return "%s  |  %d game min  |  %s" % [
+		str(receipt.get("travel_method_label", "Travel")),
+		int(receipt.get("base_minutes", 0)),
+		_fare_text(int(receipt.get("quoted_departure_fare", 0))),
+	]
 
 
 func _process(delta: float) -> void:
@@ -227,7 +333,10 @@ func _process(delta: float) -> void:
 func advance_presentation(delta: float) -> void:
 	if not active or phase == "receipt":
 		return
-	elapsed = minf(DURATION_SECONDS, elapsed + maxf(0.0, delta))
+	# A quote can depict the approach. Entry, Skip, and receipt completion
+	# wait for the host to publish the committed trip.
+	var end_time := ArrivalTimelineScript.DOOR_REACH_SECONDS - 0.05 if _departure_pending else DURATION_SECONDS
+	elapsed = minf(end_time, elapsed + maxf(0.0, delta))
 	if elapsed >= DURATION_SECONDS:
 		skip_to_receipt()
 		return
@@ -260,6 +369,11 @@ func _contract_rect(value: Variant, scale_value: Vector2) -> Rect2:
 func skip_to_receipt() -> void:
 	if not active or phase == "receipt":
 		return
+	if _departure_pending:
+		_departure_skip_requested = true
+		_skip.text = "Finishing trip..."
+		_skip.disabled = true
+		return
 	phase = "receipt"
 	elapsed = DURATION_SECONDS
 	_caption.text = ""
@@ -289,16 +403,34 @@ func _acknowledge_finished_cinematic(generation: int) -> void:
 func acknowledge() -> void:
 	if not active or phase != "receipt" or _completion_latched:
 		return
+	if completion_ready.is_valid() and not bool(completion_ready.call()):
+		_room_acknowledgement_waiting = true
+		_continue.text = "Finishing trip..."
+		_continue.disabled = true
+		return
 	_completion_latched = true
 	var journey_id := str(_receipt.get("journey_id", ""))
 	cancel()
 	completed.emit(journey_id)
 
 
+func release_prepared_arrival() -> void:
+	if _room_acknowledgement_waiting:
+		acknowledge()
+
+
 func cancel() -> void:
 	# Invalidate queued completion even when a replacement has the same receipt.
 	_presentation_generation += 1
 	_sampled_elapsed = -1.0
+	_departure_pending = false
+	_departure_skip_requested = false
+	_room_acknowledgement_waiting = false
+	if _skip != null:
+		_skip.text = "Skip scene"
+		_skip.disabled = false
+	if _continue != null:
+		_continue.disabled = false
 	if focus_scope != null:
 		focus_scope.call("pop_scope", self)
 	active = false

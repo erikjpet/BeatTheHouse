@@ -1042,16 +1042,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			"message": "Bet set to $%d." % int(StateScript.selected_bet(machine).get("total_credits", 2)),
 		})
 	if _is_pinball_direct_bonus_action(surface_action):
-		return GameModule.surface_command({
-			"handled": true,
-			"action_id": surface_action,
-			"action_kind": "bonus",
-			"direct_resolve": true,
-			"skip_stake_validation": true,
-			"preserve_surface_ui_state": true,
-			"selected_index": index,
-			"message": "Bonus input.",
-		})
+		return _surface_bonus_input_command(surface_action, index, ui_state, machine)
 	match surface_action:
 		"slot_handpay_acknowledge":
 			return GameModule.surface_command({
@@ -1108,17 +1099,25 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 				"message": "Autoplay on." if bool(machine.get("slot_autoplay_active", false)) else "Autoplay off.",
 			})
 		"launch", "left", "right", "soft", "hard", "power_down", "power_up", "tilt", "slot_bonus_launch", "slot_bonus_left", "slot_bonus_right", "slot_bonus_power_down", "slot_bonus_power_up", "slot_bonus_soft", "slot_bonus_hard", "slot_bonus_tilt":
-			return GameModule.surface_command({
-				"handled": true,
-				"action_id": _normalize_bonus_action(surface_action),
-				"action_kind": "bonus",
-				"direct_resolve": true,
-				"skip_stake_validation": true,
-				"preserve_surface_ui_state": true,
-				"selected_index": index,
-				"message": "Bonus input.",
-			})
+			return _surface_bonus_input_command(_normalize_bonus_action(surface_action), index, ui_state, machine)
 	return {"handled": false}
+
+
+func _surface_bonus_input_command(action_id: String, index: int, ui_state: Dictionary, machine: Dictionary) -> Dictionary:
+	var active: Variant = BonusRecoveryScript.machine_view(machine, definition).get("active_bonus")
+	return GameModule.surface_command({
+		"handled": true,
+		"action_id": action_id,
+		"action_kind": "bonus",
+		"direct_resolve": true,
+		"skip_stake_validation": true,
+		"preserve_surface_ui_state": true,
+		"selected_index": index,
+		# Keep the visible frame clock staged by the host so the realtime solver,
+		# which runs independently of input, owns physics between controls.
+		"ui_state": ui_state if active is Dictionary and str(active.get("family", "")) == "pinball" else {},
+		"message": "Bonus input.",
+	})
 
 
 func surface_uses_auto_tick() -> bool:

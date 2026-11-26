@@ -28,16 +28,12 @@ it into Now.
 
 ## Bugs
 
-- On Windows, the first room can still pause for about a second after Play
-  shows preparation feedback.
-- On the first return from CRT Practice, restarting the room music can briefly pause the game.
-- On Windows, the Pinball slot bonus can still stutter on consecutive inputs.
 - Release packages still carry a "-dev" build name. The Windows and Web ZIPs
   and Windows executable properties should use the release version.
 - Blackjack and Scratch use about twice the frame time of 0.6.0. The CRT menu
   (and possibly Bar Dice, Video Poker, Buffalo Slots) allocates every frame.
-- The first Back Alley to Gas Station trip can still spend seconds preparing
-  before the animation starts. Destination entry can briefly hitch.
+- The first Back Alley to Gas Station ride can stutter while the destination
+  games load and the room opens.
 - Web tables other than Roulette can appear frozen between actions.
 - 9 items promise an effect that never applies: Foil Sleeve and Mags' Lined
   Sleeve (Slot odds), Wedding Ribbon Favor and Rent-Party Hat Pin (luck when a

@@ -237,15 +237,24 @@ func preview_for_target(map_data: Dictionary, target_id: String) -> Dictionary:
 static func normalize(map_data: Dictionary) -> Dictionary:
 	if map_data.is_empty():
 		return {}
-	var normalized := map_data.duplicate(true)
+	# The node normalizer already builds detached records, including the stored
+	# environment for each visited room. Copy the remaining envelope by itself
+	# so normalization visits every stored room only once.
+	var shell := map_data.duplicate(false)
+	var nodes: Variant = shell.get("nodes", [])
+	var edges: Variant = shell.get("edges", [])
+	shell.erase("nodes")
+	shell.erase("edges")
+	shell.erase("visited_path")
+	var normalized := shell.duplicate(true)
 	normalized["version"] = maxi(1, int(normalized.get("version", VERSION)))
 	normalized["seed_text"] = str(normalized.get("seed_text", ""))
 	normalized["start_node_id"] = str(normalized.get("start_node_id", ""))
 	normalized["current_node_id"] = str(normalized.get("current_node_id", normalized.get("start_node_id", "")))
 	normalized["revision"] = maxi(0, int(normalized.get("revision", 0)))
-	normalized["nodes"] = _normalize_nodes(JsonCoerceScript._copy_array(normalized.get("nodes", [])))
-	normalized["edges"] = _normalize_edges(JsonCoerceScript._copy_array(normalized.get("edges", [])))
-	normalized["visited_path"] = JsonCoerceScript._string_array(normalized.get("visited_path", []))
+	normalized["nodes"] = _normalize_nodes(nodes if nodes is Array else [])
+	normalized["edges"] = _normalize_edges(edges if edges is Array else [])
+	normalized["visited_path"] = JsonCoerceScript._string_array(map_data.get("visited_path", []))
 	return _enforce_beach_gateway_access(normalized)
 
 

@@ -193,6 +193,8 @@ var _deferred_transition_plan: Dictionary = {}
 var _generation_token: int = 0
 var _generation_mutex: Mutex = Mutex.new()
 var _generation_thread: Thread
+var _crt_title_master_thread: Thread
+var _crt_title_preparation_cancelled := false
 var _thread_cache_key: String = ""
 var _thread_token: int = 0
 var _thread_stage: String = ""
@@ -319,6 +321,9 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if _crt_title_preparation_cancelled and _crt_title_master_thread != null and not _crt_title_master_thread.is_alive():
+		_crt_title_master_thread.wait_to_finish()
+		_crt_title_master_thread = null
 	_feed_float_pcm_players()
 	_poll_generation_thread()
 	_poll_breakpoint_transition()
@@ -335,6 +340,9 @@ func _process(delta: float) -> void:
 func _exit_tree() -> void:
 	stop()
 	_join_generation_thread()
+	if _crt_title_master_thread != null:
+		_crt_title_master_thread.wait_to_finish()
+		_crt_title_master_thread = null
 	_ambient_stream_cache.clear()
 	_ambient_primer_cache.clear()
 	_ambient_instant_cache.clear()
@@ -609,6 +617,25 @@ func main_menu_theme_environment() -> Dictionary:
 	}
 
 
+# Native CRT entry can prepare the approved master while a run save is writing.
+# The worker owns only the immutable file bytes and does not touch audio players.
+func prepare_crt_practice_theme() -> void:
+	_crt_title_preparation_cancelled = false
+	if _crt_title_master_thread != null or not audio_enabled or _running_headless() or OS.has_feature("web"):
+		return
+	var worker := Thread.new()
+	if worker.start(_read_crt_title_master) == OK:
+		_crt_title_master_thread = worker
+
+
+func crt_practice_theme_preparation_pending() -> bool:
+	return _crt_title_master_thread != null and _crt_title_master_thread.is_alive()
+
+
+func cancel_crt_practice_theme_preparation() -> void:
+	_crt_title_preparation_cancelled = true
+
+
 # Presentation-only console composition. Keep its identity independent of the
 # title tour and every run's RNG, Heat, bankroll, and arrangement save state.
 func play_crt_practice_theme() -> void:
@@ -745,7 +772,10 @@ func play_for_environment_state(environment: Dictionary, heat_level: int, music_
 		return
 	_pending_cache_key = cache_key
 	var token := _advance_generation_token()
-	_play_instant_stem_bed(profile, cache_key)
+	# The generation request starts a cached primer immediately. Avoid
+	# synthesizing a temporary bed that it would replace before the next frame.
+	if not _ambient_primer_cache.has(cache_key):
+		_play_instant_stem_bed(profile, cache_key)
 	_request_ambient_generation(profile, cache_key, token)
 
 
@@ -5604,9 +5634,17 @@ func _authored_playback_loop_frames(entry: Dictionary) -> int:
 
 func _load_authored_audio_stream(path: String, loop_frames: int, loop_enabled: bool = true):
 	if path == CRT_TITLE_MASTER_PATH:
-		if not loop_enabled or loop_frames != CRT_TITLE_LOOP_FRAMES or FileAccess.get_sha256(path) != CRT_TITLE_MASTER_SHA256:
+		if not loop_enabled or loop_frames != CRT_TITLE_LOOP_FRAMES:
 			return null
-		var master := _load_authored_wav_stream(path, loop_frames, true) as AudioStreamWAV
+		var bytes: PackedByteArray
+		if _crt_title_master_thread == null:
+			bytes = _read_crt_title_master()
+		else:
+			bytes = _crt_title_master_thread.wait_to_finish()
+			_crt_title_master_thread = null
+		if bytes.is_empty():
+			return null
+		var master := _decode_authored_wav_stream(bytes, loop_frames, true) as AudioStreamWAV
 		if master == null or master.format != AudioStreamWAV.FORMAT_16_BITS or master.mix_rate != CRT_TITLE_SAMPLE_RATE or not master.stereo or master.data.size() != CRT_TITLE_LOOP_FRAMES * 4:
 			return null
 		return master
@@ -5626,6 +5664,16 @@ func _load_authored_audio_stream(path: String, loop_frames: int, loop_enabled: b
 	if loaded is AudioStream:
 		return loaded
 	return null
+
+
+static func _read_crt_title_master() -> PackedByteArray:
+	var bytes := FileAccess.get_file_as_bytes(CRT_TITLE_MASTER_PATH)
+	if bytes.is_empty():
+		return bytes
+	var hash := HashingContext.new()
+	if hash.start(HashingContext.HASH_SHA256) != OK or hash.update(bytes) != OK or hash.finish().hex_encode() != CRT_TITLE_MASTER_SHA256:
+		return PackedByteArray()
+	return bytes
 
 
 func _load_web_adpcm_stream(path: String, loop_frames: int, loop_enabled: bool = true):
@@ -5662,7 +5710,10 @@ func _configure_wav_loop(stream: AudioStreamWAV, loop_frames: int, loop_enabled:
 func _load_authored_wav_stream(path: String, loop_frames: int, loop_enabled: bool = true):
 	if not FileAccess.file_exists(path):
 		return null
-	var bytes := FileAccess.get_file_as_bytes(path)
+	return _decode_authored_wav_stream(FileAccess.get_file_as_bytes(path), loop_frames, loop_enabled)
+
+
+func _decode_authored_wav_stream(bytes: PackedByteArray, loop_frames: int, loop_enabled: bool):
 	if bytes.size() < 12:
 		return null
 	if _ascii_from_bytes(bytes, 0, 4) != "RIFF" or _ascii_from_bytes(bytes, 8, 4) != "WAVE":

@@ -671,8 +671,8 @@ func prepare_environment_presentation_boundary(run_state: RunState, environment:
 	# to this causal boundary. Commit it before the room manifest and hook list
 	# are paired, including a negative visit roll so later reads cannot reroll it.
 	var candidate := run_state.detached_host_action_candidate(get_id())
-	_ensure_machine_state(candidate, candidate.current_environment, true)
-	var membership := candidate.prepare_current_environment_object_membership_for_publication()
+	_ensure_machine_state(candidate, candidate.current_environment, true, false)
+	var membership := candidate.prepare_current_environment_object_membership_for_publication(true)
 	var proof := candidate.validate_room_action_authority() if bool(membership.get("ok", false)) else membership
 	if not bool(proof.get("ok", false)):
 		return {"ok": false, "changed": false, "errors": JsonCoerceScript._copy_array(proof.get("errors", []))}
@@ -2335,7 +2335,7 @@ static func _next_restock_after(absolute_minute: int, phase_minute: int) -> int:
 	return candidate
 
 
-func _advance_restock_schedule(run_state: RunState, environment: Dictionary, machine: Dictionary) -> bool:
+func _advance_restock_schedule(run_state: RunState, environment: Dictionary, machine: Dictionary, reconcile_membership: bool = true) -> bool:
 	if run_state == null:
 		return false
 	var scalper_was_present_at_entry := bool(machine.get("scalper_present", false))
@@ -2370,7 +2370,8 @@ func _advance_restock_schedule(run_state: RunState, environment: Dictionary, mac
 		changed = true
 	machine["restock_cursor_absolute_minute"] = cursor
 	machine["next_restock_absolute_minute"] = next_boundary
-	_reconcile_persisted_scalper_transition(environment, machine, run_state, scalper_was_present_at_entry)
+	if reconcile_membership:
+		_reconcile_persisted_scalper_transition(environment, machine, run_state, scalper_was_present_at_entry)
 	return changed
 
 
@@ -2403,7 +2404,7 @@ func _add_restock_tickets(machine: Dictionary, count: int, rng: RngStream) -> in
 	return added
 
 
-func _refresh_scalper_for_visit(run_state: RunState, environment: Dictionary, machine: Dictionary) -> bool:
+func _refresh_scalper_for_visit(run_state: RunState, environment: Dictionary, machine: Dictionary, reconcile_membership: bool = true) -> bool:
 	if run_state == null:
 		return false
 	var scalper_was_present := bool(machine.get("scalper_present", false))
@@ -2413,14 +2414,16 @@ func _refresh_scalper_for_visit(run_state: RunState, environment: Dictionary, ma
 		machine["scalper_present"] = false
 		machine["scalper_knows_schedule"] = false
 		machine["scalper_visit_token"] = visit_token
-		_reconcile_persisted_scalper_transition(environment, machine, run_state, scalper_was_present)
+		if reconcile_membership:
+			_reconcile_persisted_scalper_transition(environment, machine, run_state, scalper_was_present)
 		return practice_changed
 	if run_state.is_tutorial_run():
 		var tutorial_changed := bool(machine.get("scalper_present", false)) or bool(machine.get("scalper_knows_schedule", false))
 		machine["scalper_present"] = false
 		machine["scalper_knows_schedule"] = false
 		machine["scalper_visit_token"] = visit_token
-		_reconcile_persisted_scalper_transition(environment, machine, run_state, scalper_was_present)
+		if reconcile_membership:
+			_reconcile_persisted_scalper_transition(environment, machine, run_state, scalper_was_present)
 		return tutorial_changed
 	var same_visit := visit_token == str(machine.get("scalper_visit_token", ""))
 	if same_visit and (bool(machine.get("scalper_present", false)) or _stock_total(machine) > 0):
@@ -2434,7 +2437,8 @@ func _refresh_scalper_for_visit(run_state: RunState, environment: Dictionary, ma
 	machine["scalper_present"] = present
 	machine["scalper_knows_schedule"] = knows_schedule
 	machine["scalper_cleared_count"] = _clear_machine_stock(machine) if present else 0
-	_reconcile_persisted_scalper_transition(environment, machine, run_state, scalper_was_present)
+	if reconcile_membership:
+		_reconcile_persisted_scalper_transition(environment, machine, run_state, scalper_was_present)
 	return true
 
 
@@ -2698,7 +2702,7 @@ func _ticket_region_upgrade_needed(ticket: Dictionary) -> bool:
 	return int(first_region.get("sample_total", 0)) <= 0
 
 
-func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist: bool) -> Dictionary:
+func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist: bool, reconcile_membership: bool = true) -> Dictionary:
 	var states_value: Variant = environment.get("game_states", {})
 	var states: Dictionary = states_value as Dictionary if typeof(states_value) == TYPE_DICTIONARY else {}
 	var value: Variant = states.get(get_id(), {})
@@ -2708,8 +2712,8 @@ func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist
 		# Project elapsed restocks and the visit-scoped scalper on the owned copy
 		# used by presentation reads. Persistent callers receive the same
 		# deterministic projection and commit it at their action boundary.
-		_refresh_scalper_for_visit(run_state, environment, machine)
-		_advance_restock_schedule(run_state, environment, machine)
+		_refresh_scalper_for_visit(run_state, environment, machine, reconcile_membership)
+		_advance_restock_schedule(run_state, environment, machine, reconcile_membership)
 		if persist:
 			_sync_portable_ticket_state(run_state, environment, machine)
 		else:
@@ -2717,8 +2721,8 @@ func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist
 		return machine
 	var generated := _generate_machine_state(run_state, environment, null)
 	_normalize_machine_state(generated, run_state)
-	_refresh_scalper_for_visit(run_state, environment, generated)
-	_advance_restock_schedule(run_state, environment, generated)
+	_refresh_scalper_for_visit(run_state, environment, generated, reconcile_membership)
+	_advance_restock_schedule(run_state, environment, generated, reconcile_membership)
 	if persist:
 		_sync_portable_ticket_state(run_state, environment, generated)
 	else:
@@ -2727,7 +2731,8 @@ func _ensure_machine_state(run_state: RunState, environment: Dictionary, persist
 		var writable_states := states.duplicate(false)
 		writable_states[get_id()] = generated
 		environment["game_states"] = writable_states
-		_reconcile_scalper_membership(environment, run_state)
+		if reconcile_membership:
+			_reconcile_scalper_membership(environment, run_state)
 	return generated
 
 

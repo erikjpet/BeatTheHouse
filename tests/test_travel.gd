@@ -128,6 +128,7 @@ func _check_roadside_map_scout(app) -> String:
 
 
 func _travel(app) -> String:
+	app.user_settings.reduce_motion = false
 	if not app.start_foundation_run("STANDARD-TRAVEL-back_alley-0", {"modifiers": {"home_archetype_id": "back_alley"}}, false):
 		return "Could not start a fresh seeded travel run."
 	var run: RunState = app.run_state
@@ -139,6 +140,7 @@ func _travel(app) -> String:
 	var chips_before := run.grand_casino_chips
 	var items_before := run.inventory.duplicate(true)
 	var count_before := run.environment_travel_count()
+	var clock_before := run.game_clock_minutes
 	if not app.open_world_map() or not app.select_world_map_node(DESTINATION):
 		return "The world map did not accept the quoted route."
 	app.world_map_confirm_button.pressed.emit()
@@ -146,8 +148,20 @@ func _travel(app) -> String:
 			or run.environment_travel_count() != count_before:
 		return "The Travel button committed the route before its departure preparation."
 	var deadline := Time.get_ticks_msec() + 20000
+	var skipped_departure := false
 	while not app._pending_player_map_travel.is_empty() and Time.get_ticks_msec() < deadline:
 		await process_frame
+		if (not skipped_departure and is_instance_valid(app.travel_cinematic_overlay)
+				and app.travel_cinematic_overlay.departure_pending()):
+			if (run.bankroll != cash_before or run.game_clock_minutes != clock_before
+					or run.environment_travel_count() != count_before or not run.travel_journey_receipt.is_empty()):
+				return "The departure choreography published travel before settlement."
+			app.travel_cinematic_overlay.skip_to_receipt()
+			if not app.travel_cinematic_overlay.departure_pending() or app.travel_cinematic_overlay.phase == "receipt":
+				return "Skipping a pending departure displayed a receipt before settlement."
+			skipped_departure = true
+	if not skipped_departure:
+		return "The queued route did not show its departure before settlement."
 	var journey := str(run.travel_journey_receipt.get("journey_id", ""))
 	if app.travel_presentation_active and is_instance_valid(app.travel_cinematic_overlay):
 		app.travel_cinematic_overlay.skip_to_receipt()

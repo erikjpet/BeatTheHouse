@@ -1,6 +1,8 @@
 extends SceneTree
 
 const MAIN := preload("res://scripts/ui/foundation_main.gd")
+const SLOT_STATE := preload("res://scripts/games/slots/slot_machine_state.gd")
+const PINBALL := preload("res://scripts/games/slots/pinball/pinball_feature.gd")
 const SEED := "CORE-MONEY"
 
 # Play on the actual Foundation host; direct module simulation cannot commit
@@ -55,6 +57,8 @@ func _run() -> void:
 			await _check_interrupted_roulette_confirmation()
 		elif game_id == "baccarat":
 			await _check_baccarat_all_in_confirmation()
+		elif game_id == "slot":
+			await _check_pinball_sealed_controls()
 	app.pending_autosave = false
 	app.save_service.wait_for_async_save()
 	for _frame in range(5):
@@ -445,6 +449,43 @@ func _accounted(game_id: String, before: Dictionary, start: int, after: Dictiona
 		_fail(game_id, "wallet totals differ from per-action net: %s + %s/%s != %s" % [before, cash_delta, chips_delta, after])
 		return false
 	return true
+
+
+func _check_pinball_sealed_controls() -> void:
+	const GAME := "slot"
+	app.close_game_test_menu()
+	app.test_game = GAME
+	if not bool(app.start_game_test_session(GAME).get("ok", false)):
+		_fail(GAME, "could not enter the Pinball test cabinet")
+		return
+	app.game_surface_canvas.set_process(false)
+	var run := app.run_state
+	var environment := run.current_environment
+	var state_key := app.current_game_state_key
+	var machine := SLOT_STATE.read_machine(environment, state_key)
+	var active := PINBALL.new().open(machine, "em_bumper_drop", 10, run.create_rng("sealed_pinball_clock"))
+	machine["active_bonus"] = active
+	machine["slot_bonus_trigger_revealed"] = true
+	SLOT_STATE.write_runtime_machine(environment, state_key, machine)
+	app._refresh()
+	await _tick()
+
+	# The two isolated proposals must apply controls to the same visible frame.
+	# Only realtime progression may advance the ball after the control is sealed.
+	var bankroll := run.bankroll
+	for action in ["slot_bonus_launch", "slot_bonus_left", "slot_bonus_right", "slot_bonus_power_64"]:
+		var tick_before := int(PINBALL.live_status(active).get("tick", -1))
+		app._on_game_surface_action(action, 0, false)
+		var live := PINBALL.live_status(active)
+		if not bool(app.last_game_result.get("ok", false)) or str(app.last_game_result.get("action_id", "")) != action \
+				or int(live.get("active_ball_count", 0)) <= 0 or int(live.get("tick", -1)) != tick_before \
+				or app.run_state.bankroll != bankroll:
+			_fail(GAME, "a sealed Pinball control changed physics time or settled an active ball: %s" % action)
+			return
+	var before_refresh := int(PINBALL.live_status(active).get("tick", -1))
+	await _tick()
+	if int(PINBALL.live_status(active).get("tick", -1)) <= before_refresh:
+		_fail(GAME, "the live Pinball ball did not move on the realtime refresh")
 
 
 func _account(run: RunState = null) -> Dictionary:

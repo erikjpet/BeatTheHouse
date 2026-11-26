@@ -249,6 +249,16 @@ func _trusted_scenario_install_data(run_state: RunState, environment_data: Dicti
 # Production travel facade. Legacy generation still returns EnvironmentInstance,
 # while this closed result lets callers distinguish a rejected departure from an
 # arrival at the unchanged source room.
+# The detached native travel worker can compile the durable projections of the
+# two rooms it changed. Autosave still verifies every projection before use.
+func prepare_player_world_travel(run_state: RunState, target_id: String) -> Dictionary:
+	var source_id := run_state.current_world_node_id()
+	var result := travel_environment_result_with_caller_rollback(run_state, target_id, true)
+	if bool(result.get("ok", false)):
+		run_state.prime_world_room_storage_projections([source_id, target_id])
+	return result
+
+
 func travel_environment_result_with_caller_rollback(run_state: RunState, target_archetype_id: String, target_prevalidated: bool = false) -> Dictionary:
 	var previous_owner := _caller_owns_result_rollback
 	_caller_owns_result_rollback = true
