@@ -28,12 +28,23 @@ it into Now.
 
 ## Bugs
 
+- Grand Casino High Limit Baccarat skips the all-in warning and can end the run
+  on the first Deal click when the wager uses every remaining chip.
+- Roadside Map: selecting a newly revealed stop hides its scouted games,
+  services, lenders, and shop stock.
+- On Windows, starting a fresh run can freeze the menu for several seconds
+  before the starting room appears.
+- Leaving CRT Practice can freeze the game before the previous room returns.
+- On Windows, Roulette can stutter during the spin and while the ball settles.
+- On Windows, the Pinball slot bonus can stutter during play.
 - Release packages still carry a "-dev" build name. The Windows and Web ZIPs
   and Windows executable properties should use the release version.
-- Video Poker: the first strategy hint takes over a second.
+- Video Poker: the Poker Hat can take over a second after Deal to show which
+  cards to hold.
 - Blackjack and Scratch use about twice the frame time of 0.6.0. The CRT menu
   (and possibly Bar Dice, Video Poker, Buffalo Slots) allocates every frame.
-- Travel can pause before the animation starts or hitch while preparing the destination.
+- Travel can freeze for seconds before the animation starts, especially on the
+  first Back Alley to Gas Station trip. Destination prep can hitch too.
 - Web tables other than Roulette can appear frozen between actions.
 - 9 items promise an effect that never applies: Foil Sleeve and Mags' Lined
   Sleeve (Slot odds), Wedding Ribbon Favor and Rent-Party Hat Pin (luck when a
