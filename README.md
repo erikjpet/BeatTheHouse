@@ -35,11 +35,19 @@ native Coin Pusher libraries for the export targets:
 .\tools\install_export_templates.ps1
 .\tools\build_native_solver.ps1 -Platform Windows -Target template_release
 .\tools\build_native_solver.ps1 -Platform Web -Target template_release
-.\tools\export_itch.ps1 -Target all
+.\tools\export_itch.ps1 -Target all -NoPackage
 ```
 
-To export just one package, use `-Target windows` or `-Target web`.
-Packaging does not publish the result.
+For a release, use the `candidate_manifest.json` from the staging directory
+printed after export. The packager verifies the Windows executable version and
+writes versioned Windows and Web ZIPs to a new local output directory.
+
+```powershell
+.\release\package.ps1 -CandidateManifest '.\builds\staging\<candidate-key>\candidate_manifest.json' -OutputDirectory '.\builds\release\0.6.2'
+```
+
+For a single-platform staging export, use `-Target windows -NoPackage` or
+`-Target web -NoPackage`. For development archives, use `-Target all`.
 
 ## Tests
 

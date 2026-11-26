@@ -28,8 +28,6 @@ it into Now.
 
 ## Bugs
 
-- Release packages still carry a "-dev" build name. The Windows and Web ZIPs
-  and Windows executable properties should use the release version.
 - Web can visibly pause on a first trip, when a cabinet first opens, or
   when continuing a saved run.
 - 9 items promise an effect that never applies: Foil Sleeve and Mags' Lined
