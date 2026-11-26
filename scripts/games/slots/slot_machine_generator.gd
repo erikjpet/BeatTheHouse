@@ -10,11 +10,7 @@ const MathScript := preload("res://scripts/games/slots/slot_rng_math.gd")
 const StateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
 
 
-func generate_machine(run_state: RunState, environment: Dictionary, rng: RngStream, definition: Dictionary, game_id: String) -> Dictionary:
-	var environment_id := str(environment.get("id", "environment"))
-	var archetype_id := str(environment.get("archetype_id", environment.get("kind", "archetype")))
-	var stream_key := "slot_machine:%s:%s:%s" % [game_id, environment_id, archetype_id]
-	var generation_rng: RngStream = run_state.create_rng(stream_key) if run_state != null else rng.fork(stream_key)
+func generate_machine(generation_rng: RngStream, definition: Dictionary) -> Dictionary:
 	var format: Dictionary = MathScript.weighted_pick(JsonCoerceScript._dictionary_array(definition.get("slot_formats", [])), generation_rng)
 	var family: Dictionary = MathScript.weighted_pick(JsonCoerceScript._dictionary_array(definition.get("slot_types", [])), generation_rng)
 	var math_variant: Dictionary = MathScript.weighted_pick(JsonCoerceScript._dictionary_array(definition.get("slot_math_variants", [])), generation_rng)

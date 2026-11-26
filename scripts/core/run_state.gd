@@ -6185,7 +6185,7 @@ func grand_casino_room_access_status(target_archetype_id: String, high_limit_buy
 func enter_world_node(node_id: String, environment_data: Dictionary) -> void:
 	if world_map.is_empty() or node_id.strip_edges().is_empty():
 		return
-	world_map = WorldMap.enter_node(world_map, node_id, _environment_for_persistent_storage(environment_data))
+	world_map = WorldMap.enter_runtime_node(world_map, node_id, _environment_for_persistent_storage(environment_data))
 	_reconcile_tier_two_casino_spawn_eligibility()
 	_apply_town_sweep_generation_context(current_environment)
 	_check_police_sweep_boundary()
@@ -16043,6 +16043,16 @@ func from_dict(data: Dictionary) -> void:
 	_prime_inactive_storage_projections()
 
 
+func restore_save_in_steps(data: Dictionary, frame_boundary: Signal) -> void:
+	# SaveService owns this instance until restore and its durable projections finish.
+	_room_event_membership_pending_context = {}
+	await RunStateSchemaScript.restore_in_steps(self, data, frame_boundary)
+	_restore_missing_comped_suite_credit()
+	await frame_boundary
+	await _prime_world_room_storage_projections_steps([], frame_boundary)
+	_grand_casino_room_states_for_save(false, true)
+
+
 # A suite offer and Players Card awards share Linda's existing rest counter.
 # Project into the accepted event's normal deltas; reading this never grants it.
 func comped_suite_offer_grant_flags() -> Dictionary:
@@ -16062,7 +16072,7 @@ func _restore_missing_comped_suite_credit() -> void:
 	narrative_flags.merge(comped_suite_offer_grant_flags(), true)
 
 
-func _run_state_schema_restore(data: Dictionary) -> void:
+func _run_state_schema_restore(data: Dictionary, frame_boundary: Signal = Signal()) -> void:
 	_room_presentation_publication = null
 	_inactive_storage_projections = {}
 	_inactive_storage_projection_bytes = 0
@@ -16106,7 +16116,10 @@ func _run_state_schema_restore(data: Dictionary) -> void:
 	alcoholic_level = clampi(int(data.get("alcoholic_level", 0)), 0, ALCOHOL_MAX)
 	pending_drunk_absorption = _normalize_pending_drunk_absorption(JsonCoerceScript._copy_array(data.get("pending_drunk_absorption", [])))
 	drunk_distortion_suppression_turns = maxi(0, int(data.get("drunk_distortion_suppression_turns", 0)))
-	current_environment = _normalize_environment(JsonCoerceScript._copy_dict(data.get("current_environment", {})))
+	if not frame_boundary.is_null():
+		await frame_boundary
+	var saved_environment: Variant = data.get("current_environment", {})
+	current_environment = _normalize_environment(saved_environment as Dictionary if saved_environment is Dictionary else {})
 	_reconcile_blackjack_authority_restore()
 	_mark_scenario_restore_pending_trusted_rebuild(current_environment)
 	scenario_host_transaction_ledger = JsonCoerceScript._copy_dict(data.get("scenario_host_transaction_ledger", {}))
@@ -16116,15 +16129,19 @@ func _run_state_schema_restore(data: Dictionary) -> void:
 	restore_portable_ticket_piles_to_environment(current_environment)
 	_sync_portable_ticket_inventory_markers()
 	_apply_sals_forfeited_shelf_to_current_environment()
-	world_map = _normalize_world_map_environment_snapshots(
-		_compact_world_map_ticket_storage(WorldMap.normalize(JsonCoerceScript._copy_dict(data.get("world_map", {}))))
-	)
+	if not frame_boundary.is_null():
+		await frame_boundary
+	var saved_world_map: Variant = data.get("world_map", {})
+	var normalized_map := WorldMap.normalize(saved_world_map as Dictionary if saved_world_map is Dictionary else {})
+	world_map = await _normalize_world_map_environment_snapshots(_compact_world_map_ticket_storage(normalized_map), frame_boundary)
 	# Restored town state is authoritative. Discovery facts are registered on
 	# fresh world generation, never injected during a byte-identical restore.
 	configure_town_world(world_map, false)
 	scenario_recent_by_archetype = _normalize_scenario_recent(JsonCoerceScript._copy_dict(data.get("scenario_recent_by_archetype", {})))
 	environment_situation_cycles_by_node = _normalize_environment_situation_cycles(JsonCoerceScript._copy_dict(data.get("environment_situation_cycles_by_node", {})))
 	grand_casino_room_states = _normalize_grand_casino_room_states(JsonCoerceScript._copy_dict(data.get("grand_casino_room_states", {})))
+	if not frame_boundary.is_null():
+		await frame_boundary
 	migrate_legacy_scenario_sequences()
 	grand_casino_staffing = _normalize_grand_casino_staffing(JsonCoerceScript._copy_dict(data.get("grand_casino_staffing", {})))
 	rourke_current_room = _normalize_grand_casino_room_id(str(data.get("rourke_current_room", "")))
@@ -16245,7 +16262,9 @@ func _run_state_schema_restore(data: Dictionary) -> void:
 	_initialize_grand_casino_living_floor()
 	# Runtime physical rows are derived from the restored living-floor state,
 	# never trusted from serialized placement output.
-	reconcile_current_environment_object_manifest(true)
+	if not frame_boundary.is_null():
+		await frame_boundary
+	await _reconcile_current_environment_object_manifest_in_steps(true, frame_boundary)
 	if saved_run_status != RUN_STATUS_ENDED and saved_run_status != RUN_STATUS_FAILED:
 		_evaluate_immediate_terminal_state(pending_paid_game)
 	if saved_run_status == RUN_STATUS_ENDED:
@@ -16740,6 +16759,10 @@ func _inactive_storage_projection(key: String, environment: Dictionary, declined
 
 
 func prime_world_room_storage_projections(node_ids: Array[String] = []) -> void:
+	_prime_world_room_storage_projections_steps.call(node_ids)
+
+
+func _prime_world_room_storage_projections_steps(node_ids: Array[String], frame_boundary: Signal = Signal()) -> void:
 	for node_value in world_map.get("nodes", []):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
@@ -16749,6 +16772,8 @@ func prime_world_room_storage_projections(node_ids: Array[String] = []) -> void:
 		var environment_value: Variant = node_value.get("environment", {})
 		if typeof(environment_value) == TYPE_DICTIONARY and not (environment_value as Dictionary).is_empty():
 			_inactive_storage_projection(node_id, environment_value)
+			if not frame_boundary.is_null():
+				await frame_boundary
 
 
 func _prime_inactive_storage_projections() -> void:
@@ -16994,19 +17019,19 @@ static func _compact_world_map_ticket_storage(map_data: Dictionary) -> Dictionar
 	return map_data
 
 
-static func _normalize_world_map_environment_snapshots(map_data: Dictionary) -> Dictionary:
+static func _normalize_world_map_environment_snapshots(map_data: Dictionary, frame_boundary: Signal) -> Dictionary:
 	if map_data.is_empty():
 		return {}
-	var nodes := JsonCoerceScript._copy_array(map_data.get("nodes", []))
-	for index in range(nodes.size()):
-		if typeof(nodes[index]) != TYPE_DICTIONARY:
+	# WorldMap.normalize already owns these node records. Environment
+	# normalization detaches each room before any saved data is migrated.
+	for node in map_data.get("nodes", []):
+		if node is not Dictionary:
 			continue
-		var node := JsonCoerceScript._copy_dict(nodes[index])
-		var environment := JsonCoerceScript._copy_dict(node.get("environment", {}))
-		if not environment.is_empty():
+		var environment: Variant = node.get("environment", {})
+		if environment is Dictionary and not environment.is_empty():
+			if not frame_boundary.is_null():
+				await frame_boundary
 			node["environment"] = _normalize_environment(environment)
-		nodes[index] = node
-	map_data["nodes"] = nodes
 	return map_data
 
 

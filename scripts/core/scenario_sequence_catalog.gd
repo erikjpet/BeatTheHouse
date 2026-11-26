@@ -26,6 +26,7 @@ const PACKAGE_ORDER := [
 ]
 
 static var _default_catalog_cache: Dictionary = {}
+static var _default_legacy_definitions: Dictionary = {}
 
 
 static func load_catalog(root_path: String = DEFAULT_ROOT) -> Dictionary:
@@ -214,6 +215,22 @@ static func legacy_definition(scenario_id: String, path: String = LEGACY_CATALOG
 	var wanted := scenario_id.strip_edges()
 	if wanted.is_empty():
 		return {}
+	if path == LEGACY_CATALOG_PATH:
+		if _default_legacy_definitions.is_empty():
+			# A cold run can restore several seeded definitions. Read the authored
+			# catalog once and keep its rows private to this lookup.
+			var index: Dictionary = {}
+			for pool_value in _parse_dictionary(path, []).values():
+				if pool_value is not Array:
+					continue
+				for definition_value in pool_value:
+					if definition_value is not Dictionary:
+						continue
+					var id := str(definition_value.get("id", ""))
+					if not id.is_empty() and not index.has(id):
+						index[id] = definition_value
+			_default_legacy_definitions = index
+		return apply_overlay(_default_legacy_definitions.get(wanted, {}), catalog)
 	var failures: Array = []
 	var source := _parse_dictionary(path, failures)
 	for pool_value in source.values():

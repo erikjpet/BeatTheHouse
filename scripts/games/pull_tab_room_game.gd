@@ -2,7 +2,8 @@ extends GameModule
 
 # Seeded stock and state shared by venue presentation and the playable cabinet.
 
-const DEFAULT_DEAL_COUNT := 150
+const MachineSpecScript := preload("res://scripts/games/pull_tab_machine_spec.gd")
+const DEFAULT_DEAL_COUNT := MachineSpecScript.DEFAULT_DEAL_COUNT
 const MAX_DEAL_COUNT := 150
 const REAL_PULL_TAB_UNIT_COUNT := 540
 const PULL_TAB_INITIAL_REMOVED_MIN_RATIO := 0.04
@@ -33,9 +34,9 @@ const CASHOUT_REPEATED_HIGH_VALUE_HEAT := 5
 const CASHOUT_LOW_LOSER_PATTERN_HEAT := 6
 const CASHOUT_BULK_WINNER_HEAT_STEP := 2
 const PULL_TAB_DISPENSE_STAGGER_MSEC := 430
-const PULL_TAB_DISPENSE_DROP_START_MSEC := 240
-const PULL_TAB_DISPENSE_DROP_DURATION_MSEC := 360
-const PULL_TAB_MACHINE_COLUMN_COUNT := 4
+const PULL_TAB_DISPENSE_DROP_START_MSEC := MachineSpecScript.PULL_TAB_DISPENSE_DROP_START_MSEC
+const PULL_TAB_DISPENSE_DROP_DURATION_MSEC := MachineSpecScript.PULL_TAB_DISPENSE_DROP_DURATION_MSEC
+const PULL_TAB_MACHINE_COLUMN_COUNT := MachineSpecScript.PULL_TAB_MACHINE_COLUMN_COUNT
 const XRAY_TARGET_COUNT := 2
 const TAROT_READING_COUNT := 5
 
@@ -180,6 +181,23 @@ func environment_object_state(run_state: RunState, environment: Dictionary) -> D
 
 
 # Generates finite deal state with the environment, before entry/selection.
+# Pull-tab prices and action availability come from the deal rows.
+func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
+	var wager_capacity := run_state.wager_capacity_for_game(get_id(), environment)
+	return {
+		"ok": true,
+		"type": "game_actions",
+		"game_id": get_id(),
+		"legal_actions": legal_actions(run_state, environment),
+		"cheat_actions": cheat_actions(run_state, environment),
+		"stake_floor": 1,
+		"stake_ceiling": maxi(1, wager_capacity),
+		"base_stake_ceiling": maxi(1, wager_capacity),
+		"economy_state": run_state.economy(),
+		"economy_pressure_applied": false,
+	}
+
+
 func generate_environment_state(run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	return _generate_machine_state(run_state, environment, rng)
 

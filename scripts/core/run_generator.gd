@@ -2146,6 +2146,8 @@ func _generated_game_states_steps(run_state: RunState, environment_data: Diction
 			await frame_boundary
 		var perf_game_started_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
 		var definition := library.game(game_id)
+		if game_id == "slot" and not frame_boundary.is_null():
+			await GameModuleRegistryScript.prepare_room_source_in_steps(definition, frame_boundary)
 		var game: GameModule = _create_game_module(definition)
 		if game == null:
 			continue

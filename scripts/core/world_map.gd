@@ -763,10 +763,24 @@ static func store_runtime_environment(map_data: Dictionary, node_id: String, env
 
 
 static func enter_node(map_data: Dictionary, node_id: String, environment_data: Dictionary = {}) -> Dictionary:
+	return _enter_normalized_node(normalize(map_data), node_id, environment_data.duplicate(true))
+
+
+# RunState already owns a normalized map and a detached destination snapshot.
+# Share untouched room snapshots and copy only the topology being updated.
+static func enter_runtime_node(map_data: Dictionary, node_id: String, environment_data: Dictionary) -> Dictionary:
+	var nodes: Variant = map_data.get("nodes")
+	if not nodes is Array:
+		return enter_node(map_data, node_id, environment_data)
+	var next_map := map_data.duplicate(false)
+	next_map["nodes"] = (nodes as Array).duplicate(false)
+	return _enter_normalized_node(_enforce_beach_gateway_access(next_map), node_id, environment_data)
+
+
+static func _enter_normalized_node(normalized: Dictionary, node_id: String, environment_data: Dictionary) -> Dictionary:
 	var target_id := node_id.strip_edges()
 	if target_id.is_empty():
-		return normalize(map_data)
-	var normalized := normalize(map_data)
+		return normalized
 	normalized["current_node_id"] = target_id
 	var nodes: Array = normalized.get("nodes", [])
 	for index in range(nodes.size()):
@@ -774,10 +788,11 @@ static func enter_node(map_data: Dictionary, node_id: String, environment_data: 
 			continue
 		var node: Dictionary = nodes[index]
 		if str(node.get("id", "")) == target_id:
+			node = node.duplicate(false)
 			node["state"] = STATE_VISITED
 			node["seen"] = true
 			if not environment_data.is_empty():
-				node["environment"] = environment_data.duplicate(true)
+				node["environment"] = environment_data
 			nodes[index] = node
 	for index in range(nodes.size()):
 		if typeof(nodes[index]) != TYPE_DICTIONARY:
@@ -790,6 +805,7 @@ static func enter_node(map_data: Dictionary, node_id: String, environment_data: 
 			continue
 		if not are_neighbors(normalized, target_id, candidate_node_id):
 			continue
+		node = node.duplicate(false)
 		node["state"] = STATE_REVEALED
 		node["seen"] = true
 		node["discovery_source"] = DISCOVERY_SOURCE_TRAVEL
@@ -1762,7 +1778,7 @@ static func _enforce_beach_gateway_access(map_data: Dictionary, source_id: Strin
 	if effective_source_id.is_empty():
 		effective_source_id = current_node_id(map_data)
 	if effective_source_id == BEACH_GATEWAY_ID:
-		var beach_node: Dictionary = nodes[beach_index]
+		var beach_node: Dictionary = (nodes[beach_index] as Dictionary).duplicate(false)
 		if str(beach_node.get("state", STATE_HIDDEN)) != STATE_VISITED:
 			beach_node["state"] = STATE_REVEALED
 		beach_node["seen"] = true

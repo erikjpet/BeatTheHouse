@@ -98,6 +98,14 @@ static func encode(runtime_state: Dictionary) -> Dictionary:
 
 
 static func decode(saved_state: Dictionary) -> Dictionary:
+	return _decode_steps.call(saved_state)
+
+
+static func decode_in_steps(saved_state: Dictionary, frame_boundary: Signal) -> Dictionary:
+	return await _decode_steps(saved_state, frame_boundary)
+
+
+static func _decode_steps(saved_state: Dictionary, frame_boundary: Signal = Signal()) -> Dictionary:
 	if int(saved_state.get(CODEC_KEY, 0)) <= 0:
 		var legacy: Variant = _restore_exact_integer_markers(saved_state)
 		return legacy as Dictionary if typeof(legacy) == TYPE_DICTIONARY else {}
@@ -106,8 +114,18 @@ static func decode(saved_state: Dictionary) -> Dictionary:
 	var root: Dictionary = saved_state.duplicate(false)
 	root.erase(CODEC_KEY)
 	root.erase(REGISTRY_KEY)
-	var decoded: Variant = _decode_value(root, registry)
-	return decoded as Dictionary if typeof(decoded) == TYPE_DICTIONARY else {}
+	var decoded_rooms: Dictionary = {}
+	if frame_boundary.is_null() or root.has(SCENARIO_DEFINITION_REF_KEY) or root.size() == 1:
+		var decoded: Variant = _decode_value(root, registry, decoded_rooms)
+		return decoded as Dictionary if typeof(decoded) == TYPE_DICTIONARY else {}
+	var decoded_state: Dictionary = {}
+	var frame_started := Time.get_ticks_usec()
+	for key in root:
+		decoded_state[key] = _decode_value(root[key], registry, decoded_rooms)
+		if Time.get_ticks_usec() - frame_started >= 6000:
+			await frame_boundary
+			frame_started = Time.get_ticks_usec()
+	return decoded_state
 
 
 static func _compact_environment_registry_deltas(registry: Dictionary) -> void:
@@ -516,7 +534,7 @@ static func _compact_slot_game_states(environment: Dictionary) -> void:
 	environment["game_states"] = compacted
 
 
-static func _decode_value(value: Variant, registry: Dictionary) -> Variant:
+static func _decode_value(value: Variant, registry: Dictionary, decoded_rooms: Dictionary) -> Variant:
 	if typeof(value) == TYPE_DICTIONARY:
 		var source: Dictionary = value
 		if source.has(SCENARIO_DEFINITION_REF_KEY):
@@ -525,16 +543,23 @@ static func _decode_value(value: Variant, registry: Dictionary) -> Variant:
 			return int(str(source.get(EXACT_INT_KEY, "0")))
 		if source.size() == 1 and source.has(ENVIRONMENT_REF_KEY):
 			var ref := str(source.get(ENVIRONMENT_REF_KEY, ""))
-			var stored: Variant = registry.get(ref, {})
-			return _decode_value(stored, registry) if typeof(stored) == TYPE_DICTIONARY else {}
+			if not decoded_rooms.has(ref):
+				var stored: Variant = registry.get(ref, {})
+				var room: Variant = _decode_value(stored, registry, decoded_rooms) if typeof(stored) == TYPE_DICTIONARY else {}
+				decoded_rooms[ref] = room
+				return room
+			# Apply compaction and exact-number decoding once per reference. Copies
+			# keep active and stored room mutations isolated after decode returns.
+			var decoded: Variant = decoded_rooms[ref]
+			return decoded.duplicate(true) if decoded is Dictionary or decoded is Array else decoded
 		var result: Dictionary = {}
 		for key_value in source.keys():
-			result[key_value] = _decode_value(source.get(key_value), registry)
+			result[key_value] = _decode_value(source.get(key_value), registry, decoded_rooms)
 		return result
 	if typeof(value) == TYPE_ARRAY:
 		var result: Array = []
 		for entry_value in value as Array:
-			result.append(_decode_value(entry_value, registry))
+			result.append(_decode_value(entry_value, registry, decoded_rooms))
 		return result
 	return value
 
@@ -587,7 +612,7 @@ static func _decode_seeded_scenario_definition(entry: Dictionary) -> Dictionary:
 	if definition.is_empty():
 		return {}
 	if entry.has(SCENARIO_DEFINITION_PATCH_KEY):
-		var decoded_patch: Variant = _decode_value(entry.get(SCENARIO_DEFINITION_PATCH_KEY), {})
+		var decoded_patch: Variant = _decode_value(entry.get(SCENARIO_DEFINITION_PATCH_KEY), {}, {})
 		var patched: Variant = _apply_dictionary_patch(definition, decoded_patch)
 		return patched as Dictionary if typeof(patched) == TYPE_DICTIONARY else {}
 	return definition

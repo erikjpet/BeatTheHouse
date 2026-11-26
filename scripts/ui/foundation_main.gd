@@ -35,16 +35,27 @@ const ACTION_CATEGORY_EVENTS := "events"
 const ACTION_CATEGORY_ITEMS := "items"
 const ACTION_CATEGORY_TRAVEL := "travel"
 const SCRATCH_TICKETS_MODULE_PATH := "res://scripts/games/scratch_tickets.gd"
-const SCRATCH_CABINET_LOAD_ORDER := [
-	"res://scripts/games/scratch_ticket_region_model.gd",
-	"res://scripts/games/scratch_ticket_mask.gd",
-	"res://scripts/games/scratch_ticket_background_renderer.gd",
-	"res://scripts/games/playing_card_renderer.gd",
-	"res://scripts/games/scratch_ticket_icon_renderer.gd",
-	"res://scripts/games/scratch_ticket_foil_renderer.gd",
-	"res://scripts/games/scratch_ticket_machine_renderer.gd",
-	SCRATCH_TICKETS_MODULE_PATH,
-]
+const WEB_CABINET_LOAD_ORDER := {
+	"scratch_tickets": [
+		"res://scripts/games/scratch_ticket_region_model.gd",
+		"res://scripts/games/scratch_ticket_mask.gd",
+		"res://scripts/games/scratch_ticket_background_renderer.gd",
+		"res://scripts/games/playing_card_renderer.gd",
+		"res://scripts/games/scratch_ticket_icon_renderer.gd",
+		"res://scripts/games/scratch_ticket_foil_renderer.gd",
+		"res://scripts/games/scratch_ticket_machine_renderer.gd",
+		SCRATCH_TICKETS_MODULE_PATH,
+	],
+	"pull_tabs": [
+		"res://scripts/games/pull_tab_renderer.gd",
+		"res://scripts/games/pull_tabs.gd",
+	],
+	"video_poker": [
+		"res://scripts/games/playing_card_renderer.gd",
+		"res://scripts/games/video_poker_renderer.gd",
+		"res://scripts/games/video_poker.gd",
+	],
+}
 const SCREEN_START := "START"
 const SCREEN_CRT := "CRT"
 const SCREEN_ENVIRONMENT := "ENVIRONMENT"
@@ -350,8 +361,9 @@ var script_prewarm_thread: Thread
 var script_prewarm_active_path := ""
 var script_prewarm_stopping := false
 var script_prewarm_force_start_error_for_test := false
-var _pending_scratch_cabinet_open: Dictionary = {}
-var _scratch_cabinet_loading_overlay: CenterContainer
+var _pending_cabinet_open: Dictionary = {}
+var _cabinet_loading_overlay: CenterContainer
+var _cabinet_loading_label: Label
 var triggered_event_module_cache: Dictionary = {}
 var triggered_event_module_cache_library: ContentLibrary = null
 var triggered_event_module_cache_generation := -1
@@ -552,6 +564,8 @@ var _pending_new_run_start := Callable()
 var _pending_player_start := Callable()
 var _player_start_content_thread: Thread
 var _player_start_room_thread: Thread
+var _player_continue_staged := false
+var _exit_after_staged_continue := false
 var _player_start_room_completed := Callable()
 var _player_start_finished := Callable()
 var _player_start_presentation_stage := -1
@@ -876,6 +890,8 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
+	if _player_continue_staged:
+		return
 	if _player_start_room_thread != null:
 		_advance_player_start_room()
 		return
@@ -887,8 +903,8 @@ func _process(delta: float) -> void:
 		return
 	if _player_map_travel_staged:
 		return
-	if not _pending_scratch_cabinet_open.is_empty():
-		_advance_scratch_cabinet_open()
+	if not _pending_cabinet_open.is_empty():
+		_advance_cabinet_open()
 		return
 	_poll_script_prewarm_worker()
 	if _pending_player_start.is_valid():
@@ -1044,12 +1060,12 @@ func _advance_environment_turns_checked(amount: int = 1, debug_timing: Dictionar
 
 
 func _input(event: InputEvent) -> void:
-	if not _pending_scratch_cabinet_open.is_empty():
+	if not _pending_cabinet_open.is_empty():
 		if event.is_action_pressed("ui_cancel"):
-			_clear_scratch_cabinet_open()
+			_clear_cabinet_open()
 		get_viewport().set_input_as_handled()
 		return
-	if _pending_player_start.is_valid() or _player_start_room_thread != null or _player_start_presentation_stage >= 0 or not _pending_player_map_travel.is_empty():
+	if _pending_player_start.is_valid() or _player_start_room_thread != null or _player_continue_staged or _player_start_presentation_stage >= 0 or not _pending_player_map_travel.is_empty():
 		if not is_instance_valid(travel_cinematic_overlay) or not travel_cinematic_overlay.departure_pending():
 			get_viewport().set_input_as_handled()
 		return
@@ -1167,7 +1183,7 @@ func _flush_pending_autosave_for_lifecycle() -> bool:
 		# The clock and destination are still owned by the detached trip.
 		# Its completion queues the authoritative save.
 		return true
-	if _lifecycle_save_flush_active or save_service == null or _player_start_room_thread != null or _player_start_presentation_stage >= 0:
+	if _lifecycle_save_flush_active or save_service == null or _player_start_room_thread != null or _player_continue_staged or _player_start_presentation_stage >= 0:
 		return false
 	# The manual request already owns a physical sync and fences its saved bytes.
 	# A newer dirty generation must wait; trying to write it here would report
@@ -1241,6 +1257,8 @@ func _drain_script_prewarm_requests_for_shutdown() -> void:
 	# path already owned by the worker without publishing into a tearing-down UI.
 	script_prewarm_stopping = true
 	_pending_player_start = Callable()
+	_player_continue_staged = false
+	_exit_after_staged_continue = false
 	_discard_player_start_room()
 	_player_start_presentation_stage = -1
 	_player_start_finished = Callable()
@@ -1647,18 +1665,23 @@ func _advance_player_start_presentation() -> void:
 		0:
 			_refresh_run_boundary()
 		1:
-			if not OS.has_feature("web") and _room_presentation_requires_scenario_finalization():
+			if _room_presentation_requires_scenario_finalization():
 				var restoring_run := run_state
 				var layout_context := JsonCoerceScript._copy_dict(restoring_run.current_environment.get("scenario_layout_context", {}))
 				# Keep the loaded room private during reconstruction. Focus,
 				# resize and audio notifications only see the loading menu.
-				run_state = null
-				if _start_player_room_worker(
-					restoring_run.scenario_finalize_installed_environment.bind(library, layout_context),
-					_finish_player_room_catalog.bind(restoring_run)
-				):
+				if _should_stage_player_continue() and _player_start_finished == _complete_loaded_foundation_presentation:
+					run_state = null
+					_stage_continue_room_catalog(restoring_run, layout_context)
 					return
-				run_state = restoring_run
+				if not OS.has_feature("web"):
+					run_state = null
+					if _start_player_room_worker(
+						restoring_run.scenario_finalize_installed_environment.bind(library, layout_context),
+						_finish_player_room_catalog.bind(restoring_run)
+					):
+						return
+					run_state = restoring_run
 			_prepare_room_presentation_at_boundary()
 		2:
 			# A restored room can rebuild scenario authority on the worker.
@@ -1780,10 +1803,12 @@ func _enter_game_after_input_guard(clean_game_id: String, clean_state_key: Strin
 	if definition.is_empty():
 		_show_message("Game definition is missing.")
 		return false
-	if from_room_input and clean_game_id == "scratch_tickets" and str(definition.get("module_path", "")) == SCRATCH_TICKETS_MODULE_PATH \
-			and _should_stage_scratch_cabinet_open() and not ResourceLoader.has_cached(SCRATCH_TICKETS_MODULE_PATH) \
-			and not script_prewarm_terminal_results.has(SCRATCH_TICKETS_MODULE_PATH) and _scratch_cabinet_is_available(object_id):
-		return _queue_scratch_cabinet_open(clean_state_key, object_id)
+	var load_paths: Array = WEB_CABINET_LOAD_ORDER.get(clean_game_id, [])
+	var module_path := str(definition.get("module_path", ""))
+	if from_room_input and not load_paths.is_empty() and module_path == load_paths.back() \
+			and _should_stage_cabinet_open() and not ResourceLoader.has_cached(module_path) \
+			and not script_prewarm_terminal_results.has(module_path) and _cabinet_is_available(clean_game_id, object_id):
+		return _queue_cabinet_open(clean_game_id, clean_state_key, object_id, load_paths, _game_display_name(clean_game_id))
 	var game_module := _game_module_for_id(clean_game_id)
 	if game_module == null:
 		_show_message("This game is not ready here.")
@@ -1826,73 +1851,76 @@ func _enter_game_after_input_guard(clean_game_id: String, clean_state_key: Strin
 	return current_screen == SCREEN_GAME and current_game == game_module
 
 
-func _should_stage_scratch_cabinet_open() -> bool:
+func _should_stage_cabinet_open() -> bool:
 	return OS.has_feature("web") and OS.has_feature("nothreads")
 
 
-func _queue_scratch_cabinet_open(state_key: String, object_id: String) -> bool:
+func _queue_cabinet_open(game_id: String, state_key: String, object_id: String, load_paths: Array, display_name: String) -> bool:
 	if run_state == null or current_game != null or current_screen not in [SCREEN_ENVIRONMENT, SCREEN_RESULT]:
 		return false
-	_pending_scratch_cabinet_open = {
+	_pending_cabinet_open = {
 		"run": run_state, "environment": run_state.current_environment, "screen": current_screen,
-		"state_key": state_key, "object_id": object_id, "step": 0,
+		"game_id": game_id, "state_key": state_key, "object_id": object_id, "load_paths": load_paths, "step": 0,
 		"first_frame": Engine.get_process_frames() + 2, "simulation_msec": _environment_simulation_time_msec(),
 	}
-	if _scratch_cabinet_loading_overlay == null:
-		_scratch_cabinet_loading_overlay = CenterContainer.new()
-		_scratch_cabinet_loading_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-		_scratch_cabinet_loading_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	if _cabinet_loading_overlay == null:
+		_cabinet_loading_overlay = CenterContainer.new()
+		_cabinet_loading_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		_cabinet_loading_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var panel := _panel_container(VisualStyle.DARK_2, VisualStyle.CYAN)
-		var label := _label("Opening Scratch Tickets…", VisualStyle.TYPE_BODY_LARGE)
-		label.autowrap_mode = TextServer.AUTOWRAP_OFF
-		panel.add_child(label)
-		_scratch_cabinet_loading_overlay.add_child(panel)
-		add_child(_scratch_cabinet_loading_overlay)
-	_scratch_cabinet_loading_overlay.show()
-	_scratch_cabinet_loading_overlay.move_to_front()
+		_cabinet_loading_label = _label("", VisualStyle.TYPE_BODY_LARGE)
+		_cabinet_loading_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+		panel.add_child(_cabinet_loading_label)
+		_cabinet_loading_overlay.add_child(panel)
+		add_child(_cabinet_loading_overlay)
+	_cabinet_loading_label.text = "Opening %s…" % display_name
+	_cabinet_loading_overlay.show()
+	_cabinet_loading_overlay.move_to_front()
 	return true
 
 
-func _advance_scratch_cabinet_open() -> void:
-	var opening := _pending_scratch_cabinet_open
+func _advance_cabinet_open() -> void:
+	var opening := _pending_cabinet_open
 	if run_state == null or run_state != opening["run"] or current_screen != opening["screen"] \
 			or current_game != null or not is_same(run_state.current_environment, opening["environment"]):
-		_clear_scratch_cabinet_open()
+		_clear_cabinet_open()
 		return
 	if Engine.get_process_frames() < int(opening["first_frame"]):
 		return
 	# Retain each script in the shared cache, separating cold loads and the
 	# eventual cabinet refresh so the room can draw between them.
 	var step := int(opening["step"])
-	if step < SCRATCH_CABINET_LOAD_ORDER.size():
-		var module_step := step == SCRATCH_CABINET_LOAD_ORDER.size() - 1
-		if _load_and_publish_script_prewarm_path(SCRATCH_CABINET_LOAD_ORDER[step], false, module_step) == null:
-			_clear_scratch_cabinet_open()
+	var load_paths: Array = opening["load_paths"]
+	if step < load_paths.size():
+		var module_step := step == load_paths.size() - 1
+		if _load_and_publish_script_prewarm_path(load_paths[step], false, module_step) == null:
+			_clear_cabinet_open()
 			_show_message("This game is not ready here.")
 			return
 		opening["step"] = step + 1
 		return
-	_clear_scratch_cabinet_open()
+	_clear_cabinet_open()
 	var object_id := str(opening["object_id"])
+	var game_id := str(opening["game_id"])
 	if not _room_action_authority_available() or _guard_player_input_route(false, object_id, false):
 		return
-	if _scratch_cabinet_is_available(object_id):
-		_enter_game_after_input_guard("scratch_tickets", str(opening["state_key"]), object_id)
+	if _cabinet_is_available(game_id, object_id):
+		_enter_game_after_input_guard(game_id, str(opening["state_key"]), object_id)
 
 
-func _scratch_cabinet_is_available(object_id: String) -> bool:
+func _cabinet_is_available(game_id: String, object_id: String) -> bool:
 	var cabinet := _interactable_object(object_id)
-	return str(cabinet.get("object_type", "")) == CONTEXT_MODE_GAME and str(cabinet.get("source_id", "")) == "scratch_tickets" \
+	return str(cabinet.get("object_type", "")) == CONTEXT_MODE_GAME and str(cabinet.get("source_id", "")) == game_id \
 		and bool(cabinet.get("enabled", true)) and bool(cabinet.get("interactive", true))
 
 
-func _clear_scratch_cabinet_open() -> void:
-	if not _pending_scratch_cabinet_open.is_empty() and run_state == _pending_scratch_cabinet_open["run"] \
-			and is_same(run_state.current_environment, _pending_scratch_cabinet_open["environment"]):
-		environment_clock_epoch_offset_msec += int(_pending_scratch_cabinet_open["simulation_msec"]) - _environment_simulation_time_msec()
-	_pending_scratch_cabinet_open = {}
-	if is_instance_valid(_scratch_cabinet_loading_overlay):
-		_scratch_cabinet_loading_overlay.hide()
+func _clear_cabinet_open() -> void:
+	if not _pending_cabinet_open.is_empty() and run_state == _pending_cabinet_open["run"] \
+			and is_same(run_state.current_environment, _pending_cabinet_open["environment"]):
+		environment_clock_epoch_offset_msec += int(_pending_cabinet_open["simulation_msec"]) - _environment_simulation_time_msec()
+	_pending_cabinet_open = {}
+	if is_instance_valid(_cabinet_loading_overlay):
+		_cabinet_loading_overlay.hide()
 
 
 func _recover_stranded_slot_wager_on_entry() -> Dictionary:
@@ -7867,7 +7895,7 @@ func load_foundation_run() -> bool:
 
 
 func _load_foundation_run_from_slot(return_to_start_on_missing: bool, player_request: bool = false) -> bool:
-	if _crt_practice_active():
+	if _player_continue_staged or _crt_practice_active():
 		return false
 	if _web_manual_save_pending:
 		return false
@@ -7883,6 +7911,9 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool, player_req
 		return false
 	_ensure_full_content_library_loaded()
 	_settle_script_prewarm_before_runtime()
+	if player_request and current_screen == SCREEN_START and _should_stage_player_continue():
+		_stage_player_continue(return_to_start_on_missing)
+		return true
 	if player_request and current_screen == SCREEN_START and not OS.has_feature("web"):
 		if _start_player_room_worker(save_service.load_run.bind(autosave_slot_id), _apply_loaded_foundation_run.bind(return_to_start_on_missing, true)):
 			if start_status_label != null:
@@ -7890,6 +7921,56 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool, player_req
 			return true
 	var loaded: Variant = save_service.load_run(autosave_slot_id)
 	return _apply_loaded_foundation_run(loaded, return_to_start_on_missing, player_request and current_screen == SCREEN_START)
+
+
+func _should_stage_player_continue() -> bool:
+	return OS.has_feature("web") and OS.has_feature("nothreads")
+
+
+func _stage_player_continue(return_to_start_on_missing: bool) -> void:
+	var frame_boundary := get_tree().process_frame
+	var service := save_service
+	var slot_id := autosave_slot_id
+	_player_continue_staged = true
+	if start_status_label != null:
+		start_status_label.text = "Loading the saved run..."
+	await frame_boundary
+	if not _player_continue_staged:
+		return
+	var loaded: Variant = await service.load_run_in_steps(slot_id, frame_boundary)
+	if loaded is RunState and not loaded.is_terminal():
+		for game_id in JsonCoerceScript._raw_string_array(loaded.current_environment.get("game_ids", [])):
+			if not _player_continue_staged or _exit_after_staged_continue:
+				break
+			await GameModuleRegistryScript.prepare_room_source_in_steps(library.game(game_id), frame_boundary)
+	await frame_boundary
+	if not _finish_staged_continue():
+		return
+	if service == save_service and slot_id == autosave_slot_id and current_screen == SCREEN_START:
+		_apply_loaded_foundation_run(loaded, return_to_start_on_missing, true)
+
+
+func _stage_continue_room_catalog(restoring_run: RunState, layout_context: Dictionary) -> void:
+	_player_continue_staged = true
+	var frame_boundary := get_tree().process_frame
+	await frame_boundary
+	var finalized := await restoring_run.finalize_installed_scenario_in_steps(library, layout_context, frame_boundary)
+	await frame_boundary
+	if _finish_staged_continue():
+		_finish_player_room_catalog(finalized, restoring_run)
+
+
+func _finish_staged_continue() -> bool:
+	if not _player_continue_staged:
+		return false
+	_player_continue_staged = false
+	if _exit_after_staged_continue:
+		_exit_after_staged_continue = false
+		_player_start_presentation_stage = -1
+		_player_start_finished = Callable()
+		exit_game.call_deferred()
+		return false
+	return true
 
 
 func _apply_loaded_foundation_run(loaded: Variant, return_to_start_on_missing: bool, staged: bool) -> bool:
@@ -10212,7 +10293,7 @@ func _ensure_full_content_library_loaded() -> void:
 
 
 func _queue_player_start(action: Callable) -> void:
-	if _pending_player_start.is_valid() or _player_start_room_thread != null or _player_start_presentation_stage >= 0 or not action.is_valid():
+	if _pending_player_start.is_valid() or _player_start_room_thread != null or _player_continue_staged or _player_start_presentation_stage >= 0 or not action.is_valid():
 		return
 	_pending_player_start = action
 	_player_start_request_frame = Engine.get_process_frames()
@@ -16104,7 +16185,7 @@ func _blocking_modal_message() -> String:
 
 func _guard_player_input_route(force_closing_allowed: bool = false, coach_action_id: String = "ui:any", notify_coach: bool = true) -> bool:
 	input_route_guard_visit_count += 1
-	if not _pending_scratch_cabinet_open.is_empty() or not terminal_game_result_presentation.is_empty():
+	if not _pending_cabinet_open.is_empty() or not terminal_game_result_presentation.is_empty():
 		return true
 	if not _rourke_resolution.is_empty() and not _rourke_resolution_dispatch_active:
 		return true
@@ -20344,6 +20425,10 @@ func _confirm_new_run_start() -> void:
 
 
 func start_or_continue_primary(player_request: bool = false) -> bool:
+	# The title already validated the displayed Resume Slot. Continue itself
+	# reads and validates both generations as needed, across draw boundaries.
+	if player_request and current_screen == SCREEN_START and _should_stage_player_continue() and autosave_loadable_available:
+		return _load_foundation_run_from_slot(true, true)
 	if _has_foundation_save():
 		return _load_foundation_run_from_slot(true, player_request)
 	return _on_start_pressed(player_request)
@@ -20630,7 +20715,7 @@ func return_to_main_menu() -> bool:
 		return true
 	if _web_manual_save_pending:
 		return false
-	_clear_scratch_cabinet_open()
+	_clear_cabinet_open()
 	if _is_meta_session():
 		_exit_meta_session()
 		return true
@@ -20726,12 +20811,18 @@ func exit_game() -> void:
 		# the detached trip before using the existing durable exit path.
 		_exit_after_staged_map_travel = true
 		return
-	_clear_scratch_cabinet_open()
+	if _player_continue_staged:
+		_exit_after_staged_continue = true
+		return
+	_clear_cabinet_open()
 	if _crt_entry_wait_run != null:
 		_finish_crt_entry_wait()
 	while _player_start_presentation_stage >= 0:
 		if _player_start_room_thread == null:
 			_advance_player_start_presentation()
+			if _player_continue_staged:
+				_exit_after_staged_continue = true
+				return
 		else:
 			_advance_player_start_room(true)
 	_discard_player_start_room()
@@ -26570,7 +26661,13 @@ func _snapshot_copy_value(value: Variant) -> Variant:
 
 
 func _recorded_result_game(result: Dictionary) -> GameModule:
-	return _game_module_for_id(str(result.get("game_id", result.get("source_id", ""))))
+	var game_id := str(result.get("game_id", result.get("source_id", "")))
+	# The authored Slot uses GameModule's empty story feedback defaults. A
+	# restored paid spin can use those defaults without opening the cabinet.
+	if game_id == "slot" and not game_module_cache.has(game_id) and library != null \
+			and str(library.game(game_id).get("module_path", "")) == "res://scripts/games/slot.gd":
+		return null
+	return _game_module_for_id(game_id)
 
 func _round_net_feedback_delta(result: Dictionary) -> Variant:
 	var game := _recorded_result_game(result)

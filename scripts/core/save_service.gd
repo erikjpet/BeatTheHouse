@@ -344,10 +344,18 @@ static func _payload_dictionary_loadable(payload: Dictionary) -> bool:
 
 # Loads run state from a save slot.
 func load_run(slot_id: String = "autosave") -> Variant:
+	return _load_run_steps.call(slot_id)
+
+
+func load_run_in_steps(slot_id: String, frame_boundary: Signal) -> Variant:
+	return await _load_run_steps(slot_id, frame_boundary)
+
+
+func _load_run_steps(slot_id: String, frame_boundary: Signal = Signal()) -> Variant:
 	if async_save_in_flight():
 		wait_for_async_save()
 	var clean_slot := _slot_id(slot_id)
-	var primary := _read_run_state_from_path(run_save_path(clean_slot))
+	var primary := await _read_run_state_from_path(run_save_path(clean_slot), frame_boundary)
 	if bool(primary.get("loadable", false)):
 		# A valid primary is authoritative. Parsing and normalizing the complete
 		# backup as well doubled Continue time for accumulated late-run saves.
@@ -360,7 +368,7 @@ func load_run(slot_id: String = "autosave") -> Variant:
 		_remember_primary_digest(clean_slot, run_save_path(clean_slot), str(primary.get("validated_sha256", "")))
 		last_load_outcome = _load_outcome(clean_slot, LOAD_OUTCOME_PRIMARY, primary, backup)
 		return primary.get("run_state")
-	var backup := _read_run_state_from_path(backup_save_path(clean_slot))
+	var backup := await _read_run_state_from_path(backup_save_path(clean_slot), frame_boundary)
 	trusted_primary_fingerprints.erase(clean_slot)
 	if bool(backup.get("loadable", false)):
 		last_load_outcome = _load_outcome(clean_slot, LOAD_OUTCOME_BACKUP, primary, backup)
@@ -507,7 +515,7 @@ static func _payload_from_storage_pack(packed_result: Dictionary, act: int, slot
 
 
 # Accepts current envelopes and previous raw foundation RunState dictionaries.
-func _run_data_from_payload(payload: Dictionary, validation_proof: Dictionary = {}) -> Dictionary:
+func _run_data_from_payload(payload: Dictionary, validation_proof: Dictionary, frame_boundary: Signal) -> Dictionary:
 	if payload.get("schema", "") == SAVE_SCHEMA:
 		var run_data: Variant = payload.get("run_state", {})
 		if typeof(run_data) != TYPE_DICTIONARY:
@@ -515,10 +523,16 @@ func _run_data_from_payload(payload: Dictionary, validation_proof: Dictionary = 
 		var unpacked_run_data := RunSaveCodecScript.unpack_from_storage(run_data as Dictionary)
 		if unpacked_run_data.is_empty():
 			return {}
+		if not frame_boundary.is_null():
+			await frame_boundary
 		# These are the same pre-decode checks as _payload_dictionary_loadable.
 		# Normalized RunState defaults must never mint a durable-generation proof.
 		validation_proof["loadable"] = unpacked_run_data.has("seed_text") and unpacked_run_data.has("rng_state") and unpacked_run_data.has("current_environment")
-		var copied_run_data := RunSaveCodecScript.decode(unpacked_run_data)
+		var copied_run_data: Dictionary
+		if frame_boundary.is_null():
+			copied_run_data = RunSaveCodecScript.decode(unpacked_run_data)
+		else:
+			copied_run_data = await RunSaveCodecScript.decode_in_steps(unpacked_run_data, frame_boundary)
 		if not copied_run_data.has("act"):
 			copied_run_data["act"] = maxi(1, int(payload.get("act", 1)))
 		return copied_run_data
@@ -527,7 +541,7 @@ func _run_data_from_payload(payload: Dictionary, validation_proof: Dictionary = 
 	return {}
 
 
-func _read_run_state_from_path(path: String) -> Dictionary:
+func _read_run_state_from_path(path: String, frame_boundary: Signal) -> Dictionary:
 	if not FileAccess.file_exists(path):
 		return {"exists": false, "loadable": false, "run_state": null}
 	var text := FileAccess.get_file_as_string(path)
@@ -538,12 +552,18 @@ func _read_run_state_from_path(path: String) -> Dictionary:
 	var parsed: Variant = json.data
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return {"exists": true, "loadable": false, "run_state": null}
+	if not frame_boundary.is_null():
+		await frame_boundary
 	var validation_proof: Dictionary = {}
-	var run_data := _run_data_from_payload(parsed as Dictionary, validation_proof)
+	var run_data := await _run_data_from_payload(parsed as Dictionary, validation_proof, frame_boundary)
 	if run_data.is_empty():
 		return {"exists": true, "loadable": false, "run_state": null}
 	var run_state := RunState.new()
-	run_state.from_dict(run_data)
+	if frame_boundary.is_null():
+		run_state.from_dict(run_data)
+	else:
+		await frame_boundary
+		await run_state.restore_save_in_steps(run_data, frame_boundary)
 	var result := {"exists": true, "loadable": true, "run_state": run_state}
 	# A ledger rewrite, raw/unknown envelope, failed unpack, or absent required
 	# field keeps the existing full-validation path on the following save.

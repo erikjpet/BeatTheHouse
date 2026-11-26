@@ -5,6 +5,8 @@ All notable public release changes for Beat the House are recorded here.
 ## Unreleased
 
 - Name release ZIPs and the Windows executable with the release version.
+- Prepare Web cabinets and saved rooms across frames, and reuse stored room
+  snapshots during travel.
 - Reduced cold travel pauses by loading room game data separately from the
   playable cabinets and spreading Web room validation across frames.
 - Fixed Scratch Tickets failing to load its foil renderer on Web.

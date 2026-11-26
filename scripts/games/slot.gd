@@ -335,8 +335,16 @@ func cheat_actions(run_state: RunState, environment: Dictionary) -> Array:
 
 
 func generate_environment_state(run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
-	var machine: Dictionary = generator.generate_machine(run_state, environment, rng, definition, get_id())
+	var machine: Dictionary = _generate_seeded_machine(run_state, environment, rng)
 	return definition_cache.compact_machine_for_storage(machine)
+
+
+func _generate_seeded_machine(run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
+	var environment_id := str(environment.get("id", "environment"))
+	var archetype_id := str(environment.get("archetype_id", environment.get("kind", "archetype")))
+	var stream_key := "slot_machine:%s:%s:%s" % [get_id(), environment_id, archetype_id]
+	var generation_rng: RngStream = run_state.create_rng(stream_key) if run_state != null else rng.fork(stream_key)
+	return generator.generate_machine(generation_rng, definition)
 
 
 func generate_environment_fixture_states(_run_state: RunState, environment: Dictionary, rng: RngStream, fixture_count: int) -> Dictionary:
@@ -1897,7 +1905,7 @@ func _ensure_machine_state(run_state: RunState, environment: Dictionary, rng: Rn
 		if generation_rng == null:
 			generation_rng = RngStream.new()
 			generation_rng.configure(1)
-		machine = generator.generate_machine(run_state, environment, generation_rng, definition, get_id())
+		machine = _generate_seeded_machine(run_state, environment, generation_rng)
 		_write_machine(environment, machine, false)
 	elif not _bonus_recovery_required(machine) and int(machine.get("schema_version", 0)) != StateScript.SCHEMA_VERSION:
 		machine = StateScript.normalize(machine)

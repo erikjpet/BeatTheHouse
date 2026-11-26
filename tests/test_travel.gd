@@ -6,13 +6,19 @@ const DESTINATION := "gas_station_casino"
 const TRAVEL_SAVE_PREFIX := "TRAVEL_SAVE "
 
 
-class ScratchEntryHost extends FoundationMain:
-	func _should_stage_scratch_cabinet_open() -> bool:
+class CabinetEntryHost extends FoundationMain:
+	func _should_stage_cabinet_open() -> bool:
 		return true
 
 	func _request_game_module_script_prewarm() -> void:
 		super._request_game_module_script_prewarm()
 		game_module_script_prewarm_requests.erase(SCRATCH_TICKETS_MODULE_PATH)
+		game_module_script_prewarm_requests.erase("res://scripts/games/pull_tabs.gd")
+
+
+class ContinueHost extends FoundationMain:
+	func _should_stage_player_continue() -> bool:
+		return true
 
 
 func _initialize() -> void:
@@ -23,7 +29,9 @@ func _run() -> void:
 	var arguments := OS.get_cmdline_user_args()
 	var app = MAIN.instantiate()
 	if arguments.is_empty():
-		app.set_script(ScratchEntryHost)
+		app.set_script(CabinetEntryHost)
+	else:
+		app.set_script(ContinueHost)
 	root.add_child(app)
 	app.continuous_environment_clock_enabled = false
 	app.user_settings.coach_tips_enabled = false
@@ -38,7 +46,7 @@ func _run() -> void:
 			await process_frame
 			failure = "Normal quit did not exit after Save."
 	elif arguments.size() == 2 and arguments[0] == "--continue":
-		failure = _continue(app, Marshalls.base64_to_utf8(arguments[1]))
+		failure = await _continue(app, Marshalls.base64_to_utf8(arguments[1]))
 	else:
 		failure = "Expected the travel writer or its cold Continue phase."
 	app.pending_autosave = false
@@ -53,9 +61,10 @@ func _play_and_save(app) -> String:
 	var travel_failure := await _travel(app)
 	if not travel_failure.is_empty():
 		return travel_failure
-	var scratch_failure := await _check_staged_scratch_entry(app)
-	if not scratch_failure.is_empty():
-		return scratch_failure
+	for game_id in ["scratch_tickets", "pull_tabs"]:
+		var opening_failure := await _check_staged_cabinet_entry(app, game_id)
+		if not opening_failure.is_empty():
+			return opening_failure
 	if not app.activate_interactable_object("game:slot") or app.current_game == null:
 		return "The seeded arrival has no playable Slot cabinet."
 	var run: RunState = app.run_state
@@ -88,36 +97,37 @@ func _play_and_save(app) -> String:
 	return ""
 
 
-func _check_staged_scratch_entry(app) -> String:
-	const CABINET := "game:scratch_tickets"
+func _check_staged_cabinet_entry(app, game_id: String) -> String:
+	var cabinet := "game:%s" % game_id
+	var module_path: String = app.library.game(game_id).get("module_path", "")
 	var run: RunState = app.run_state
 	var bankroll := run.bankroll
 	var clock := run.game_clock_minutes
-	app.environment_canvas.object_focused.emit(CABINET)
+	app.environment_canvas.object_focused.emit(cabinet)
 	await process_frame
-	var preview: Dictionary = app._game_entry_preview("scratch_tickets")
-	if not bool(preview.get("ok", false)) or ResourceLoader.has_cached(app.SCRATCH_TICKETS_MODULE_PATH):
-		return "Inspecting Scratch must show its actions without loading the playable cabinet."
-	app.environment_canvas.object_activated.emit(CABINET)
-	if app._pending_scratch_cabinet_open.is_empty() or app.current_game != null or app.open_world_map():
-		return "A cold Scratch opening must keep the run on the room floor and own room input."
+	var preview: Dictionary = app._game_entry_preview(game_id)
+	if not bool(preview.get("ok", false)) or ResourceLoader.has_cached(module_path):
+		return "Inspecting %s must show its actions without loading the playable cabinet." % game_id
+	app.environment_canvas.object_activated.emit(cabinet)
+	if app._pending_cabinet_open.is_empty() or app.current_game != null or app.open_world_map():
+		return "A cold cabinet opening must keep the run on the room floor and own room input."
 	var cancel := InputEventAction.new()
 	cancel.action = "ui_cancel"
 	cancel.pressed = true
 	root.push_input(cancel)
-	if not app._pending_scratch_cabinet_open.is_empty() or app.current_game != null:
+	if not app._pending_cabinet_open.is_empty() or app.current_game != null:
 		return "Cancel must discard the pending cabinet opening."
-	app.environment_canvas.object_activated.emit(CABINET)
-	if app._pending_scratch_cabinet_open.is_empty():
-		return "The canceled Scratch opening must accept another room activation."
+	app.environment_canvas.object_activated.emit(cabinet)
+	if app._pending_cabinet_open.is_empty():
+		return "The canceled opening must accept another room activation."
 	for frame in range(32):
-		if app._pending_scratch_cabinet_open.is_empty():
+		if app._pending_cabinet_open.is_empty():
 			break
 		if app.run_state != run or run.bankroll != bankroll or run.game_clock_minutes != clock or app.current_game != null:
-			return "Scratch preparation must keep the departing room and run intact."
+			return "Cabinet preparation must keep the room and run intact."
 		await process_frame
-	if app.current_game == null or app.current_game.get_id() != "scratch_tickets" or app.current_game_state_key != "scratch_tickets":
-		return "Scratch preparation must enter the original physical cabinet."
+	if app.current_game == null or app.current_game.get_id() != game_id or app.current_game_state_key != game_id:
+		return "Cabinet preparation must enter the original physical cabinet."
 	app.back_to_environment()
 	return ""
 
@@ -126,7 +136,20 @@ func _continue(app, expected: String) -> String:
 	var snapshot: Variant = JSON.parse_string(expected)
 	if not snapshot is Dictionary or str(snapshot.get("machine_key", "")).is_empty():
 		return "Cold Continue did not receive a valid saved-state snapshot."
-	if not app.start_or_continue_primary() or app.run_state == null:
+	app.autosave_loadable_available = app.save_service.has_run(app.autosave_slot_id)
+	if not app.start_or_continue_primary(true) or not app._player_continue_staged:
+		return "Cold Continue did not start staged restoration."
+	app.new_run_button.pressed.emit()
+	if app._pending_player_start.is_valid():
+		return "Continue accepted another title request during restoration."
+	for frame in range(240):
+		if app._player_continue_staged:
+			if app.run_state != null or app.run_screen.visible:
+				return "Continue published the run before its restoration finished."
+		if app.run_state != null and app._player_start_presentation_stage < 0:
+			break
+		await process_frame
+	if app.run_state == null:
 		return "The new process could not Continue the saved run."
 	if app.save_service.last_load_result().get("outcome") != SaveService.LOAD_OUTCOME_PRIMARY:
 		return "Cold Continue did not load the primary save."

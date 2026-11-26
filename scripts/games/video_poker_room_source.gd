@@ -224,6 +224,23 @@ const VARIANTS := {
 
 
 # Generates the cabinet identity (game variant) before entry.
+# The cabinet's denomination, coin count and hands determine its actual bet.
+func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
+	var wager_capacity := run_state.wager_capacity_for_game(get_id(), environment)
+	return {
+		"ok": true,
+		"type": "game_actions",
+		"game_id": get_id(),
+		"legal_actions": legal_actions(run_state, environment),
+		"cheat_actions": cheat_actions(run_state, environment),
+		"stake_floor": 1,
+		"stake_ceiling": maxi(1, wager_capacity),
+		"base_stake_ceiling": maxi(1, wager_capacity),
+		"economy_state": run_state.economy(),
+		"economy_pressure_applied": false,
+	}
+
+
 func generate_environment_state(run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	var cabinet_id := str(rng.pick(CABINET_ORDER, "jacks_or_better"))
 	var cabinet: Dictionary = _cabinet_spec(cabinet_id)

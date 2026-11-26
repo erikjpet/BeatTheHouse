@@ -5,6 +5,14 @@ extends RefCounted
 # from validated definitions before a heavyweight game instance is considered.
 
 const SCRIPT_CACHE_MAX_ENTRIES := 32
+const SLOT_MODULE_PATH := "res://scripts/games/slot.gd"
+const SLOT_MODULE_LOAD_ORDER := [
+	"res://scripts/games/slots/pinball/pinball_feature.gd",
+	"res://scripts/games/slots/slot_resolver.gd",
+	"res://scripts/games/slots/slot_presentation.gd",
+	"res://scripts/games/slots/slot_renderer.gd",
+	SLOT_MODULE_PATH,
+]
 # Travel and the room catalog need seeded game data, not the cabinet renderer
 # or action code. Only these exact authored modules share a smaller room base.
 const ROOM_SOURCE_PATHS := {
@@ -48,6 +56,33 @@ static func _load_script(module_path: String) -> Script:
 
 static func create_module(definition: Dictionary, library: ContentLibrary) -> GameModule:
 	return _instantiate(script_for_definition(definition), definition, library)
+
+
+static func prepare_room_source_in_steps(definition: Dictionary, frame_boundary: Signal) -> void:
+	var module_path := str(definition.get("module_path", "")).strip_edges()
+	if module_path == SLOT_MODULE_PATH:
+		await _prepare_slot_in_steps(frame_boundary)
+		return
+	var path := str(ROOM_SOURCE_PATHS.get(module_path, module_path))
+	if _valid_module_path(path) and not ResourceLoader.has_cached(path):
+		await frame_boundary
+		_load_script(path)
+
+
+static func _prepare_slot_in_steps(frame_boundary: Signal) -> void:
+	if ResourceLoader.has_cached(SLOT_MODULE_PATH):
+		return
+	# The non-threaded browser still needs the real Slot module for background
+	# spins. Retain its cold dependencies between draws before the room uses it.
+	var retained: Array[Script] = []
+	for path in SLOT_MODULE_LOAD_ORDER:
+		if not ResourceLoader.has_cached(path):
+			await frame_boundary
+		var script := _load_script(path)
+		if script == null:
+			return
+		retained.append(script)
+	await frame_boundary
 
 
 static func room_source_path(definition: Dictionary) -> String:

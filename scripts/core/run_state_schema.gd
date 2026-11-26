@@ -98,6 +98,14 @@ static func serialize(run_state: Object) -> Dictionary:
 
 
 static func restore(run_state: Object, payload: Dictionary) -> void:
+	run_state.call("_run_state_schema_restore", _restore_fields(payload))
+
+
+static func restore_in_steps(run_state: Object, payload: Dictionary, frame_boundary: Signal) -> void:
+	await run_state.call("_run_state_schema_restore", _restore_fields(payload), frame_boundary)
+
+
+static func _restore_fields(payload: Dictionary) -> Dictionary:
 	var canonical: Dictionary = {}
 	for field in FIELDS:
 		var key := str(field.get("key", ""))
@@ -109,7 +117,7 @@ static func restore(run_state: Object, payload: Dictionary) -> void:
 	for legacy_key in LEGACY_INPUT_KEYS:
 		if payload.has(legacy_key):
 			canonical[legacy_key] = payload[legacy_key]
-	run_state.call("_run_state_schema_restore", canonical)
+	return canonical
 
 
 static func serialized_keys() -> Array:
