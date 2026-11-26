@@ -3,6 +3,7 @@ extends SceneTree
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 const BlackjackGameScript := preload("res://scripts/games/blackjack.gd")
+const RouletteGameScript := preload("res://scripts/games/roulette.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 
 
@@ -86,6 +87,25 @@ func _run() -> void:
 			or JSON.stringify(cast_start.get("dealer_motion", [])) == JSON.stringify(cast_end.get("dealer_motion", [])) \
 			or JSON.stringify(cast_start.get("patron_motion", [])) == JSON.stringify(cast_end.get("patron_motion", [])):
 		push_error("Blackjack dealer or patron motion did not advance autonomously between hands.")
+		quit(1)
+		return
+
+	var roulette := RouletteGameScript.new()
+	var roulette_state := roulette.surface_state(RunState.new(), {})
+	game_canvas.call("set_game_module", roulette)
+	game_canvas.call("render_game_snapshot", roulette_state)
+	if float(roulette_state.get("surface_web_idle_animation_fps", 1.0)) <= 1.0:
+		push_error("Roulette is using the one-redraw-per-second Web fallback.")
+		quit(1)
+		return
+	game_canvas.call("reset_performance_counters")
+	var wheel_start: Dictionary = game_canvas.call("debug_surface_motion_sample")
+	for _frame_index in range(24):
+		await process_frame
+	var wheel_end: Dictionary = game_canvas.call("debug_surface_motion_sample")
+	var roulette_end: Dictionary = game_canvas.call("current_view_snapshot")
+	if wheel_start == wheel_end or int(roulette_end.get("surface_animation_redraw_count", 0)) <= 0:
+		push_error("Roulette wheel or ball motion did not advance without pointer input.")
 		quit(1)
 		return
 

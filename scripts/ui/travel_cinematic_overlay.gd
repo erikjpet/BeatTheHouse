@@ -25,6 +25,8 @@ var elapsed := 0.0
 var _receipt: Dictionary = {}
 var _scene: Dictionary = {}
 var _mode := "bus"
+var _frame_choreography: Dictionary = {}
+var _sampled_elapsed := -1.0
 var _completion_latched := false
 var _presentation_generation := 0
 var _street: Texture2D
@@ -207,8 +209,6 @@ func present(receipt: Dictionary, reduced_motion: bool = false, high_contrast: b
 	else:
 		set_process(true)
 		_focus_action(_skip)
-	_update_scene_views()
-	queue_redraw()
 
 func _load_art(path: String) -> Texture2D:
 	if force_missing_art_for_test or path.is_empty() or not ResourceLoader.exists(path, "Texture2D"):
@@ -273,8 +273,6 @@ func skip_to_receipt() -> void:
 	_layout()
 	if not _auto_complete:
 		_focus_action(_continue)
-	_update_scene_views()
-	queue_redraw()
 	if _auto_complete:
 		# Natural finish, Skip and fresh fallback share exactly-once arrival. Defer
 		# emission so the host can refresh/free views without reentering input,
@@ -300,6 +298,7 @@ func acknowledge() -> void:
 func cancel() -> void:
 	# Invalidate queued completion even when a replacement has the same receipt.
 	_presentation_generation += 1
+	_sampled_elapsed = -1.0
 	if focus_scope != null:
 		focus_scope.call("pop_scope", self)
 	active = false
@@ -502,7 +501,13 @@ func layer_window_snapshot(seconds: float) -> Dictionary:
 
 
 func _choreography(seconds: float = -1.0) -> Dictionary:
-	return ArrivalTimelineScript.sample(elapsed if seconds < 0 else seconds, _mode, _scene.get("motion", {}))
+	if seconds >= 0.0:
+		return ArrivalTimelineScript.sample(seconds, _mode, _scene.get("motion", {}))
+	# Phase updates, retained layers, and canvas drawing use the same sample.
+	if _sampled_elapsed != elapsed:
+		_frame_choreography = ArrivalTimelineScript.sample(elapsed, _mode, _scene.get("motion", {}))
+		_sampled_elapsed = elapsed
+	return _frame_choreography
 
 
 func _has_scene_art() -> bool:
