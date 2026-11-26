@@ -97,15 +97,16 @@ func gameplay_model() -> String:
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
-	# Rasterize each authored foil layout once when the machine opens. Purchases
-	# then clone a full-resolution template instead of rebuilding identical
-	# geometry while the ticket dispense animation is starting.
-	for ticket_type_value in _ticket_types():
-		MaskScript.prime(ticket_type_value as Dictionary)
 	var machine := _ensure_machine_state(run_state, environment, false)
+	var stock := _stock_view(machine)
+	# Warm the layouts a player can buy before the dispense animation starts.
+	for slot_value in stock:
+		var slot: Dictionary = slot_value
+		if int(slot.get("remaining", 0)) > 0:
+			MaskScript.prime(_ticket_type(str(slot.get("type_id", ""))))
 	var result := super.enter(run_state, environment)
 	result["message"] = "The scratcher vending machine hums beside %s's sales counter. Stock releases in small unposted batches; pick a live slot, then drag across the latex." % _redeemer_label(environment)
-	result["scratch_stock_count"] = _stock_view(machine).size()
+	result["scratch_stock_count"] = stock.size()
 	result["scratch_stock_available"] = _stock_total(machine)
 	result["scratch_scalper_present"] = bool(machine.get("scalper_present", false))
 	return result

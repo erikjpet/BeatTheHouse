@@ -285,11 +285,35 @@ static func sections_from_regions(regions: Array) -> Array:
 
 static func _rasterize_region(mask: Array, region: Dictionary, alpha: int) -> int:
 	var ranges := _region_ranges(region)
+	var left: int = ranges[0]
+	var right: int = ranges[1]
+	var top: int = ranges[2]
+	var bottom: int = ranges[3]
+	# Decode the ellipse once and reuse the squared X distance for each row.
+	var ellipse_x_squared := PackedFloat64Array()
+	var center_y := 0.0
+	var radius_y := 1.0
+	if str(region.get("mask_shape", "rect")) == "ellipse":
+		var values: Variant = region.get("art_rect", [])
+		if values is Array and values.size() >= 4:
+			var center_x := (float(values[0]) + float(values[2]) * 0.5) * MASK_COLUMNS
+			var radius_x := maxf(0.5, float(values[2]) * MASK_COLUMNS * 0.5)
+			center_y = (float(values[1]) + float(values[3]) * 0.5) * MASK_ROWS
+			radius_y = maxf(0.5, float(values[3]) * MASK_ROWS * 0.5)
+			ellipse_x_squared.resize(right - left)
+			for column in range(left, right):
+				var dx := (float(column) + 0.5 - center_x) / radius_x
+				ellipse_x_squared[column - left] = dx * dx
+	var ellipse := not ellipse_x_squared.is_empty()
 	var changed := 0
-	for row in range(int(ranges[2]), int(ranges[3])):
+	for row in range(top, bottom):
 		var offset := row * MASK_COLUMNS
-		for column in range(int(ranges[0]), int(ranges[1])):
-			if not _sample_inside_region(region, column, row):
+		var dy_squared := 0.0
+		if ellipse:
+			var dy := (float(row) + 0.5 - center_y) / radius_y
+			dy_squared = dy * dy
+		for column in range(left, right):
+			if ellipse and not (ellipse_x_squared[column - left] + dy_squared <= 1.0):
 				continue
 			var index := offset + column
 			if int(mask[index]) == alpha:
