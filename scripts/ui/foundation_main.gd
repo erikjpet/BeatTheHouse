@@ -1666,15 +1666,17 @@ func _advance_player_start_presentation() -> void:
 		0:
 			_refresh_run_boundary()
 		1:
-			if _room_presentation_requires_scenario_finalization():
+			var finalize_scenario := _room_presentation_requires_scenario_finalization()
+			if _should_stage_player_continue() and _player_start_finished == _complete_loaded_foundation_presentation:
+				var restoring_run := run_state
+				run_state = null
+				_stage_continue_room_catalog(restoring_run, finalize_scenario)
+				return
+			if finalize_scenario:
 				var restoring_run := run_state
 				var layout_context := JsonCoerceScript._copy_dict(restoring_run.current_environment.get("scenario_layout_context", {}))
 				# Keep the loaded room private during reconstruction. Focus,
 				# resize and audio notifications only see the loading menu.
-				if _should_stage_player_continue() and _player_start_finished == _complete_loaded_foundation_presentation:
-					run_state = null
-					_stage_continue_room_catalog(restoring_run, layout_context)
-					return
 				if not OS.has_feature("web"):
 					run_state = null
 					if _start_player_room_worker(
@@ -7955,14 +7957,31 @@ func _stage_player_continue(return_to_start_on_missing: bool) -> void:
 		_apply_loaded_foundation_run(loaded, return_to_start_on_missing, true)
 
 
-func _stage_continue_room_catalog(restoring_run: RunState, layout_context: Dictionary) -> void:
+func _stage_continue_room_catalog(restoring_run: RunState, finalize_scenario: bool) -> void:
 	_player_continue_staged = true
 	var frame_boundary := get_tree().process_frame
 	await frame_boundary
-	var finalized := await restoring_run.finalize_installed_scenario_in_steps(library, layout_context, frame_boundary)
+	var finalized: Dictionary = {}
+	if finalize_scenario and not _exit_after_staged_continue:
+		var layout_context := JsonCoerceScript._copy_dict(restoring_run.current_environment.get("scenario_layout_context", {}))
+		finalized = await restoring_run.finalize_installed_scenario_in_steps(library, layout_context, frame_boundary)
+		await frame_boundary
+	# Builders use the host's run during each synchronous step. Between draws
+	# keep it detached so input, resize and close still see the loading screen.
+	var sources_ready := false
+	if _player_continue_staged and not _exit_after_staged_continue:
+		run_state = restoring_run
+		sources_ready = _prepare_room_presentation_sources(finalized) and _prepare_room_presentation_game_sources()
+		run_state = null
+	if sources_ready:
+		await frame_boundary
+		if _player_continue_staged and not _exit_after_staged_continue:
+			run_state = restoring_run
+			_publish_room_presentation_catalog()
+			run_state = null
 	await frame_boundary
 	if _finish_staged_continue():
-		_finish_player_room_catalog(finalized, restoring_run)
+		run_state = restoring_run
 
 
 func _finish_staged_continue() -> bool:
