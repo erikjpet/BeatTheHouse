@@ -189,7 +189,6 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_time_msec": int(ui_state.get("surface_time_msec", dispense_started_msec)),
 		"surface_presentation_time_msec": presentation_time_msec,
 		"surface_animates_idle": true,
-		"surface_web_idle_animation_fps": 15.0,
 		"surface_embeds_outcomes": true,
 		"surface_ui_preference_keys": PULL_TAB_GLIMMER_UI_STATE_KEYS,
 		"reduce_motion": bool(ui_state.get("reduce_motion", false)),

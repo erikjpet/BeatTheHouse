@@ -53,7 +53,6 @@ func _run() -> void:
 		"surface_renderer_opaque": true,
 		"surface_animates_idle": true,
 		"surface_native_low_detail_idle": true,
-		"surface_native_idle_animation_fps": 15.0,
 		"phase": "betting",
 		"between_hands": true,
 		"dealer_name": "Liveness Dealer",
@@ -76,11 +75,11 @@ func _run() -> void:
 		quit(1)
 		return
 	if not bool(game_canvas.call("surface_low_detail_idle")):
-		push_error("Blackjack between-hand liveness no longer preserves its measured low-detail redraw cadence.")
+		push_error("Blackjack between-hand animation did not retain low-detail rendering.")
 		quit(1)
 		return
-	if not is_equal_approx(float(game_canvas.call("surface_idle_animation_fps")), 15.0):
-		push_error("Blackjack between-hand liveness no longer uses its 15 FPS native idle cadence.")
+	if not _schedules_full_rate_idle(game_canvas):
+		push_error("Blackjack did not schedule a redraw at each idle animation tick.")
 		quit(1)
 		return
 	if not bool(cast_start.get("between_hand_cast_active", false)) \
@@ -94,8 +93,8 @@ func _run() -> void:
 	var roulette_state := roulette.surface_state(RunState.new(), {})
 	game_canvas.call("set_game_module", roulette)
 	game_canvas.call("render_game_snapshot", roulette_state)
-	if float(roulette_state.get("surface_web_idle_animation_fps", 1.0)) <= 1.0:
-		push_error("Roulette is using the one-redraw-per-second Web fallback.")
+	if not _schedules_full_rate_idle(game_canvas):
+		push_error("Roulette did not schedule a redraw at each idle animation tick.")
 		quit(1)
 		return
 	game_canvas.call("reset_performance_counters")
@@ -109,5 +108,26 @@ func _run() -> void:
 		quit(1)
 		return
 
+	roulette_state["reduce_motion"] = true
+	game_canvas.call("render_game_snapshot", roulette_state)
+	game_canvas.call("reset_performance_counters")
+	var reduced: Dictionary = game_canvas.call("debug_advance_idle_liveness", 1.0)
+	if not game_canvas.is_processing() or float(reduced.get("surface_idle_animation_fps", -1.0)) != 0.0 \
+			or int(reduced.get("surface_animation_redraw_count", -1)) != 0:
+		push_error("Reduced motion did not hold idle animation while keeping the game canvas processing.")
+		quit(1)
+		return
+
 	print("Animation liveness without pointer input: PASS")
 	quit(0)
+
+
+func _schedules_full_rate_idle(canvas: Control) -> bool:
+	if not is_equal_approx(float(canvas.call("surface_idle_animation_fps")), 60.0):
+		return false
+	canvas.call("reset_performance_counters")
+	for tick in range(1, 13):
+		var status: Dictionary = canvas.call("debug_advance_idle_liveness", 1.0 / 60.0)
+		if int(status.get("surface_animation_redraw_count", 0)) != tick:
+			return false
+	return true

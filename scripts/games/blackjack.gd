@@ -128,6 +128,9 @@ const BJ_CENTER_FELT_COLORS := [Color("#063f35")]
 var draw_deal_events_cache_id := ""
 var draw_deal_events_cache: Array = []
 const CHIP_RIM_GEOMETRY_CACHE_LIMIT := 128
+const CHIP_MESH_CACHE_LIMIT := 48
+const CHIP_CIRCLE_SEGMENTS := 64
+var chip_mesh_cache: Dictionary = {}
 var chip_rim_geometry_cache: Dictionary = {}
 var draw_dealer_character_style: Dictionary = {}
 var draw_patron_character_style: Dictionary = {}
@@ -824,13 +827,11 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_stake_controls_required": true,
 		"surface_embeds_outcomes": true,
 		"surface_animates_idle": true,
-		# The deliberately stepped low-detail cast keeps the dealer and patrons
+		# The low-detail cast keeps the dealer and patrons
 		# visibly alive without rebuilding the full table 60 times per second.
 		# Any active deal, attention, count, or payout channel leaves this mode and
 		# returns to the full 60 FPS surface cadence.
 		"surface_native_low_detail_idle": true,
-		"surface_native_idle_animation_fps": 15.0,
-		"surface_web_idle_animation_fps": 12.0,
 		"surface_dynamic_overlay_channels": [DEAL_ANIMATION_CHANNEL, ATTENTION_ANIMATION_CHANNEL, COUNT_ANIMATION_CHANNEL, PAYOUT_ANIMATION_CHANNEL],
 		"surface_realtime_state_refresh": false,
 		"money_presentation_animation_channel": DEAL_ANIMATION_CHANNEL,
@@ -3511,7 +3512,6 @@ func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 		var threshold := int(patron.get("snitch_threshold", 30))
 		var tell_active := watching and (risk >= threshold or (phase > 0.58 and phase < 0.82))
 		var accent := C_PINK if watching else C_TEAL if covered else C_SOFT
-		var patron_motion := _blackjack_between_hand_character_motion(patron_clock, float(i) * 0.37)
 		draw_patron_character_style.clear()
 		draw_patron_character_style["name"] = str(patron.get("name", "Seat"))
 		draw_patron_character_style["skin"] = Color("#c49371")
@@ -3521,6 +3521,7 @@ func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 		draw_patron_character_style["role"] = "patron"
 		var patron_pose := "covered" if covered else "snitch" if tell_active else "idle"
 		if _blackjack_between_hand_cast_active(surface_state) and not covered and not tell_active:
+			var patron_motion := _blackjack_between_hand_character_motion(patron_clock, float(i) * 0.37)
 			patron_pose = ["chin_touch", "adjust_cuff", "rub_hands"][int(patron_motion.get("gesture_index", 0))]
 			draw_patron_character_style["body_bob"] = float(patron_motion.get("body_bob", 0.0))
 			draw_patron_character_style["head_x"] = float(patron_motion.get("head_x", 0.0))
@@ -3556,7 +3557,7 @@ func _blackjack_between_hand_cast_active(surface_state: Dictionary) -> bool:
 
 func _blackjack_between_hand_character_motion(clock: float, phase_offset: float = 0.0) -> Dictionary:
 	# Each gesture returns to its resting pose before the next one is selected, so
-	# the low-cadence cast moves continuously without popping between arm poses.
+	# the cast moves continuously without popping between arm poses.
 	var gesture_clock := maxf(0.0, clock) / 2.8 + phase_offset
 	var gesture_phase := fposmod(gesture_clock, 1.0)
 	var breath_clock := maxf(0.0, clock) * 2.15 + phase_offset * TAU
@@ -4440,8 +4441,20 @@ func _draw_chip_stack(surface, pos: Vector2, stack_value: Variant, scale: float 
 
 
 func _draw_casino_chip(surface, center: Vector2, value: int, radius: float, alpha: float = 1.0, selected: bool = false) -> void:
-	var color := _chip_color(value)
-	var rim := C_WHITE if selected else Color("#f7f1d0")
+	if surface is CanvasItem and (alpha == 1.0 or alpha == 0.92 or alpha == 0.35):
+		# Rack chips and moving stacks reuse center-relative geometry.
+		# A continuously fading payout chip uses the immediate path.
+		var mesh := _chip_mesh(radius, value, alpha, selected)
+		surface.draw_mesh(mesh, null, Transform2D(0.0, center))
+	else:
+		var rim := C_WHITE if selected else Color("#f7f1d0")
+		_draw_chip_geometry(surface, center, radius, _chip_color(value), rim, alpha)
+	if radius >= 8.0:
+		var label_size := clampi(int(radius * 0.58), 6, 11)
+		surface.surface_label_centered("$%d" % value, Rect2(center - Vector2(radius * 0.62, radius * 0.34), Vector2(radius * 1.24, radius * 0.68)), label_size, C_WHITE)
+
+
+func _draw_chip_geometry(surface, center: Vector2, radius: float, color: Color, rim: Color, alpha: float) -> void:
 	surface.draw_circle(center + Vector2(2, 3), radius, Color(0, 0, 0, 0.28 * alpha))
 	surface.draw_circle(center, radius, Color(color.r, color.g, color.b, 0.95 * alpha))
 	surface.draw_circle(center, radius * 0.78, Color(rim.r, rim.g, rim.b, 0.86 * alpha), false, maxf(1.0, radius * 0.12))
@@ -4456,9 +4469,68 @@ func _draw_casino_chip(surface, center: Vector2, value: int, radius: float, alph
 			surface.draw_line(rim_points[point_index], rim_points[point_index + 1], rim_color, rim_width)
 	surface.draw_circle(center, radius * 0.50, Color("#101018"))
 	surface.draw_circle(center, radius * 0.50, Color(color.r, color.g, color.b, 0.42 * alpha), false, maxf(1.0, radius * 0.08))
-	if radius >= 8.0:
-		var label_size := clampi(int(radius * 0.58), 6, 11)
-		surface.surface_label_centered("$%d" % value, Rect2(center - Vector2(radius * 0.62, radius * 0.34), Vector2(radius * 1.24, radius * 0.68)), label_size, C_WHITE)
+
+
+func _chip_mesh(radius: float, value: int, alpha: float, selected: bool) -> ArrayMesh:
+	var denomination := 25 if value >= 25 else 10 if value >= 10 else 5 if value >= 5 else 1
+	var key := Vector4(radius, float(denomination), alpha, 1.0 if selected else 0.0)
+	var cached: ArrayMesh = chip_mesh_cache.get(key)
+	if cached != null:
+		return cached
+	var color := _chip_color(denomination)
+	var rim := C_WHITE if selected else Color("#f7f1d0")
+	var points := PackedVector2Array()
+	var colors := PackedColorArray()
+	_append_chip_disc(points, colors, Vector2(2, 3), radius, 0.0, Color(0, 0, 0, 0.28 * alpha))
+	_append_chip_disc(points, colors, Vector2.ZERO, radius, 0.0, Color(color, 0.95 * alpha))
+	_append_chip_disc(points, colors, Vector2.ZERO, radius * 0.78, maxf(1.0, radius * 0.12), Color(rim, 0.86 * alpha))
+	var rim_color := Color(rim, 0.88 * alpha)
+	for index in range(12):
+		var direction := Vector2.from_angle(float(index) * TAU / 12.0)
+		var inner := direction * radius * 0.70
+		var outer := direction * radius * 0.98
+		var stroke := direction.orthogonal() * maxf(1.0, radius * 0.10) * 0.5
+		_append_chip_quad(points, colors, inner + stroke, outer + stroke, outer - stroke, inner - stroke, rim_color)
+	_append_chip_disc(points, colors, Vector2.ZERO, radius * 0.50, 0.0, Color("#101018"))
+	_append_chip_disc(points, colors, Vector2.ZERO, radius * 0.50, maxf(1.0, radius * 0.08), Color(color, 0.42 * alpha))
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = points
+	arrays[Mesh.ARRAY_COLOR] = colors
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	if chip_mesh_cache.size() < CHIP_MESH_CACHE_LIMIT:
+		chip_mesh_cache[key] = mesh
+	return mesh
+
+
+func _append_chip_disc(points: PackedVector2Array, colors: PackedColorArray, center: Vector2, radius: float, width: float, color: Color) -> void:
+	var outer_radius := radius + width * 0.5
+	var inner_radius := radius - width * 0.5
+	for index in range(CHIP_CIRCLE_SEGMENTS):
+		var first := Vector2.from_angle(float(index) * TAU / CHIP_CIRCLE_SEGMENTS)
+		var second := Vector2.from_angle(float(index + 1) * TAU / CHIP_CIRCLE_SEGMENTS)
+		var a := center + first * outer_radius
+		var b := center + second * outer_radius
+		if width > 0.0:
+			_append_chip_quad(points, colors, a, b, center + second * inner_radius, center + first * inner_radius, color)
+		else:
+			points.append(center)
+			points.append(a)
+			points.append(b)
+			for vertex in range(3):
+				colors.append(color)
+
+
+func _append_chip_quad(points: PackedVector2Array, colors: PackedColorArray, a: Vector2, b: Vector2, c: Vector2, d: Vector2, color: Color) -> void:
+	points.append(a)
+	points.append(b)
+	points.append(c)
+	points.append(a)
+	points.append(c)
+	points.append(d)
+	for vertex in range(6):
+		colors.append(color)
 
 
 func _chip_color(value: int) -> Color:

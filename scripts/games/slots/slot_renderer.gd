@@ -607,12 +607,10 @@ func _draw_reels(surface, state: Dictionary, definition: Dictionary, skin: Dicti
 		for point_index in range(maxi(0, points.size() - 1)):
 			surface.draw_line(points[point_index], points[point_index + 1], Color(light.r, light.g, light.b, 0.92), 4)
 			surface.draw_line(points[point_index], points[point_index + 1], Color(accent.r, accent.g, accent.b, 0.48), 8)
-	_draw_buffalo_main_board_overlay(FunctionOptions.BuffaloBoardOverlayOptions.from({
-		"surface": surface, "state": state, "definition": definition, "reel_rect": rect,
-		"reel_count": reel_count, "row_count": row_count, "gap": gap, "cell_w": cell_w,
-		"cell_h": cell_h, "time_msec": time_msec, "accent": accent, "light": light,
-		"glass": glass, "payload": _read_dict(signature.get("buffalo_main_board_payload", {})),
-	}))
+	var buffalo_board: Variant = signature.get("buffalo_main_board_payload")
+	if buffalo_board is Dictionary and not buffalo_board.is_empty():
+		_draw_buffalo_main_board_overlay(surface, definition, rect, Vector2i(reel_count, row_count),
+			Vector2(cell_w, cell_h), gap, time_msec, accent, light, glass, buffalo_board)
 	if bool(signature.get("tease_overlay_visible", false)):
 		surface.draw_rect(rect.grow(15), Color(accent.r, accent.g, accent.b, 0.44), false, 4)
 
@@ -753,28 +751,13 @@ func _buffalo_main_board_manifest(surface_state: Dictionary, payload: Dictionary
 	}
 
 
-func _draw_buffalo_main_board_overlay(options: FunctionOptions.BuffaloBoardOverlayOptions) -> void:
-	var surface = options.values.get("surface")
-	var state: Dictionary = options.values.get("state", {})
-	var definition: Dictionary = options.values.get("definition", {})
-	var reel_rect: Rect2 = options.values.get("reel_rect", Rect2())
-	var reel_count := int(options.values.get("reel_count", 0))
-	var row_count := int(options.values.get("row_count", 0))
-	var gap := float(options.values.get("gap", 0.0))
-	var cell_w := float(options.values.get("cell_w", 0.0))
-	var cell_h := float(options.values.get("cell_h", 0.0))
-	var time_msec := int(options.values.get("time_msec", 0))
-	var accent: Color = options.values.get("accent", Color.WHITE)
-	var light: Color = options.values.get("light", Color.WHITE)
-	var glass: Color = options.values.get("glass", Color.WHITE)
-	var payload: Dictionary = options.values.get("payload", {})
-	var active: Dictionary = _read_dict(state.get("slot_active_bonus", {}))
-	if str(active.get("family", state.get("slot_type_id", ""))) != "buffalo":
-		return
-	if active.is_empty() or not bool(state.get("slot_active_bonus_active", false)):
-		return
-	if payload.is_empty():
-		payload = _buffalo_main_board_payload(state, time_msec)
+func _draw_buffalo_main_board_overlay(surface, definition: Dictionary, reel_rect: Rect2,
+		reel_layout: Vector2i, cell_size: Vector2, gap: float, time_msec: int,
+		accent: Color, light: Color, glass: Color, payload: Dictionary) -> void:
+	var reel_count := reel_layout.x
+	var row_count := reel_layout.y
+	var cell_w := cell_size.x
+	var cell_h := cell_size.y
 	var coins: Array = _read_array(payload.get("coins", []))
 	var coin_lookup: Dictionary = {}
 	for coin_value in coins:
@@ -831,7 +814,7 @@ func _buffalo_main_board_payload(state: Dictionary, time_msec: int) -> Dictionar
 			if not _buffalo_lock_revealed(lock, time_msec):
 				pending_lock_count += 1
 				continue
-			var lock_payload := lock.duplicate(true)
+			var lock_payload := lock.duplicate(false)
 			lock_payload["reel"] = reel
 			lock_payload["row"] = row
 			lock_payload["symbol"] = str(lock_payload.get("symbol", "GOLD_TOKEN"))
@@ -848,8 +831,7 @@ func _buffalo_main_board_payload(state: Dictionary, time_msec: int) -> Dictionar
 		var reveal_lookup: Dictionary = _buffalo_coin_reveal_lookup(active, time_msec)
 		var coin_source: Array = _read_array(active.get("collected_coins", []))
 		if coin_source.is_empty() and not reveal_lookup.is_empty():
-			for reveal_key in reveal_lookup.keys():
-				coin_source.append(_read_dict(reveal_lookup.get(reveal_key, {})))
+			coin_source = reveal_lookup.values()
 		for coin_value in coin_source:
 			var coin: Dictionary = _read_dict(coin_value)
 			var reel := int(coin.get("reel", -1))
@@ -858,8 +840,9 @@ func _buffalo_main_board_payload(state: Dictionary, time_msec: int) -> Dictionar
 				continue
 			var key := _cell_key(reel, row)
 			var reveal: Dictionary = _read_dict(reveal_lookup.get(key, {}))
-			if not reveal.is_empty():
-				coin = reveal
+			# A projection owns the fields it changes. A borrowed collection
+			# record must not acquire presentation state from a draw.
+			coin = reveal if not reveal.is_empty() else coin.duplicate(false)
 			coin["symbol"] = "GOLD_TOKEN"
 			coin["recent"] = bool(recent_lookup.get(key, false))
 			coins.append(coin)
@@ -2353,7 +2336,7 @@ func _buffalo_coin_index_lookup(coins: Array) -> Dictionary:
 func _buffalo_coin_reveal_lookup(active: Dictionary, feature_msec: int) -> Dictionary:
 	var result: Dictionary = {}
 	for reveal_value in _read_array(active.get("coin_reveals", [])):
-		var reveal: Dictionary = _read_dict(reveal_value).duplicate(true)
+		var reveal: Dictionary = _read_dict(reveal_value).duplicate(false)
 		var key := _cell_key(int(reveal.get("reel", 0)), int(reveal.get("row", 0)))
 		var start_msec := int(reveal.get("reveal_start_msec", 0))
 		var duration_msec := maxi(1, int(reveal.get("reveal_duration_msec", 320)))
@@ -2366,7 +2349,7 @@ func _buffalo_coin_reveal_lookup(active: Dictionary, feature_msec: int) -> Dicti
 func _buffalo_coin_reveal_index_lookup(active: Dictionary, feature_msec: int) -> Dictionary:
 	var result: Dictionary = {}
 	for reveal_value in _read_array(active.get("coin_reveals", [])):
-		var reveal: Dictionary = _read_dict(reveal_value).duplicate(true)
+		var reveal: Dictionary = _read_dict(reveal_value).duplicate(false)
 		var key := _cell_int_key(int(reveal.get("reel", 0)), int(reveal.get("row", 0)))
 		var start_msec := int(reveal.get("reveal_start_msec", 0))
 		var duration_msec := maxi(1, int(reveal.get("reveal_duration_msec", 320)))

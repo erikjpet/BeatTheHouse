@@ -15,6 +15,9 @@ const PLAYFIELD := Rect2(42, 232, 876, 218)
 const CONTROL_DECK := Rect2(30, 462, 900, 62)
 const MAX_COIN_COUNT := 5
 const HAND_SIZE := 5
+const FACEDOWN_CARD := {"hidden": true}
+const EMPTY_DRAW_ARRAY: Array = []
+const EMPTY_DRAW_RESULT: Dictionary = {}
 
 const C_CYAN := VisualStyleScript.CYAN
 const C_TEAL := VisualStyleScript.TEAL
@@ -32,6 +35,7 @@ var _palette_cache_key := ""
 var _palette_cache: Dictionary = {}
 var _paytable_cache_fingerprint := 0
 var _paytable_cache_rows: Array = []
+var _hand_panel_draw_options: Dictionary = {}
 
 
 func draw(surface, state: Dictionary, _context: Dictionary = {}) -> bool:
@@ -288,23 +292,23 @@ func _paytable_render_rows(source: Variant) -> Array:
 func _draw_hands(surface, state: Dictionary, palette: Dictionary) -> void:
 	var phase := str(state.get("phase", "idle"))
 	var hand_count := maxi(1, int(state.get("hand_count", 1)))
-	var display_hands: Array = state.get("display_hands", [])
-	var hand_results: Array = state.get("hand_results", [])
-	var holds: Array = state.get("holds", [])
-	var drawn_indices: Array = state.get("drawn_indices", [])
+	var display_hands: Array = state.get("display_hands", EMPTY_DRAW_ARRAY)
+	var hand_results: Array = state.get("hand_results", EMPTY_DRAW_ARRAY)
 	var layouts := _hand_layouts(hand_count)
 	var flip_active := bool(surface.surface_animation_active("video_poker_flip"))
-	var flip_progress := float(surface.surface_animation_progress("video_poker_flip"))
+	# Everything except the cards and result is shared by this frame's panels.
+	_hand_panel_draw_options["holds"] = state.get("holds", EMPTY_DRAW_ARRAY)
+	_hand_panel_draw_options["drawn_indices"] = state.get("drawn_indices", EMPTY_DRAW_ARRAY)
+	_hand_panel_draw_options["hand_count"] = hand_count
+	_hand_panel_draw_options["phase"] = phase
+	_hand_panel_draw_options["flip_active"] = flip_active
+	_hand_panel_draw_options["flip_progress"] = float(surface.surface_animation_progress("video_poker_flip"))
 	_draw_guidance(surface, state, palette, flip_active)
 	for hand_index in range(layouts.size()):
 		var panel: Rect2 = layouts[hand_index]
-		var cards: Array = display_hands[hand_index] if hand_index < display_hands.size() and typeof(display_hands[hand_index]) == TYPE_ARRAY else []
-		var result: Dictionary = hand_results[hand_index] if hand_index < hand_results.size() and typeof(hand_results[hand_index]) == TYPE_DICTIONARY else {}
-		_draw_hand_panel(FunctionOptions.VideoPokerHandPanelOptions.from({
-			"surface": surface, "state": state, "palette": palette, "panel": panel, "cards": cards,
-			"result": result, "holds": holds, "drawn_indices": drawn_indices, "hand_index": hand_index,
-			"hand_count": hand_count, "phase": phase, "flip_active": flip_active, "flip_progress": flip_progress,
-		}))
+		_hand_panel_draw_options["cards"] = display_hands[hand_index] if hand_index < display_hands.size() and typeof(display_hands[hand_index]) == TYPE_ARRAY else EMPTY_DRAW_ARRAY
+		_hand_panel_draw_options["result"] = hand_results[hand_index] if hand_index < hand_results.size() and typeof(hand_results[hand_index]) == TYPE_DICTIONARY else EMPTY_DRAW_RESULT
+		_draw_hand_panel(surface, state, palette, panel, hand_index, _hand_panel_draw_options)
 
 
 func _draw_guidance(surface, state: Dictionary, palette: Dictionary, flip_active: bool) -> void:
@@ -345,23 +349,18 @@ func _hand_layouts(hand_count: int) -> Array:
 	return TRIPLE_HAND_LAYOUT
 
 
-func _draw_hand_panel(options: FunctionOptions.VideoPokerHandPanelOptions) -> void:
-	var surface = options.values.get("surface")
-	var state: Dictionary = options.values.get("state", {})
-	var palette: Dictionary = options.values.get("palette", {})
-	var panel: Rect2 = options.values.get("panel", Rect2())
-	var cards: Array = options.values.get("cards", [])
-	var result: Dictionary = options.values.get("result", {})
-	var holds: Array = options.values.get("holds", [])
-	var drawn_indices: Array = options.values.get("drawn_indices", [])
-	var hand_index := int(options.values.get("hand_index", 0))
-	var hand_count := int(options.values.get("hand_count", 1))
-	var phase := str(options.values.get("phase", "idle"))
-	var flip_active := bool(options.values.get("flip_active", false))
-	var flip_progress := float(options.values.get("flip_progress", 0.0))
+func _draw_hand_panel(surface, state: Dictionary, palette: Dictionary, panel: Rect2, hand_index: int, options: Dictionary) -> void:
+	var cards: Array = options["cards"]
+	var result: Dictionary = options["result"]
+	var holds: Array = options["holds"]
+	var drawn_indices: Array = options["drawn_indices"]
+	var hand_count: int = options["hand_count"]
+	var phase: String = options["phase"]
+	var flip_active: bool = options["flip_active"]
+	var flip_progress: float = options["flip_progress"]
 	var primary: Color = palette["primary"]
 	var secondary: Color = palette["secondary"]
-	var recommended_holds: Array = state.get("recommended_holds", [])
+	var recommended_holds: Array = state.get("recommended_holds", EMPTY_DRAW_ARRAY)
 	var show_advice := bool(state.get("poker_hat_strategy_active", false)) and not flip_active and not bool(state.get("strategy_hint_pending", false))
 	var winning := not flip_active and int(result.get("total", 0)) > 0
 	surface.draw_rect(panel, Color("#020611"))
@@ -380,7 +379,7 @@ func _draw_hand_panel(options: FunctionOptions.VideoPokerHandPanelOptions) -> vo
 	var start := Vector2(panel.position.x + (panel.size.x - row_w) * 0.5, panel.position.y + label_h + (max_h - card_h) * 0.5 + 3.0)
 	for card_index in range(5):
 		var rect := Rect2(start + Vector2(float(card_index) * (card_w + gap), 0), Vector2(card_w, card_h))
-		var card: Dictionary = cards[card_index] if card_index < cards.size() and typeof(cards[card_index]) == TYPE_DICTIONARY else {"hidden": true}
+		var card: Dictionary = cards[card_index] if card_index < cards.size() and typeof(cards[card_index]) == TYPE_DICTIONARY else FACEDOWN_CARD
 		var held := phase == "hold" and holds.has(card_index)
 		var recommended := phase == "hold" and show_advice and recommended_holds.has(card_index)
 		var sequence_index := hand_index * HAND_SIZE + card_index
@@ -503,8 +502,8 @@ func _draw_double_up(surface, state: Dictionary, palette: Dictionary) -> void:
 		var rect := Rect2(PLAYFIELD.position + Vector2(226 + index * 148, 62), Vector2(102, 142))
 		var selected := resolved and index == int(view.get("selected_pick", -1))
 		var picks: Array = view.get("picks", []) if typeof(view.get("picks", [])) == TYPE_ARRAY else []
-		var shown_card: Dictionary = picks[index] if index < picks.size() and typeof(picks[index]) == TYPE_DICTIONARY else {"hidden": true}
-		_draw_card(surface, shown_card if selected else {"hidden": true}, rect, false, selected)
+		var shown_card: Dictionary = picks[index] if index < picks.size() and typeof(picks[index]) == TYPE_DICTIONARY else FACEDOWN_CARD
+		_draw_card(surface, shown_card if selected else FACEDOWN_CARD, rect, false, selected)
 		if selected:
 			surface.draw_rect(rect.grow(5), title_color, false, 4)
 		else:

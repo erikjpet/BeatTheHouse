@@ -141,6 +141,9 @@ var _shader_material: ShaderMaterial
 var _jitter := Vector2.ZERO
 var _ripple_phase := 0.0
 var _ripple_strength := 0.0
+var _glass_displacement := Vector4.ZERO
+var _roll_band := Vector2(1.18, 0.0)
+var _cartridge_refresh_queued := false
 var _reduce_motion := false
 var _pointer_down := false
 var _touch_index := -1
@@ -172,7 +175,7 @@ func configure(host: Variant) -> void:
 	_display_viewport.gui_embed_subwindows = true
 	_display_viewport.handle_input_locally = true
 	_display_viewport.gui_disable_input = true
-	_display_viewport.render_target_update_mode = SubViewport.UPDATE_WHEN_VISIBLE
+	_display_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
 	add_child(_display_viewport)
 	_display_root = Control.new()
 	_display_root.name = "CartridgeGameSelect"
@@ -184,6 +187,7 @@ func configure(host: Variant) -> void:
 	_display_root.add_child(backdrop)
 	_build_game_select()
 	_build_generation_panel()
+	_track_cartridge_visual(_display_viewport)
 	_display = TextureRect.new()
 	_display.name = "CrtDisplayTexture"
 	_display.texture = _display_viewport.get_texture()
@@ -432,24 +436,65 @@ func _layout_television() -> void:
 	_stage.queue_redraw()
 
 
+# Native controls still perform their usual redraws. Only the static cartridge
+# image is retained between changes. The outer glass keeps animating every frame.
+func _track_cartridge_visual(node: Node) -> void:
+	if not node.child_entered_tree.is_connected(_track_cartridge_visual):
+		node.child_entered_tree.connect(_track_cartridge_visual)
+		node.child_exiting_tree.connect(_on_cartridge_child_removed)
+		if node is CanvasItem:
+			node.draw.connect(_refresh_cartridge_image)
+			node.item_rect_changed.connect(_refresh_cartridge_image)
+			node.visibility_changed.connect(_refresh_cartridge_image)
+		elif node is Window:
+			node.visibility_changed.connect(_refresh_cartridge_image)
+		for child in node.get_children():
+			_track_cartridge_visual(child)
+	_refresh_cartridge_image()
+
+
+func _on_cartridge_child_removed(_node: Node) -> void:
+	_refresh_cartridge_image()
+
+
+func _refresh_cartridge_image() -> void:
+	if _cartridge_refresh_queued or not is_visible_in_tree():
+		return
+	_cartridge_refresh_queued = true
+	_update_cartridge_image.call_deferred()
+
+
+func _update_cartridge_image() -> void:
+	_cartridge_refresh_queued = false
+	if _display_viewport != null and is_visible_in_tree():
+		_display_viewport.render_target_update_mode = SubViewport.UPDATE_ONCE
+
+
 func _process(_delta: float) -> void:
 	if not is_visible_in_tree() or _shader_material == null:
 		return
 	_reduce_motion = bool(_host._reduce_motion_enabled())
-	var seconds := float(Time.get_ticks_msec()) / 1000.0
-	var burst := pow(maxf(0, sin(seconds * 1.73) * sin(seconds * 0.63 + 1.1)), 4)
-	_jitter = Vector2.ZERO if _reduce_motion else Vector2(sin(seconds * 32.7) * 0.00035 * burst, sin(seconds * 19.1) * 0.00018 * burst)
-	_ripple_phase = 0.0 if _reduce_motion else seconds * 2.3
-	_ripple_strength = 0.0 if _reduce_motion else 0.00034 * burst
-	_shader_material.set_shader_parameter("reduce_motion", _reduce_motion)
-	_shader_material.set_shader_parameter("jitter", _jitter)
-	_shader_material.set_shader_parameter("ripple_phase", _ripple_phase)
-	_shader_material.set_shader_parameter("ripple_strength", _ripple_strength)
-	# A prompt upward pass, then quiet glass. This changes luminance only;
-	# the visual/input warp and idle redraw scheduling remain shared and intact.
-	var sweep_time := fmod(float(Time.get_ticks_msec() - _glass_entry_msec) / 1000.0, SCAN_CYCLE_SECONDS)
-	_shader_material.set_shader_parameter("roll_position", lerpf(1.18, -0.18, minf(sweep_time / SCAN_SWEEP_SECONDS, 1.0)))
-	_shader_material.set_shader_parameter("roll_strength", 0.0 if _reduce_motion or sweep_time >= SCAN_SWEEP_SECONDS else 1.0)
+	var displacement := Vector4.ZERO
+	var roll := Vector2(1.18, 0.0)
+	if not _reduce_motion:
+		var now_msec := Time.get_ticks_msec()
+		var seconds := float(now_msec) / 1000.0
+		var burst := pow(maxf(0, sin(seconds * 1.73) * sin(seconds * 0.63 + 1.1)), 4)
+		displacement = Vector4(sin(seconds * 32.7) * 0.00035 * burst,
+			sin(seconds * 19.1) * 0.00018 * burst, seconds * 2.3, 0.00034 * burst)
+		# A prompt upward pass, then quiet glass without sending new uniforms.
+		var sweep_time := fmod(float(now_msec - _glass_entry_msec) / 1000.0, SCAN_CYCLE_SECONDS)
+		if sweep_time < SCAN_SWEEP_SECONDS:
+			roll = Vector2(lerpf(1.18, -0.18, sweep_time / SCAN_SWEEP_SECONDS), 1.0)
+	_jitter = Vector2(displacement.x, displacement.y)
+	_ripple_phase = displacement.z
+	_ripple_strength = displacement.w
+	if displacement != _glass_displacement:
+		_glass_displacement = displacement
+		_shader_material.set_shader_parameter("glass_displacement", displacement)
+	if roll != _roll_band:
+		_roll_band = roll
+		_shader_material.set_shader_parameter("roll_band", roll)
 	if _await_pointer_release and not Input.is_mouse_button_pressed(MOUSE_BUTTON_LEFT):
 		_await_pointer_release = false
 
@@ -479,6 +524,7 @@ func _on_visibility_changed() -> void:
 	else:
 		_glass_entry_msec = Time.get_ticks_msec()
 		_display_viewport.gui_disable_input = false
+		_refresh_cartridge_image()
 
 
 func _notify_display_mouse_entered() -> void:

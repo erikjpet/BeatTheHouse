@@ -2635,6 +2635,12 @@ func reconcile_health_inspector_venue_scope() -> bool:
 
 # Sets the current environment and records the previous one.
 func set_environment(environment_data: Dictionary, debug_timing: Dictionary = {}) -> Dictionary:
+	return install_environment_in_steps.call(environment_data, debug_timing)
+
+
+# Only detached travel supplies a frame boundary. Synchronous callers run the
+# same steps inline and still receive the complete result before they return.
+func install_environment_in_steps(environment_data: Dictionary, debug_timing: Dictionary = {}, frame_boundary: Signal = Signal()) -> Dictionary:
 	var perf_timing_enabled := not debug_timing.is_empty()
 	var perf_stage_started_usec := Time.get_ticks_usec() if perf_timing_enabled else 0
 	var previous_was_grand_casino := _is_grand_casino_environment(current_environment)
@@ -2680,6 +2686,8 @@ func set_environment(environment_data: Dictionary, debug_timing: Dictionary = {}
 	if perf_timing_enabled:
 		debug_timing["source_persist"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
+	if not frame_boundary.is_null():
+		await frame_boundary
 	CharacterOfferModelScript.expire_departure(self)
 	current_environment = _normalize_environment(environment_data)
 	_retain_world_sequences_bound_to_environment(current_environment)
@@ -2743,6 +2751,8 @@ func set_environment(environment_data: Dictionary, debug_timing: Dictionary = {}
 	if perf_timing_enabled:
 		debug_timing["sequence_definition_prepare"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
+	if not frame_boundary.is_null():
+		await frame_boundary
 	CharacterChainModelScript.apply_to_environment(self, current_environment)
 	if perf_timing_enabled:
 		debug_timing["character_chain"] = Time.get_ticks_usec() - perf_stage_started_usec

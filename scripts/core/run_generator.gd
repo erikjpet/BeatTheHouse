@@ -160,7 +160,13 @@ func _install_environment_test_layer(run_state: RunState, layer_id: String) -> D
 
 # Travel callers already hold the exact atomic rollback snapshot. Reuse it so
 # large visited-room machines are not copied a second time at every transition.
+# Synchronous wrappers call the same steps without a frame signal. Callable
+# dispatch allows the non-yielding path to keep its synchronous API.
 func _install_environment_with_rollback(run_state: RunState, environment_data: Dictionary, rollback: Dictionary, restore_on_failure: bool = true) -> Dictionary:
+	return _install_environment_steps.call(run_state, environment_data, rollback, restore_on_failure)
+
+
+func _install_environment_steps(run_state: RunState, environment_data: Dictionary, rollback: Dictionary, restore_on_failure: bool, frame_boundary: Signal = Signal()) -> Dictionary:
 	var perf_stage_started_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
 	_world_environment_install_stages_usec = {}
 	var trusted := _trusted_scenario_install_data(run_state, environment_data)
@@ -181,13 +187,19 @@ func _install_environment_with_rollback(run_state: RunState, environment_data: D
 		_world_environment_install_stages_usec["trusted_copy"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
 	var state_timing := {"enabled": true} if _world_environment_timing_enabled else {}
-	var installed := run_state.set_environment(install_data, state_timing)
+	var installed: Dictionary
+	if frame_boundary.is_null():
+		installed = run_state.set_environment(install_data, state_timing)
+	else:
+		installed = await run_state.install_environment_in_steps(install_data, state_timing, frame_boundary)
 	if _world_environment_timing_enabled:
 		_world_environment_install_stages_usec["set_environment"] = Time.get_ticks_usec() - perf_stage_started_usec
 		_world_environment_install_stages_usec["set_environment_stages"] = state_timing
 		perf_stage_started_usec = Time.get_ticks_usec()
 	if not bool(installed.get("ok", false)):
 		return installed
+	if not frame_boundary.is_null():
+		await frame_boundary
 	var finalized := run_state.scenario_finalize_installed_environment(library)
 	if _world_environment_timing_enabled:
 		_world_environment_install_stages_usec["scenario_finalize"] = Time.get_ticks_usec() - perf_stage_started_usec
@@ -267,10 +279,25 @@ func travel_environment_result_with_caller_rollback(run_state: RunState, target_
 	return result
 
 
+# The browser runs the native candidate's generator transaction on the render
+# thread, handing a frame back between costly pieces of the detached install.
+func prepare_staged_player_world_travel(run_state: RunState, target_id: String, frame_boundary: Signal) -> Dictionary:
+	var source_id := run_state.current_world_node_id()
+	var result := await _travel_environment_result_steps(run_state, target_id, true, true, frame_boundary)
+	if bool(result.get("ok", false)):
+		for node_id: String in [source_id, target_id]:
+			await frame_boundary
+			run_state.prime_world_room_storage_projections([node_id])
+	return result
+
+
 func travel_environment_result(run_state: RunState, target_archetype_id: String, target_prevalidated: bool = false) -> Dictionary:
+	return _travel_environment_result_steps.call(run_state, target_archetype_id, target_prevalidated, _caller_owns_result_rollback)
+
+
+func _travel_environment_result_steps(run_state: RunState, target_archetype_id: String, target_prevalidated: bool, caller_owns_rollback: bool, frame_boundary: Signal = Signal()) -> Dictionary:
 	if run_state == null:
 		return {"ok": false, "errors": ["Travel requires an active run."], "environment": {}}
-	var caller_owns_rollback := _caller_owns_result_rollback
 	var source_id := run_state.current_world_node_id()
 	var target_id := target_archetype_id.strip_edges()
 	var preflight := run_state.scenario_preflight_environment_change(source_id, target_id, "world")
@@ -282,9 +309,11 @@ func travel_environment_result(run_state: RunState, target_archetype_id: String,
 	# source/destination scenario boundary. Pass both facts into the private world
 	# path instead of copying the entire run and repeating the same preflight.
 	if run_state.has_world_map() or run_state.current_environment.is_empty():
-		_next_world_environment(run_state, target_id, run_state.create_rng(), target_prevalidated, rollback, true, false)
+		await _next_world_environment_steps(run_state, target_id, run_state.create_rng(), target_prevalidated, rollback, true, false, frame_boundary)
 	else:
 		next_environment(run_state, target_id, target_prevalidated)
+	if not frame_boundary.is_null():
+		await frame_boundary
 	var arrived_id := run_state.current_world_node_id()
 	if target_id.is_empty() or arrived_id != target_id:
 		if not caller_owns_rollback:
@@ -877,7 +906,12 @@ func world_map_snapshot(run_state: RunState, selected_id: String = "") -> Dictio
 	return WorldMap.snapshot(run_state.world_map, selected_id)
 
 
-func _next_world_environment(run_state: RunState, target_archetype_id: String, rng: RngStream, target_prevalidated: bool = false, prepared_rollback: Dictionary = {}, source_preflight_complete: bool = false, restore_on_failure: bool = true) -> EnvironmentInstance:
+func _next_world_environment(run_state: RunState, target_archetype_id: String, rng: RngStream, target_prevalidated: bool = false) -> EnvironmentInstance:
+	# Without a frame signal the shared implementation completes synchronously.
+	return _next_world_environment_steps.call(run_state, target_archetype_id, rng, target_prevalidated, {}, false, true)
+
+
+func _next_world_environment_steps(run_state: RunState, target_archetype_id: String, rng: RngStream, target_prevalidated: bool, prepared_rollback: Dictionary, source_preflight_complete: bool, restore_on_failure: bool, frame_boundary: Signal = Signal()) -> EnvironmentInstance:
 	var perf_total_started_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
 	var perf_stage_started_usec := perf_total_started_usec
 	var perf_stages: Dictionary = {}
@@ -934,14 +968,20 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 	if _world_environment_timing_enabled:
 		perf_stages["route_departure"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
-	var environment_data := _world_environment_data_for_node(run_state, map_data, node, rng)
+	if not frame_boundary.is_null():
+		await frame_boundary
+	var environment_data := await _world_environment_build_steps(run_state, map_data, node, rng, {}, frame_boundary)
 	if _world_environment_timing_enabled:
 		perf_stages["environment_build"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
 	# A failed lazy restore is an explicit rejection, never a Base / No Scenario
 	# room. Do not let set_environment() evaluate the economy against an empty
 	# destination, even when the outer UI owns transaction rollback.
-	var installed := {"ok": false, "errors": _last_environment_install_errors.duplicate(true)} if environment_data.is_empty() else _install_environment_with_rollback(run_state, environment_data, rollback, false)
+	if not frame_boundary.is_null():
+		await frame_boundary
+	var installed := {"ok": false, "errors": _last_environment_install_errors.duplicate(true)}
+	if not environment_data.is_empty():
+		installed = await _install_environment_steps(run_state, environment_data, rollback, false, frame_boundary)
 	if environment_data.is_empty() and JsonCoerceScript._copy_array(installed.get("errors", [])).is_empty():
 		installed["errors"] = ["Travel destination could not be generated."]
 	if not bool(installed.get("ok", false)):
@@ -968,6 +1008,8 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 	if _world_environment_timing_enabled:
 		perf_stages["environment_install"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
+	if not frame_boundary.is_null():
+		await frame_boundary
 	run_state.enter_world_node(target_id, run_state.current_environment)
 	_apply_scenario_authored_travel_targets(run_state, target_id)
 	if not current_node_id.is_empty() and current_node_id != target_id:
@@ -1114,6 +1156,10 @@ func _legacy_next_environment(run_state: RunState, target_archetype_id: String, 
 
 
 func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary, node: Dictionary, rng: RngStream, generation_options: Dictionary = {}) -> Dictionary:
+	return _world_environment_build_steps.call(run_state, map_data, node, rng, generation_options)
+
+
+func _world_environment_build_steps(run_state: RunState, map_data: Dictionary, node: Dictionary, rng: RngStream, generation_options: Dictionary, frame_boundary: Signal = Signal()) -> Dictionary:
 	var perf_stage_started_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
 	_world_environment_build_stages_usec = {}
 	var node_id := str(node.get("id", "")).strip_edges()
@@ -1131,6 +1177,8 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 		and str(node.get("state", "")) == WorldMap.STATE_VISITED \
 		and _stored_environment_matches_situation_cycle(run_state, node_id, stored_environment)
 	if restore_stored:
+		if not frame_boundary.is_null():
+			await frame_boundary
 		var restored := stored_environment.duplicate(true)
 		if not restored.has(ENVIRONMENT_SITUATION_CYCLE_KEY):
 			restored[ENVIRONMENT_SITUATION_CYCLE_KEY] = _environment_situation_cycle_id(run_state, node_id)
@@ -1182,7 +1230,9 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 	if _world_environment_timing_enabled:
 		_world_environment_build_stages_usec["crew"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
-	environment_data["game_states"] = _generated_game_states(run_state, environment_data, rng)
+	environment_data["game_states"] = await _generated_game_states_steps(run_state, environment_data, rng, frame_boundary)
+	if not frame_boundary.is_null():
+		await frame_boundary
 	# Reopening refreshes a venue's situation, not its persistent machines.
 	if not stored_environment.is_empty() and typeof(stored_environment.get("game_states", {})) == TYPE_DICTIONARY:
 		var persistent_games: Dictionary = stored_environment.get("game_states", {})
@@ -2083,9 +2133,15 @@ func _int_range(value: Variant, fallback_min: int, fallback_max: int) -> Array:
 
 # Lets GameModule instances attach generated per-environment state before entry.
 func _generated_game_states(run_state: RunState, environment_data: Dictionary, rng: RngStream) -> Dictionary:
+	return _generated_game_states_steps.call(run_state, environment_data, rng)
+
+
+func _generated_game_states_steps(run_state: RunState, environment_data: Dictionary, rng: RngStream, frame_boundary: Signal = Signal()) -> Dictionary:
 	var states := JsonCoerceScript._copy_dict(environment_data.get("game_states", {}))
 	var perf_games_detail: Dictionary = {}
 	for game_id in JsonCoerceScript._raw_string_array(environment_data.get("game_ids", [])):
+		if not frame_boundary.is_null():
+			await frame_boundary
 		var perf_game_started_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
 		var definition := library.game(game_id)
 		var game: GameModule = _create_game_module(definition)

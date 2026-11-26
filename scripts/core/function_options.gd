@@ -32,24 +32,6 @@ class BlackjackResultOptions extends RefCounted:
 		return options
 
 
-class BuffaloBoardOverlayOptions extends RefCounted:
-	var values: Dictionary
-
-	static func from(values_value: Dictionary) -> BuffaloBoardOverlayOptions:
-		var options := BuffaloBoardOverlayOptions.new()
-		options.values = values_value
-		return options
-
-
-class VideoPokerHandPanelOptions extends RefCounted:
-	var values: Dictionary
-
-	static func from(values_value: Dictionary) -> VideoPokerHandPanelOptions:
-		var options := VideoPokerHandPanelOptions.new()
-		options.values = values_value
-		return options
-
-
 class WorldSequenceCommandOptions extends RefCounted:
 	var values: Dictionary
 
@@ -64,15 +46,6 @@ class ScenarioSequenceCommandOptions extends RefCounted:
 
 	static func from(values_value: Dictionary) -> ScenarioSequenceCommandOptions:
 		var options := ScenarioSequenceCommandOptions.new()
-		options.values = values_value
-		return options
-
-
-class DiceRowOptions extends RefCounted:
-	var values: Dictionary
-
-	static func from(values_value: Dictionary) -> DiceRowOptions:
-		var options := DiceRowOptions.new()
 		options.values = values_value
 		return options
 

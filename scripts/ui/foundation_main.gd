@@ -427,6 +427,8 @@ var travel_cinematic_overlay: Control
 var travel_presentation_return_focus: WeakRef
 var _pending_player_map_travel: Dictionary = {}
 var _player_map_travel_thread: Thread
+var _player_map_travel_staged := false
+var _exit_after_staged_map_travel := false
 var _player_map_travel_completion: Callable
 # Presentation-only work is advanced one stage per frame, after the overlay has
 # had a draw opportunity. No stage resolves travel or consumes gameplay requests.
@@ -868,6 +870,8 @@ func _process(delta: float) -> void:
 	if _player_map_travel_thread != null:
 		_finish_player_map_travel()
 		return
+	if _player_map_travel_staged:
+		return
 	_poll_script_prewarm_worker()
 	if _pending_player_start.is_valid():
 		_advance_player_start()
@@ -1136,7 +1140,7 @@ func _notification(what: int) -> void:
 
 
 func _flush_pending_autosave_for_lifecycle() -> bool:
-	if _player_map_travel_thread != null:
+	if _player_map_travel_thread != null or _player_map_travel_staged:
 		# The clock and destination are still owned by the detached trip.
 		# Its completion queues the authoritative save.
 		return true
@@ -1218,6 +1222,8 @@ func _drain_script_prewarm_requests_for_shutdown() -> void:
 	_player_start_presentation_stage = -1
 	_player_start_finished = Callable()
 	_pending_player_map_travel.clear()
+	_player_map_travel_staged = false
+	_exit_after_staged_map_travel = false
 	if _player_map_travel_thread != null:
 		_player_map_travel_thread.wait_to_finish()
 		_player_map_travel_thread = null
@@ -9104,8 +9110,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	# The result-returning lifecycle boundary must remain synchronous so callers
 	# can atomically commit or roll back the complete travel transaction.
 	var route_risk := {} if local_casino_room_move else run_state.travel_route_risk(route, target_id)
-	var detached_install := prepare_for_player and not _should_use_atomic_web_travel_transition() \
-		and not local_casino_room_move and expected_offer_target_id.is_empty() \
+	var detached_install := prepare_for_player and not local_casino_room_move and expected_offer_target_id.is_empty() \
 		and str(choice_data.get("expected_active_home_node_id", "")).strip_edges().is_empty()
 	var travel_run := run_state.detached_world_travel_candidate() if detached_install else run_state
 	var travel_heat := travel_run.begin_travel_suspicion_decay(route, target_id)
@@ -9163,6 +9168,12 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		travel_method_kind, departure_route_status, travel_minutes, expected_home_node_id, expected_offer_target_id,
 		perf_corner_store_timing, perf_corner_store_total_started_usec, perf_corner_store_stage_started_usec, perf_corner_store_stages)
 	if detached_install:
+		if _should_use_atomic_web_travel_transition():
+			if not is_instance_valid(travel_cinematic_overlay) or not travel_cinematic_overlay.departure_pending():
+				_show_travel_transition(target_id, target_label, "Leaving %s..." % str(previous_environment.get("display_name", "this room")))
+			_player_map_travel_staged = true
+			_stage_player_map_travel(target_id, run_state, travel_run, finish, lifecycle_rollback)
+			return {"ok": true, "preparing": true}
 		_player_map_travel_thread = Thread.new()
 		var worker_error := _player_map_travel_thread.start(
 			generator.prepare_player_world_travel.bind(travel_run, target_id),
@@ -9180,6 +9191,23 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	var install_result := generator.enter_grand_casino_room_result_with_caller_rollback(run_state, target_id) \
 		if local_casino_room_move else generator.travel_environment_result_with_caller_rollback(run_state, target_id, true)
 	return finish.call(install_result)
+
+
+func _stage_player_map_travel(target_id: String, source_run: RunState, candidate: RunState, finish: Callable, lifecycle_rollback: Dictionary) -> void:
+	var travel_generator := generator
+	var frame_boundary := get_tree().process_frame
+	await frame_boundary
+	var result := await travel_generator.prepare_staged_player_world_travel(candidate, target_id, frame_boundary)
+	# Give the last preparation step its own draw before publishing the trip.
+	await frame_boundary
+	if not _player_map_travel_staged or not is_inside_tree():
+		return
+	_player_map_travel_staged = false
+	_pending_player_map_travel = {}
+	_complete_player_map_travel(result, source_run, candidate, finish, lifecycle_rollback)
+	if _exit_after_staged_map_travel:
+		_exit_after_staged_map_travel = false
+		exit_game.call_deferred()
 
 
 func _finish_player_map_travel(wait: bool = false) -> void:
@@ -20454,6 +20482,8 @@ func _apply_meta_collection_loadout_to_run(target: RunState) -> void:
 
 
 func _save_foundation_run_before_leaving(status_text: String) -> bool:
+	if _player_map_travel_staged:
+		return false
 	_finish_player_map_travel(true)
 	_drain_rourke_resolution()
 	if not _settle_terminal_meta_before_replacement():
@@ -20489,6 +20519,9 @@ func _save_foundation_run_before_leaving(status_text: String) -> bool:
 
 
 func return_to_main_menu() -> bool:
+	if _player_map_travel_staged:
+		# The travel overlay owns player input until its transaction settles.
+		return false
 	if _crt_practice_active():
 		if current_screen == SCREEN_CRT:
 			close_game_test_menu()
@@ -20589,6 +20622,11 @@ func _restore_main_menu_surface_visibility() -> void:
 
 
 func exit_game() -> void:
+	if _player_map_travel_staged:
+		# An explicit window close can arrive outside the input guard. Finish
+		# the detached trip before using the existing durable exit path.
+		_exit_after_staged_map_travel = true
+		return
 	if _crt_entry_wait_run != null:
 		_finish_crt_entry_wait()
 	while _player_start_presentation_stage >= 0:

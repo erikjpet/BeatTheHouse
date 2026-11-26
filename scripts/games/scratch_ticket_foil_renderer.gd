@@ -4,42 +4,107 @@ extends RefCounted
 # Paints deterministic latex/foil textures for active Scratch Tickets; exposed
 # style identities describe appearance only and never influence outcomes.
 
-static func draw(surface, ticket: Dictionary, art_frame: Rect2, state: Dictionary = {}) -> void:
-	if ticket.is_empty():
+# One retained batch per cabinet. The UI may replace a ticket or its mask at
+# Continue, while brush strokes update the current mask in place.
+const EMPTY_PALETTE := {}
+
+var _batch: MultiMesh
+var _white_texture: ImageTexture
+var _mask: Array = []
+var _regions: Array = []
+var _art_frame := Rect2()
+var _dimensions := Vector2i.ZERO
+var _mask_revision := -1
+var _type_id := ""
+var _palette: Dictionary = {}
+var _base := Color.WHITE
+var _glint := Color.WHITE
+
+
+func draw(surface, ticket: Dictionary, art_frame: Rect2, state: Dictionary) -> void:
+	var scratch: Variant = ticket.get("scratch")
+	var mask: Variant = ticket.get("latex_mask")
+	var regions: Variant = ticket.get("scratch_regions")
+	if not scratch is Dictionary or not mask is Array or not regions is Array:
 		return
-	var scratch: Dictionary = ticket.get("scratch", {}) if typeof(ticket.get("scratch", {})) == TYPE_DICTIONARY else {}
-	var columns := maxi(1, int(scratch.get("mask_columns", 1)))
-	var rows := maxi(1, int(scratch.get("mask_rows", 1)))
-	var mask: Array = ticket.get("latex_mask", []) if typeof(ticket.get("latex_mask", [])) == TYPE_ARRAY else []
-	if mask.size() != columns * rows:
+	var dimensions := Vector2i(maxi(1, int(scratch.get("mask_columns", 1))), maxi(1, int(scratch.get("mask_rows", 1))))
+	if mask.size() != dimensions.x * dimensions.y:
 		return
-	var regions: Array = ticket.get("scratch_regions", []) if typeof(ticket.get("scratch_regions", [])) == TYPE_ARRAY else []
-	var colors := _foil_colors(ticket)
-	var base: Color = colors[0]
-	var dark: Color = colors[1]
-	var glint: Color = colors[2]
-	for region_value in regions:
-		if typeof(region_value) != TYPE_DICTIONARY:
-			continue
-		var region: Dictionary = region_value
-		_paint_region_mask(surface, mask, columns, rows, region, art_frame, base, dark, glint)
+	var revision := int(ticket.get("mask_revision", -1))
+	var type_id := str(ticket.get("type_id", ""))
+	var palette: Variant = ticket.get("palette")
+	var face: Variant = ticket.get("face")
+	if face is Dictionary:
+		palette = face.get("palette", palette)
+	if not palette is Dictionary:
+		palette = EMPTY_PALETTE
+	if _batch == null or not is_same(mask, _mask) or not is_same(regions, _regions) \
+			or _mask_revision != revision or _art_frame != art_frame or _dimensions != dimensions \
+			or _type_id != type_id or _palette != palette:
+		_mask = mask
+		_regions = regions
+		_art_frame = art_frame
+		_dimensions = dimensions
+		_mask_revision = revision
+		_type_id = type_id
+		_palette = palette.duplicate(false)
+		_build_batch()
+	if _batch.instance_count > 0:
+		surface.draw_multimesh(_batch, _white_texture)
 	if bool(state.get("scratch_drag_active", false)):
 		var crumbs: Array = state.get("scratch_crumbs", []) if typeof(state.get("scratch_crumbs", [])) == TYPE_ARRAY else []
 		for crumb_value in crumbs:
 			if typeof(crumb_value) != TYPE_DICTIONARY:
 				continue
 			var crumb: Dictionary = crumb_value
-			surface.draw_circle(Vector2(float(crumb.get("x", 0.0)), float(crumb.get("y", 0.0))), float(crumb.get("r", 1.5)), Color(base.r, base.g, base.b, 0.72))
+			surface.draw_circle(Vector2(float(crumb.get("x", 0.0)), float(crumb.get("y", 0.0))), float(crumb.get("r", 1.5)), Color(_base.r, _base.g, _base.b, 0.72))
 		var point: Vector2 = state.get("scratch_last_pointer", Vector2.ZERO)
 		var radius := maxf(8.0, float(state.get("scratch_brush_radius", 15.0)))
-		surface.draw_circle(point, radius, Color(glint.r, glint.g, glint.b, 0.18), false, 1)
+		surface.draw_circle(point, radius, Color(_glint.r, _glint.g, _glint.b, 0.18), false, 1)
 
 
 static func style_id(ticket: Dictionary) -> String:
 	return "%s_integrated_security_foil" % str(ticket.get("type_id", "ticket"))
 
 
-static func _paint_region_mask(surface, mask: Array, columns: int, rows: int, region: Dictionary, art_frame: Rect2, base: Color, dark: Color, glint: Color) -> void:
+func clear() -> void:
+	if _batch == null:
+		return
+	_batch = null
+	_mask = []
+	_regions = []
+
+
+func _build_batch() -> void:
+	var colors := _foil_colors(_type_id, _palette)
+	_base = colors[0]
+	var dark: Color = colors[1]
+	_glint = colors[2]
+	var buffer := PackedFloat32Array()
+	for region_value in _regions:
+		if region_value is Dictionary:
+			_append_region(buffer, region_value, dark)
+	if _batch == null:
+		var quad := QuadMesh.new()
+		quad.size = Vector2.ONE
+		_batch = MultiMesh.new()
+		_batch.transform_format = MultiMesh.TRANSFORM_2D
+		_batch.use_colors = true
+		_batch.mesh = quad
+		if _white_texture == null:
+			var pixel := Image.create(1, 1, false, Image.FORMAT_RGBA8)
+			pixel.fill(Color.WHITE)
+			_white_texture = ImageTexture.create_from_image(pixel)
+	# Each tinted quad has two padded 2D transform rows and one RGBA row.
+	_batch.instance_count = int(buffer.size() / 12.0)
+	if not buffer.is_empty():
+		_batch.buffer = buffer
+
+
+func _append_region(buffer: PackedFloat32Array, region: Dictionary, dark: Color) -> void:
+	var columns := _dimensions.x
+	var rows := _dimensions.y
+	var art_frame := _art_frame
 	var values: Array = region.get("art_rect", []) if typeof(region.get("art_rect", [])) == TYPE_ARRAY else []
 	if values.size() < 4:
 		return
@@ -52,49 +117,63 @@ static func _paint_region_mask(surface, mask: Array, columns: int, rows: int, re
 		var offset := row * columns
 		var column := column_start
 		while column < column_end:
-			var alpha_bucket := _alpha_bucket(int(mask[offset + column]))
+			var alpha_bucket := _alpha_bucket(int(_mask[offset + column]))
 			if alpha_bucket <= 0:
 				column += 1
 				continue
 			var run_start := column
 			column += 1
-			while column < column_end and _alpha_bucket(int(mask[offset + column])) == alpha_bucket:
+			while column < column_end and _alpha_bucket(int(_mask[offset + column])) == alpha_bucket:
 				column += 1
 			var alpha := float(alpha_bucket) / 32.0
 			var run_rect := Rect2(
 				art_frame.position + Vector2(float(run_start) * sample_size.x, float(row) * sample_size.y),
 				Vector2(float(column - run_start) * sample_size.x + 0.20, sample_size.y + 0.20)
 			)
-			_paint_run(surface, run_rect, row, alpha, base, dark, glint)
+			_append_run(buffer, run_rect, row, alpha, dark)
 
 
-static func _paint_run(surface, rect: Rect2, row: int, alpha: float, base: Color, dark: Color, glint: Color) -> void:
+func _append_run(buffer: PackedFloat32Array, rect: Rect2, row: int, alpha: float, dark: Color) -> void:
 	# Material variation is anchored to the ticket row, never to the start of a
 	# run. Splitting a row with the brush therefore cannot restyle untouched
 	# coating elsewhere on that row.
 	var phase := posmod(row, 12)
-	var coat := base
+	var coat := _base
 	if phase <= 1:
-		coat = base.lerp(glint, 0.055)
+		coat = _base.lerp(_glint, 0.055)
 	elif phase >= 10:
-		coat = base.lerp(dark, 0.045)
-	surface.draw_rect(rect, Color(coat.r, coat.g, coat.b, alpha))
-	if phase == 0:
-		surface.draw_line(rect.position, Vector2(rect.end.x, rect.position.y), Color(glint.r, glint.g, glint.b, 0.20 * alpha), 1)
-	elif phase == 6:
-		surface.draw_line(rect.position, Vector2(rect.end.x, rect.position.y), Color(dark.r, dark.g, dark.b, 0.14 * alpha), 1)
+		coat = _base.lerp(dark, 0.045)
+	_append_quad(buffer, rect, Color(coat.r, coat.g, coat.b, alpha))
+	if phase == 0 or phase == 6:
+		var line_color := _glint if phase == 0 else dark
+		line_color.a = (0.20 if phase == 0 else 0.14) * alpha
+		_append_quad(buffer, Rect2(rect.position - Vector2(0, 0.5), Vector2(rect.size.x, 1)), line_color)
 
 
-static func _foil_colors(ticket: Dictionary) -> Array:
-	var face: Dictionary = ticket.get("face", {}) if typeof(ticket.get("face", {})) == TYPE_DICTIONARY else {}
-	var palette: Dictionary = face.get("palette", ticket.get("palette", {})) if typeof(face.get("palette", ticket.get("palette", {}))) == TYPE_DICTIONARY else {}
+static func _append_quad(buffer: PackedFloat32Array, rect: Rect2, color: Color) -> void:
+	var center := rect.get_center()
+	buffer.append(rect.size.x)
+	buffer.append(0.0)
+	buffer.append(0.0)
+	buffer.append(center.x)
+	buffer.append(0.0)
+	buffer.append(rect.size.y)
+	buffer.append(0.0)
+	buffer.append(center.y)
+	buffer.append(color.r)
+	buffer.append(color.g)
+	buffer.append(color.b)
+	buffer.append(color.a)
+
+
+static func _foil_colors(type_id: String, palette: Dictionary) -> Array:
 	var latex := Color(str(palette.get("latex", "#aeb3bd")))
 	var paper := Color(str(palette.get("paper", "#f3ead4")))
 	var ink := Color(str(palette.get("ink", "#34323a")))
 	var accent := Color(str(palette.get("accent", "#b44961")))
 	var trim := Color(str(palette.get("trim", "#e7c85c")))
 	var base := latex.lerp(paper, 0.78)
-	match str(ticket.get("type_id", "")):
+	match type_id:
 		"two_fer":
 			base = Color("#ead8a4").lerp(trim, 0.08)
 		"lucky_7s":

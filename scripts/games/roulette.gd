@@ -355,7 +355,6 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
 		"surface_animates_idle": true,
-		"surface_web_idle_animation_fps": 12.0,
 		"surface_dynamic_overlay_channels": [ROULETTE_SPIN_CHANNEL, ROULETTE_PAYOUT_CHANNEL],
 		"surface_realtime_state_refresh": roulette_motion_active,
 		"surface_time_msec": now_msec,

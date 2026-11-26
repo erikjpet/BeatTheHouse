@@ -129,6 +129,7 @@ func _check_roadside_map_scout(app) -> String:
 
 func _travel(app) -> String:
 	app.user_settings.reduce_motion = false
+	app.travel_transition_force_web_runtime_for_test = true
 	if not app.start_foundation_run("STANDARD-TRAVEL-back_alley-0", {"modifiers": {"home_archetype_id": "back_alley"}}, false):
 		return "Could not start a fresh seeded travel run."
 	var run: RunState = app.run_state
@@ -149,8 +150,15 @@ func _travel(app) -> String:
 		return "The Travel button committed the route before its departure preparation."
 	var deadline := Time.get_ticks_msec() + 20000
 	var skipped_departure := false
+	var staged_departure := false
 	while not app._pending_player_map_travel.is_empty() and Time.get_ticks_msec() < deadline:
 		await process_frame
+		if app._player_map_travel_staged:
+			if not staged_departure and (app.return_to_main_menu() or app.leave_without_saving_confirmation.visible):
+				return "Leaving during browser travel bypassed the active trip or showed a save failure."
+			staged_departure = true
+			if run.game_clock_minutes != clock_before or run.bankroll != cash_before or not run.travel_journey_receipt.is_empty():
+				return "Browser room preparation changed the departing run."
 		if (not skipped_departure and is_instance_valid(app.travel_cinematic_overlay)
 				and app.travel_cinematic_overlay.departure_pending()):
 			if (run.bankroll != cash_before or run.game_clock_minutes != clock_before
@@ -160,6 +168,8 @@ func _travel(app) -> String:
 			if not app.travel_cinematic_overlay.departure_pending() or app.travel_cinematic_overlay.phase == "receipt":
 				return "Skipping a pending departure displayed a receipt before settlement."
 			skipped_departure = true
+	if not staged_departure:
+		return "The browser route did not prepare the destination across frames."
 	if not skipped_departure:
 		return "The queued route did not show its departure before settlement."
 	var journey := str(run.travel_journey_receipt.get("journey_id", ""))

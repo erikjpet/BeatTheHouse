@@ -108,6 +108,7 @@ const CROSSWORD_PUZZLE_FAMILIES := [
 const CROSSWORD_PUZZLE_CYCLE := 140
 const CROSSWORD_LETTERS := "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
+var _foil_renderer := FoilRendererScript.new()
 var active_ticket_rect := DEFAULT_TICKET_RECT
 
 
@@ -2112,6 +2113,7 @@ func _draw_ticket(surface, state: Dictionary, render_context: Dictionary = {}) -
 	_draw_result_piles(surface, state)
 	_draw_queue_stack(surface, state)
 	if ticket.is_empty():
+		_foil_renderer.clear()
 		_draw_empty_ticket_outline(surface, state)
 		return
 	var render_rect := active_ticket_rect
@@ -2128,7 +2130,7 @@ func _draw_ticket(surface, state: Dictionary, render_context: Dictionary = {}) -
 	if layer_count >= 2:
 		IconRendererScript.draw(surface, ticket, art_frame)
 	if layer_count >= 3:
-		FoilRendererScript.draw(surface, ticket, art_frame, state)
+		_foil_renderer.draw(surface, ticket, art_frame, state)
 	if bool(ticket.get("result_ready", false)):
 		surface.surface_draw_ready_badge(art_frame, "CLICK TO FILE")
 		surface.surface_add_exact_invisible_hit(art_frame, FILE_TICKET_ACTION, 0)

@@ -93,6 +93,16 @@ const BAR_DICE_DEALER_STATUS_LAYOUT := {
 	"status_panel": Rect2(352, 216, 196, 16),
 }
 const DICE_GOAL_LABELS := ["SHIP 6", "CAPTAIN 5", "CREW 4", "CARGO"]
+# The row painter only reads its inputs. Reuse the player marks across draws
+# and share one empty set of marks between all opponent rows.
+const EMPTY_DRAW_MARKS: Array = []
+const OPPONENT_DICE_DRAW_OPTIONS := {
+	"reroll": EMPTY_DRAW_MARKS,
+	"suggested": EMPTY_DRAW_MARKS,
+	"rolling": EMPTY_DRAW_MARKS,
+	"show_keep_labels": false,
+	"compact": true,
+}
 
 const RULESET_LABEL := {
 	"ship_captain_crew": "Ship, Captain, Crew",
@@ -168,6 +178,8 @@ const MEMORABLE_REGULAR := {
 	],
 	"accent": {"name": "yellow"},
 }
+
+var player_dice_draw_options := {"compact": false}
 
 
 func sealed_action_authority_script() -> Script:
@@ -3313,18 +3325,14 @@ func _draw_bar_top(surface, _state: Dictionary) -> void:
 func _draw_dice_rows(surface, state: Dictionary) -> void:
 	var phase := str(state.get("phase", "bet"))
 	var player := _draw_array_view(state.get("player", []))
-	var reroll := _draw_array_view(state.get("reroll", []))
-	var suggested := _draw_array_view(state.get("suggested_reroll", []))
-	var scoring := _draw_array_view(state.get("scoring_indices", []))
-	var animated := _draw_array_view(state.get("animated_dice_indices", []))
+	var scoring := _draw_array_view(state.get("scoring_indices"))
+	player_dice_draw_options["reroll"] = _draw_array_view(state.get("reroll"))
+	player_dice_draw_options["suggested"] = _draw_array_view(state.get("suggested_reroll"))
+	player_dice_draw_options["rolling"] = _draw_array_view(state.get("animated_dice_indices"))
+	player_dice_draw_options["show_keep_labels"] = phase == "select"
 	_draw_opponent_dice_rows(surface, state)
 	surface.surface_label("YOUR CUP", Vector2(268, 238), 10, C_TEAL)
-	_draw_dice_row(FunctionOptions.DiceRowOptions.from({
-		"surface": surface, "values": player, "start": PLAYER_DICE_ORIGIN, "reroll": reroll,
-		"suggested": suggested, "scoring": scoring, "hidden": false, "die_size": DIE_SIZE,
-		"die_spacing": DIE_SPACING, "rolling_indices": animated,
-		"show_keep_labels": phase == "select", "compact": false,
-	}))
+	_draw_dice_row(surface, player, PLAYER_DICE_ORIGIN, scoring, player_dice_draw_options)
 	if phase == "select":
 		_add_dice_row_hits(surface, player, PLAYER_DICE_ORIGIN, "bar_dice_select", DIE_SIZE, DIE_SPACING)
 	var cheat_meter_visible := bool(state.get("loaded_armed", false)) or bool(state.get("palm_armed", false))
@@ -3406,12 +3414,8 @@ func _draw_opponent_dice_rows(surface, state: Dictionary) -> void:
 			detail = str(row.get("blurb", "Cup ready"))
 		if not wager_controls_visible:
 			surface.surface_label(detail.left(13), origin + Vector2(78, -4), 6, C_AMBER)
-		_draw_dice_row(FunctionOptions.DiceRowOptions.from({
-			"surface": surface, "values": _draw_array_view(row.get("dice", [])), "start": origin + Vector2(0, 3),
-			"reroll": [], "suggested": [], "scoring": _draw_array_view(row.get("scoring_indices", [])),
-			"hidden": false, "die_size": OPPONENT_DIE_SIZE, "die_spacing": OPPONENT_DIE_SPACING,
-			"rolling_indices": [], "show_keep_labels": false, "compact": true,
-		}))
+		_draw_dice_row(surface, _draw_array_view(row.get("dice")), origin + Vector2(0, 3),
+			_draw_array_view(row.get("scoring_indices")), OPPONENT_DICE_DRAW_OPTIONS)
 		if wager_controls_visible and not wager_action.is_empty():
 			var patron_index := int(row.get("turn_order", i))
 			_draw_rail_choice(surface, Rect2(origin + Vector2(108, 3), Vector2(30, 16)), "WITH", wager_action, patron_index, C_TEAL)
@@ -3425,37 +3429,27 @@ func _draw_rail_choice(surface, rect: Rect2, label: String, action: String, inde
 	surface.surface_add_exact_hit(rect, action, index)
 
 
-func _draw_dice_row(options: FunctionOptions.DiceRowOptions) -> void:
-	var surface = options.values.get("surface")
-	var values: Array = options.values.get("values", [])
-	var start: Vector2 = options.values.get("start", Vector2.ZERO)
-	var reroll: Array = options.values.get("reroll", [])
-	var suggested: Array = options.values.get("suggested", [])
-	var scoring: Array = options.values.get("scoring", [])
-	var hidden := bool(options.values.get("hidden", false))
-	var die_size: Vector2 = options.values.get("die_size", Vector2.ZERO)
-	var die_spacing := float(options.values.get("die_spacing", 0.0))
-	var rolling_indices: Array = options.values.get("rolling_indices", [])
-	var show_keep_labels := bool(options.values.get("show_keep_labels", false))
-	var compact := bool(options.values.get("compact", false))
+func _draw_dice_row(surface, values: Array, start: Vector2, scoring: Array, options: Dictionary) -> void:
+	var reroll: Array = options["reroll"]
+	var suggested: Array = options["suggested"]
+	var rolling: Array = options["rolling"]
+	var show_keep_labels: bool = options["show_keep_labels"]
+	var compact: bool = options["compact"]
+	var die_size := OPPONENT_DIE_SIZE if compact else DIE_SIZE
+	var die_spacing := OPPONENT_DIE_SPACING if compact else DIE_SPACING
 	var tumble_active := bool(surface.surface_animation_active(TUMBLE_CHANNEL))
 	var tumble_progress := float(surface.surface_animation_progress(TUMBLE_CHANNEL))
 	var flicker := float(surface.surface_flicker())
-	var rolling := rolling_indices
 	for i in range(values.size()):
 		var rect := Rect2(start + Vector2(float(i) * die_spacing, 0.0), die_size)
-		var die_rolling := tumble_active and tumble_progress < 0.98 and rolling.has(i) and not hidden
+		var die_rolling := tumble_active and tumble_progress < 0.98 and rolling.has(i)
 		var draw_rect := rect
+		var face := int(values[i])
 		if die_rolling:
 			draw_rect = Rect2(rect.position + Vector2(0, sin((flicker * 18.0) + float(i)) * 5.0), rect.size)
 			_draw_die_motion_trail(surface, rect, i, flicker)
-		if hidden:
-			_draw_die_cup(surface, draw_rect)
-		else:
-			var face := int(values[i])
-			if die_rolling:
-				face = 1 + int(flicker * 19.0 + i * 3) % DIE_FACES
-			_draw_die(surface, draw_rect, face, reroll.has(i), suggested.has(i), scoring.has(i) and not die_rolling, show_keep_labels, compact)
+			face = 1 + int(flicker * 19.0 + i * 3) % DIE_FACES
+		_draw_die(surface, draw_rect, face, reroll.has(i), suggested.has(i), scoring.has(i) and not die_rolling, show_keep_labels, compact)
 
 
 func _add_dice_row_hits(surface, values: Array, start: Vector2, action: String, die_size: Vector2, die_spacing: float) -> void:
@@ -3520,13 +3514,6 @@ func _draw_dice_goal_strip(surface, state: Dictionary, pos: Vector2) -> void:
 		surface.draw_rect(rect, Color(color.r, color.g, color.b, 0.16 if done or i == stage else 0.06))
 		surface.draw_rect(rect, color, false, 1)
 		surface.surface_label_centered(DICE_GOAL_LABELS[i], rect.grow(-2), 7, color)
-
-
-func _draw_die_cup(surface, rect: Rect2) -> void:
-	surface.draw_rect(rect, Color("#1c1326"))
-	surface.draw_rect(Rect2(rect.position + Vector2(4, 4), rect.size - Vector2(8, 8)), Color("#2a1c36"))
-	surface.draw_rect(Rect2(rect.position + Vector2(2, 2), rect.size - Vector2(4, 4)), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.30), false, 2)
-	surface.surface_label_centered("?", rect, 24, C_PINK_2)
 
 
 func _draw_pips(surface, rect: Rect2, value: int) -> void:

@@ -30,11 +30,8 @@ it into Now.
 
 - Release packages still carry a "-dev" build name. The Windows and Web ZIPs
   and Windows executable properties should use the release version.
-- Blackjack and Scratch use about twice the frame time of 0.6.0. The CRT menu
-  (and possibly Bar Dice, Video Poker, Buffalo Slots) allocates every frame.
-- The first Back Alley to Gas Station ride can stutter while the destination
-  games load and the room opens.
-- Web tables other than Roulette can appear frozen between actions.
+- Cold travel can briefly stutter while the destination games load for the
+  first time, especially on Web.
 - 9 items promise an effect that never applies: Foil Sleeve and Mags' Lined
   Sleeve (Slot odds), Wedding Ribbon Favor and Rent-Party Hat Pin (luck when a
   scene grants them; check the other 11 souvenirs), Creased Luck Card, Lucky

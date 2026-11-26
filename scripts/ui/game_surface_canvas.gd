@@ -42,8 +42,6 @@ const EMULATED_TOUCH_SUPPRESS_MS := 750
 const EMULATED_TOUCH_SUPPRESS_DISTANCE := 18.0
 const SURFACE_ANIMATION_FPS := 60.0
 const SURFACE_ANIMATION_INTERVAL_SEC := 1.0 / SURFACE_ANIMATION_FPS
-const DEFAULT_WEB_IDLE_ANIMATION_FPS := 1.0
-const DEFAULT_NATIVE_IDLE_ANIMATION_FPS := 15.0
 const TRANSIENT_SURFACE_LOOP_HOLD_MSEC := 95
 
 var game_id: String = ""
@@ -398,15 +396,12 @@ func surface_animation_liveness_active() -> bool:
 	return _surface_animation_liveness_active()
 
 
-# This is the production idle cadence, not a test floor. Surfaces may opt into
-# their deliberately stepped low-detail idle cast on native as well as Web;
-# finite deal/payout channels still leave low-detail mode and run at 60 FPS.
+# Idle and active animations share the same target cadence. Low-detail
+# renderers can keep the work of each idle draw small.
 func surface_idle_animation_fps() -> float:
 	if reduce_motion or not bool(state.get("surface_animates_idle", false)):
 		return 0.0
-	if not surface_low_detail_idle():
-		return SURFACE_ANIMATION_FPS
-	return _requested_web_idle_animation_fps() if OS.has_feature("web") else _requested_native_idle_animation_fps()
+	return SURFACE_ANIMATION_FPS
 
 
 # A lightweight boundary query for UI owners that must wait until a finite
@@ -806,7 +801,7 @@ func surface_low_detail_idle() -> bool:
 		return false
 	if _screen_effect_overlay_needs_redraw() or _surface_dynamic_overlay_channel_active() or _surface_animation_handoff_active():
 		return false
-	for channel_id in surface_animation_channels.keys():
+	for channel_id in surface_animation_channels:
 		if surface_animation_active(str(channel_id)):
 			return false
 	return true
@@ -1598,20 +1593,15 @@ func _needs_continuous_redraw() -> bool:
 
 func _surface_animation_liveness_active() -> bool:
 	return _surface_main_animation_redraw_active()
+
+
 func _surface_main_animation_redraw_active() -> bool:
 	if reduce_motion:
 		return false
-	for channel_id in surface_animation_channels.keys():
-		var normalized_id := str(channel_id)
-		if surface_animation_active(normalized_id):
+	for channel_id in surface_animation_channels:
+		if surface_animation_active(str(channel_id)):
 			return true
-	if int(state.get("suspicion_level", 0)) > 0:
-		return true
-	if drunk_distortion_overlay != null and drunk_distortion_overlay.visible:
-		return true
-	if drunk_effect_mode == "classic" and int(state.get("drunk_level", 0)) >= 12:
-		return true
-	if _surface_animation_handoff_active():
+	if _screen_effect_overlay_needs_redraw() or _surface_animation_handoff_active():
 		return true
 	return bool(state.get("surface_animates_idle", false))
 
@@ -1637,27 +1627,14 @@ func _surface_animation_handoff_active() -> bool:
 
 func _surface_animation_redraw_due(delta: float) -> bool:
 	surface_animation_redraw_accumulator += maxf(0.0, delta)
-	var target_interval := _low_detail_idle_animation_interval() if surface_low_detail_idle() else SURFACE_ANIMATION_INTERVAL_SEC
-	if surface_animation_redraw_accumulator < target_interval:
+	if surface_animation_redraw_accumulator < SURFACE_ANIMATION_INTERVAL_SEC:
 		return false
 	surface_animation_redraw_accumulator = minf(
-		surface_animation_redraw_accumulator - target_interval,
-		target_interval
+		surface_animation_redraw_accumulator - SURFACE_ANIMATION_INTERVAL_SEC,
+		SURFACE_ANIMATION_INTERVAL_SEC
 	)
 	surface_animation_redraw_count += 1
 	return true
-
-
-func _low_detail_idle_animation_interval() -> float:
-	return 1.0 / (_requested_web_idle_animation_fps() if OS.has_feature("web") else _requested_native_idle_animation_fps())
-
-
-func _requested_web_idle_animation_fps() -> float:
-	return clampf(float(state.get("surface_web_idle_animation_fps", DEFAULT_WEB_IDLE_ANIMATION_FPS)), DEFAULT_WEB_IDLE_ANIMATION_FPS, SURFACE_ANIMATION_FPS)
-
-
-func _requested_native_idle_animation_fps() -> float:
-	return clampf(float(state.get("surface_native_idle_animation_fps", DEFAULT_NATIVE_IDLE_ANIMATION_FPS)), 1.0, SURFACE_ANIMATION_FPS)
 
 
 func _scale_canvas() -> void:
