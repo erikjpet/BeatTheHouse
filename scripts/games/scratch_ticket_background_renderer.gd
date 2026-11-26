@@ -9,22 +9,28 @@ const CROSSWORD_GRID_RECT := Rect2(0.06, 0.32, 0.50, 0.48)
 const CROSSWORD_GRID_COLUMNS := 11
 const CROSSWORD_GRID_ROWS := 10
 
-const BACKGROUNDS := {
-	"two_fer": preload("res://assets/art/scratch_tickets/layers/two_fer_background_pro.png"),
-	"lucky_7s": preload("res://assets/art/scratch_tickets/layers/lucky_7s_background_pro.png"),
-	"tic_tac_gold": preload("res://assets/art/scratch_tickets/layers/tic_tac_gold_background_pro.png"),
-	"crossword_corner": preload("res://assets/art/scratch_tickets/layers/crossword_corner_background_pro.png"),
-	"bonus_bingo": preload("res://assets/art/scratch_tickets/layers/bonus_bingo_background_pro.png"),
-	"high_roller_holdem": preload("res://assets/art/scratch_tickets/layers/high_roller_holdem_background_pro.png"),
-	"golden_vault": preload("res://assets/art/scratch_tickets/layers/golden_vault_background_pro.png"),
+const BACKGROUND_PATHS := {
+	"two_fer": "res://assets/art/scratch_tickets/layers/two_fer_background_pro.png",
+	"lucky_7s": "res://assets/art/scratch_tickets/layers/lucky_7s_background_pro.png",
+	"tic_tac_gold": "res://assets/art/scratch_tickets/layers/tic_tac_gold_background_pro.png",
+	"crossword_corner": "res://assets/art/scratch_tickets/layers/crossword_corner_background_pro.png",
+	"bonus_bingo": "res://assets/art/scratch_tickets/layers/bonus_bingo_background_pro.png",
+	"high_roller_holdem": "res://assets/art/scratch_tickets/layers/high_roller_holdem_background_pro.png",
+	"golden_vault": "res://assets/art/scratch_tickets/layers/golden_vault_background_pro.png",
 }
+
+static var _backgrounds: Dictionary = {}
 
 
 static func draw(surface, ticket: Dictionary, art_frame: Rect2) -> void:
 	if ticket.is_empty():
 		return
 	var type_id := str(ticket.get("type_id", ""))
-	var background: Texture2D = BACKGROUNDS.get(type_id)
+	# Decode each authored background the first time its ticket is painted.
+	# An empty cabinet can finish loading without decoding its ticket art.
+	if not _backgrounds.has(type_id) and BACKGROUND_PATHS.has(type_id):
+		_backgrounds[type_id] = load(BACKGROUND_PATHS[type_id]) as Texture2D
+	var background := _backgrounds.get(type_id) as Texture2D
 	if background == null:
 		return
 	surface.draw_texture_rect(background, art_frame, false)

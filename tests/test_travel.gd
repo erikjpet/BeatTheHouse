@@ -6,17 +6,28 @@ const DESTINATION := "gas_station_casino"
 const TRAVEL_SAVE_PREFIX := "TRAVEL_SAVE "
 
 
+class ScratchEntryHost extends FoundationMain:
+	func _should_stage_scratch_cabinet_open() -> bool:
+		return true
+
+	func _request_game_module_script_prewarm() -> void:
+		super._request_game_module_script_prewarm()
+		game_module_script_prewarm_requests.erase(SCRATCH_TICKETS_MODULE_PATH)
+
+
 func _initialize() -> void:
 	call_deferred("_run")
 
 
 func _run() -> void:
+	var arguments := OS.get_cmdline_user_args()
 	var app = MAIN.instantiate()
+	if arguments.is_empty():
+		app.set_script(ScratchEntryHost)
 	root.add_child(app)
 	app.continuous_environment_clock_enabled = false
 	app.user_settings.coach_tips_enabled = false
 	app.autosave_slot_id = "test_travel"
-	var arguments := OS.get_cmdline_user_args()
 	var failure: String
 	if arguments.is_empty():
 		failure = _check_roadside_map_scout(app)
@@ -42,6 +53,9 @@ func _play_and_save(app) -> String:
 	var travel_failure := await _travel(app)
 	if not travel_failure.is_empty():
 		return travel_failure
+	var scratch_failure := await _check_staged_scratch_entry(app)
+	if not scratch_failure.is_empty():
+		return scratch_failure
 	if not app.activate_interactable_object("game:slot") or app.current_game == null:
 		return "The seeded arrival has no playable Slot cabinet."
 	var run: RunState = app.run_state
@@ -71,6 +85,35 @@ func _play_and_save(app) -> String:
 		return "The run menu did not complete a new Save."
 	var expected := JSON.stringify(_resume_state(run, machine_key))
 	print(TRAVEL_SAVE_PREFIX + Marshalls.utf8_to_base64(expected))
+	return ""
+
+
+func _check_staged_scratch_entry(app) -> String:
+	const CABINET := "game:scratch_tickets"
+	var run: RunState = app.run_state
+	var bankroll := run.bankroll
+	var clock := run.game_clock_minutes
+	app.environment_canvas.object_activated.emit(CABINET)
+	if app._pending_scratch_cabinet_open.is_empty() or app.current_game != null or app.open_world_map():
+		return "A cold Scratch opening must keep the run on the room floor and own room input."
+	var cancel := InputEventAction.new()
+	cancel.action = "ui_cancel"
+	cancel.pressed = true
+	root.push_input(cancel)
+	if not app._pending_scratch_cabinet_open.is_empty() or app.current_game != null:
+		return "Cancel must discard the pending cabinet opening."
+	app.environment_canvas.object_activated.emit(CABINET)
+	if app._pending_scratch_cabinet_open.is_empty():
+		return "The canceled Scratch opening must accept another room activation."
+	for frame in range(32):
+		if app._pending_scratch_cabinet_open.is_empty():
+			break
+		if app.run_state != run or run.bankroll != bankroll or run.game_clock_minutes != clock or app.current_game != null:
+			return "Scratch preparation must keep the departing room and run intact."
+		await process_frame
+	if app.current_game == null or app.current_game.get_id() != "scratch_tickets" or app.current_game_state_key != "scratch_tickets":
+		return "Scratch preparation must enter the original physical cabinet."
+	app.back_to_environment()
 	return ""
 
 
