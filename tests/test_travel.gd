@@ -62,7 +62,9 @@ func _play_and_save(app) -> String:
 	var travel_failure := await _travel(app)
 	if not travel_failure.is_empty():
 		return travel_failure
-	for game_id in ["slot", "scratch_tickets", "pull_tabs"]:
+	if not ResourceLoader.has_cached(GameModuleRegistry.SLOT_MODULE_PATH):
+		return "Travel must warm Slot before the player can open the room's cabinet."
+	for game_id in ["scratch_tickets", "pull_tabs"]:
 		var opening_failure := await _check_staged_cabinet_entry(app, game_id)
 		if not opening_failure.is_empty():
 			return opening_failure
@@ -162,7 +164,7 @@ func _continue(app, expected: String) -> String:
 		return "Cold Continue changed the saved location or settlement.\nExpected: %s\nRestored: %s" % [expected, restored]
 	if ResourceLoader.has_cached(GameModuleRegistry.SLOT_MODULE_PATH):
 		return "Continuing a room with an idle Slot must leave its playable cabinet unloaded."
-	return ""
+	return await _check_staged_cabinet_entry(app, "slot")
 
 
 func _resume_state(run: RunState, machine_key: String) -> Dictionary:

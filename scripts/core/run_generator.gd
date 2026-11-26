@@ -285,10 +285,9 @@ func prepare_staged_player_world_travel(run_state: RunState, target_id: String, 
 	var source_id := run_state.current_world_node_id()
 	var result := await _travel_environment_result_steps(run_state, target_id, true, true, frame_boundary)
 	if bool(result.get("ok", false)):
-		# The detached install can restore machines from earlier visits. Prepare
-		# any active Slot state before publishing the destination and its clock.
+		# Previously visited rooms may skip generation and still need a warm Slot.
 		if JsonCoerceScript._raw_string_array(run_state.current_environment.get("game_ids", [])).has("slot"):
-			await GameModuleRegistryScript.prepare_room_source_in_steps(library.game("slot"), frame_boundary, run_state.current_environment)
+			await GameModuleRegistryScript.prepare_travel_slot_in_steps(library.game("slot"), frame_boundary)
 		for node_id: String in [source_id, target_id]:
 			await frame_boundary
 			run_state.prime_world_room_storage_projections([node_id])
@@ -2151,7 +2150,7 @@ func _generated_game_states_steps(run_state: RunState, environment_data: Diction
 		var perf_game_started_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
 		var definition := library.game(game_id)
 		if game_id == "slot" and not frame_boundary.is_null():
-			await GameModuleRegistryScript.prepare_room_source_in_steps(definition, frame_boundary)
+			await GameModuleRegistryScript.prepare_travel_slot_in_steps(definition, frame_boundary)
 		var game: GameModule = _create_game_module(definition)
 		if game == null:
 			continue

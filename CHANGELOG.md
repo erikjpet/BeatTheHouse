@@ -4,8 +4,8 @@ All notable public release changes for Beat the House are recorded here.
 
 ## Unreleased
 
-- Load idle Slot room data separately from the cabinet during Web travel and
-  Continue, and reduce copying during save restoration and cabinet entry.
+- Load idle Slot room data separately from the cabinet when continuing a Web
+  save, and reduce copying during save restoration and cabinet entry.
 - Name release ZIPs and the Windows executable with the release version.
 - Prepare Web cabinets and saved rooms across frames, and reuse stored room
   snapshots during travel.

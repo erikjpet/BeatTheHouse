@@ -75,9 +75,18 @@ static func prepare_room_source_in_steps(definition: Dictionary, frame_boundary:
 		await _prepare_slot_in_steps(frame_boundary)
 
 
+static func prepare_travel_slot_in_steps(definition: Dictionary, frame_boundary: Signal) -> void:
+	if str(definition.get("module_path", "")).strip_edges() == SLOT_MODULE_PATH:
+		# Travel already owns a loading transition. Warm the cabinet there so a
+		# player arriving at the room can open it without paying that cost again.
+		await _prepare_slot_in_steps(frame_boundary)
+	else:
+		await prepare_room_source_in_steps(definition, frame_boundary)
+
+
 static func _prepare_slot_in_steps(frame_boundary: Signal) -> void:
-	# Restore active cabinets before publishing the room so the first due spin
-	# can settle without compiling its gameplay dependencies on the tick.
+	if ResourceLoader.has_cached(SLOT_MODULE_PATH):
+		return
 	var retained: Array[Script] = []
 	for path in SLOT_MODULE_LOAD_ORDER:
 		if not ResourceLoader.has_cached(path):
