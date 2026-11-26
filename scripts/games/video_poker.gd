@@ -304,7 +304,7 @@ const SUIT_WORD := {0: "Spades", 1: "Hearts", 2: "Clubs", 3: "Diamonds"}
 
 var machine_renderer := VideoPokerRendererScript.new()
 const STRATEGY_HINT_SLICE_USEC := 3000
-const STRATEGY_HINT_MAX_COMPLETIONS_PER_SLICE := 512
+const STRATEGY_HINT_MAX_COMPLETIONS_PER_SLICE := 2048
 var _strategy_hint_last_completed: Dictionary = {}
 var _strategy_hint_last_slice_usec := 0
 var _strategy_hint_max_slice_usec := 0
@@ -3000,7 +3000,6 @@ func _start_strategy_hint_mask(job: Dictionary) -> void:
 			slots.append(index)
 	job["holds"] = holds
 	job["slots"] = slots
-	job["completed"] = (job.hand as PackedInt32Array).duplicate()
 	job["first"] = 0
 	job["second"] = 1
 	job["samples"] = 0
@@ -3019,61 +3018,84 @@ func _advance_strategy_hint_job(budget_usec: int = STRATEGY_HINT_SLICE_USEC) -> 
 	var job := _strategy_hint_job
 	var started_usec := Time.get_ticks_usec()
 	var deadline := started_usec + maxi(1, budget_usec)
+	var hand: PackedInt32Array = job.hand
 	var deck: PackedInt32Array = job.deck
+	var pays: PackedInt64Array = job.pays
+	var wild_order: PackedInt32Array = job.wild_order
+	var is_wild := bool(job.wild)
+	var variant_id := str(job.variant_id)
+	var progressive := int(job.progressive)
+	var sequential := int(job.sequential)
+	var scores: PackedFloat64Array = job.scores
+	var completed_samples := int(job.completed_samples)
 	var slots: PackedInt32Array = job.slots
-	var completed: PackedInt32Array = job.completed
+	var draw_count := slots.size()
+	# Every completion overwrites all drawn positions. Keep the working hand
+	# private to this slice so writing it never copies an array shared with the job.
+	var completed := hand.duplicate()
+	var first := int(job.first)
+	var second := int(job.second)
+	var samples := int(job.samples)
+	var total := float(job.total)
+	var sample_rng: RngStream = job.get("rng")
 	for _completion in range(STRATEGY_HINT_MAX_COMPLETIONS_PER_SLICE):
 		var mask_done := false
-		if slots.size() == 0:
+		if draw_count == 0:
 			mask_done = true
-		elif slots.size() == 1:
-			completed[slots[0]] = deck[int(job.first)]
-			job.first = int(job.first) + 1
-			mask_done = int(job.first) >= deck.size()
-		elif slots.size() == 2:
-			completed[slots[0]] = deck[int(job.first)]
-			completed[slots[1]] = deck[int(job.second)]
-			job.second = int(job.second) + 1
-			if int(job.second) >= deck.size():
-				job.first = int(job.first) + 1
-				job.second = int(job.first) + 1
-			mask_done = int(job.first) >= deck.size() - 1
+		elif draw_count == 1:
+			completed[slots[0]] = deck[first]
+			first += 1
+			mask_done = first >= deck.size()
+		elif draw_count == 2:
+			completed[slots[0]] = deck[first]
+			completed[slots[1]] = deck[second]
+			second += 1
+			if second >= deck.size():
+				first += 1
+				second = first + 1
+			mask_done = first >= deck.size() - 1
 		else:
 			var pool := deck.duplicate()
-			var sample_rng: RngStream = job.rng
 			for slot in slots:
 				var pick := sample_rng.randi_range(0, pool.size() - 1)
 				completed[slot] = pool[pick]
 				pool.remove_at(pick)
-			mask_done = int(job.samples) + 1 >= STRATEGY_SAMPLE_CAP
-		job.total = float(job.total) + _strategy_numeric_pay(completed, job.pays, job.wild_order, bool(job.wild), str(job.variant_id), int(job.progressive), int(job.sequential))
-		job.samples = int(job.samples) + 1
-		job.completed_samples = int(job.completed_samples) + 1
-		job.completed = completed
+			mask_done = samples + 1 >= STRATEGY_SAMPLE_CAP
+		total += _strategy_numeric_pay(completed, pays, wild_order, is_wild, variant_id, progressive, sequential)
+		samples += 1
+		completed_samples += 1
 		if mask_done:
-			var average := float(job.total) / float(maxi(1, int(job.samples)))
-			var scores: PackedFloat64Array = job.scores
+			var average := total / float(samples)
 			scores.append(average)
-			job.scores = scores
 			var best := float(job.best_average)
 			if average > best + 0.000001 or (is_equal_approx(average, best) and (job.holds as Array).size() > (job.best_holds as Array).size()):
 				job.best_average = average
 				job.best_holds = (job.holds as Array).duplicate()
 			job.mask = int(job.mask) + 1
 			if int(job.mask) >= (1 << HAND_SIZE):
-				_strategy_hint_last_completed = {"key": str(job.key), "scores": job.scores, "completed_samples": int(job.completed_samples)}
+				_strategy_hint_last_completed = {"key": str(job.key), "scores": scores, "completed_samples": completed_samples}
 				_strategy_cache_holds(str(job.key), job.best_holds)
 				_strategy_hint_job.clear()
 				_record_strategy_hint_slice(started_usec)
 				return
 			_start_strategy_hint_mask(job)
 			slots = job.slots
-			completed = job.completed
+			draw_count = slots.size()
+			completed = hand.duplicate()
+			first = 0
+			second = 1
+			samples = 0
+			total = 0.0
+			sample_rng = job.get("rng")
 		if Time.get_ticks_usec() >= deadline:
-			_record_strategy_hint_slice(started_usec)
-			return
+			break
+	job.first = first
+	job.second = second
+	job.samples = samples
+	job.total = total
+	job.completed_samples = completed_samples
+	job.scores = scores
 	_record_strategy_hint_slice(started_usec)
-
 
 func _record_strategy_hint_slice(started_usec: int) -> void:
 	_strategy_hint_last_slice_usec = Time.get_ticks_usec() - started_usec

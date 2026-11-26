@@ -53,6 +53,8 @@ func _run() -> void:
 			_fail(game_id, "settlement differs after restore: %s vs %s" % [uninterrupted, restored])
 		if game_id == "roulette":
 			await _check_interrupted_roulette_confirmation()
+		elif game_id == "baccarat":
+			await _check_baccarat_all_in_confirmation()
 	app.pending_autosave = false
 	app.save_service.wait_for_async_save()
 	for _frame in range(5):
@@ -112,6 +114,49 @@ func _play(game_id: String, reload: bool) -> Dictionary:
 		_fail(game_id, "restoring already settled state duplicates or loses a settlement")
 		return {}
 	return settled
+
+
+func _check_baccarat_all_in_confirmation() -> void:
+	const GAME := "baccarat"
+	const DEAL := "baccarat_deal"
+	const RESOLVE := "deal_baccarat"
+	app.close_game_test_menu()
+	app.test_game = GAME
+	if not bool(app.start_game_test_session(GAME).get("ok", false)):
+		_fail(GAME, "could not enter the test table")
+		return
+	app.game_surface_canvas.set_process(false)
+	app.run_state.bankroll = 0
+	app.run_state.grand_casino_chips = int(app.game_surface_canvas.state.get("table_minimum", 0))
+	app._refresh()
+	await _tick()
+	var offered := app.current_game.actions(app.run_state, app.run_state.current_environment)
+	if not await _stage_table_bet(GAME, offered):
+		return
+	var before := _account()
+	await _click(DEAL)
+	if app.pending_wager_confirm_action_id != RESOLVE or not app._event_choice_popup_is_visible() or _account() != before:
+		_fail(GAME, "Deal must ask before spending the last chips")
+		return
+	app.cancel_pending_wager_confirmation()
+	await _tick()
+	if not app.pending_wager_confirm_action_id.is_empty() or _account() != before:
+		_fail(GAME, "canceling the warning must preserve the wallet")
+		return
+	await _click(DEAL)
+	if app.pending_wager_confirm_action_id != RESOLVE or _account() != before:
+		_fail(GAME, "canceling must keep the wager available for an explicit retry")
+		return
+	app.confirm_pending_wager_action()
+	await _tick()
+	var settled := _account()
+	if str(app.last_game_result.get("action_id", "")) != RESOLVE or not bool(app.last_game_result.get("ok", false)) or settled == before:
+		_fail(GAME, "confirming must settle the staged wager")
+		return
+	app.confirm_pending_wager_action()
+	await _tick()
+	if _account() != settled:
+		_fail(GAME, "a second confirmation must not charge the wager again")
 
 
 func _check_interrupted_roulette_confirmation() -> void:

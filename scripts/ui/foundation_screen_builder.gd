@@ -119,14 +119,14 @@ static func _build_redesigned_start_screen(host: Variant) -> void:
 	primary_row.add_theme_constant_override("separation", 12)
 	primary_row.custom_minimum_size = Vector2(916, 106)
 	action_grid.add_child(primary_row)
-	host.new_run_button = host._main_menu_button("PLAY", "Begin a new run", Callable(host, "start_or_continue_primary"))
+	host.new_run_button = host._main_menu_button("PLAY", "Begin a new run", Callable(host, "_queue_player_start").bind(Callable(host, "start_or_continue_primary")))
 	host.new_run_button.custom_minimum_size = Vector2(608, 106)
 	host.new_run_button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	host._set_control_font_size(host.new_run_button, 28)
 	primary_row.add_child(host.new_run_button)
 	# Continue replaces Play in place; this alias keeps old callers compatible.
 	host.continue_button = host.new_run_button
-	host.daily_run_button = host._main_menu_button("DAILY CHALLENGE", "Start today's hidden-seed challenge", Callable(host, "start_daily_challenge_run"))
+	host.daily_run_button = host._main_menu_button("DAILY CHALLENGE", "Start today's hidden-seed challenge", Callable(host, "_queue_player_start").bind(Callable(host, "start_daily_challenge_run")))
 	host.daily_run_button.custom_minimum_size = Vector2(296, 106)
 	primary_row.add_child(host.daily_run_button)
 
@@ -138,7 +138,7 @@ static func _build_redesigned_start_screen(host: Variant) -> void:
 	UIArtScript.apply_control_icon(host.run_config_button, "run_setup", "Run setup", 28)
 	host.run_config_button.custom_minimum_size = Vector2(296, 106)
 	secondary_row.add_child(host.run_config_button)
-	host.replay_tutorial_button = host._main_menu_button("REPLAY LESSONS", "Replay the guided First Night", Callable(host, "request_tutorial_replay"))
+	host.replay_tutorial_button = host._main_menu_button("REPLAY LESSONS", "Replay the guided First Night", Callable(host, "_queue_player_start").bind(Callable(host, "request_tutorial_replay")))
 	host.replay_tutorial_button.custom_minimum_size = Vector2(296, 106)
 	secondary_row.add_child(host.replay_tutorial_button)
 	host.collections_button = host._main_menu_button("TRAVEL HOME", "Enter your persistent home", Callable(host, "open_collection_browser"))
@@ -215,7 +215,7 @@ static func _build_redesigned_start_screen(host: Variant) -> void:
 	host.delete_saved_run_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	host.delete_saved_run_button.add_theme_stylebox_override("normal", VisualStyle.pixel_box(Color("#1b0914", 0.96), VisualStyle.PINK_2, 2))
 	config_actions.add_child(host.delete_saved_run_button)
-	host.run_config_start_button = host._button("START NEW RUN", host._portrait_menu_callback(Callable(host, "_on_start_pressed")))
+	host.run_config_start_button = host._button("START NEW RUN", host._portrait_menu_callback(Callable(host, "_queue_player_start").bind(Callable(host, "_on_start_pressed"))))
 	host.run_config_start_button.tooltip_text = "Start a new run with this seed, content, and challenge configuration"
 	host.run_config_start_button.custom_minimum_size = Vector2(0, 48)
 	host.run_config_start_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL

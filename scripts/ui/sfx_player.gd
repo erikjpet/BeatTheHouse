@@ -1923,6 +1923,11 @@ func _process_prewarm_chunk() -> void:
 			var event_id := str(_prewarm_queue.pop_front())
 			if _stream_cache.has(event_id):
 				continue
+			if _has_native_event_master(event_id):
+				var native_stream := _native_delivery_event_stream(event_id)
+				if native_stream != null:
+					_stream_cache[event_id] = native_stream
+					return
 			_begin_prewarm_event(event_id)
 			break
 	if _prewarm_active_event_id.is_empty():
@@ -1999,11 +2004,17 @@ func _remove_from_prewarm_queue(event_id: String) -> void:
 		_prewarm_queue.remove_at(index)
 
 
+func _has_native_event_master(event_id: String) -> bool:
+	return not OS.has_feature("web") and (
+		NATIVE_SLOT_DELIVERY_EVENTS.has(event_id) or ROULETTE_PREWARM_EVENTS.has(event_id)
+	)
+
+
 func _event_stream(event_id: String) -> AudioStreamWAV:
 	var normalized := _normalized_event_id(event_id)
 	if _stream_cache.has(normalized):
 		return _stream_cache[normalized]
-	if not OS.has_feature("web") and bool(NATIVE_SLOT_DELIVERY_EVENTS.get(normalized, false)):
+	if _has_native_event_master(normalized):
 		var native_delivery_stream := _native_delivery_event_stream(normalized)
 		if native_delivery_stream != null:
 			_stream_cache[normalized] = native_delivery_stream

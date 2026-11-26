@@ -299,7 +299,9 @@ static func result_fingerprint(result: Dictionary) -> String:
 	var content := result.duplicate(false)
 	content.erase("blackjack_host_apply_receipt")
 	content.erase("blackjack_host_content_fingerprint")
-	return RuntimeScript.canonical_fingerprint(content)
+	# Live bonus results can contain dense nested state. The native encoder
+	# produces the same bytes and preserves historical coercion on its fallback.
+	return RuntimeScript.canonical_json_native(content).sha256_text()
 
 
 static func receipt_for(delivery: Dictionary, table_binding: String, result: Dictionary, proposal_fingerprint: String, run_fingerprint: String, rng_fingerprint: String) -> Dictionary:

@@ -295,7 +295,7 @@ func _draw_hands(surface, state: Dictionary, palette: Dictionary) -> void:
 	var layouts := _hand_layouts(hand_count)
 	var flip_active := bool(surface.surface_animation_active("video_poker_flip"))
 	var flip_progress := float(surface.surface_animation_progress("video_poker_flip"))
-	_draw_guidance(surface, state, palette)
+	_draw_guidance(surface, state, palette, flip_active)
 	for hand_index in range(layouts.size()):
 		var panel: Rect2 = layouts[hand_index]
 		var cards: Array = display_hands[hand_index] if hand_index < display_hands.size() and typeof(display_hands[hand_index]) == TYPE_ARRAY else []
@@ -307,14 +307,15 @@ func _draw_hands(surface, state: Dictionary, palette: Dictionary) -> void:
 		}))
 
 
-func _draw_guidance(surface, state: Dictionary, palette: Dictionary) -> void:
+func _draw_guidance(surface, state: Dictionary, palette: Dictionary, flip_active: bool) -> void:
 	var phase := str(state.get("phase", "idle"))
 	var primary: Color = palette["primary"]
 	var strip := Rect2(PLAYFIELD.position + Vector2(8, 7), Vector2(PLAYFIELD.size.x - 16, 24))
 	if phase == "hold" and bool(state.get("poker_hat_strategy_active", false)):
 		surface.draw_rect(strip, Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.22))
 		surface.draw_rect(strip, C_TEAL, false, 2)
-		surface.surface_label_centered("FRED'S PICK  •  %s" % str(state.get("recommended_hold_text", "DRAW ALL FIVE")), strip.grow(-3), 10, C_TEAL)
+		var hint_text := "READING THE HAND..." if flip_active else str(state.get("recommended_hold_text", "DRAW ALL FIVE"))
+		surface.surface_label_centered("FRED'S PICK  •  %s" % hint_text, strip.grow(-3), 10, C_TEAL)
 		return
 	if phase == "settled":
 		var result_detail := "CARDS REVEALING. PAYOUT FOLLOWS." if _result_reveal_pending(surface, state) else str(state.get("result_detail", state.get("outcome_headline", ""))).strip_edges()
@@ -361,7 +362,7 @@ func _draw_hand_panel(options: FunctionOptions.VideoPokerHandPanelOptions) -> vo
 	var primary: Color = palette["primary"]
 	var secondary: Color = palette["secondary"]
 	var recommended_holds: Array = state.get("recommended_holds", [])
-	var poker_hat_active := bool(state.get("poker_hat_strategy_active", false))
+	var show_advice := bool(state.get("poker_hat_strategy_active", false)) and not flip_active and not bool(state.get("strategy_hint_pending", false))
 	var winning := not flip_active and int(result.get("total", 0)) > 0
 	surface.draw_rect(panel, Color("#020611"))
 	surface.draw_rect(panel, C_YELLOW if winning else (primary if hand_index == 0 else secondary), false, 2)
@@ -381,7 +382,7 @@ func _draw_hand_panel(options: FunctionOptions.VideoPokerHandPanelOptions) -> vo
 		var rect := Rect2(start + Vector2(float(card_index) * (card_w + gap), 0), Vector2(card_w, card_h))
 		var card: Dictionary = cards[card_index] if card_index < cards.size() and typeof(cards[card_index]) == TYPE_DICTIONARY else {"hidden": true}
 		var held := phase == "hold" and holds.has(card_index)
-		var recommended := phase == "hold" and poker_hat_active and recommended_holds.has(card_index)
+		var recommended := phase == "hold" and show_advice and recommended_holds.has(card_index)
 		var sequence_index := hand_index * HAND_SIZE + card_index
 		var sequence_count := maxi(1, hand_count * HAND_SIZE)
 		var reveal_threshold := float(sequence_index + 1) / float(sequence_count)
@@ -395,7 +396,7 @@ func _draw_hand_panel(options: FunctionOptions.VideoPokerHandPanelOptions) -> vo
 		_draw_card(surface, card, rect, held, winning, face_down)
 		if phase == "hold":
 			var badge := Rect2(rect.position + Vector2(0, rect.size.y - 16), Vector2(rect.size.x, 16))
-			if poker_hat_active:
+			if show_advice:
 				var matches_advice := held == recommended
 				var advice_label := ("RIGHT" if held else "DRAW") if matches_advice else ("HOLD" if recommended else "DROP")
 				var advice_color := C_TEAL if matches_advice else C_AMBER

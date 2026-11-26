@@ -18,9 +18,13 @@ func _run() -> void:
 	# Disable periodic autosaves, not startup logic. The runner isolates all
 	# storage regardless, so no existing run or profile is used.
 	app.continuous_environment_clock_enabled = false
-	var started: bool = app.start_foundation_run("CORE-BOOT", {}, false)
+	app._queue_player_start(Callable(app, "start_foundation_run").bind("CORE-BOOT", {}, false))
+	var queued: bool = app.run_state == null and app._pending_player_start.is_valid()
+	var deadline := Time.get_ticks_msec() + 20000
+	while app._pending_player_start.is_valid() and Time.get_ticks_msec() < deadline:
+		await process_frame
 	var run: RunState = app.run_state
-	var passed := started and run != null and not run.is_terminal() \
+	var passed: bool = queued and run != null and not run.is_terminal() \
 		and not run.current_world_node_id().is_empty() and not run.current_environment.is_empty()
 	if not passed:
 		push_error("Main could not start an active seeded run in a generated room.")

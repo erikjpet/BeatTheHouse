@@ -428,6 +428,7 @@ var travel_presentation_active := false
 var travel_presentation_journey_id := ""
 var travel_cinematic_overlay: Control
 var travel_presentation_return_focus: WeakRef
+var _pending_player_map_travel: Dictionary = {}
 # Presentation-only work is advanced one stage per frame, after the overlay has
 # had a draw opportunity. No stage resolves travel or consumes gameplay requests.
 var travel_destination_preparation: Dictionary = {}
@@ -529,6 +530,9 @@ var new_run_confirmation: ConfirmationDialog
 var first_lesson_choice: ConfirmationDialog
 var first_lesson_skip_button: Button
 var _pending_new_run_start := Callable()
+var _pending_player_start := Callable()
+var _player_start_content_thread: Thread
+var _player_start_request_frame := 0
 var save_delete_confirmation: ConfirmationDialog
 var leave_without_saving_confirmation: ConfirmationDialog
 var leave_without_saving_action := ""
@@ -850,6 +854,12 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_poll_script_prewarm_worker()
+	if _pending_player_start.is_valid():
+		_advance_player_start()
+		return
+	if not _pending_player_map_travel.is_empty():
+		_advance_player_map_travel()
+		return
 	_advance_game_coach_refresh_after_draw()
 	_sync_simulation_pause_owners()
 	# Canvas nodes retain their own autonomous processing/redraw. Only the host
@@ -994,6 +1004,9 @@ func _advance_environment_turns_checked(amount: int = 1, debug_timing: Dictionar
 
 
 func _input(event: InputEvent) -> void:
+	if _pending_player_start.is_valid() or not _pending_player_map_travel.is_empty():
+		get_viewport().set_input_as_handled()
+		return
 	# The embedded confirmation Window owns navigation in its own viewport.
 	# Root handling would move focus a second time for the same gesture.
 	if (new_run_confirmation != null and new_run_confirmation.visible) or (first_lesson_choice != null and first_lesson_choice.visible):
@@ -1167,6 +1180,11 @@ func _drain_script_prewarm_requests_for_shutdown() -> void:
 	# is released. Discard work that has not started, then join the one immutable
 	# path already owned by the worker without publishing into a tearing-down UI.
 	script_prewarm_stopping = true
+	_pending_player_start = Callable()
+	_pending_player_map_travel.clear()
+	if _player_start_content_thread != null:
+		_player_start_content_thread.wait_to_finish()
+		_player_start_content_thread = null
 	if script_prewarm_thread != null:
 		if script_prewarm_thread.is_started():
 			script_prewarm_thread.wait_to_finish()
@@ -3941,7 +3959,51 @@ func select_world_map_node(node_id: String) -> bool:
 		_show_message(message)
 	if bool(result.get("refresh", false)):
 		_refresh_world_map_overlay()
+	if bool(result.get("ok", false)) and bool(choice.get("enabled", false)):
+		_prewarm_destination_game_scripts(clean_id)
 	return bool(result.get("ok", false))
+
+
+func _prewarm_destination_game_scripts(target_id: String) -> void:
+	if OS.has_feature("web") or run_state == null or generator == null or library == null or _is_meta_session():
+		return
+	var destination := generator.preview_environment(run_state, target_id, true)
+	var destination_paths: Array[String] = []
+	for game_id in JsonCoerceScript._raw_string_array(destination.get("game_ids", [])):
+		var path := str(library.game(game_id).get("module_path", "")).strip_edges()
+		if not path.is_empty() and not game_module_script_cache.has(path):
+			destination_paths.append(path)
+			_queue_script_prewarm_request(game_module_script_prewarm_requests, path)
+	# Only the selected stop owns queued compile work. An already-started load
+	# must finish, but previous selections cannot hold up the Travel button.
+	for pending_path in game_module_script_prewarm_requests.keys():
+		if pending_path != script_prewarm_active_path and not destination_paths.has(pending_path):
+			game_module_script_prewarm_requests.erase(pending_path)
+
+
+func _queue_player_map_travel() -> void:
+	if not _pending_player_map_travel.is_empty() or _guard_blocking_decision_or_transition():
+		return
+	if _is_meta_session() or not bool(_travel_choice(selected_world_map_node_id).get("enabled", false)):
+		confirm_world_map_travel()
+		return
+	_pending_player_map_travel = {"run": run_state, "target_id": selected_world_map_node_id, "frame": Engine.get_process_frames()}
+	world_map_confirm_button.text = "Preparing..."
+	world_map_confirm_button.disabled = true
+
+
+func _advance_player_map_travel() -> void:
+	if Engine.get_process_frames() < int(_pending_player_map_travel["frame"]) + 2 \
+			or script_prewarm_thread != null or not game_module_script_prewarm_requests.is_empty():
+		return
+	var pending := _pending_player_map_travel
+	_pending_player_map_travel = {}
+	world_map_confirm_button.text = "Travel"
+	if pending["run"] != run_state or str(pending["target_id"]) != selected_world_map_node_id:
+		_refresh_world_map_overlay()
+		return
+	world_map_confirm_button.disabled = false
+	confirm_world_map_travel()
 
 
 func confirm_world_map_travel() -> Dictionary:
@@ -7813,10 +7875,11 @@ func abandon_run_from_menu() -> void:
 	_refresh()
 
 
-func _foundation_lifecycle_snapshot() -> Dictionary:
+func _foundation_lifecycle_snapshot(park_run_state: bool = false) -> Dictionary:
 	var snapshot := {
 		"run_state_ref": run_state,
-		"run_state_storage": _run_state_lifecycle_storage_snapshot(),
+		"run_state_storage": {} if park_run_state else _run_state_lifecycle_storage_snapshot(),
+		"run_state_parked": park_run_state,
 		"fields": {},
 		"visibility": {},
 	}
@@ -7861,7 +7924,7 @@ func _foundation_lifecycle_snapshot() -> Dictionary:
 	snapshot["coach"] = _coach_lifecycle_snapshot()
 	snapshot["talk_dock"] = _talk_dock_lifecycle_snapshot()
 	snapshot["talk_dock_canvases"] = _talk_dock_canvas_lifecycle_snapshot()
-	snapshot["run_state_mutable_models"] = {
+	snapshot["run_state_mutable_models"] = {} if park_run_state else {
 		"numbers": {
 			"state": run_state.numbers_state.snapshot(),
 			"config": run_state.numbers_state.config.duplicate(true),
@@ -7922,7 +7985,7 @@ func _restore_run_state_lifecycle_storage(snapshot: Dictionary) -> void:
 func _restore_foundation_lifecycle_snapshot(snapshot: Dictionary) -> void:
 	var restored_run: Variant = snapshot.get("run_state_ref", null)
 	run_state = restored_run as RunState if restored_run is RunState else null
-	if run_state != null:
+	if run_state != null and not bool(snapshot.get("run_state_parked", false)):
 		var storage_snapshot := JsonCoerceScript._copy_dict(snapshot.get("run_state_storage", {}))
 		if storage_snapshot.is_empty():
 			run_state.from_dict(JsonCoerceScript._copy_dict(snapshot.get("run", {})))
@@ -8693,6 +8756,9 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			_show_message("Travel is already in progress.")
 			_refresh_modal_contract_owner()
 		return {"ok": false, "errors": ["Travel is already in progress."]}
+	# Direct hosts can bypass the player button's readiness wait. Make their
+	# synchronous generator the sole resource loader at that boundary too.
+	_settle_script_prewarm_before_runtime()
 	# This stage clock exists only for an explicitly enabled performance probe.
 	# Normal travel skips timestamp reads and publishes no diagnostics.
 	var perf_corner_store_timing: bool = perf_telemetry_overlay != null \
@@ -9496,7 +9562,7 @@ func _on_travel_presentation_completed(journey_id: String) -> void:
 	# The ordinary path has completed these behind the cinematic many frames ago.
 	if not bool(travel_destination_preparation.get("requested", false)):
 		_refresh()
-	for _stage in range(6):
+	for _stage in range(8 + library.games.size()):
 		if not _travel_destination_preparation_is_current() or bool(travel_destination_preparation.get("ready", false)):
 			break
 		_advance_travel_destination_preparation(true)
@@ -9573,20 +9639,40 @@ func _advance_travel_destination_preparation(drain: bool = false) -> void:
 	var stage := int(travel_destination_preparation["stage"])
 	var started := Time.get_ticks_usec()
 	var label := ""
+	var next_stage := stage + 1
 	match stage:
 		0:
-			label = "room_catalog"
-			if not _ensure_run_ui_built(): return
-			_prepare_room_presentation_at_boundary()
+			label = "room_authority"
+			if not _ensure_run_ui_built():
+				return
+			travel_destination_preparation["catalog_sources_ready"] = _prepare_room_presentation_sources()
+			travel_destination_preparation["game_source_index"] = 0
 		1:
+			label = "room_game_sources"
+			if bool(travel_destination_preparation.get("catalog_sources_ready", false)):
+				var game_ids := JsonCoerceScript._raw_string_array(run_state.current_environment.get("game_ids", []))
+				var index := int(travel_destination_preparation["game_source_index"])
+				if index < game_ids.size():
+					var game_id := str(game_ids[index])
+					label = "room_game_source:%s" % game_id
+					var ready := _prepare_room_presentation_game_source(game_id)
+					travel_destination_preparation["catalog_sources_ready"] = ready
+					travel_destination_preparation["game_source_index"] = index + 1
+					if ready and index + 1 < game_ids.size():
+						next_stage = stage
+		2:
+			label = "room_catalog"
+			if bool(travel_destination_preparation.get("catalog_sources_ready", false)):
+				_publish_room_presentation_catalog()
+		3:
 			label = "header_layout_and_panels"
 			_render_prepared_environment_header()
 			_render_prepared_environment_details()
-		2:
+		4:
 			label = "environment_model"
 			travel_destination_preparation["snapshot"] = _environment_view_snapshot()
 			travel_destination_preparation["signature"] = _environment_snapshot_signature()
-		3:
+		5:
 			# Do not publish a model replaced by a same-room presentation change.
 			if str(travel_destination_preparation["signature"]) != _environment_snapshot_signature():
 				travel_destination_preparation["stage"] = 0
@@ -9596,10 +9682,10 @@ func _advance_travel_destination_preparation(drain: bool = false) -> void:
 			label = "canvas_publication"
 			_render_foundation_snapshots(travel_destination_preparation["snapshot"])
 			travel_destination_preparation["snapshot"] = {}
-		4:
+		6:
 			label = "overlays_and_music"
 			_render_prepared_environment_overlays()
-		5:
+		7:
 			label = "publication_check"
 			travel_destination_preparation["ready"] = true
 			travel_destination_preparation["ready_frame"] = Engine.get_process_frames()
@@ -9610,7 +9696,7 @@ func _advance_travel_destination_preparation(drain: bool = false) -> void:
 	travel_destination_preparation["stages"].append({"name":label,
 		"frame":Engine.get_process_frames(), "duration_ms":float(Time.get_ticks_usec() - started) / 1000.0,
 		"drained":drain})
-	travel_destination_preparation["stage"] = stage + 1
+	travel_destination_preparation["stage"] = next_stage
 	travel_destination_preparation["next_frame"] = Engine.get_process_frames() + 1
 
 
@@ -9666,7 +9752,13 @@ func _ensure_full_content_library_loaded() -> void:
 		return
 	if library.is_fully_loaded():
 		return
-	library.load(false)
+	if _player_start_content_thread != null:
+		var loaded := _player_start_content_thread.wait_to_finish() as ContentLibrary
+		_player_start_content_thread = null
+		if loaded != null:
+			library = loaded
+	if not library.is_fully_loaded():
+		library.load(false)
 	_rebuild_triggered_event_module_cache()
 	_surface_content_validation_errors(library, true)
 	game_module_cache = {}
@@ -9674,6 +9766,44 @@ func _ensure_full_content_library_loaded() -> void:
 	_publish_cached_game_module_scripts_to_generator()
 	_request_game_module_script_prewarm()
 	_refresh_run_action_service()
+
+
+func _queue_player_start(action: Callable) -> void:
+	if _pending_player_start.is_valid() or not action.is_valid():
+		return
+	_pending_player_start = action
+	_player_start_request_frame = Engine.get_process_frames()
+	if start_status_label != null:
+		start_status_label.text = "Preparing the game..."
+	if not OS.has_feature("web") and library != null and not library.is_fully_loaded() and _player_start_content_thread == null:
+		_player_start_content_thread = Thread.new()
+		if _player_start_content_thread.start(Callable(self, "_load_player_start_content")) != OK:
+			_player_start_content_thread = null
+	if not run_ui_built and not run_ui_build_in_progress:
+		_prewarm_run_ui_after_web_start()
+
+
+func _load_player_start_content() -> ContentLibrary:
+	var prepared := ContentLibrary.new()
+	prepared.load(false)
+	return prepared
+
+
+func _advance_player_start() -> void:
+	if not run_ui_build_failure_reason.is_empty():
+		_pending_player_start = Callable()
+		_present_run_ui_unavailable()
+		return
+	if not run_ui_built or Engine.get_process_frames() < _player_start_request_frame + 2 \
+			or (_player_start_content_thread != null and _player_start_content_thread.is_alive()) \
+			or script_prewarm_thread != null:
+		return
+	var action := _pending_player_start
+	_pending_player_start = Callable()
+	if start_status_label != null and start_status_label.text == "Preparing the game...":
+		start_status_label.text = ""
+	_ensure_full_content_library_loaded()
+	action.call()
 
 
 func boot_telemetry_snapshot() -> Dictionary:
@@ -10113,8 +10243,7 @@ func _build_ui() -> void:
 
 	# Player-facing launches only need the start screen for their first interactive
 	# frame. Build the much larger run shell one bounded stage per frame behind
-	# the menu. An immediate New Run still completes any remaining stages
-	# synchronously, so staging cannot expose a partially usable game screen.
+	# the menu. Player start requests wait for those stages to finish.
 	if OS.has_feature("web") or _defer_start_menu_secondary_panels():
 		# Web retains its bounded stage-per-frame loader. Native builds additionally
 		# compile one queued script at a time on one owned background Thread before
@@ -11410,7 +11539,7 @@ func _build_world_map_overlay() -> void:
 	world_map_detail_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	popup_stack.add_child(world_map_detail_label)
 
-	world_map_confirm_button = _button("Travel", Callable(self, "confirm_world_map_travel"))
+	world_map_confirm_button = _button("Travel", Callable(self, "_queue_player_map_travel"))
 	world_map_confirm_button.custom_minimum_size = Vector2(132, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	popup_stack.add_child(world_map_confirm_button)
 	world_map_overlay_controller.configure_nodes(world_map_overlay, world_map_holder, world_map_nodes_layer, world_map_title_label, world_map_detail_popup, world_map_detail_label, world_map_badge_slot, world_map_confirm_button, world_map_close_button)
@@ -12852,8 +12981,13 @@ func _room_action_authority_available() -> bool:
 
 
 func _prepare_room_presentation_at_boundary() -> void:
+	if _prepare_room_presentation_sources() and _prepare_room_presentation_game_sources():
+		_publish_room_presentation_catalog()
+
+
+func _prepare_room_presentation_sources() -> bool:
 	if run_state == null or library == null or _is_meta_session():
-		return
+		return false
 	# Restore can publish a valid base envelope before its non-causal scenario
 	# projection is rebuilt. That publication is not yet a reusable room catalog.
 	var delivery_node_id := str(run_state.current_environment.get("world_node_id", run_state.current_environment.get("archetype_id", "")))
@@ -12871,14 +13005,16 @@ func _prepare_room_presentation_at_boundary() -> void:
 			interactable_object_view_cache_valid = false
 			var errors := JsonCoerceScript._copy_array(finalized.get("errors", []))
 			_show_message(str(errors[0]) if not errors.is_empty() else "The delivery room could not be prepared safely.")
-			return
+			return false
 	elif run_state.room_presentation_revision() == 0 \
 			or bool(run_state.current_environment.get("scenario_restore_pending_trusted_rebuild", false)):
 		EnvironmentInteractionControllerScript.compile_room_catalog_at_boundary(self)
 		run_state.publish_room_presentation()
 	var cycle_changed := _refresh_venue_scenario_cycle_at_boundary()
-	if _scenario_cycle_publication_failed: return
-	if cycle_changed: _autosave_foundation_run("Venue situation changed.")
+	if _scenario_cycle_publication_failed:
+		return false
+	if cycle_changed:
+		_autosave_foundation_run("Venue situation changed.")
 	var room_events := run_state.prepare_new_room_event_membership_for_publication(library)
 	if not bool(room_events.get("ok", false)):
 		_room_catalog_publication = []
@@ -12886,21 +13022,36 @@ func _prepare_room_presentation_at_boundary() -> void:
 		interactable_object_view_cache_valid = false
 		var event_errors := JsonCoerceScript._copy_array(room_events.get("errors", []))
 		_show_message(str(event_errors[0]) if not event_errors.is_empty() else "The room's new event could not be prepared safely.")
-		return
+		return false
+	return true
+
+
+func _prepare_room_presentation_game_sources() -> bool:
+	for game_id in JsonCoerceScript._raw_string_array(run_state.current_environment.get("game_ids", [])):
+		if not _prepare_room_presentation_game_source(str(game_id)):
+			return false
+	return true
+
+
+func _prepare_room_presentation_game_source(game_id: String) -> bool:
 	# A read-only game hook may project a visit/restock-driven person. Its owner
 	# must commit that state and the complete physical envelope before the shared
 	# catalog joins it to sealed records; getters cannot mint room membership.
-	for game_id in JsonCoerceScript._raw_string_array(run_state.current_environment.get("game_ids", [])):
-		var game := _game_module_for_id(str(game_id))
-		if game == null: continue
-		var prepared: Dictionary = game.prepare_environment_presentation_boundary(run_state, run_state.current_environment)
-		if not bool(prepared.get("ok", false)):
-			_room_catalog_publication = []
-			interactable_object_catalog_cache_valid = false
-			interactable_object_view_cache_valid = false
-			var errors := JsonCoerceScript._copy_array(prepared.get("errors", []))
-			_show_message(str(errors[0]) if not errors.is_empty() else "That room's game objects could not be prepared safely.")
-			return
+	var game := _game_module_for_id(game_id)
+	if game == null:
+		return true
+	var prepared: Dictionary = game.prepare_environment_presentation_boundary(run_state, run_state.current_environment)
+	if not bool(prepared.get("ok", false)):
+		_room_catalog_publication = []
+		interactable_object_catalog_cache_valid = false
+		interactable_object_view_cache_valid = false
+		var errors := JsonCoerceScript._copy_array(prepared.get("errors", []))
+		_show_message(str(errors[0]) if not errors.is_empty() else "That room's game objects could not be prepared safely.")
+		return false
+	return true
+
+
+func _publish_room_presentation_catalog() -> void:
 	_room_catalog_publication = EnvironmentInteractionViewModelScript.deduplicated_scenario_instruction_records(
 		EnvironmentInteractionControllerScript.prepare_room_catalog_at_boundary(self)
 	).duplicate(true)
@@ -12931,6 +13082,10 @@ func _refresh_venue_scenario_cycle_at_boundary() -> bool:
 
 
 func _refresh() -> void:
+	_refresh_foundation(0)
+
+
+func _refresh_foundation(parked_room_revision: int) -> void:
 	if _crt_practice_active() and current_screen == SCREEN_CRT:
 		return
 	if not _rourke_resolution.is_empty() and not _rourke_resolution_dispatch_active:
@@ -12970,7 +13125,13 @@ func _refresh() -> void:
 	if not _event_response_transaction.is_empty() and int(_event_response_transaction.get("step", -1)) == 3:
 		_event_response_transaction["refresh_requested"] = true
 		return
-	_finish_foundation_refresh()
+	# CRT practice parks the room and its compiled catalog together. Pending
+	# outcomes or any catalog change still require the ordinary preparation.
+	var use_parked_catalog := parked_room_revision != 0 and current_screen in [SCREEN_ENVIRONMENT, SCREEN_RESULT] \
+		and bool(resumed_world_outcomes.get("inactive", false)) and scenario_transition_message.is_empty() \
+		and run_state.room_presentation_revision() == parked_room_revision \
+		and not _room_catalog_publication.is_empty()
+	_finish_foundation_refresh(use_parked_catalog)
 
 
 func _finish_foundation_refresh(room_prepared: bool = false) -> void:
@@ -14860,11 +15021,10 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	if not rendered_action_state.is_empty() and rendered_action_state.has("surface_action_bindings"):
 		action_surface_ui_state = action_surface_ui_state.duplicate(false)
 		action_surface_ui_state["surface_action_bindings"] = rendered_action_state.get("surface_action_bindings", {})
-	# A sealed delivery with skip_stake_validation is already entering the
-	# authoritative resolver, which recomputes and enforces its exact wager cost.
-	# Previewing it here would build and validate a second detached Blackjack
-	# candidate solely for an all-in dialog that retries/settlement must not show.
-	var sealed_skip_preview := current_action_uses_authority and skip_stake_validation and not authority_delivery.is_empty()
+	# Sealed settlement actions skip the extra wager preview. Baccarat Deal also
+	# skips stake validation because the bet is a chip total, but it is a new wager.
+	var sealed_skip_preview := current_action_uses_authority and skip_stake_validation \
+			and not authority_delivery.is_empty() and action_id != "deal_baccarat"
 	var wager_cost := 0 if sealed_skip_preview else _wager_cost_for_action(action_id, stake, action_surface_ui_state)
 	if not wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, action_surface_ui_state):
 		_pause_repeating_surface_action_for_wager_confirmation()
@@ -21545,7 +21705,11 @@ func open_game_test_menu() -> void:
 			_record_autosave_failure(ERR_UNAVAILABLE, "console_entry_browser_sync_failed", autosave_dirty_generation)
 			_show_message("Finish saving your run before opening the console.")
 			return
-	var origin_lifecycle := _foundation_lifecycle_snapshot()
+	# When entered from the room, practice owns a separate run. Park the
+	# original before selector teardown, so its world and room can stay intact.
+	var park_run_state := ordinary_origin and current_game == null and not travel_transition_active \
+		and current_screen in [SCREEN_ENVIRONMENT, SCREEN_RESULT]
+	var origin_lifecycle := _foundation_lifecycle_snapshot(park_run_state)
 	_protect_foundation_coach_attention(origin_lifecycle)
 	var origin_attention: Dictionary = JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(origin_lifecycle.get("coach", {})).get("attention", {}))
 	var retained_tween: Variant = origin_attention.get("tween")
@@ -21554,6 +21718,7 @@ func open_game_test_menu() -> void:
 		retained_tween.pause()
 	crt_practice_origin = {
 		"lifecycle": origin_lifecycle,
+		"room_revision": run_state.room_presentation_revision() if park_run_state else 0,
 		"music": _crt_origin_music_state(),
 		"attention_tween": retained_tween,
 		"resume_attention": resume_attention,
@@ -21573,6 +21738,8 @@ func open_game_test_menu() -> void:
 		settings_menu.visible = false
 	if settings_overlay != null:
 		settings_overlay.visible = false
+	if park_run_state:
+		run_state = null
 	_return_to_crt_selector()
 
 
@@ -21642,7 +21809,11 @@ func close_game_test_menu() -> void:
 	# A fresh attention checkpoint protects the restored fade through refresh.
 	var restored_coach := {"coach": _coach_lifecycle_snapshot()}
 	_protect_foundation_coach_attention(restored_coach)
-	_refresh()
+	var parked_room_revision := int(origin.get("room_revision", 0))
+	if parked_room_revision != 0:
+		_refresh_foundation(parked_room_revision)
+	else:
+		_refresh()
 	_restore_coach_lifecycle_snapshot(JsonCoerceScript._copy_dict(restored_coach.get("coach", {})))
 	var retained_tween: Variant = origin.get("attention_tween")
 	if bool(origin.get("resume_attention", false)) and retained_tween is Tween and retained_tween.is_valid():
@@ -24486,6 +24657,7 @@ func _refresh_world_map_detail() -> void:
 	if selected_world_map_node_id.is_empty():
 		_set_world_map_confirm_enabled(false)
 		_set_world_map_detail_badges([])
+		world_map_detail_label.max_lines_visible = 8
 		world_map_detail_label.text = "Select a revealed stop."
 		return
 	var current_id := run_state.current_world_node_id()
@@ -24493,6 +24665,7 @@ func _refresh_world_map_detail() -> void:
 	if node.is_empty() or not WorldMapScript.is_node_visible(run_state.world_map, selected_world_map_node_id):
 		_set_world_map_confirm_enabled(false)
 		_set_world_map_detail_badges([])
+		world_map_detail_label.max_lines_visible = 8
 		world_map_detail_label.text = "That stop is not visible from here."
 		return
 	var choice := {}
@@ -24536,6 +24709,11 @@ func _refresh_world_map_detail() -> void:
 	var heard_rumor := _world_map_heard_rumor_line(node)
 	if not heard_rumor.is_empty():
 		detail_lines.insert(3, "Heard: %s" % heard_rumor)
+	var preview: Dictionary = choice.get("preview", {})
+	var has_full_preview := str(preview.get("level", "")) == "full"
+	if has_full_preview:
+		detail_lines.append_array(preview.get("lines", []))
+	world_map_detail_label.max_lines_visible = -1 if has_full_preview else 8
 	var delivery_layer := run_state.delivery_map_layer()
 	if not delivery_layer.is_empty():
 		for target_value in JsonCoerceScript._copy_array(delivery_layer.get("targets", [])):
@@ -24658,6 +24836,7 @@ func _meta_archetype_id_for_location(node_id: String) -> String:
 
 
 func _refresh_meta_world_map_detail() -> void:
+	world_map_detail_label.max_lines_visible = 8
 	_ensure_meta_session_controller()
 	var detail := meta_session_controller.world_map_detail_view(meta_session_location_id, selected_world_map_node_id)
 	_set_world_map_confirm_enabled(bool(detail.get("confirm_enabled", false)))

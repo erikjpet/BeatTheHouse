@@ -77,6 +77,7 @@ func sealed_action_authority_contract() -> Dictionary:
 		# against a narrow detached candidate and fingerprint the exact Slot inputs
 		# instead of serializing unrelated late-run story/world history six times.
 		"compact_authority_evidence_method": &"_machine_game_authority_evidence",
+		"compact_authority_native_json_predicate_method": &"_machine_game_uses_native_pinball_evidence",
 		# Both isolated executions already compare their complete result, RNG, and
 		# compact authority graphs. The replay does not need to serialize that same
 		# large Slot/pinball payload into a second output digest.
@@ -724,7 +725,7 @@ func _machine_game_resolve_proposal(action_id: String, stake: int, run_snapshot:
 	candidate.from_dict(run_snapshot)
 	var proposal_rng := RngStream.new()
 	proposal_rng.restore(rng_snapshot)
-	var result := _machine_game_resolve_candidate(action_id, stake, candidate, proposal_rng, ui_state)
+	var result := _machine_game_resolve_candidate(action_id, stake, candidate, proposal_rng, ui_state, false)
 	var proposal := {
 		"ok": bool(result.get("ok", false)),
 		"input_fingerprint": RuntimeScript.canonical_fingerprint(proposal_input),
@@ -736,7 +737,7 @@ func _machine_game_resolve_proposal(action_id: String, stake: int, run_snapshot:
 	return proposal
 
 
-func _machine_game_resolve_candidate(action_id: String, stake: int, candidate: RunState, proposal_rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+func _machine_game_resolve_candidate(action_id: String, stake: int, candidate: RunState, proposal_rng: RngStream, ui_state: Dictionary = {}, compact_pinball_response: bool = true) -> Dictionary:
 	var result: Dictionary
 	if action_id == "slot_handpay_acknowledge":
 		var acknowledgement := _slot_handpay_acknowledgement_proposal(candidate.current_environment)
@@ -749,6 +750,14 @@ func _machine_game_resolve_candidate(action_id: String, stake: int, candidate: R
 		result = resolve_with_context(action_id, stake, candidate, candidate.current_environment, proposal_rng, ui_state.duplicate(true))
 		if bool(result.get("ok", false)) and bool(result.get("host_apply_result", false)):
 			result["machine_game_proposal_requires_apply"] = true
+	if compact_pinball_response and str(result.get("slot_bonus_family", "")) == "pinball" and not bool(result.get("slot_bonus_complete", false)):
+		# Live controls retain their result and replay receipt, but the complete
+		# board already lives in the sealed candidate's authoritative machine.
+		# Duplicating it in every cached response makes later controls rehash
+		# several generations of presentation data.
+		var step: Dictionary = (result.get("slot_bonus_step", {}) as Dictionary).duplicate(false)
+		step.erase("active_bonus")
+		result["slot_bonus_step"] = step
 	return result
 
 
@@ -817,6 +826,14 @@ func _machine_game_authority_evidence(candidate: RunState, action_id: String, st
 		"machine": machine,
 		"ui_state": ui_state,
 	}
+
+
+func _machine_game_uses_native_pinball_evidence(candidate: RunState) -> bool:
+	var machine := _peek_machine(candidate.current_environment)
+	var bonus: Variant = machine.get("active_bonus")
+	# The native fast path keeps the canonical JSON bytes identical and falls
+	# back to historical coercion for old or non-JSON-shaped machine data.
+	return bonus is Dictionary and str(bonus.get("family", "")) == "pinball"
 
 
 func _machine_game_runtime_checkpoint(candidate: RunState) -> Dictionary:

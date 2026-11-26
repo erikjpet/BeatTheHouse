@@ -670,14 +670,13 @@ func prepare_environment_presentation_boundary(run_state: RunState, environment:
 	# The same deterministic visit/restock projection used by observers belongs
 	# to this causal boundary. Commit it before the room manifest and hook list
 	# are paired, including a negative visit roll so later reads cannot reroll it.
-	var rollback := run_state.to_dict()
-	_ensure_machine_state(run_state, environment, true)
-	var membership := run_state.prepare_current_environment_object_membership_for_publication()
-	var proof := run_state.validate_room_action_authority() if bool(membership.get("ok", false)) else membership
+	var candidate := run_state.detached_host_action_candidate(get_id())
+	_ensure_machine_state(candidate, candidate.current_environment, true)
+	var membership := candidate.prepare_current_environment_object_membership_for_publication()
+	var proof := candidate.validate_room_action_authority() if bool(membership.get("ok", false)) else membership
 	if not bool(proof.get("ok", false)):
-		var errors := JsonCoerceScript._copy_array(proof.get("errors", []))
-		run_state.from_dict(rollback)
-		return {"ok": false, "changed": false, "errors": errors}
+		return {"ok": false, "changed": false, "errors": JsonCoerceScript._copy_array(proof.get("errors", []))}
+	run_state.publish_host_action_candidate(candidate)
 	return {"ok": true, "changed": true, "errors": []}
 
 

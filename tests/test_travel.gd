@@ -19,7 +19,9 @@ func _run() -> void:
 	var arguments := OS.get_cmdline_user_args()
 	var failure: String
 	if arguments.is_empty():
-		failure = await _play_and_save(app)
+		failure = _check_roadside_map_scout(app)
+		if failure.is_empty():
+			failure = await _play_and_save(app)
 		if failure.is_empty():
 			app.exit_game()
 			await process_frame
@@ -107,6 +109,24 @@ func _resume_state(run: RunState, machine_key: String) -> Dictionary:
 	}
 
 
+func _check_roadside_map_scout(app) -> String:
+	const SCOUT_STOP := "motel"
+	if not app.start_foundation_run("STANDARD-TRAVEL-back_alley-2", {"modifiers": {"home_archetype_id": "back_alley"}}, false):
+		return "Could not start the Roadside Map run."
+	app.run_state.add_item("roadside_map")
+	if not app.open_world_map() or not app.select_world_map_node(SCOUT_STOP) or not app.world_map_detail_label.is_visible_in_tree():
+		return "The revealed destination must open its map details."
+	var scout: Dictionary = app._travel_choice(SCOUT_STOP).get("preview", {})
+	var scout_lines: Array = scout.get("lines", [])
+	if scout.get("level", "") != "full" or scout_lines.size() < 2:
+		return "Roadside Map did not provide a full scout for the revealed destination."
+	for line in scout_lines:
+		if not str(line) in app.world_map_detail_label.text:
+			return "The selected map stop omitted part of its full scout."
+	app.close_world_map()
+	return ""
+
+
 func _travel(app) -> String:
 	if not app.start_foundation_run("STANDARD-TRAVEL-back_alley-0", {"modifiers": {"home_archetype_id": "back_alley"}}, false):
 		return "Could not start a fresh seeded travel run."
@@ -119,8 +139,15 @@ func _travel(app) -> String:
 	var chips_before := run.grand_casino_chips
 	var items_before := run.inventory.duplicate(true)
 	var count_before := run.environment_travel_count()
-	if not app.select_travel_option(DESTINATION) or not app.confirm_selected_travel(true):
-		return "The normal travel menu did not accept the quoted route."
+	if not app.open_world_map() or not app.select_world_map_node(DESTINATION):
+		return "The world map did not accept the quoted route."
+	app.world_map_confirm_button.pressed.emit()
+	if app._pending_player_map_travel.is_empty() or run.bankroll != cash_before \
+			or run.environment_travel_count() != count_before:
+		return "The Travel button committed the route before its departure preparation."
+	var deadline := Time.get_ticks_msec() + 20000
+	while not app._pending_player_map_travel.is_empty() and Time.get_ticks_msec() < deadline:
+		await process_frame
 	var journey := str(run.travel_journey_receipt.get("journey_id", ""))
 	if app.travel_presentation_active and is_instance_valid(app.travel_cinematic_overlay):
 		app.travel_cinematic_overlay.skip_to_receipt()
