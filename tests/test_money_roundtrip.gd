@@ -1,6 +1,7 @@
 extends SceneTree
 
 const MAIN := preload("res://scripts/ui/foundation_main.gd")
+const GAME_MODULES := preload("res://scripts/core/game_module_registry.gd")
 const SLOT_STATE := preload("res://scripts/games/slots/slot_machine_state.gd")
 const PINBALL := preload("res://scripts/games/slots/pinball/pinball_feature.gd")
 const SEED := "CORE-MONEY"
@@ -90,6 +91,8 @@ func _play(game_id: String, reload: bool) -> Dictionary:
 	var boundary := await _begin(game_id, offered)
 	if boundary.is_empty():
 		return {}
+	if not reload and game_id in ["scratch_tickets", "pull_tabs"]:
+		_check_ticket_room_source(game_id, run, game)
 	var saved_account := _account()
 	# The host's ordinary save boundary checkpoints the module's UI-local
 	# session into RunState. The package never needs a player save or disk.
@@ -118,6 +121,27 @@ func _play(game_id: String, reload: bool) -> Dictionary:
 		_fail(game_id, "restoring already settled state duplicates or loses a settlement")
 		return {}
 	return settled
+
+
+func _check_ticket_room_source(game_id: String, run: RunState, cabinet: GameModule) -> void:
+	var room := GAME_MODULES.create_room_source(app.library.game(game_id), app.library)
+	if room == null or room.get_script() == cabinet.get_script():
+		_fail(game_id, "room stock or status requires the full cabinet script")
+		return
+	var environment := run.current_environment
+	var saved := run.to_dict().duplicate(true)
+	var venue_rng := run.create_rng("ticket-room-test")
+	var stock := room.generate_environment_state(run, environment, venue_rng)
+	if stock.is_empty() or stock != cabinet.generate_environment_state(run, environment, run.create_rng("ticket-room-test")):
+		_fail(game_id, "room stock differs from the cabinet for the same seed")
+	var runtime := room.environment_runtime_state(run, environment)
+	if int(runtime.get("unresolved_ticket_count", 0)) < 1 \
+			or runtime != cabinet.environment_runtime_state(run, environment) \
+			or room.environment_object_state(run, environment) != cabinet.environment_object_state(run, environment) \
+			or room.environment_interactable_objects(run, environment) != cabinet.environment_interactable_objects(run, environment):
+		_fail(game_id, "room source differs from the cabinet for a pending paid ticket")
+	if run.to_dict() != saved:
+		_fail(game_id, "room projection changed the saved run")
 
 
 func _check_baccarat_all_in_confirmation() -> void:

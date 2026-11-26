@@ -200,7 +200,7 @@ func _install_environment_steps(run_state: RunState, environment_data: Dictionar
 		return installed
 	if not frame_boundary.is_null():
 		await frame_boundary
-	var finalized := run_state.scenario_finalize_installed_environment(library)
+	var finalized := await run_state.finalize_installed_scenario_in_steps(library, {}, frame_boundary)
 	if _world_environment_timing_enabled:
 		_world_environment_install_stages_usec["scenario_finalize"] = Time.get_ticks_usec() - perf_stage_started_usec
 	if not bool(finalized.get("ok", false)):
@@ -1012,6 +1012,8 @@ func _next_world_environment_steps(run_state: RunState, target_archetype_id: Str
 		await frame_boundary
 	run_state.enter_world_node(target_id, run_state.current_environment)
 	_apply_scenario_authored_travel_targets(run_state, target_id)
+	if not frame_boundary.is_null():
+		await frame_boundary
 	if not current_node_id.is_empty() and current_node_id != target_id:
 		run_state.scenario_publish_travel("travel_arrived", current_node_id, target_id, "world")
 	_apply_tutorial_authored_travel_targets(run_state, target_id)
@@ -2193,7 +2195,7 @@ func _generated_game_states_steps(run_state: RunState, environment_data: Diction
 
 
 func _create_game_module(definition: Dictionary) -> GameModule:
-	return GameModuleRegistryScript.create_module(definition, library)
+	return GameModuleRegistryScript.create_room_source(definition, library)
 
 
 func _count_ceiling(value: Variant) -> int:

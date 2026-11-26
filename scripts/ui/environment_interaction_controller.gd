@@ -2428,7 +2428,7 @@ static func game_hook_interactable_objects(host: Variant, apply_failure_lock: bo
 			failed_reason = "Run failed."
 	var hook_index := 0
 	for game_id in JsonCoerceScript._raw_string_array(host.run_state.current_environment.get("game_ids", [])):
-		var game = host._game_module_for_id(game_id)
+		var game = host._room_game_source_for_id(game_id)
 		if game == null:
 			continue
 		for hook_value in game.environment_interactable_objects(host.run_state, host.run_state.current_environment):

@@ -1625,6 +1625,10 @@ func validate_room_action_authority(require_renderer_proofs: bool = true) -> Dic
 
 
 func reconcile_current_environment_object_manifest(refresh_layout: bool = false) -> Dictionary:
+	return _reconcile_current_environment_object_manifest_in_steps.call(refresh_layout)
+
+
+func _reconcile_current_environment_object_manifest_in_steps(refresh_layout: bool, frame_boundary: Signal = Signal()) -> Dictionary:
 	if not _scratch_scalper_legacy_rejection_errors(current_environment).is_empty():
 		return JsonCoerceScript._copy_dict(current_environment.get("object_manifest", {}))
 	if current_environment.is_empty():
@@ -1634,6 +1638,8 @@ func reconcile_current_environment_object_manifest(refresh_layout: bool = false)
 		current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
 	else:
 		EnvironmentInstance.reconcile_object_manifest(current_environment)
+	if not frame_boundary.is_null():
+		await frame_boundary
 	if _owned_turn_publication_depth > 0:
 		_room_presentation_publication = null
 		_owned_turn_publication_pending = true
@@ -1820,6 +1826,10 @@ func _resolve_terminal_scenario_action_aliases(candidate: Dictionary) -> void:
 # on detached action candidates after changing manifest-backed source state and
 # before publication. The live RunState remains untouched if validation fails.
 func prepare_current_environment_object_membership_for_publication(reuse_accepted_membership: bool = false) -> Dictionary:
+	return _prepare_current_environment_membership_in_steps.call(reuse_accepted_membership)
+
+
+func _prepare_current_environment_membership_in_steps(reuse_accepted_membership: bool, frame_boundary: Signal = Signal()) -> Dictionary:
 	if reuse_accepted_membership and _room_presentation_publication != null \
 			and not is_layered_environment() and not _is_grand_casino_environment(current_environment) \
 			and not _room_presentation_publication.proof_for_live_environment(current_environment).is_empty():
@@ -1832,6 +1842,8 @@ func prepare_current_environment_object_membership_for_publication(reuse_accepte
 	var reconciled := reconcile_environment_object_membership(current_environment, false)
 	if not bool(reconciled.get("ok", false)):
 		return reconciled
+	if not frame_boundary.is_null():
+		await frame_boundary
 	# Physical membership alone is not a published room. A completed loan or
 	# service must not commit its economy while the manifest/layout join rejects
 	# every control. Validate at this publication boundary, after any pending
@@ -2665,7 +2677,10 @@ func install_environment_in_steps(environment_data: Dictionary, debug_timing: Di
 			store_current_environment_layer_state()
 		if _is_grand_casino_environment(current_environment):
 			store_grand_casino_room_environment(current_environment)
-		store_current_world_node_environment()
+		if frame_boundary.is_null():
+			store_current_world_node_environment()
+		else:
+			await _prepare_current_environment_membership_in_steps(false, frame_boundary)
 		# Travel advances the clock before installing the destination, but stamps
 		# the actual departure first. Preserve that boundary so the report can
 		# animate the journey instead of collapsing it to a zero-length teleport.
@@ -3749,6 +3764,12 @@ func world_sequence_finalize_base_semantics(interactable_records: Array, library
 
 
 func scenario_finalize_installed_environment(library: ContentLibrary, layout_context: Dictionary = {}) -> Dictionary:
+	return finalize_installed_scenario_in_steps.call(library, layout_context)
+
+
+# Staged travel runs these steps on its detached RunState. Other callers keep
+# the synchronous finalization boundary, including rollback on invalid proofs.
+func finalize_installed_scenario_in_steps(library: ContentLibrary, layout_context: Dictionary = {}, frame_boundary: Signal = Signal()) -> Dictionary:
 	var legacy_rejection := _scratch_scalper_legacy_rejection_errors(current_environment)
 	if not legacy_rejection.is_empty():
 		return {"ok": false, "inactive": false, "errors": legacy_rejection}
@@ -3809,6 +3830,8 @@ func scenario_finalize_installed_environment(library: ContentLibrary, layout_con
 			authoritative_physical_errors.append(message)
 	if not authoritative_physical_errors.is_empty():
 		return _scenario_semantic_finalization_failure(authoritative_physical_errors, bool(current_environment.get("scenario_semantic_ready", false)))
+	if not frame_boundary.is_null():
+		await frame_boundary
 	var authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(authoritative_environment, library)
 	if not bool(authoritative.get("ok", false)):
 		return _scenario_semantic_finalization_failure(JsonCoerceScript._copy_array(authoritative.get("errors", [])), bool(current_environment.get("scenario_semantic_ready", false)))
@@ -3845,15 +3868,19 @@ func scenario_finalize_installed_environment(library: ContentLibrary, layout_con
 	var finalization_context := layout_context.duplicate(true)
 	# Historical proof binding must not replace the live room's reservations.
 	finalization_context["slot_occupancy"] = finalization_occupancy if historical_event_slots else proof_occupancy
+	if not frame_boundary.is_null():
+		await frame_boundary
 	if world_only:
 		var finalized := world_sequence_finalize_base_semantics(JsonCoerceScript._copy_array(bound.get("records", [])), library, finalization_context)
 		if not bool(finalized.get("ok", false)):
 			return finalized
+		if not frame_boundary.is_null():
+			await frame_boundary
 		var publication := publish_room_presentation()
 		if not bool(publication.get("ok", false)):
 			return publication
 		return finalized
-	return _scenario_finalize_trusted_base_semantics(JsonCoerceScript._copy_array(bound.get("records", [])), library, finalization_context, authoritative_environment)
+	return await _scenario_finalize_trusted_base_semantics(JsonCoerceScript._copy_array(bound.get("records", [])), library, finalization_context, authoritative_environment, frame_boundary)
 
 
 func _scenario_event_choice_authority(definition: Dictionary, library: ContentLibrary, environment_override: Dictionary = {}) -> Dictionary:
@@ -4156,10 +4183,10 @@ func scenario_finalize_base_semantics(interactable_records: Array, library: Cont
 	# scenario_finalize_installed_environment(), whose records come only from the
 	# installed environment plus trusted ContentLibrary. Presentation callers do
 	# not route through this seam.
-	return _scenario_finalize_trusted_base_semantics(interactable_records, library, layout_context)
+	return _scenario_finalize_trusted_base_semantics.call(interactable_records, library, layout_context)
 
 
-func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: ContentLibrary, layout_context: Dictionary = {}, authenticated_baseline: Dictionary = {}) -> Dictionary:
+func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: ContentLibrary, layout_context: Dictionary = {}, authenticated_baseline: Dictionary = {}, frame_boundary: Signal = Signal()) -> Dictionary:
 	var legacy_rejection := _scratch_scalper_legacy_rejection_errors(current_environment)
 	if not legacy_rejection.is_empty():
 		return {"ok": false, "inactive": false, "errors": legacy_rejection}
@@ -4218,6 +4245,8 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	var actors := JsonCoerceScript._copy_array(produced.get("actors", []))
 	actors.append_array(JsonCoerceScript._copy_array(dynamic_actors.get("records", [])))
 	actors = _scenario_declared_base_records(actors, definition, ["actors"])
+	if not frame_boundary.is_null():
+		await frame_boundary
 	var action_digest := ScenarioSequenceRuntimeScript.base_interaction_action_authority_digest(interactions)
 	var sealed := EnvironmentSemanticInventoryScript.for_instance(semantic_environment, library, interactions, actors)
 	var prior_sealed := _scenario_prior_sealed_inventory_for_current_layer(sealed, semantic_environment, library, interactions, actors)
@@ -4242,6 +4271,8 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 		var definition_errors := ScenarioSequenceSchemaScript.validate_definition(definition, ScenarioOperationRegistryScript, validation_inventory)
 		if not definition_errors.is_empty(): return _scenario_semantic_finalization_failure(definition_errors, refresh_attempt)
 		definition[ScenarioEngineScript.VALIDATED_SEQUENCE_MARKER] = true
+	if not frame_boundary.is_null():
+		await frame_boundary
 	var definition_id := str(definition.get("id", definition.get("scenario_id", ""))).strip_edges()
 	var next_version := int(sealed.get("schema_version", 0))
 	var next_digest := str(sealed.get("digest", ""))
@@ -4286,6 +4317,8 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 		var refreshed_state := ScenarioEngineScript.ensure_sequence_state(refresh_candidate, definition)
 		if refreshed_state.is_empty() or str(refreshed_state.get("status", "")) == ScenarioSequenceRuntimeScript.STATUS_CLEANED and str(JsonCoerceScript._copy_dict(current_environment.get("scenario_sequence_state", {})).get("status", "")) != ScenarioSequenceRuntimeScript.STATUS_CLEANED:
 			return _scenario_semantic_finalization_failure(JsonCoerceScript._copy_array(refreshed_state.get("errors", ["Scenario semantic refresh failed closed."])), refresh_attempt)
+		if not frame_boundary.is_null():
+			await frame_boundary
 		var refresh_layout := _resolve_scenario_layout_candidate(refresh_candidate, stamped_records, definition, layout_context)
 		if not bool(refresh_layout.get("ok", false)):
 			return refresh_layout
@@ -4340,6 +4373,8 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	var migration := ScenarioEngineScript.migrate_environment_sequence(candidate, definition, scenario_seed, false, true)
 	if not bool(migration.get("ok", false)) or not bool(migration.get("active", false)):
 		return _scenario_semantic_finalization_failure(JsonCoerceScript._copy_array(migration.get("errors", ["Scenario sequence migration did not activate after semantic finalization."])), refresh_attempt)
+	if not frame_boundary.is_null():
+		await frame_boundary
 	var initialized_state := JsonCoerceScript._copy_dict(candidate.get("scenario_sequence_state", {}))
 	if str(initialized_state.get("status", "")) == ScenarioSequenceRuntimeScript.STATUS_CLEANED:
 		var initialization_errors := JsonCoerceScript._copy_array(initialized_state.get("errors", []))
@@ -4353,6 +4388,8 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	var reentry := ScenarioEngineScript.sequence_apply_reentry(candidate, definition, visit_id)
 	if not bool(reentry.get("ok", false)):
 		return {"ok": false, "errors": JsonCoerceScript._copy_array(reentry.get("errors", []))}
+	if not frame_boundary.is_null():
+		await frame_boundary
 	var candidate_layout := {
 		"ok": true,
 		"projection": JsonCoerceScript._copy_dict(reentry.get("projection", candidate.get("scenario_sequence_projection", {}))),
@@ -4369,7 +4406,7 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	current_environment.erase("scenario_restore_pending_trusted_rebuild")
 	_release_completed_engine_trouble_travel_lock(current_environment, JsonCoerceScript._copy_dict(reentry.get("state", {})), definition)
 	if not definition_id.is_empty(): _scenario_sequence_definition_cache[definition_id] = definition.duplicate(true)
-	reconcile_current_environment_object_manifest(true)
+	await _reconcile_current_environment_object_manifest_in_steps(true, frame_boundary)
 	return _finalized_scenario_layout_result(false, next_digest, JsonCoerceScript._copy_dict(reentry.get("state", {})), stamped_records, candidate_layout)
 
 

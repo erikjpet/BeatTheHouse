@@ -4,6 +4,7 @@ extends Control
 const PersistencePathsScript := preload("res://scripts/core/persistence_paths.gd")
 
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+const GameModuleRegistryScript := preload("res://scripts/core/game_module_registry.gd")
 const GameRitualRuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 const MoneyFeedbackViewModelScript := preload("res://scripts/ui/money_feedback_view_model.gd")
 const WebSaveDurabilityBridgeScript := preload("res://scripts/ui/web_save_durability_bridge.gd")
@@ -326,6 +327,7 @@ var camera_focus_point: Vector2 = Vector2(0.5, 0.5)
 var current_context_mode: String = CONTEXT_MODE_ROOM
 var game_surface_ui_state: Dictionary = {}
 var game_module_cache: Dictionary = {}
+var room_game_source_cache: Dictionary = {}
 var game_module_script_cache: Dictionary = {}
 var game_module_script_prewarm_requests: Dictionary = {}
 var run_ui_script_prewarm_results: Dictionary = {}
@@ -3381,7 +3383,7 @@ func _rebuild_environment_runtime_schedule(environment_data: Dictionary, game_id
 	var order_index := 0
 	for game_id_value in game_ids:
 		var game_id := str(game_id_value)
-		var game := _game_module_for_id(game_id)
+		var game := _room_game_source_for_id(game_id)
 		if game == null or not game.environment_runtime_enabled():
 			continue
 		var previous_state_key_context := game.transient_state_key_context()
@@ -10078,7 +10080,8 @@ func _initialize_foundation() -> void:
 		AttributeBadgeRowScript.warm_all_glyphs(14)
 		AttributeBadgeRowScript.warm_all_glyphs(16)
 	_mark_boot_event("content_library_load_complete", library.load_timing_snapshot())
-	game_module_cache = {}
+	game_module_cache.clear()
+	room_game_source_cache.clear()
 	generator = RunGenerator.new(library)
 	_publish_cached_game_module_scripts_to_generator()
 	_request_game_module_script_prewarm()
@@ -10106,7 +10109,8 @@ func _ensure_full_content_library_loaded() -> void:
 		library.load(false)
 	_rebuild_triggered_event_module_cache()
 	_surface_content_validation_errors(library, true)
-	game_module_cache = {}
+	game_module_cache.clear()
+	room_game_source_cache.clear()
 	generator = RunGenerator.new(library)
 	_publish_cached_game_module_scripts_to_generator()
 	_request_game_module_script_prewarm()
@@ -13375,7 +13379,7 @@ func _prepare_room_presentation_game_source(game_id: String) -> bool:
 	# A read-only game hook may project a visit/restock-driven person. Its owner
 	# must commit that state and the complete physical envelope before the shared
 	# catalog joins it to sealed records; getters cannot mint room membership.
-	var game := _game_module_for_id(game_id)
+	var game := _room_game_source_for_id(game_id)
 	if game == null:
 		return true
 	var prepared: Dictionary = game.prepare_environment_presentation_boundary(run_state, run_state.current_environment)
@@ -19333,7 +19337,7 @@ func _parent_home_parent_target_id() -> String:
 
 
 func _environment_game_runtime_state(game_id: String) -> Dictionary:
-	var game := _game_module_for_id(game_id)
+	var game := _room_game_source_for_id(game_id)
 	if game == null or run_state == null:
 		return {}
 	var state := game.environment_runtime_state(run_state, run_state.current_environment)
@@ -19341,7 +19345,7 @@ func _environment_game_runtime_state(game_id: String) -> Dictionary:
 
 
 func _environment_game_object_state(game_id: String) -> Dictionary:
-	var game := _game_module_for_id(game_id)
+	var game := _room_game_source_for_id(game_id)
 	if game == null or run_state == null:
 		return {}
 	var state := game.environment_object_state(run_state, run_state.current_environment)
@@ -19350,7 +19354,7 @@ func _environment_game_object_state(game_id: String) -> Dictionary:
 
 func _environment_game_fixture_object_states(game_id: String) -> Dictionary:
 	var result: Dictionary = {}
-	var game := _game_module_for_id(game_id)
+	var game := _room_game_source_for_id(game_id)
 	if game == null or run_state == null:
 		return result
 	if not game.has_method("environment_object_state_for_state_key"):
@@ -23806,6 +23810,24 @@ func _create_game_module(definition: Dictionary) -> GameModule:
 	var game: GameModule = module_instance
 	game.setup(definition, library)
 	return game
+
+
+func _room_game_source_for_id(game_id: String) -> GameModule:
+	if library == null or game_id.is_empty():
+		return null
+	var loaded := game_module_cache.get(game_id) as GameModule
+	if loaded != null:
+		return loaded
+	var prepared := room_game_source_cache.get(game_id) as GameModule
+	if prepared != null:
+		return prepared
+	var definition := library.game(game_id)
+	if GameModuleRegistryScript.room_source_path(definition).is_empty():
+		return _game_module_for_id(game_id)
+	prepared = GameModuleRegistryScript.create_room_source(definition, library)
+	if prepared != null:
+		room_game_source_cache[game_id] = prepared
+	return prepared
 
 
 func _game_module_for_id(game_id: String) -> GameModule:

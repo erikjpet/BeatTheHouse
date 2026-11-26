@@ -4,6 +4,7 @@ const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd"
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 const BlackjackGameScript := preload("res://scripts/games/blackjack.gd")
 const RouletteGameScript := preload("res://scripts/games/roulette.gd")
+const TalkDockScript := preload("res://scripts/ui/talk_dock.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 
 
@@ -117,6 +118,16 @@ func _run() -> void:
 		push_error("Reduced motion did not hold idle animation while keeping the game canvas processing.")
 		quit(1)
 		return
+
+	var portrait := TalkDockScript.PortraitModel.new()
+	root.add_child(portrait)
+	portrait.set_animation_active(true)
+	for tick in range(1, 13):
+		portrait._process(1.0 / 60.0)
+		if portrait.animation_redraw_count != tick:
+			push_error("Dialogue portrait did not schedule a redraw at each idle animation tick.")
+			quit(1)
+			return
 
 	print("Animation liveness without pointer input: PASS")
 	quit(0)

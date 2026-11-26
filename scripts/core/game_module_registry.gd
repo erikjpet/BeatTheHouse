@@ -5,6 +5,13 @@ extends RefCounted
 # from validated definitions before a heavyweight game instance is considered.
 
 const SCRIPT_CACHE_MAX_ENTRIES := 32
+# Travel and the room catalog need seeded game data, not the cabinet renderer
+# or action code. Only these exact authored modules share a smaller room base.
+const ROOM_SOURCE_PATHS := {
+	"res://scripts/games/video_poker.gd": "res://scripts/games/video_poker_room_source.gd",
+	"res://scripts/games/scratch_tickets.gd": "res://scripts/games/scratch_ticket_room_game.gd",
+	"res://scripts/games/pull_tabs.gd": "res://scripts/games/pull_tab_room_game.gd",
+}
 
 static var _script_cache: Dictionary = {}
 
@@ -26,7 +33,10 @@ static func cache_script(module_path: String, module_script: Script) -> void:
 
 
 static func script_for_definition(definition: Dictionary) -> Script:
-	var module_path := str(definition.get("module_path", "")).strip_edges()
+	return _load_script(str(definition.get("module_path", "")).strip_edges())
+
+
+static func _load_script(module_path: String) -> Script:
 	if not _valid_module_path(module_path):
 		return null
 	var module_script: Script = _script_cache.get(module_path) as Script
@@ -37,7 +47,21 @@ static func script_for_definition(definition: Dictionary) -> Script:
 
 
 static func create_module(definition: Dictionary, library: ContentLibrary) -> GameModule:
-	var module_script := script_for_definition(definition)
+	return _instantiate(script_for_definition(definition), definition, library)
+
+
+static func room_source_path(definition: Dictionary) -> String:
+	return str(ROOM_SOURCE_PATHS.get(str(definition.get("module_path", "")).strip_edges(), ""))
+
+
+static func create_room_source(definition: Dictionary, library: ContentLibrary) -> GameModule:
+	var room_path := room_source_path(definition)
+	if room_path.is_empty():
+		return create_module(definition, library)
+	return _instantiate(_load_script(room_path), definition, library)
+
+
+static func _instantiate(module_script: Script, definition: Dictionary, library: ContentLibrary) -> GameModule:
 	if module_script == null:
 		return null
 	var module_instance: Variant = module_script.new()

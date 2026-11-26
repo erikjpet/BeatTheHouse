@@ -33,7 +33,7 @@ class PortraitModel:
 	extends Control
 
 	const PortraitTableGameVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
-	const ANIMATION_REDRAW_INTERVAL := 1.0 / 12.0
+	const ANIMATION_REDRAW_INTERVAL := 1.0 / 60.0
 
 	var speaker: Dictionary = {}
 	var speaker_key := ""
@@ -70,9 +70,9 @@ class PortraitModel:
 			return
 		animation_clock = fposmod(animation_clock + delta, 120.0)
 		animation_redraw_elapsed += delta
-		if animation_redraw_elapsed < ANIMATION_REDRAW_INTERVAL:
+		if animation_redraw_elapsed + 0.0001 < ANIMATION_REDRAW_INTERVAL:
 			return
-		animation_redraw_elapsed = fposmod(animation_redraw_elapsed, ANIMATION_REDRAW_INTERVAL)
+		animation_redraw_elapsed = fposmod(maxf(animation_redraw_elapsed - ANIMATION_REDRAW_INTERVAL, 0.0), ANIMATION_REDRAW_INTERVAL)
 		animation_redraw_count += 1
 		queue_redraw()
 

@@ -4,6 +4,9 @@ All notable public release changes for Beat the House are recorded here.
 
 ## Unreleased
 
+- Reduced cold travel pauses by loading room game data separately from the
+  playable cabinets and spreading Web room validation across frames.
+- Restored 60 FPS idle animation for dialogue portraits.
 - Prevented the QA performance overlay from opening in player builds.
 - The Gas Station storm shelter lasts two in-game hours. Casino access follows
   the station's normal hours throughout.
