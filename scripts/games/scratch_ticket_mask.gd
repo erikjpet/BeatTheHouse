@@ -6,9 +6,10 @@ extends RefCounted
 
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
+const MaskSchemaScript := preload("res://scripts/games/scratch_ticket_mask_schema.gd")
 const RegionModelScript := preload("res://scripts/games/scratch_ticket_region_model.gd")
-const MASK_COLUMNS := 256
-const MASK_ROWS := 192
+const MASK_COLUMNS := MaskSchemaScript.MASK_COLUMNS
+const MASK_ROWS := MaskSchemaScript.MASK_ROWS
 const DEFAULT_BRUSH_RADIUS := 15.0
 const DEFAULT_PASS_REMOVAL := 0.66
 const DEFAULT_SWEEP_THRESHOLD := 0.80

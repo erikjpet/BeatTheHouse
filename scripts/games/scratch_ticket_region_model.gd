@@ -2,12 +2,13 @@ class_name ScratchTicketRegionModel
 extends RefCounted
 
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+const MaskSchemaScript := preload("res://scripts/games/scratch_ticket_mask_schema.gd")
 
-const LAYOUT_VERSION := 11
+const LAYOUT_VERSION := MaskSchemaScript.REGION_LAYOUT_VERSION
 const REGION_DATA_PATH := "res://data/games/scratch_ticket_regions.json"
 const MECHANIC_INSET_CELLS := 1.0
-const MASK_COLUMNS := 256.0
-const MASK_ROWS := 192.0
+const MASK_COLUMNS := float(MaskSchemaScript.MASK_COLUMNS)
+const MASK_ROWS := float(MaskSchemaScript.MASK_ROWS)
 
 static var _data_cache: Dictionary = {}
 

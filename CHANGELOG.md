@@ -6,6 +6,7 @@ All notable public release changes for Beat the House are recorded here.
 
 - Reduced cold travel pauses by loading room game data separately from the
   playable cabinets and spreading Web room validation across frames.
+- Fixed Scratch Tickets failing to load its foil renderer on Web.
 - Restored 60 FPS idle animation for dialogue portraits.
 - Prevented the QA performance overlay from opening in player builds.
 - The Gas Station storm shelter lasts two in-game hours. Casino access follows

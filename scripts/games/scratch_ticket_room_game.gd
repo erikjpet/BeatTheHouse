@@ -2,8 +2,7 @@ extends GameModule
 
 # Seeded stock and state shared by venue presentation and the playable cabinet.
 
-const RegionModelScript := preload("res://scripts/games/scratch_ticket_region_model.gd")
-const MaskScript := preload("res://scripts/games/scratch_ticket_mask.gd")
+const MaskSchemaScript := preload("res://scripts/games/scratch_ticket_mask_schema.gd")
 const DISPENSE_DURATION_MSEC := 1500
 const REDEEM_HOOK_ID := "scratch_ticket_clerk"
 const REDEEM_ACTION_ID := "redeem_scratch_winners"
@@ -18,11 +17,13 @@ const SCALPER_KNOWS_CHANCE_PERCENT := 50
 const SCALPER_RESTOCK_ARRIVAL_CHANCE_PERCENT := 20
 const SCALPER_GIFT_REWARD_CHANCE_PERCENT := 33
 const PRACTICE_STOCK_COUNT := 100
-const DEFAULT_MASK_COLUMNS := MaskScript.MASK_COLUMNS
-const DEFAULT_MASK_ROWS := MaskScript.MASK_ROWS
+const DEFAULT_MASK_COLUMNS := MaskSchemaScript.MASK_COLUMNS
+const DEFAULT_MASK_ROWS := MaskSchemaScript.MASK_ROWS
 const ACTIVE_TICKET_TYPE_IDS := ["two_fer", "lucky_7s", "tic_tac_gold", "crossword_corner", "bonus_bingo", "high_roller_holdem", "golden_vault"]
 const MACHINE_STATE_VERSION := 6
-const REGION_LAYOUT_VERSION := RegionModelScript.LAYOUT_VERSION
+const REGION_LAYOUT_VERSION := MaskSchemaScript.REGION_LAYOUT_VERSION
+
+static var _legacy_mask_script: Script
 
 
 func generate_environment_state(run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
@@ -298,7 +299,10 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 
 
 func _ensure_ticket_regions(ticket: Dictionary) -> void:
-	MaskScript.ensure(ticket)
+	# Only a legacy ticket needs mask code while the room is being prepared.
+	if _legacy_mask_script == null:
+		_legacy_mask_script = load("res://scripts/games/scratch_ticket_mask.gd")
+	_legacy_mask_script.call("ensure", ticket)
 
 
 func _stock_view(machine: Dictionary) -> Array:

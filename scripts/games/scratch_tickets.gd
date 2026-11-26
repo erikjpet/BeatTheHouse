@@ -5,9 +5,11 @@ extends "res://scripts/games/scratch_ticket_room_game.gd"
 # and tray flow, free-form masks, filing/discard, redemption, and collection.
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
+const RegionModelScript := preload("res://scripts/games/scratch_ticket_region_model.gd")
 const BackgroundRendererScript := preload("res://scripts/games/scratch_ticket_background_renderer.gd")
 const IconRendererScript := preload("res://scripts/games/scratch_ticket_icon_renderer.gd")
 const FoilRendererScript := preload("res://scripts/games/scratch_ticket_foil_renderer.gd")
+const MaskScript := preload("res://scripts/games/scratch_ticket_mask.gd")
 const MachineRendererScript := preload("res://scripts/games/scratch_ticket_machine_renderer.gd")
 const SURFACE_DESIGN_SIZE := Vector2(VisualStyleScript.GAME_BOARD_SIZE)
 const C_WHITE := VisualStyleScript.WHITE

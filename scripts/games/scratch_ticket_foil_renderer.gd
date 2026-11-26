@@ -85,12 +85,10 @@ func _build_batch() -> void:
 		if region_value is Dictionary:
 			_append_region(buffer, region_value, dark)
 	if _batch == null:
-		var quad := QuadMesh.new()
-		quad.size = Vector2.ONE
 		_batch = MultiMesh.new()
 		_batch.transform_format = MultiMesh.TRANSFORM_2D
 		_batch.use_colors = true
-		_batch.mesh = quad
+		_batch.mesh = _make_unit_quad()
 		if _white_texture == null:
 			var pixel := Image.create(1, 1, false, Image.FORMAT_RGBA8)
 			pixel.fill(Color.WHITE)
@@ -99,6 +97,29 @@ func _build_batch() -> void:
 	_batch.instance_count = int(buffer.size() / 12.0)
 	if not buffer.is_empty():
 		_batch.buffer = buffer
+
+
+static func _make_unit_quad() -> ArrayMesh:
+	# The 2D-only Web export provides ArrayMesh but omits QuadMesh. Keep the
+	# same centered unit quad so the foil's instance transforms stay identical.
+	var arrays: Array = []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = PackedVector3Array([
+		Vector3(0.5, -0.5, 0.0),
+		Vector3(-0.5, -0.5, 0.0),
+		Vector3(0.5, 0.5, 0.0),
+		Vector3(-0.5, 0.5, 0.0),
+	])
+	arrays[Mesh.ARRAY_TEX_UV] = PackedVector2Array([
+		Vector2(1.0, 1.0),
+		Vector2(0.0, 1.0),
+		Vector2(1.0, 0.0),
+		Vector2(0.0, 0.0),
+	])
+	arrays[Mesh.ARRAY_INDEX] = PackedInt32Array([0, 1, 2, 1, 3, 2])
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	return mesh
 
 
 func _append_region(buffer: PackedFloat32Array, region: Dictionary, dark: Color) -> void:
