@@ -30,8 +30,8 @@ it into Now.
 
 - Release packages still carry a "-dev" build name. The Windows and Web ZIPs
   and Windows executable properties should use the release version.
-- Cold travel can briefly stutter while the destination games load for the
-  first time, especially on Web.
+- On Web, a first trip can visibly stutter and the first open of a cabinet
+  can pause while its controls load.
 - 9 items promise an effect that never applies: Foil Sleeve and Mags' Lined
   Sleeve (Slot odds), Wedding Ribbon Favor and Rent-Party Hat Pin (luck when a
   scene grants them; check the other 11 souvenirs), Creased Luck Card, Lucky
