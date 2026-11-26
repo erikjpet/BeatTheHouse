@@ -172,7 +172,7 @@ static func authoritative_interactable_records(environment: Dictionary, library:
 	var bound := EnvironmentSlotBinderScript.bind_base_records(environment, records, slot_bindings, room_slot_occupancy)
 	if not bool(bound.get("ok", false)):
 		return {"ok": false, "records": [], "errors": _array(bound.get("errors", []))}
-	return {"ok": true, "records": _array(bound.get("records", [])), "errors": []}
+	return {"ok": true, "records": _array(bound.get("records", [])), "slot_occupancy": room_slot_occupancy, "errors": []}
 
 
 static func stamp_interactable_records(records_value: Array, environment: Dictionary, library: Variant, producer_context: Dictionary = {}) -> Dictionary:

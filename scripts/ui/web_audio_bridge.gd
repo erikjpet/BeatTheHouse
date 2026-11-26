@@ -72,7 +72,11 @@ const WEB_AUDIO_SCRIPT := """
 		}
 	}
 	function base64ToBytes(data) {
-		var binary = window.atob(String(data || ""));
+		var encoded = String(data || "");
+		if (typeof Uint8Array.fromBase64 === "function") {
+			return Uint8Array.fromBase64(encoded);
+		}
+		var binary = window.atob(encoded);
 		var bytes = new Uint8Array(binary.length);
 		for (var index = 0; index < binary.length; index += 1) {
 			bytes[index] = binary.charCodeAt(index) & 255;
@@ -100,6 +104,16 @@ const WEB_AUDIO_SCRIPT := """
 		var outputSampleRate = Math.max(3000, inputSampleRate);
 		var outputFrames = Math.max(1, Math.round(inputFrames * outputSampleRate / inputSampleRate));
 		var buffer = ctx.createBuffer(channels, outputFrames, outputSampleRate);
+		if (outputSampleRate === inputSampleRate && bytes.length >= channels * 2) {
+			var samples = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
+			for (var channel = 0; channel < channels; channel += 1) {
+				var output = buffer.getChannelData(channel);
+				for (var frame = 0; frame < inputFrames; frame += 1) {
+					output[frame] = samples.getInt16((frame * channels + channel) * 2, true) / 32768;
+				}
+			}
+			return buffer;
+		}
 		for (var channel = 0; channel < channels; channel += 1) {
 			var output = buffer.getChannelData(channel);
 			for (var outputFrame = 0; outputFrame < outputFrames; outputFrame += 1) {
@@ -133,13 +147,15 @@ const WEB_AUDIO_SCRIPT := """
 		var predictors = [];
 		var indices = [];
 		var buffer = ctx.createBuffer(channels, frames, sampleRate);
+		var outputs = [];
 		for (var channel = 0; channel < channels; channel += 1) {
 			var headerOffset = 16 + channel * 3;
 			var predictor = (bytes[headerOffset + 1] << 8) | bytes[headerOffset];
 			if (predictor >= 32768) predictor -= 65536;
 			predictors[channel] = predictor;
 			indices[channel] = Math.max(0, Math.min(88, bytes[headerOffset + 2] | 0));
-			buffer.getChannelData(channel)[0] = predictor / 32768;
+			outputs[channel] = buffer.getChannelData(channel);
+			outputs[channel][0] = predictor / 32768;
 		}
 		var nibbleOffset = 0;
 		for (var frame = 1; frame < frames; frame += 1) {
@@ -155,7 +171,7 @@ const WEB_AUDIO_SCRIPT := """
 				predictors[channel] += (code & 8) ? -delta : delta;
 				predictors[channel] = clamp(predictors[channel], -32768, 32767);
 				indices[channel] = clamp(indices[channel] + indexTable[code], 0, 88);
-				buffer.getChannelData(channel)[frame] = predictors[channel] / 32768;
+				outputs[channel][frame] = predictors[channel] / 32768;
 			}
 		}
 		return buffer;

@@ -4,6 +4,8 @@ All notable public release changes for Beat the House are recorded here.
 
 ## Unreleased
 
+- Prepare Web cabinets and game content before the title appears, and pace
+  travel artwork, first cabinet entry, and save decoding across frames.
 - Load idle Slot room data separately from the cabinet when continuing a Web
   save, spread room setup across frames, and reduce copying during save
   restoration and cabinet entry.

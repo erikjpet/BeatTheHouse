@@ -16,11 +16,27 @@ func _run() -> void:
 	_check_shelter_signage(library, failures)
 	_check_shelter_window(library, failures)
 	_check_reward_packs_stay_out_of_ordinary_shops(library, failures)
+	_check_web_game_script_bundle(library, failures)
 	if count == 0 or library.games.is_empty() or not library.validation_complete:
 		failures.append("The authored data catalog did not load.")
 	for failure in failures:
 		push_error(failure)
 	quit(0 if failures.is_empty() else 1)
+
+
+func _check_web_game_script_bundle(library: ContentLibrary, failures: Array[String]) -> void:
+	var bundle := load("res://scripts/core/web_game_script_bundle.gd") as Script
+	if bundle == null:
+		failures.append("The Web game script bundle could not load.")
+		return
+	var retained_paths := {}
+	for script: Script in bundle.get_script_constant_map().get("SCRIPTS", []):
+		retained_paths[script.resource_path] = true
+	for game: Dictionary in library.games:
+		var module_path := str(game.get("module_path", ""))
+		var room_path := GameModuleRegistry.room_source_path(game)
+		if not retained_paths.has(module_path) or (not room_path.is_empty() and not retained_paths.has(room_path)):
+			failures.append("The Web game script bundle omits a resource for %s." % str(game.get("id", "")))
 
 
 func _check_directory(path: String, failures: Array[String]) -> int:

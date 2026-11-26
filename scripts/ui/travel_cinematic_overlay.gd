@@ -162,8 +162,6 @@ func present_departure(quote: Dictionary, high_contrast: bool, text_scale: float
 
 
 func queue_departure_art(quote: Dictionary) -> void:
-	if OS.has_feature("web"):
-		return
 	var profile := CatalogScript.profile(quote)
 	var vehicle: Dictionary = profile.get("vehicle", {})
 	var paths: Array[String] = []
@@ -174,7 +172,8 @@ func queue_departure_art(quote: Dictionary) -> void:
 			if not path.is_empty() and not paths.has(path):
 				paths.append(path)
 	_wanted_departure_art = paths
-	poll_departure_art()
+	if not OS.has_feature("web"):
+		poll_departure_art()
 
 
 func poll_departure_art() -> bool:
@@ -194,6 +193,12 @@ func poll_departure_art() -> bool:
 			missing.append(path)
 	if missing.is_empty():
 		return true
+	if OS.has_feature("web"):
+		# The browser export has no loading thread. Decode a single texture
+		# between map draws and hold the results until the approach starts.
+		var path := missing[0]
+		_departure_art[path] = ResourceLoader.load(path, "Texture2D") if ResourceLoader.exists(path, "Texture2D") else null
+		return false
 	_departure_art_thread = Thread.new()
 	if _departure_art_thread.start(_load_departure_art.bind(missing), Thread.PRIORITY_LOW) == OK:
 		return false

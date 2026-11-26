@@ -520,7 +520,7 @@ func _run_data_from_payload(payload: Dictionary, validation_proof: Dictionary, f
 		var run_data: Variant = payload.get("run_state", {})
 		if typeof(run_data) != TYPE_DICTIONARY:
 			return {}
-		var unpacked_run_data := RunSaveCodecScript.unpack_from_storage(run_data as Dictionary)
+		var unpacked_run_data := await RunSaveCodecScript.unpack_from_storage_in_steps(run_data as Dictionary, frame_boundary)
 		if unpacked_run_data.is_empty():
 			return {}
 		if not frame_boundary.is_null():
@@ -546,7 +546,7 @@ func _read_run_state_from_path(path: String, frame_boundary: Signal) -> Dictiona
 		return {"exists": false, "loadable": false, "run_state": null}
 	var text := FileAccess.get_file_as_string(path)
 	var load_text := RunSaveCodecScript.preserve_blackjack_ledger_integer_tokens(text)
-	var json := StorageNumericJsonScript.parse(load_text)
+	var json := await StorageNumericJsonScript.parse_in_steps(load_text, frame_boundary)
 	if int(json.error) != OK:
 		return {"exists": true, "loadable": false, "run_state": null}
 	var parsed: Variant = json.data

@@ -3847,7 +3847,6 @@ func finalize_installed_scenario_in_steps(library: ContentLibrary, layout_contex
 	# Finalization must cross the same fixed-slot seam as the live production UI.
 	# In particular, slot overflow remains actionable authority even though it has
 	# no environment-board rectangle.
-	var authoritative_layout := JsonCoerceScript._copy_dict(authoritative_environment.get("layout", {}))
 	var finalization_occupancy := JsonCoerceScript._copy_dict(layout_context.get("slot_occupancy", {}))
 	var proof_occupancy := finalization_occupancy.duplicate(true)
 	var baseline_event_ids := JsonCoerceScript._copy_array(authoritative_environment.get("event_ids", []))
@@ -3857,21 +3856,28 @@ func finalize_installed_scenario_in_steps(library: ContentLibrary, layout_contex
 		if occupant.begins_with("event:") and not baseline_event_ids.has(occupant.trim_prefix("event:")):
 			proof_occupancy.erase(slot_id)
 			historical_event_slots = true
-	var bound := EnvironmentSlotBinderScript.bind_base_records(
-		authoritative_environment,
-		base_records,
-		JsonCoerceScript._copy_dict(authoritative_layout.get("slot_bindings", {})),
-		proof_occupancy
-	)
-	if not bool(bound.get("ok", false)):
-		return _scenario_semantic_finalization_failure(JsonCoerceScript._copy_array(bound.get("errors", [])), bool(current_environment.get("scenario_semantic_ready", false)))
+	if world_only or not proof_occupancy.is_empty():
+		var authoritative_layout := JsonCoerceScript._copy_dict(authoritative_environment.get("layout", {}))
+		var bound := EnvironmentSlotBinderScript.bind_base_records(
+			authoritative_environment,
+			base_records,
+			JsonCoerceScript._copy_dict(authoritative_layout.get("slot_bindings", {})),
+			proof_occupancy
+		)
+		if not bool(bound.get("ok", false)):
+			return _scenario_semantic_finalization_failure(JsonCoerceScript._copy_array(bound.get("errors", [])), bool(current_environment.get("scenario_semantic_ready", false)))
+		base_records = JsonCoerceScript._copy_array(bound.get("records", []))
+	else:
+		# The producer has already bound the same full record set with no
+		# reservations. Retain the exact result and its matching occupancy.
+		proof_occupancy = JsonCoerceScript._copy_dict(authoritative.get("slot_occupancy", {}))
 	var finalization_context := layout_context.duplicate(true)
 	# Historical proof binding must not replace the live room's reservations.
 	finalization_context["slot_occupancy"] = finalization_occupancy if historical_event_slots else proof_occupancy
 	if not frame_boundary.is_null():
 		await frame_boundary
 	if world_only:
-		var finalized := world_sequence_finalize_base_semantics(JsonCoerceScript._copy_array(bound.get("records", [])), library, finalization_context)
+		var finalized := world_sequence_finalize_base_semantics(base_records, library, finalization_context)
 		if not bool(finalized.get("ok", false)):
 			return finalized
 		if not frame_boundary.is_null():
@@ -3880,7 +3886,7 @@ func finalize_installed_scenario_in_steps(library: ContentLibrary, layout_contex
 		if not bool(publication.get("ok", false)):
 			return publication
 		return finalized
-	return await _scenario_finalize_trusted_base_semantics(JsonCoerceScript._copy_array(bound.get("records", [])), library, finalization_context, authoritative_environment, frame_boundary)
+	return await _scenario_finalize_trusted_base_semantics(base_records, library, finalization_context, authoritative_environment, frame_boundary)
 
 
 func _scenario_event_choice_authority(definition: Dictionary, library: ContentLibrary, environment_override: Dictionary = {}) -> Dictionary:

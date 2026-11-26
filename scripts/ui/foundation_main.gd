@@ -34,6 +34,7 @@ const ACTION_CATEGORY_GAMES := "games"
 const ACTION_CATEGORY_EVENTS := "events"
 const ACTION_CATEGORY_ITEMS := "items"
 const ACTION_CATEGORY_TRAVEL := "travel"
+const WEB_GAME_SCRIPT_BUNDLE_PATH := "res://scripts/core/web_game_script_bundle.gd"
 const SCRATCH_TICKETS_MODULE_PATH := "res://scripts/games/scratch_tickets.gd"
 const WEB_CABINET_LOAD_ORDER := {
 	"slot": GameModuleRegistryScript.SLOT_MODULE_LOAD_ORDER,
@@ -352,6 +353,7 @@ var game_surface_ui_state: Dictionary = {}
 var game_module_cache: Dictionary = {}
 var room_game_source_cache: Dictionary = {}
 var game_module_script_cache: Dictionary = {}
+var _web_game_script_bundle: Script
 var game_module_script_prewarm_requests: Dictionary = {}
 var run_ui_script_prewarm_results: Dictionary = {}
 # Bounded by the finite run-UI/game catalogs. A Script lets an owner discovered
@@ -876,6 +878,11 @@ func _ready() -> void:
 	_mark_boot_event("meta_collection_deferred")
 	_initialize_foundation()
 	_mark_boot_event("foundation_ready")
+	if _uses_web_startup_bundle():
+		# Keep strong ownership for the lifetime of the game. Building the title
+		# afterward leaves the browser's existing startup screen in charge.
+		_web_game_script_bundle = load(WEB_GAME_SCRIPT_BUNDLE_PATH) as Script
+		_mark_boot_event("web_game_scripts_ready")
 	_build_ui()
 	_mark_boot_event("ui_built")
 	_surface_user_settings_load_outcome()
@@ -1801,7 +1808,7 @@ func enter_game(game_id: String, state_key: String = "", from_room_input: bool =
 # enter_game(). A slot click can complete an anchored lesson or refresh a modal
 # at that boundary; the duplicate pass then consumed the click without opening
 # the machine even though the same room's other games remained available.
-func _enter_game_after_input_guard(clean_game_id: String, clean_state_key: String, object_id: String, from_room_input: bool = false) -> bool:
+func _enter_game_after_input_guard(clean_game_id: String, clean_state_key: String, object_id: String, from_room_input: bool = false, prepared_room_revision: int = 0) -> bool:
 	var definition := library.game(clean_game_id)
 	if definition.is_empty():
 		_show_message("Game definition is missing.")
@@ -1809,9 +1816,12 @@ func _enter_game_after_input_guard(clean_game_id: String, clean_state_key: Strin
 	var load_paths: Array = WEB_CABINET_LOAD_ORDER.get(clean_game_id, [])
 	var module_path := str(definition.get("module_path", ""))
 	if from_room_input and not load_paths.is_empty() and module_path == load_paths.back() \
-			and _should_stage_cabinet_open() and not ResourceLoader.has_cached(module_path) \
-			and not script_prewarm_terminal_results.has(module_path) and _cabinet_is_available(clean_game_id, object_id):
-		return _queue_cabinet_open(clean_game_id, clean_state_key, object_id, load_paths, _game_display_name(clean_game_id))
+			and _should_stage_cabinet_open() and not game_module_cache.has(clean_game_id) \
+			and _cabinet_is_available(clean_game_id, object_id):
+		if ResourceLoader.has_cached(module_path):
+			return _queue_cabinet_open(clean_game_id, clean_state_key, object_id, [], _game_display_name(clean_game_id))
+		if not script_prewarm_terminal_results.has(module_path):
+			return _queue_cabinet_open(clean_game_id, clean_state_key, object_id, load_paths, _game_display_name(clean_game_id))
 	var game_module := _game_module_for_id(clean_game_id)
 	if game_module == null:
 		_show_message("This game is not ready here.")
@@ -1847,7 +1857,10 @@ func _enter_game_after_input_guard(clean_game_id: String, clean_state_key: Strin
 	if bool(slot_wager_recovery.get("handled", false)):
 		_show_message(str(slot_wager_recovery.get("message", "")))
 		_autosave_foundation_run("Autosaved recovered wager.")
-	_refresh()
+	if prepared_room_revision != 0:
+		_refresh_foundation(prepared_room_revision)
+	else:
+		_refresh()
 	_clear_selected_stake()
 	if restored_surface_wager > 0:
 		selected_stake = restored_surface_wager
@@ -1906,13 +1919,19 @@ func _advance_cabinet_open() -> void:
 		opening["step"] = step
 		if not already_loaded:
 			return
-	_clear_cabinet_open()
 	var object_id := str(opening["object_id"])
 	var game_id := str(opening["game_id"])
+	if game_id in ["pull_tabs", "scratch_tickets", "video_poker"] and not opening.has("prepared_room_revision"):
+		# These cabinet entry hooks only read the room. Prepare its catalog on
+		# its own frame, then reuse it if the entry boundary retains the room.
+		_prepare_room_presentation_at_boundary()
+		opening["prepared_room_revision"] = run_state.room_presentation_revision()
+		return
+	_clear_cabinet_open()
 	if not _room_action_authority_available() or _guard_player_input_route(false, object_id, false):
 		return
 	if _cabinet_is_available(game_id, object_id):
-		_enter_game_after_input_guard(game_id, str(opening["state_key"]), object_id)
+		_enter_game_after_input_guard(game_id, str(opening["state_key"]), object_id, false, int(opening.get("prepared_room_revision", 0)))
 
 
 func _cabinet_is_available(game_id: String, object_id: String) -> bool:
@@ -4272,8 +4291,12 @@ func _queue_player_map_travel() -> void:
 	if _is_meta_session() or not bool(choice.get("enabled", false)):
 		confirm_world_map_travel()
 		return
+	var departure := _map_departure_quote(selected_world_map_node_id, choice)
 	_pending_player_map_travel = {"run": run_state, "target_id": selected_world_map_node_id,
-		"frame": Engine.get_process_frames(), "departure": _map_departure_quote(selected_world_map_node_id, choice)}
+		"frame": Engine.get_process_frames(), "departure": departure}
+	if OS.has_feature("web") and not departure.is_empty():
+		_build_travel_cinematic_overlay()
+		travel_cinematic_overlay.queue_departure_art(departure)
 	# An already running compiler can finish in the background. The accepted
 	# destination worker can load any remaining modules as it generates the room.
 	if not _should_use_atomic_web_travel_transition():
@@ -10264,7 +10287,10 @@ func _initialize_foundation() -> void:
 	_mark_boot_event("content_library_load_start")
 	var defer_content_validation := _defer_start_menu_secondary_panels()
 	var defer_run_content_load := defer_content_validation or OS.has_feature("web")
-	if defer_run_content_load:
+	if _uses_web_startup_bundle():
+		library.load(false)
+		ScenarioSequenceCatalog.retain_default_content(library.environment_scenarios, library.scenario_sequence_catalog)
+	elif defer_run_content_load:
 		library.load_start_menu()
 	else:
 		library.load(true)
@@ -10292,6 +10318,10 @@ func _initialize_foundation() -> void:
 	run_action_service = RunActionServiceScript.new()
 	_refresh_run_action_service()
 	_mark_boot_event("foundation_init_complete")
+
+
+func _uses_web_startup_bundle() -> bool:
+	return OS.has_feature("web") and OS.has_feature("nothreads")
 
 
 func _ensure_full_content_library_loaded() -> void:
@@ -13656,9 +13686,9 @@ func _refresh_foundation(parked_room_revision: int) -> void:
 	if not _event_response_transaction.is_empty() and int(_event_response_transaction.get("step", -1)) == 3:
 		_event_response_transaction["refresh_requested"] = true
 		return
-	# CRT practice parks the room and its compiled catalog together. Pending
-	# outcomes or any catalog change still require the ordinary preparation.
-	var use_parked_catalog := parked_room_revision != 0 and current_screen in [SCREEN_ENVIRONMENT, SCREEN_RESULT] \
+	# CRT practice and read-only cabinet entry can preserve a prepared room.
+	# Pending outcomes or a changed room still require ordinary preparation.
+	var use_parked_catalog := parked_room_revision != 0 and current_screen in [SCREEN_ENVIRONMENT, SCREEN_RESULT, SCREEN_GAME] \
 		and room_unchanged \
 		and run_state.room_presentation_revision() == parked_room_revision \
 		and not _room_catalog_publication.is_empty()

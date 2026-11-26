@@ -217,19 +217,7 @@ static func legacy_definition(scenario_id: String, path: String = LEGACY_CATALOG
 		return {}
 	if path == LEGACY_CATALOG_PATH:
 		if _default_legacy_definitions.is_empty():
-			# A cold run can restore several seeded definitions. Read the authored
-			# catalog once and keep its rows private to this lookup.
-			var index: Dictionary = {}
-			for pool_value in _parse_dictionary(path, []).values():
-				if pool_value is not Array:
-					continue
-				for definition_value in pool_value:
-					if definition_value is not Dictionary:
-						continue
-					var id := str(definition_value.get("id", ""))
-					if not id.is_empty() and not index.has(id):
-						index[id] = definition_value
-			_default_legacy_definitions = index
+			_default_legacy_definitions = _index_legacy_definitions(_parse_dictionary(path, []))
 		return apply_overlay(_default_legacy_definitions.get(wanted, {}), catalog)
 	var failures: Array = []
 	var source := _parse_dictionary(path, failures)
@@ -239,6 +227,31 @@ static func legacy_definition(scenario_id: String, path: String = LEGACY_CATALOG
 			if str(definition.get("id", "")) == wanted:
 				return apply_overlay(definition, catalog)
 	return {}
+
+
+static func retain_default_content(legacy_catalog: Dictionary, sequence_catalog: Dictionary) -> void:
+	# The Web startup has already read the packaged defaults. Own a separate
+	# snapshot so library consumers cannot change save-codec definitions.
+	if _default_legacy_definitions.is_empty():
+		_default_legacy_definitions = _index_legacy_definitions(legacy_catalog).duplicate(true)
+	if _default_catalog_cache.is_empty():
+		_default_catalog_cache = sequence_catalog.duplicate(true)
+
+
+static func _index_legacy_definitions(source: Dictionary) -> Dictionary:
+	var index := {}
+	for pool_value in source.values():
+		if pool_value is not Array:
+			continue
+		for definition_value in pool_value:
+			if definition_value is not Dictionary:
+				continue
+			var id := str(definition_value.get("id", ""))
+			if not id.is_empty() and not index.has(id):
+				index[id] = definition_value
+	return index
+
+
 static func default_catalog_snapshot() -> Dictionary:
 	return _default_catalog().duplicate(true)
 

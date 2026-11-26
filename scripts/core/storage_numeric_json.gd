@@ -11,11 +11,23 @@ const HIDDEN_BIT := 0x0010000000000000
 const EXACT_INTEGER_LIMIT := 9007199254740992
 const DIGIT_LIMIT := 768
 const CACHE_LIMIT := 4096
+const PARSE_FRAME_BUDGET_USEC := 6000
+const PARSE_CHECK_INTERVAL := 256
 const NUMBER_PREFIX := "~bth-json-number:"
 const ZERO_PREFIX := "~bth-json-negative-zero:"
 
 
 static func parse(text: String) -> Dictionary:
+	return _parse_steps.call(text)
+
+
+static func parse_in_steps(text: String, frame_boundary: Signal) -> Dictionary:
+	return await _parse_steps(text, frame_boundary)
+
+
+static func _parse_steps(text: String, frame_boundary: Signal = Signal()) -> Dictionary:
+	var staged := not frame_boundary.is_null()
+	var frame_started := Time.get_ticks_usec() if staged else 0
 	var native := JSON.new()
 	var error := native.parse(text)
 	if error != OK:
@@ -27,13 +39,25 @@ static func parse(text: String) -> Dictionary:
 	var copy_from := 0
 	var index := 0
 	var next_id := 0
-	while index < text.length():
+	var text_length := text.length()
+	var next_check := 0 if staged else text_length + 1
+	while index < text_length:
+		if index >= next_check:
+			next_check = index + PARSE_CHECK_INTERVAL
+			if Time.get_ticks_usec() - frame_started >= PARSE_FRAME_BUDGET_USEC:
+				await frame_boundary
+				frame_started = Time.get_ticks_usec()
 		var code := text.unicode_at(index)
 		if code == 0:
 			break # Preserve the native parser's terminator behavior.
 		if code == 34:
 			index += 1
-			while index < text.length():
+			while index < text_length:
+				if index >= next_check:
+					next_check = index + PARSE_CHECK_INTERVAL
+					if Time.get_ticks_usec() - frame_started >= PARSE_FRAME_BUDGET_USEC:
+						await frame_boundary
+						frame_started = Time.get_ticks_usec()
 				var quoted := text.unicode_at(index)
 				index += 1
 				if quoted == 92:
@@ -45,7 +69,12 @@ static func parse(text: String) -> Dictionary:
 			index += 1
 			continue
 		var end := index + 1
-		while end < text.length() and text[end] in "0123456789+-.eE":
+		while end < text_length and text[end] in "0123456789+-.eE":
+			if end >= next_check:
+				next_check = end + PARSE_CHECK_INTERVAL
+				if Time.get_ticks_usec() - frame_started >= PARSE_FRAME_BUDGET_USEC:
+					await frame_boundary
+					frame_started = Time.get_ticks_usec()
 			end += 1
 		var token := text.substr(index, end - index)
 		var approximate := token.to_float()
@@ -56,9 +85,15 @@ static func parse(text: String) -> Dictionary:
 			corrected = _number(token, approximate, context)
 			if context.cache.size() < CACHE_LIMIT:
 				context.cache[token] = corrected
+			if staged and Time.get_ticks_usec() - frame_started >= PARSE_FRAME_BUDGET_USEC:
+				await frame_boundary
+				frame_started = Time.get_ticks_usec()
 		if _bits(corrected) != _bits(approximate):
 			if replacements.is_empty():
 				occupied = _occupied_number_strings(native.data)
+				if staged and Time.get_ticks_usec() - frame_started >= PARSE_FRAME_BUDGET_USEC:
+					await frame_boundary
+					frame_started = Time.get_ticks_usec()
 			var marker := NUMBER_PREFIX + str(next_id) + "~"
 			while occupied.has(marker):
 				next_id += 1
@@ -76,11 +111,16 @@ static func parse(text: String) -> Dictionary:
 	# Occupancy is checked against decoded live strings, including escaped text.
 	# The second native parse preserves duplicate-key and string behavior.
 	native.data = null
+	if staged and Time.get_ticks_usec() - frame_started >= PARSE_FRAME_BUDGET_USEC:
+		await frame_boundary
+		frame_started = Time.get_ticks_usec()
 	var rewritten := JSON.new()
 	error = rewritten.parse("".join(pieces))
 	if error != OK:
 		return {"error": error, "data": null}
 	var result: Variant = rewritten.data
+	if staged and Time.get_ticks_usec() - frame_started >= PARSE_FRAME_BUDGET_USEC:
+		await frame_boundary
 	if typeof(result) == TYPE_STRING and replacements.has(result):
 		result = replacements[result]
 	else:

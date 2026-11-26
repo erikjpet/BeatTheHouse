@@ -237,6 +237,14 @@ static func storage_envelope_valid(value: Dictionary) -> bool:
 # Only content/shape validation may skip the legacy token repair. Real loads
 # keep the default so authority hashes receive exact historical integer values.
 static func unpack_from_storage(stored_state: Dictionary, preserve_legacy_authority_integers: bool = true) -> Dictionary:
+	return _unpack_from_storage_steps.call(stored_state, preserve_legacy_authority_integers)
+
+
+static func unpack_from_storage_in_steps(stored_state: Dictionary, frame_boundary: Signal) -> Dictionary:
+	return await _unpack_from_storage_steps(stored_state, true, frame_boundary)
+
+
+static func _unpack_from_storage_steps(stored_state: Dictionary, preserve_legacy_authority_integers: bool, frame_boundary: Signal = Signal()) -> Dictionary:
 	if not stored_state.has(STORAGE_MARKER_KEY):
 		return stored_state.duplicate(true)
 	var source := _validated_storage_source(stored_state)
@@ -245,7 +253,10 @@ static func unpack_from_storage(stored_state: Dictionary, preserve_legacy_author
 	var json_text := source.get_string_from_utf8()
 	if preserve_legacy_authority_integers:
 		json_text = preserve_blackjack_ledger_integer_tokens(json_text)
-	var parsed := StorageNumericJsonScript.parse(json_text)
+	# Decompression and legacy authority repair precede the staged numeric scan.
+	if not frame_boundary.is_null():
+		await frame_boundary
+	var parsed := await StorageNumericJsonScript.parse_in_steps(json_text, frame_boundary)
 	if int(parsed.error) != OK or typeof(parsed.data) != TYPE_DICTIONARY:
 		return {}
 	# This parser was created for this one call. Its complete JSON graph is
