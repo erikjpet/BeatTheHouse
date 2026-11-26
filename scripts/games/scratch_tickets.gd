@@ -112,21 +112,6 @@ func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	return result
 
 
-func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
-	return {
-		"ok": true,
-		"type": "game_actions",
-		"game_id": get_id(),
-		"legal_actions": legal_actions(run_state, environment),
-		"cheat_actions": [],
-		"stake_floor": 1,
-		"stake_ceiling": maxi(1, run_state.bankroll),
-		"base_stake_ceiling": maxi(1, run_state.bankroll),
-		"economy_state": run_state.economy(),
-		"economy_pressure_applied": false,
-	}
-
-
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var machine := _ensure_machine_state(run_state, environment, false)
 	var active_ticket := _dict_ref(machine.get("active_ticket", {}))

@@ -93,6 +93,11 @@ func _check_staged_scratch_entry(app) -> String:
 	var run: RunState = app.run_state
 	var bankroll := run.bankroll
 	var clock := run.game_clock_minutes
+	app.environment_canvas.object_focused.emit(CABINET)
+	await process_frame
+	var preview: Dictionary = app._game_entry_preview("scratch_tickets")
+	if not bool(preview.get("ok", false)) or ResourceLoader.has_cached(app.SCRATCH_TICKETS_MODULE_PATH):
+		return "Inspecting Scratch must show its actions without loading the playable cabinet."
 	app.environment_canvas.object_activated.emit(CABINET)
 	if app._pending_scratch_cabinet_open.is_empty() or app.current_game != null or app.open_world_map():
 		return "A cold Scratch opening must keep the run on the room floor and own room input."

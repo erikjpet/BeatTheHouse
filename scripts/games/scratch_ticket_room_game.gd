@@ -30,6 +30,21 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 	return _generate_machine_state(run_state, environment, rng)
 
 
+func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
+	return {
+		"ok": true,
+		"type": "game_actions",
+		"game_id": get_id(),
+		"legal_actions": legal_actions(run_state, environment),
+		"cheat_actions": [],
+		"stake_floor": 1,
+		"stake_ceiling": maxi(1, run_state.bankroll),
+		"base_stake_ceiling": maxi(1, run_state.bankroll),
+		"economy_state": run_state.economy(),
+		"economy_pressure_applied": false,
+	}
+
+
 func environment_object_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var machine := _ensure_machine_state(run_state, environment, false)
 	var rows := _stock_view(machine)

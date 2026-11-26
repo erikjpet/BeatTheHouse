@@ -7,8 +7,8 @@ All notable public release changes for Beat the House are recorded here.
 - Reduced cold travel pauses by loading room game data separately from the
   playable cabinets and spreading Web room validation across frames.
 - Fixed Scratch Tickets failing to load its foil renderer on Web.
-- Spread Web Scratch cabinet loading across frames and load artwork for each
-  ticket when it is displayed.
+- Show Scratch previews from room data, prepare the Web cabinet across
+  frames, and load ticket artwork when the ticket is displayed.
 - Reduced opening work for Scratch Tickets by skipping empty rows and
   building foil masks faster.
 - Restored 60 FPS idle animation for dialogue portraits.

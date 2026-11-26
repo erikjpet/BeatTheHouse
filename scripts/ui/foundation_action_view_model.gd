@@ -569,7 +569,8 @@ static func game_entry_preview(host: Variant, game_id: String) -> Dictionary:
 	var definition = host.library.game(game_id)
 	if definition.is_empty():
 		return {}
-	var game = host._create_game_module(definition)
+	# Scratch's room source provides the full action preview without loading the cabinet.
+	var game = host._room_game_source_for_id(game_id) if game_id == "scratch_tickets" else host._create_game_module(definition)
 	if game == null:
 		return {"ok": false}
 	var action_view = game.actions(host.run_state, host.run_state.current_environment)

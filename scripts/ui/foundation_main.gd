@@ -1843,7 +1843,9 @@ func _queue_scratch_cabinet_open(state_key: String, object_id: String) -> bool:
 		_scratch_cabinet_loading_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 		_scratch_cabinet_loading_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var panel := _panel_container(VisualStyle.DARK_2, VisualStyle.CYAN)
-		panel.add_child(_label("Opening Scratch Tickets…", VisualStyle.TYPE_BODY_LARGE))
+		var label := _label("Opening Scratch Tickets…", VisualStyle.TYPE_BODY_LARGE)
+		label.autowrap_mode = TextServer.AUTOWRAP_OFF
+		panel.add_child(label)
 		_scratch_cabinet_loading_overlay.add_child(panel)
 		add_child(_scratch_cabinet_loading_overlay)
 	_scratch_cabinet_loading_overlay.show()
