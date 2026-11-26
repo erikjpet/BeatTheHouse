@@ -8,6 +8,7 @@ const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const MathScript := preload("res://scripts/games/slots/slot_rng_math.gd")
 const StateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
+const HeatScript := preload("res://scripts/games/slots/slot_heat.gd")
 const BonusRecoveryScript := preload("res://scripts/games/slots/slot_bonus_recovery.gd")
 const PinballScript := preload("res://scripts/games/slots/slot_family_pinball.gd")
 const BuffaloScript := preload("res://scripts/games/slots/slot_family_buffalo.gd")
@@ -146,7 +147,7 @@ func resolve_spin(options: FunctionOptions.SlotResolveOptions) -> Dictionary:
 
 	var base_bankroll_delta := immediate_payout - stake_cost
 	if is_cheat:
-		_apply_slot_nudge_item_heat_state(machine, resolved_item_effects, nudge_event)
+		HeatScript.apply_nudge_item_heat(machine, resolved_item_effects, nudge_event)
 	var cross_effects: Dictionary = _slot_resolve_cross_effects(immediate_payout, stake, stake_cost, base_bankroll_delta, is_cheat, normalized_action, run_state, definition, environment, machine, resolved_item_effects)
 	var luck_payout_bonus := int(cross_effects.get("luck_payout_bonus", 0))
 	var item_payout_bonus := int(cross_effects.get("item_payout_bonus", 0))
@@ -769,28 +770,6 @@ func _apply_lucky_reel_grease_entry(machine: Dictionary, family, definition: Dic
 	item_state["lucky_reel_grease_last_tease"] = str(adjusted.get("classification", "")) == "near_miss"
 	machine["slot_item_state"] = item_state
 	return adjusted
-
-
-func _apply_slot_nudge_item_heat_state(machine: Dictionary, item_effects: Dictionary, nudge_event: Dictionary) -> void:
-	var item_state: Dictionary = JsonCoerceScript._copy_dict(machine.get("slot_item_state", {}))
-	var cold_charges := maxi(0, int(item_state.get("cold_quarters_charges", 0)))
-	if cold_charges > 0:
-		var reduction := maxi(0, int(item_effects.get("slot_cold_quarter_heat_reduction", 0)))
-		if reduction > 0:
-			item_effects["cheat_suspicion_delta"] = int(item_effects.get("cheat_suspicion_delta", 0)) - reduction
-			item_effects["slot_cold_quarter_used"] = true
-			cold_charges -= 1
-			if cold_charges <= 0:
-				item_state.erase("cold_quarters_charges")
-			else:
-				item_state["cold_quarters_charges"] = cold_charges
-			item_effects["slot_cold_quarters_remaining"] = cold_charges
-	var skill_outcome := str(nudge_event.get("skill_outcome", ""))
-	if bool(nudge_event.get("lucky_reel_grease_active", false)) and (skill_outcome == "clean_miss" or skill_outcome == "blown"):
-		var heat_bonus := maxi(0, int(item_state.get("lucky_reel_grease_failed_nudge_heat_bonus", 14)))
-		item_effects["cheat_suspicion_delta"] = int(item_effects.get("cheat_suspicion_delta", 0)) + heat_bonus
-		item_effects["slot_grease_failed_nudge_heat_bonus_applied"] = heat_bonus
-	machine["slot_item_state"] = item_state
 
 
 func _derive_grid_side_effects(machine: Dictionary, grid: Array, family_id: String, stake: int, entry: Dictionary = {}, definition: Dictionary = {}) -> Dictionary:
@@ -1675,72 +1654,13 @@ func _slot_resolve_cross_effects(payout: int, stake: int, stake_cost: int, bankr
 		if refund_percent > 0:
 			effects["slot_loss_refund"] = mini(absi(bankroll_delta), maxi(1, int(round(float(stake_cost) * float(refund_percent) / 100.0))))
 	if is_cheat:
-		var heat: Dictionary = _slot_cheat_heat(action_id, stake_basis, run_state, definition, environment, item_effects)
+		var heat: Dictionary = HeatScript.cheat_heat(action_id, stake_basis, run_state, definition, environment, item_effects)
 		for key in heat.keys():
 			effects[key] = heat[key]
 	effects["slot_cold_quarter_used"] = bool(item_effects.get("slot_cold_quarter_used", false))
 	effects["slot_cold_quarters_remaining"] = maxi(0, int(item_effects.get("slot_cold_quarters_remaining", 0)))
 	effects["slot_grease_failed_nudge_heat_bonus_applied"] = maxi(0, int(item_effects.get("slot_grease_failed_nudge_heat_bonus_applied", 0)))
 	return effects
-
-
-func preview_nudge_heat(machine: Dictionary, run_state: RunState, definition: Dictionary, environment: Dictionary, item_effects: Dictionary) -> Dictionary:
-	# Use the settlement helpers on detached item state. Forecast the worst
-	# skill outcome cost without spending a Cold Quarter or resolving an action.
-	var projected_machine := {"slot_item_state": JsonCoerceScript._copy_dict(machine.get("slot_item_state", {}))}
-	var projected_effects := item_effects.duplicate(true)
-	var offer := JsonCoerceScript._copy_dict(machine.get("last_nudge_offer", {}))
-	_apply_slot_nudge_item_heat_state(projected_machine, projected_effects, {
-		"skill_outcome": "blown",
-		"lucky_reel_grease_active": bool(offer.get("lucky_reel_grease_active", false)),
-	})
-	var stake := maxi(1, int(StateScript.selected_bet(machine).get("total_credits", 2)))
-	return _slot_cheat_heat(NUDGE_ACTION, stake, run_state, definition, environment, projected_effects)
-
-
-func _slot_cheat_heat(action_id: String, stake: int, run_state: RunState, definition: Dictionary, environment: Dictionary, item_effects: Dictionary) -> Dictionary:
-	var cheat_def: Dictionary = _cheat_action_def(definition, action_id)
-	var base_heat := int(cheat_def.get("suspicion_delta", 12))
-	if run_state == null:
-		return {
-			"suspicion_delta": maxi(0, base_heat),
-			"base_suspicion_delta": maxi(0, base_heat),
-			"security_bankroll_delta": 0,
-			"security_message": "",
-			"security_ended": false,
-			"pit_boss_watched": false,
-			"pit_boss_heat_bonus": 0,
-		}
-	var pit_boss_status: Dictionary = run_state.pit_boss_watch_status(environment)
-	var pit_boss_bonus := int(pit_boss_status.get("cheat_heat_bonus", 0)) if bool(pit_boss_status.get("active", false)) else 0
-	var raw_heat := maxi(0, base_heat + int(item_effects.get("cheat_suspicion_delta", 0)) + run_state.security_risk_bonus("cheat") + pit_boss_bonus)
-	var suspicion_delta := run_state.alcohol_adjusted_suspicion_delta(raw_heat) if raw_heat > 0 else 0
-	var security_pressure: Dictionary = run_state.security_action_pressure("cheat", stake, run_state.suspicion_level() + suspicion_delta) if suspicion_delta > 0 else {}
-	var security_message := str(security_pressure.get("message", ""))
-	var pit_boss_summary := str(pit_boss_status.get("summary", "")) if bool(pit_boss_status.get("active", false)) else ""
-	if not pit_boss_summary.is_empty():
-		security_message = "%s %s" % [pit_boss_summary, security_message]
-		security_message = security_message.strip_edges()
-	return {
-		"suspicion_delta": suspicion_delta,
-		"base_suspicion_delta": maxi(0, base_heat),
-		"security_bankroll_delta": int(security_pressure.get("bankroll_delta", 0)),
-		"security_message": security_message,
-		"security_ended": bool(security_pressure.get("ended", false)),
-		"pit_boss_watched": bool(pit_boss_status.get("watched", false)),
-		"pit_boss_heat_bonus": pit_boss_bonus,
-	}
-
-
-func _cheat_action_def(definition: Dictionary, action_id: String) -> Dictionary:
-	var actions: Array = definition.get("cheat_actions", []) if typeof(definition.get("cheat_actions", [])) == TYPE_ARRAY else []
-	for action_value in actions:
-		if typeof(action_value) != TYPE_DICTIONARY:
-			continue
-		var action: Dictionary = action_value
-		if str(action.get("id", "")) == action_id:
-			return action.duplicate(true)
-	return {}
 
 
 func _spin_result(options: FunctionOptions.SlotSpinResultOptions) -> Dictionary:

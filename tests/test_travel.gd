@@ -12,11 +12,12 @@ class CabinetEntryHost extends FoundationMain:
 
 	func _request_game_module_script_prewarm() -> void:
 		super._request_game_module_script_prewarm()
+		game_module_script_prewarm_requests.erase(GameModuleRegistryScript.SLOT_MODULE_PATH)
 		game_module_script_prewarm_requests.erase(SCRATCH_TICKETS_MODULE_PATH)
 		game_module_script_prewarm_requests.erase("res://scripts/games/pull_tabs.gd")
 
 
-class ContinueHost extends FoundationMain:
+class ContinueHost extends CabinetEntryHost:
 	func _should_stage_player_continue() -> bool:
 		return true
 
@@ -61,7 +62,7 @@ func _play_and_save(app) -> String:
 	var travel_failure := await _travel(app)
 	if not travel_failure.is_empty():
 		return travel_failure
-	for game_id in ["scratch_tickets", "pull_tabs"]:
+	for game_id in ["slot", "scratch_tickets", "pull_tabs"]:
 		var opening_failure := await _check_staged_cabinet_entry(app, game_id)
 		if not opening_failure.is_empty():
 			return opening_failure
@@ -159,6 +160,8 @@ func _continue(app, expected: String) -> String:
 	var restored := JSON.stringify(_resume_state(run, str(snapshot["machine_key"])))
 	if restored != expected:
 		return "Cold Continue changed the saved location or settlement.\nExpected: %s\nRestored: %s" % [expected, restored]
+	if ResourceLoader.has_cached(GameModuleRegistry.SLOT_MODULE_PATH):
+		return "Continuing a room with an idle Slot must leave its playable cabinet unloaded."
 	return ""
 
 

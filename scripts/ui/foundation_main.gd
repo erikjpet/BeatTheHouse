@@ -36,6 +36,7 @@ const ACTION_CATEGORY_ITEMS := "items"
 const ACTION_CATEGORY_TRAVEL := "travel"
 const SCRATCH_TICKETS_MODULE_PATH := "res://scripts/games/scratch_tickets.gd"
 const WEB_CABINET_LOAD_ORDER := {
+	"slot": GameModuleRegistryScript.SLOT_MODULE_LOAD_ORDER,
 	"scratch_tickets": [
 		"res://scripts/games/scratch_ticket_region_model.gd",
 		"res://scripts/games/scratch_ticket_mask.gd",
@@ -1891,14 +1892,18 @@ func _advance_cabinet_open() -> void:
 	# eventual cabinet refresh so the room can draw between them.
 	var step := int(opening["step"])
 	var load_paths: Array = opening["load_paths"]
-	if step < load_paths.size():
+	while step < load_paths.size():
+		var path: String = load_paths[step]
+		var already_loaded := ResourceLoader.has_cached(path)
 		var module_step := step == load_paths.size() - 1
-		if _load_and_publish_script_prewarm_path(load_paths[step], false, module_step) == null:
+		if _load_and_publish_script_prewarm_path(path, false, module_step) == null:
 			_clear_cabinet_open()
 			_show_message("This game is not ready here.")
 			return
-		opening["step"] = step + 1
-		return
+		step += 1
+		opening["step"] = step
+		if not already_loaded:
+			return
 	_clear_cabinet_open()
 	var object_id := str(opening["object_id"])
 	var game_id := str(opening["game_id"])
@@ -7942,7 +7947,7 @@ func _stage_player_continue(return_to_start_on_missing: bool) -> void:
 		for game_id in JsonCoerceScript._raw_string_array(loaded.current_environment.get("game_ids", [])):
 			if not _player_continue_staged or _exit_after_staged_continue:
 				break
-			await GameModuleRegistryScript.prepare_room_source_in_steps(library.game(game_id), frame_boundary)
+			await GameModuleRegistryScript.prepare_room_source_in_steps(library.game(game_id), frame_boundary, loaded.current_environment)
 	await frame_boundary
 	if not _finish_staged_continue():
 		return
@@ -17260,16 +17265,10 @@ func activate_interactable_object(object_id: String, from_room_input: bool = fal
 	# snapshot, so cloning the entire Foundation lifecycle here is redundant.
 	if object_id.begins_with("event_response:"):
 		return _activate_event_response_action(object_id)
-	# Inspecting a room event only focuses it and opens its response card. The
-	# response resolver below owns the actual transactional rollback boundary.
-	# Avoid copying a mature run just to display the card.
-	if object_id.begins_with("event:"):
-		var event_attention_boundary := _foundation_coach_attention_boundary_snapshot()
-		_protect_foundation_coach_attention(event_attention_boundary)
-		var event_action_ok := _activate_interactable_object_with_lifecycle_snapshot(object_id, event_attention_boundary)
-		_commit_foundation_coach_attention(event_attention_boundary)
-		return event_action_ok
-	var caller_rollback := _foundation_lifecycle_snapshot()
+	# Opening an event card or a cabinet never uses the caller's run rollback.
+	# The event response and paid game actions own their own checkpoints.
+	var presentation_only := object_id.begins_with("event:") or (from_room_input and object_id.begins_with("game:"))
+	var caller_rollback := _foundation_coach_attention_boundary_snapshot() if presentation_only else _foundation_lifecycle_snapshot()
 	_protect_foundation_coach_attention(caller_rollback)
 	var action_ok := _activate_interactable_object_with_lifecycle_snapshot(object_id, caller_rollback, from_room_input)
 	_commit_foundation_coach_attention(caller_rollback)
@@ -23176,7 +23175,7 @@ func _has_deferred_bankroll_zero_failure() -> bool:
 	if run_state == null or library == null or run_state.has_liquid_run_funds() or run_state.current_environment.is_empty():
 		return false
 	for game_id in JsonCoerceScript._raw_string_array(run_state.current_environment.get("game_ids", [])):
-		var game := current_game if current_game != null and current_game.get_id() == game_id else _game_module_for_id(game_id)
+		var game := current_game if current_game != null and current_game.get_id() == game_id else _room_game_source_for_id(game_id)
 		if game == null:
 			continue
 		var runtime_state := game.environment_runtime_state(run_state, run_state.current_environment)

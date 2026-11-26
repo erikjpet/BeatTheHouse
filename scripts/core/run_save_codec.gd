@@ -73,6 +73,7 @@ const WEB_Z85_DECODE := """(function(source, expectedSize, alphabet) {
     return result;
 })"""
 const SEEDED_SCENARIO_DEFINITIONS_KEY := "seeded_scenario_definitions_by_node"
+const TOWN_DEFINITIONS_PATH := ["living_world", SEEDED_SCENARIO_DEFINITIONS_KEY]
 const SCENARIO_DEFINITION_REF_KEY := "__bth_scenario_definition_ref"
 const SCENARIO_DEFINITION_PATCH_KEY := "p"
 const PATCH_VALUE_KEY := "v"
@@ -121,11 +122,34 @@ static func _decode_steps(saved_state: Dictionary, frame_boundary: Signal = Sign
 	var decoded_state: Dictionary = {}
 	var frame_started := Time.get_ticks_usec()
 	for key in root:
-		decoded_state[key] = _decode_value(root[key], registry, decoded_rooms)
+		var value: Variant = root[key]
+		if key == "town_state":
+			decoded_state[key] = await _decode_town_in_steps(value, registry, decoded_rooms, frame_boundary)
+		else:
+			decoded_state[key] = _decode_value(value, registry, decoded_rooms)
 		if Time.get_ticks_usec() - frame_started >= 6000:
 			await frame_boundary
 			frame_started = Time.get_ticks_usec()
 	return decoded_state
+
+
+static func _decode_town_in_steps(value: Variant, registry: Dictionary, decoded_rooms: Dictionary, frame_boundary: Signal, depth: int = 0) -> Variant:
+	if value is not Dictionary or value.has(SCENARIO_DEFINITION_REF_KEY) \
+			or (value.size() == 1 and (value.has(ENVIRONMENT_REF_KEY) or value.get(EXACT_INT_KEY) is String)):
+		return _decode_value(value, registry, decoded_rooms)
+	# Decoding one town field can resolve dozens of authored scenario records.
+	# Yield between those records while retaining their original traversal order.
+	var result: Dictionary = {}
+	var frame_started := Time.get_ticks_usec()
+	for key in value:
+		if depth < TOWN_DEFINITIONS_PATH.size() and key == TOWN_DEFINITIONS_PATH[depth]:
+			result[key] = await _decode_town_in_steps(value[key], registry, decoded_rooms, frame_boundary, depth + 1)
+		else:
+			result[key] = _decode_value(value[key], registry, decoded_rooms)
+		if Time.get_ticks_usec() - frame_started >= 6000:
+			await frame_boundary
+			frame_started = Time.get_ticks_usec()
+	return result
 
 
 static func _compact_environment_registry_deltas(registry: Dictionary) -> void:

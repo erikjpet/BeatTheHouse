@@ -570,7 +570,7 @@ static func game_entry_preview(host: Variant, game_id: String) -> Dictionary:
 	if definition.is_empty():
 		return {}
 	# These room sources own the action preview for their playable cabinets.
-	var game = host._room_game_source_for_id(game_id) if game_id in ["scratch_tickets", "pull_tabs", "video_poker"] else host._create_game_module(definition)
+	var game = host._room_game_source_for_id(game_id) if game_id in ["slot", "scratch_tickets", "pull_tabs", "video_poker"] else host._create_game_module(definition)
 	if game == null:
 		return {"ok": false}
 	var action_view = game.actions(host.run_state, host.run_state.current_environment)

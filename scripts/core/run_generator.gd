@@ -285,6 +285,10 @@ func prepare_staged_player_world_travel(run_state: RunState, target_id: String, 
 	var source_id := run_state.current_world_node_id()
 	var result := await _travel_environment_result_steps(run_state, target_id, true, true, frame_boundary)
 	if bool(result.get("ok", false)):
+		# The detached install can restore machines from earlier visits. Prepare
+		# any active Slot state before publishing the destination and its clock.
+		if JsonCoerceScript._raw_string_array(run_state.current_environment.get("game_ids", [])).has("slot"):
+			await GameModuleRegistryScript.prepare_room_source_in_steps(library.game("slot"), frame_boundary, run_state.current_environment)
 		for node_id: String in [source_id, target_id]:
 			await frame_boundary
 			run_state.prime_world_room_storage_projections([node_id])

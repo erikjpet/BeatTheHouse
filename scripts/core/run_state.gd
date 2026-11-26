@@ -5553,6 +5553,10 @@ func scenario_drain_event_requests() -> Dictionary:
 # or touching snapshots that do not have a sequence overlay. SaveService restores
 # through from_dict(), so this is the single migration seam for old slots.
 func migrate_legacy_scenario_sequences() -> Dictionary:
+	return _migrate_legacy_scenario_sequences_steps.call()
+
+
+func _migrate_legacy_scenario_sequences_steps(frame_boundary: Signal = Signal()) -> Dictionary:
 	var report := {
 		"schema_version": ScenarioSequenceRuntimeScript.STATE_SCHEMA_VERSION,
 		"snapshots_checked": 0,
@@ -5566,36 +5570,46 @@ func migrate_legacy_scenario_sequences() -> Dictionary:
 	var current_result := _migrate_scenario_environment_graph(current_environment, "current_environment", report, str(current_environment.get("archetype_id", "")))
 	if bool(current_result.get("changed", false)):
 		current_environment = JsonCoerceScript._copy_dict(current_result.get("environment", current_environment))
-	var nodes := JsonCoerceScript._copy_array(world_map.get("nodes", []))
+	if not frame_boundary.is_null() and not current_environment.is_empty():
+		await frame_boundary
+	var nodes_value: Variant = world_map.get("nodes", [])
+	var nodes: Array = nodes_value.duplicate(false) if nodes_value is Array else []
 	var map_changed := false
 	for index in range(nodes.size()):
-		if typeof(nodes[index]) != TYPE_DICTIONARY:
+		if nodes[index] is not Dictionary:
 			continue
-		var node := JsonCoerceScript._copy_dict(nodes[index])
-		var environment := JsonCoerceScript._copy_dict(node.get("environment", {}))
-		if environment.is_empty():
+		var node: Dictionary = nodes[index]
+		var environment: Variant = node.get("environment", {})
+		if environment is not Dictionary or environment.is_empty():
 			continue
 		var node_id := str(node.get("id", index)).strip_edges()
 		var stored_result := _migrate_scenario_environment_graph(environment, "world_map.nodes.%s.environment" % node_id, report, str(node.get("archetype_id", "")))
 		if bool(stored_result.get("changed", false)):
-			node["environment"] = JsonCoerceScript._copy_dict(stored_result.get("environment", environment))
-			nodes[index] = node
+			var migrated_node := node.duplicate(false)
+			migrated_node["environment"] = stored_result.get("environment", environment)
+			nodes[index] = migrated_node
 			map_changed = true
+		if not frame_boundary.is_null():
+			await frame_boundary
 	if map_changed:
-		var next_map := world_map.duplicate(true)
+		var next_map := world_map.duplicate(false)
 		next_map["nodes"] = nodes
-		world_map = next_map
-	var rooms := grand_casino_room_states.duplicate(true)
+		world_map = next_map.duplicate(true)
+	var rooms := grand_casino_room_states.duplicate(false)
 	var rooms_changed := false
 	for room_id_value in rooms.keys():
 		var room_id := str(room_id_value)
-		var room := JsonCoerceScript._copy_dict(rooms.get(room_id_value, {}))
+		var room: Variant = rooms[room_id_value]
+		if room is not Dictionary:
+			continue
 		var room_result := _migrate_scenario_environment_graph(room, "grand_casino_room_states.%s" % room_id, report, room_id)
 		if bool(room_result.get("changed", false)):
-			rooms[room_id_value] = JsonCoerceScript._copy_dict(room_result.get("environment", room))
+			rooms[room_id_value] = room_result.get("environment", room)
 			rooms_changed = true
+		if not frame_boundary.is_null() and not room.is_empty():
+			await frame_boundary
 	if rooms_changed:
-		grand_casino_room_states = rooms
+		grand_casino_room_states = rooms.duplicate(true)
 	(report["scenario_ids"] as Array).sort()
 	(report["changed_paths"] as Array).sort()
 	return report
@@ -5604,25 +5618,29 @@ func migrate_legacy_scenario_sequences() -> Dictionary:
 func _migrate_scenario_environment_graph(environment: Dictionary, path: String, report: Dictionary, fallback_archetype_id: String = "") -> Dictionary:
 	if environment.is_empty():
 		return {"changed": false, "environment": environment}
-	var before := JSON.stringify(environment)
-	var candidate := environment.duplicate(true)
+	# Migration replaces scenario fields on the working room and layer shells.
+	# The engine compares those fields. Clone the full graph only when a change
+	# is installed so reporting cannot serialize unrelated cabinet state.
+	var candidate := environment.duplicate(false)
 	var graph_archetype_id := str(candidate.get("archetype_id", "")).strip_edges()
 	if graph_archetype_id.is_empty():
 		graph_archetype_id = str(JsonCoerceScript._copy_dict(candidate.get("scenario_state", {})).get("archetype_id", "")).strip_edges()
 	if graph_archetype_id.is_empty():
 		graph_archetype_id = fallback_archetype_id.strip_edges()
-	_migrate_scenario_snapshot_in_place(candidate, path, report, graph_archetype_id)
-	var states := JsonCoerceScript._copy_dict(candidate.get("layer_states", {}))
-	for layer_id_value in states.keys():
+	var changed := _migrate_scenario_snapshot_in_place(candidate, path, report, graph_archetype_id)
+	var saved_states: Variant = candidate.get("layer_states", {})
+	var states: Dictionary = saved_states.duplicate(false) if saved_states is Dictionary else {}
+	for layer_id_value in states:
 		var layer_id := str(layer_id_value)
-		var layer := JsonCoerceScript._copy_dict(states.get(layer_id_value, {}))
-		if layer.is_empty():
+		var saved_layer: Variant = states[layer_id_value]
+		if saved_layer is not Dictionary or saved_layer.is_empty():
 			continue
-		_migrate_scenario_snapshot_in_place(layer, "%s.layer_states.%s" % [path, layer_id], report, graph_archetype_id)
-		states[layer_id_value] = layer
-	if not states.is_empty():
+		var layer: Dictionary = saved_layer.duplicate(false)
+		if _migrate_scenario_snapshot_in_place(layer, "%s.layer_states.%s" % [path, layer_id], report, graph_archetype_id):
+			states[layer_id_value] = layer
+			changed = true
+	if changed and not states.is_empty():
 		candidate["layer_states"] = states
-	var changed := before != JSON.stringify(candidate)
 	if changed:
 		report["changed_snapshots"] = int(report.get("changed_snapshots", 0)) + 1
 		var changed_paths := JsonCoerceScript._copy_array(report.get("changed_paths", []))
@@ -5632,12 +5650,15 @@ func _migrate_scenario_environment_graph(environment: Dictionary, path: String, 
 	return {"changed": changed, "environment": candidate if changed else environment}
 
 
-func _migrate_scenario_snapshot_in_place(environment: Dictionary, path: String, report: Dictionary, fallback_archetype_id: String = "") -> void:
+func _migrate_scenario_snapshot_in_place(environment: Dictionary, path: String, report: Dictionary, fallback_archetype_id: String = "") -> bool:
 	report["snapshots_checked"] = int(report.get("snapshots_checked", 0)) + 1
-	var scenario_id := str(JsonCoerceScript._copy_dict(environment.get("scenario_state", {})).get("id", environment.get("scenario_id", ""))).strip_edges()
+	var had_original_state := environment.has("scenario_state")
+	var original_state: Variant = environment.get("scenario_state", {})
+	var scenario_state: Dictionary = original_state if original_state is Dictionary else {}
+	var scenario_id := str(scenario_state.get("id", environment.get("scenario_id", ""))).strip_edges()
 	if scenario_id.is_empty():
 		report["no_sequence_unchanged"] = int(report.get("no_sequence_unchanged", 0)) + 1
-		return
+		return false
 	report["legacy_scenarios_checked"] = int(report.get("legacy_scenarios_checked", 0)) + 1
 	var scenario_ids := JsonCoerceScript._copy_array(report.get("scenario_ids", []))
 	if not scenario_ids.has(scenario_id):
@@ -5647,6 +5668,8 @@ func _migrate_scenario_snapshot_in_place(environment: Dictionary, path: String, 
 	var result := ScenarioEngineScript.migrate_environment_sequence(environment, preferred, "%d:%s" % [seed_value, path])
 	if bool(result.get("active", false)):
 		report["active_sequences"] = int(report.get("active_sequences", 0)) + 1
+	return bool(result.get("changed", false)) or (not preferred.is_empty() and (not had_original_state \
+		or JSON.stringify(original_state) != JSON.stringify(environment.get("scenario_state", {}))))
 
 
 # Old saves predate the durable suppression marker, so every independently
@@ -16133,7 +16156,7 @@ func _run_state_schema_restore(data: Dictionary, frame_boundary: Signal = Signal
 		await frame_boundary
 	var saved_world_map: Variant = data.get("world_map", {})
 	var normalized_map := WorldMap.normalize(saved_world_map as Dictionary if saved_world_map is Dictionary else {})
-	world_map = await _normalize_world_map_environment_snapshots(_compact_world_map_ticket_storage(normalized_map), frame_boundary)
+	world_map = await _normalize_world_map_environment_snapshots(normalized_map, frame_boundary)
 	# Restored town state is authoritative. Discovery facts are registered on
 	# fresh world generation, never injected during a byte-identical restore.
 	configure_town_world(world_map, false)
@@ -16142,7 +16165,10 @@ func _run_state_schema_restore(data: Dictionary, frame_boundary: Signal = Signal
 	grand_casino_room_states = _normalize_grand_casino_room_states(JsonCoerceScript._copy_dict(data.get("grand_casino_room_states", {})))
 	if not frame_boundary.is_null():
 		await frame_boundary
-	migrate_legacy_scenario_sequences()
+	if frame_boundary.is_null():
+		migrate_legacy_scenario_sequences()
+	else:
+		await _migrate_legacy_scenario_sequences_steps(frame_boundary)
 	grand_casino_staffing = _normalize_grand_casino_staffing(JsonCoerceScript._copy_dict(data.get("grand_casino_staffing", {})))
 	rourke_current_room = _normalize_grand_casino_room_id(str(data.get("rourke_current_room", "")))
 	rourke_current_spot = str(data.get("rourke_current_spot", "")).strip_edges()
@@ -17022,8 +17048,8 @@ static func _compact_world_map_ticket_storage(map_data: Dictionary) -> Dictionar
 static func _normalize_world_map_environment_snapshots(map_data: Dictionary, frame_boundary: Signal) -> Dictionary:
 	if map_data.is_empty():
 		return {}
-	# WorldMap.normalize already owns these node records. Environment
-	# normalization detaches each room before any saved data is migrated.
+	# WorldMap.normalize already owns these room snapshots. Compact and normalize
+	# each room at the same boundary, reusing its detached nested records.
 	for node in map_data.get("nodes", []):
 		if node is not Dictionary:
 			continue
@@ -17031,7 +17057,7 @@ static func _normalize_world_map_environment_snapshots(map_data: Dictionary, fra
 		if environment is Dictionary and not environment.is_empty():
 			if not frame_boundary.is_null():
 				await frame_boundary
-			node["environment"] = _normalize_environment(environment)
+			node["environment"] = _normalize_owned_environment(_environment_for_persistent_storage(environment, false))
 	return map_data
 
 
@@ -17682,7 +17708,10 @@ func _alcohol_dependency_penalty(gap: int) -> int:
 static func _normalize_environment(data: Dictionary) -> Dictionary:
 	if data.is_empty():
 		return {}
-	var environment := data.duplicate(true)
+	return _normalize_owned_environment(data.duplicate(true))
+
+
+static func _normalize_owned_environment(environment: Dictionary) -> Dictionary:
 	# This marker is a fresh process-local rejection, never a saved authority or
 	# a policy switch. Authenticate original legacy bytes before any rebuild.
 	environment.erase("_scratch_scalper_legacy_rejection_errors")
@@ -17730,24 +17759,19 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 		environment["crew_switch_intel_uses"] = maxi(0, int(environment.get("crew_switch_intel_uses", 0)))
 	if environment.has("crew_switch_intel_visit_id"):
 		environment["crew_switch_intel_visit_id"] = str(environment.get("crew_switch_intel_visit_id", ""))
-	environment["game_states"] = _normalize_game_states(JsonCoerceScript._copy_dict(environment.get("game_states", {})))
-	var blackjack_states: Dictionary = environment.get("game_states", {})
-	for authority_game_id_value in blackjack_states.keys():
-		var authority_game_id := str(authority_game_id_value)
-		if typeof(blackjack_states.get(authority_game_id, null)) != TYPE_DICTIONARY:
-			continue
-		var blackjack_table: Dictionary = (blackjack_states.get(authority_game_id, {}) as Dictionary).duplicate(true)
+	var game_states := _normalize_owned_game_states(environment.get("game_states", {}))
+	environment["game_states"] = game_states
+	for game_id in game_states:
+		var blackjack_table: Dictionary = game_states[game_id]
 		# Apply receipts are transaction-local and can never survive a save boundary.
 		blackjack_table.erase("_blackjack_pending_apply_receipt")
 		if blackjack_table.has(BlackjackActionAuthorityScript.LEDGER_KEY):
-			var binding := action_authority_table_binding(authority_game_id, environment)
+			var binding := action_authority_table_binding(game_id, environment)
 			var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger(blackjack_table.get(BlackjackActionAuthorityScript.LEDGER_KEY), binding)
 			if ledger.is_empty():
 				blackjack_table.erase(BlackjackActionAuthorityScript.LEDGER_KEY)
 			else:
 				blackjack_table[BlackjackActionAuthorityScript.LEDGER_KEY] = ledger
-		blackjack_states[authority_game_id] = blackjack_table
-	environment["game_states"] = blackjack_states
 	environment["visual_context"] = JsonCoerceScript._copy_dict(environment.get("visual_context", {}))
 	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment)
 	environment["security_profile"] = JsonCoerceScript._copy_dict(environment.get("security_profile", {}))
@@ -18199,15 +18223,18 @@ static func action_authority_table_binding(state_key: String, environment: Dicti
 
 
 # Normalizes per-environment gameplay state owned by GameModule instances.
-static func _normalize_game_states(states: Dictionary) -> Dictionary:
+static func _normalize_owned_game_states(value: Variant) -> Dictionary:
+	if value is not Dictionary:
+		return {}
+	var states: Dictionary = value
 	var result := {}
-	for key in states.keys():
+	for key in states:
 		var game_id := str(key)
 		if game_id.is_empty():
 			continue
-		var value: Variant = states[key]
-		if typeof(value) == TYPE_DICTIONARY:
-			result[game_id] = (value as Dictionary).duplicate(true)
+		var state: Variant = states[key]
+		if state is Dictionary:
+			result[game_id] = state
 	return result
 
 
