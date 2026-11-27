@@ -48,6 +48,7 @@ it into Now.
 
 ## Later
 
+- Improve Gold Card solver routes for seeds that drain the bankroll before Linda's final tier.
 - For the full 1.0.0 release, remove the Developer section, placement tools,
   and debug library links from player builds.
 - Voice and copy pass on all 0.6 text (Erik, by hand).
