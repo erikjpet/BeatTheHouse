@@ -60,6 +60,7 @@ func _run() -> void:
 			await _check_baccarat_all_in_confirmation()
 		elif game_id == "blackjack":
 			await _check_eye_in_the_sky()
+			await _check_blackjack_redeal_after_payout()
 		elif game_id == "slot":
 			await _check_pinball_sealed_controls()
 	app.pending_autosave = false
@@ -142,6 +143,72 @@ func _check_eye_in_the_sky() -> void:
 		if app.current_screen != app.SCREEN_GAME or app.current_game != game \
 				or run.grand_casino_chips != chips or app.last_game_result != settled:
 			_fail("blackjack", "Eye in the Sky lost the active table or its settlement")
+
+
+func _check_blackjack_redeal_after_payout() -> void:
+	const GAME := "blackjack"
+	const DEAL := "blackjack_deal"
+	const PAYOUT := "blackjack_payout"
+	if (await _play(GAME, false)).is_empty():
+		return
+	var canvas: Control = app.game_surface_canvas
+	var channels: Array = canvas.state.get("surface_animation_channels", [])
+	var payout: Dictionary = {}
+	for channel in channels:
+		if channel.get("id") == PAYOUT:
+			payout = channel
+			break
+	var start := int(payout.get("started_msec", 0))
+	var duration := int(payout.get("duration_msec", 0))
+	if start <= 0 or duration <= 0:
+		_fail(GAME, "the settled hand did not publish a payout animation")
+		return
+	app.user_settings.reduce_motion = false
+	canvas.reduce_motion = false
+	var ready_time := start + duration + 1
+	app.test_time = ready_time
+	canvas.surface_simulation_clock_msec = ready_time
+	canvas.surface_presentation_clock_msec = ready_time
+	app._refresh()
+	await process_frame
+	await process_frame
+	var position: Vector2 = canvas.local_position_for_surface_action(DEAL, 0)
+	var wager := int(canvas.state.get("total_wager_cost", 0))
+	if position.x < 0 or position.y < 0 or wager <= 0:
+		_fail(GAME, "the next Deal had no paid control")
+		return
+	app.test_time = start + 1
+	canvas.surface_simulation_clock_msec = app.test_time
+	canvas.surface_presentation_clock_msec = app.test_time
+	app._refresh()
+	await process_frame
+	if not canvas.surface_animation_active(PAYOUT) or canvas.state.get("phase") != "betting":
+		_fail(GAME, "could not reach Settlement with the next wager available")
+		return
+	if not canvas.surface_action_is_blocked(DEAL):
+		_fail(GAME, "Deal is enabled while the previous payout is still on the table")
+	var chips := app.run_state.grand_casino_chips
+	canvas._activate_surface_at_position(position, false)
+	if app.run_state.grand_casino_chips != chips or _incomplete():
+		_fail(GAME, "a click during the payout opened or charged another hand")
+		return
+	app.test_time = ready_time
+	canvas.surface_simulation_clock_msec = ready_time
+	canvas.surface_presentation_clock_msec = ready_time
+	canvas.set_process(true)
+	for _frame in range(12):
+		await process_frame
+		if canvas.local_position_for_surface_action(DEAL, 0).x >= 0:
+			break
+	canvas.set_process(false)
+	position = canvas.local_position_for_surface_action(DEAL, 0)
+	if position.x < 0 or position.y < 0 or canvas.surface_action_is_blocked(DEAL):
+		_fail(GAME, "Deal did not become available after the payout")
+		return
+	canvas._activate_surface_at_position(position, false)
+	canvas._activate_surface_at_position(position, false)
+	if app.run_state.grand_casino_chips != chips - wager or not _incomplete():
+		_fail(GAME, "the next Deal did not open a live hand with exactly one wager debit")
 
 
 func _check_ticket_room_source(game_id: String, run: RunState, cabinet: GameModule) -> void:

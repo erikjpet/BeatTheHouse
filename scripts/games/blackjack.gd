@@ -1026,6 +1026,11 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		}),
 	})
 	if not _is_rourke_duel(run_state, environment):
+		spec["surface_action_blocks"].append({
+			"actions": ["blackjack_deal", BLACKJACK_CUT_GESTURE],
+			"while_animation": PAYOUT_ANIMATION_CHANNEL,
+			"reason": "Let the previous hand finish paying before dealing again.",
+		})
 		spec["ritual_contract"] = BLACKJACK_RITUAL_CONTRACT
 		spec["ritual_id"] = BLACKJACK_RITUAL_ID
 		spec["ritual_projection"] = _blackjack_ritual_projection(
@@ -3940,7 +3945,8 @@ func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 	var counting_enabled := bool(surface_state.get("counting_enabled", false))
 	_draw_table_button(surface, Rect2(panel.position.x + 112, panel.position.y + 7, 88, 16), "COUNT ON" if counting_enabled else "COUNT OFF", "blackjack_count_toggle", 0, C_PINK_2 if counting_enabled else C_SOFT, true, counting_enabled)
 	if bool(surface_state.get("can_deal", false)) or bool(surface_state.get("wager_blocked", false)):
-		_draw_table_button(surface, Rect2(panel.position.x + 14, panel.position.y + 28, 132, 38), "DEAL", "blackjack_deal", 0, C_YELLOW, deal_actions_ready and bool(surface_state.get("can_deal", false)), surface.surface_native_action_selected("blackjack_deal"))
+		var can_deal: bool = bool(surface_state.get("can_deal", false)) and not surface.surface_action_is_blocked("blackjack_deal")
+		_draw_table_button(surface, Rect2(panel.position.x + 14, panel.position.y + 28, 132, 38), "DEAL", "blackjack_deal", 0, C_YELLOW, can_deal, surface.surface_native_action_selected("blackjack_deal"))
 		if bool(surface_state.get("wager_blocked", false)):
 			surface.surface_label("MIN $%d" % int(surface_state.get("minimum_wager", 1)), panel.position + Vector2(154, 40), 9, C_ORANGE)
 			if not _settlement_reveal_waiting(surface, surface_state) and not surface.surface_animation_active(PAYOUT_ANIMATION_CHANNEL):
