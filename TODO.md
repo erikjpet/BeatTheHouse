@@ -28,8 +28,6 @@ it into Now.
 
 ## Bugs
 
-- Web can visibly pause on a first trip, when a cabinet first opens, or
-  when continuing a saved run.
 - 9 items promise an effect that never applies: Foil Sleeve and Mags' Lined
   Sleeve (Slot odds), Wedding Ribbon Favor and Rent-Party Hat Pin (luck when a
   scene grants them; check the other 11 souvenirs), Creased Luck Card, Lucky
