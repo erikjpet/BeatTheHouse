@@ -12,10 +12,9 @@ const MAX_SETTLE_TICKS := 1200
 # batch. At 60 accepted moves per second, keeping the full history retained
 # about 19 MB after 30,000 inputs despite the solver consuming every event.
 const INPUT_TRACE_COMPACT_MIN_CONSUMED := 1024
-# The renderer's packed native batch keeps a published frame bounded. The old
-# 1.1-second Web throttle predated that path and made the cabinet visibly update
-# at less than one frame per second even when the solver itself stayed healthy.
-const WEB_PRESENTATION_INTERVAL_MSEC := 33
+# Match the host's 16 ms surface refresh so each 60 Hz Web step can publish
+# the platform and coin positions together.
+const WEB_PRESENTATION_INTERVAL_MSEC := 16
 
 static var _native_cache_generation := 0
 

@@ -839,11 +839,9 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 			settled_empty_drop_count = _consume_pending_empty_settlement(session, settled_tray)
 	var presentation_session_value: Variant = machine.get("live_session")
 	var presentation_session: Dictionary = presentation_session_value if typeof(presentation_session_value) == TYPE_DICTIONARY else {}
-	# The production Web canvas intentionally presents idle machine motion at a
-	# measured low-detail cadence. Keep the authority/solver at 60 Hz, but only
-	# project its 300-body presentation tuple when that tuple can become visible.
-	# Accepted controls patch immediately; continuous input cannot postpone the
-	# regular coin-body publication cadence.
+	# Publish the platform and coins together at the Web surface refresh cadence.
+	# Accepted controls acknowledge immediately without shifting the next scheduled
+	# publication of the packed coin positions.
 	var simulation := _simulation(machine)
 	var tray_value: Variant = simulation.get("tray_ledger")
 	var invariants_value: Variant = simulation.get("last_invariants")
