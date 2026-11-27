@@ -265,11 +265,8 @@ func realtime_state_patch(machine: Dictionary, run_state: RunState, ui_state: Di
 		"surface_realtime_state_refresh": true,
 		"slot_bonus_recovery_required": false,
 		"slot_bonus_recovery_message": "",
-		# The canvas scheduler already owns Slot's visible cadence: active reel and
-		# feature channels draw at 60 fps, while Web attract mode intentionally uses
-		# its declared low-detail idle cadence. This 16 ms presentation patch only
-		# advances read-only state; requesting another redraw here bypassed that
-		# scheduler and repainted the complete idle cabinet every browser frame.
+		# The canvas scheduler owns the 60 Hz draw cadence. This patch updates the
+		# cabinet state without asking the canvas to redraw a second time.
 		"surface_defer_patch_redraw": true,
 		"slot_visual_time_msec": surface_time_msec,
 		"slot_attract_phase": _attract_phase(surface_time_msec, skin),

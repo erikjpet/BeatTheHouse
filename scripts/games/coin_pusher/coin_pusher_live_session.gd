@@ -12,10 +12,6 @@ const MAX_SETTLE_TICKS := 1200
 # batch. At 60 accepted moves per second, keeping the full history retained
 # about 19 MB after 30,000 inputs despite the solver consuming every event.
 const INPUT_TRACE_COMPACT_MIN_CONSUMED := 1024
-# Match the host's 16 ms surface refresh so each 60 Hz Web step can publish
-# the platform and coin positions together.
-const WEB_PRESENTATION_INTERVAL_MSEC := 16
-
 static var _native_cache_generation := 0
 
 
@@ -96,7 +92,6 @@ static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int
 		"presentation_previous_face_y": int(simulation.get("face_y", 0)),
 		"presentation_current_face_y": int(simulation.get("face_y", 0)),
 		"presentation_view_serial": 0,
-		"presentation_last_publish_msec": -1,
 		"presentation_audio_serial": 0,
 		# Empty authority ticks dominate a live cabinet. Reuse these private
 		# presentation-only arrays so the Web main thread does not create two
@@ -143,28 +138,10 @@ static func _append_input(simulation: Dictionary, session: Dictionary, input: Di
 	return event
 
 
-static func presentation_publish_due(machine: Dictionary, now_msec: int) -> bool:
-	if not OS.has_feature("web"):
-		return true
-	var session_value: Variant = machine.get("live_session")
-	var session: Dictionary = session_value if typeof(session_value) == TYPE_DICTIONARY else {}
-	if session.is_empty():
-		return true
-	var last_publish_msec := int(session.get("presentation_last_publish_msec", -1))
-	return last_publish_msec < 0 or now_msec - last_publish_msec >= WEB_PRESENTATION_INTERVAL_MSEC
-
-
 static func total_input_count(machine: Dictionary) -> int:
 	var session: Dictionary = machine.get("live_session", {})
 	var trace: Array = session.get("input_trace", [])
 	return maxi(int(session.get("input_count", 0)), trace.size())
-
-
-static func mark_presentation_published(machine: Dictionary, now_msec: int) -> void:
-	var session_value: Variant = machine.get("live_session")
-	var session: Dictionary = session_value if typeof(session_value) == TYPE_DICTIONARY else {}
-	if not session.is_empty():
-		session["presentation_last_publish_msec"] = now_msec
 
 
 static func enqueue_drops(machine: Dictionary, request: Dictionary, count: int) -> int:

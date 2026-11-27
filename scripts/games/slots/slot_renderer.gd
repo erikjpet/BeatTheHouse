@@ -516,6 +516,15 @@ func _draw_topper(surface, state: Dictionary, skin: Dictionary, accent: Color, l
 			for i in range(12):
 				var alpha := 0.20 + 0.18 * float(posmod(bucket + i, 4) == 0)
 				surface.draw_circle(rect.position + Vector2(24 + i * (rect.size.x - 48.0) / 11.0, rect.size.y * 0.5), 5.0, Color(light.r, light.g, light.b, alpha))
+	else:
+		# The painted cabinet replaces the procedural bulbs. Keep a small band
+		# of attract lights on the topper, clear of the reels and READY panel.
+		var lamp_center := Vector2(rect.get_center().x, rect.end.y - 6.0)
+		var lamp_phase := float(surface.surface_flicker()) * 3.0
+		for lamp in range(5):
+			var alpha := 0.38 + 0.27 * sin(lamp_phase + float(lamp) * 0.72)
+			var position := lamp_center + Vector2(float(lamp - 2) * 9.0, 0.0)
+			surface.draw_circle(position, 3.0, Color(light.r, light.g, light.b, alpha))
 	var grand_prize := int(state.get("slot_buffalo_grand_prize", 0))
 	if str(state.get("slot_type_id", "")) == "buffalo" and grand_prize > 0:
 		var grand_rect := Rect2(rect.position + Vector2(rect.size.x * 0.34, 5), Vector2(rect.size.x * 0.32, 28))
@@ -2153,7 +2162,7 @@ func _draw_buffalo_feature(surface, rect: Rect2, state: Dictionary, definition: 
 	var dusk := _buffalo_sunset_shift(state, bucket)
 	surface.draw_rect(rect, Color("#301207").lerp(Color("#090816"), dusk))
 	surface.draw_rect(rect, Color(trim.r, trim.g, trim.b, 0.20), false, 2)
-	_draw_buffalo_stampede(surface, rect, phase, bucket, accent, trim)
+	_draw_buffalo_stampede(surface, rect, phase, accent, trim)
 	if mode == "hold_and_spin":
 		_draw_buffalo_hold_and_spin(surface, rect.grow(-8), state, active, definition, accent, light, trim, bucket, feature_msec, spin_msec)
 	elif mode == "wheel":
@@ -2199,18 +2208,19 @@ func _buffalo_feature_manifest(surface_state: Dictionary, time_msec: int, mode: 
 	}
 
 
-func _draw_buffalo_stampede(surface, rect: Rect2, phase: String, bucket: int, accent: Color, trim: Color) -> void:
+func _draw_buffalo_stampede(surface, rect: Rect2, phase: String, accent: Color, trim: Color) -> void:
 	var dust_alpha := 0.10
 	if phase == "transition":
 		dust_alpha = 0.28
 	elif phase == "celebration":
 		dust_alpha = 0.34
+	var drift := float(surface.surface_flicker()) / 0.18
 	for dust in range(12):
-		var dust_x := rect.position.x + fposmod(float(bucket * 11 + dust * 29), rect.size.x)
+		var dust_x := rect.position.x + fposmod(drift * 11.0 + float(dust) * 29.0, rect.size.x)
 		var dust_y := rect.position.y + rect.size.y * (0.64 + 0.06 * float(dust % 3))
 		surface.draw_circle(Vector2(dust_x, dust_y), 4.0 + float(dust % 4), Color(trim.r, trim.g, trim.b, dust_alpha))
 	for herd in range(6):
-		var x := rect.position.x + fposmod(float(bucket * 8 + herd * 47), rect.size.x + 80.0) - 40.0
+		var x := rect.position.x + fposmod(drift * 8.0 + float(herd) * 47.0, rect.size.x + 80.0) - 40.0
 		var y := rect.position.y + rect.size.y * (0.54 + 0.08 * float(herd % 2))
 		_draw_buffalo_silhouette(surface, Vector2(x, y), 0.42 + float(herd % 3) * 0.08, Color(0.0, 0.0, 0.0, 0.32))
 	if phase == "transition":

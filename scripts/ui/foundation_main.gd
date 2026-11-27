@@ -102,7 +102,7 @@ const RUN_HUD_COMPACT_MAX_WIDTH := 1280.0
 const ENVIRONMENT_CANVAS_MIN_SIZE := Vector2.ZERO
 const GAME_SURFACE_FOCUSED_MIN_SIZE := Vector2.ZERO
 const GAME_SURFACE_PREVIEW_MIN_SIZE := Vector2.ZERO
-const GAME_SURFACE_REALTIME_REFRESH_INTERVAL_MSEC := 16
+const GAME_SURFACE_REALTIME_REFRESH_HZ := 60
 const AUTOSAVE_INTERACTION_DEBOUNCE_MSEC := 250
 const AUTOSAVE_GAME_INTERACTION_DEBOUNCE_MSEC := 400
 const AUTOSAVE_MAX_DEFER_MSEC := 1500
@@ -477,7 +477,7 @@ var environment_runtime_state_key_cache: Dictionary = {}
 var environment_runtime_active_keys_scratch: Dictionary = {}
 var environment_runtime_scheduler = EnvironmentRuntimeSchedulerScript.new()
 var environment_runtime_last_timing_usec: Dictionary = {}
-var last_game_surface_realtime_refresh_msec := 0
+var next_game_surface_realtime_refresh_units := 0
 var last_game_surface_realtime_work_frame := -1
 var game_surface_realtime_ui_state_scratch: Dictionary = {}
 var surface_feature_music_active := false
@@ -3178,9 +3178,18 @@ func _advance_game_surface_realtime_state() -> void:
 	if not game_surface_canvas.surface_realtime_state_refresh_enabled():
 		return
 	var now_msec := _environment_simulation_time_msec()
-	if last_game_surface_realtime_refresh_msec > 0 and now_msec - last_game_surface_realtime_refresh_msec < GAME_SURFACE_REALTIME_REFRESH_INTERVAL_MSEC:
+	# Scaling milliseconds by the target frequency makes each interval exactly 1000 units.
+	var now_units := now_msec * GAME_SURFACE_REALTIME_REFRESH_HZ
+	# The clock truncates to milliseconds, so a due frame can read slightly early.
+	if now_units + GAME_SURFACE_REALTIME_REFRESH_HZ < next_game_surface_realtime_refresh_units:
 		return
-	last_game_surface_realtime_refresh_msec = now_msec
+	# Keep the original 60 Hz schedule when a frame arrives between deadlines.
+	# A late frame publishes once, then continues at the next scheduled deadline.
+	if next_game_surface_realtime_refresh_units > 0:
+		var overdue_units := maxi(0, now_units - next_game_surface_realtime_refresh_units)
+		next_game_surface_realtime_refresh_units += overdue_units - (overdue_units % 1000) + 1000
+	else:
+		next_game_surface_realtime_refresh_units = now_units + 1000
 	last_game_surface_realtime_work_frame = Engine.get_process_frames()
 	var patch := _game_surface_realtime_state_patch(now_msec)
 	if patch.is_empty():
@@ -3970,7 +3979,7 @@ func _reset_game_surface_runtime_state(checkpoint_source: bool = true, preserve_
 	_stop_surface_feature_music()
 	game_surface_ui_state = {}
 	game_surface_auto_resolving = false
-	last_game_surface_realtime_refresh_msec = 0
+	next_game_surface_realtime_refresh_units = 0
 	last_game_surface_realtime_work_frame = -1
 	_reset_drunk_time_surface_clock()
 
@@ -8376,7 +8385,7 @@ func _foundation_lifecycle_snapshot(park_run_state: bool = false) -> Dictionary:
 		"run_inventory_popup_mode", "run_inventory_context_container_id", "selected_run_inventory_item_id", "selected_run_inventory_item_source",
 		"travel_transition_active", "travel_transition_target_id", "travel_transition_target_label", "travel_presentation_active", "travel_presentation_journey_id",
 		"game_surface_session_generation", "deferred_coach_refresh_active_generation", "tutorial_action_resume_active_generation", "deferred_embedded_refresh_generation", "deferred_embedded_refresh_pending", "deferred_embedded_refresh_run_state", "deferred_embedded_refresh_game", "deferred_embedded_refresh_environment", "deferred_embedded_refresh_result", "deferred_embedded_refresh_canvas", "deferred_embedded_refresh_game_state_key", "deferred_embedded_refresh_surface_session_generation",
-		"game_surface_auto_resolving", "last_game_surface_realtime_refresh_msec", "surface_feature_music_active", "surface_feature_music_ducking", "drunk_time_anchor_real_msec", "drunk_time_anchor_scaled_msec", "drunk_time_last_scale",
+		"game_surface_auto_resolving", "next_game_surface_realtime_refresh_units", "surface_feature_music_active", "surface_feature_music_ducking", "drunk_time_anchor_real_msec", "drunk_time_anchor_scaled_msec", "drunk_time_last_scale",
 		"pending_autosave", "pending_autosave_status_text", "pending_autosave_after_frame", "pending_autosave_not_before_msec", "pending_autosave_first_queued_msec",
 		"autosave_dirty_generation", "autosave_inflight_generation", "autosave_completed_generation", "save_status_message", "_manual_save_error",
 		"autosave_failure_generation", "autosave_failure_count", "autosave_last_error", "autosave_last_error_code", "autosave_retry_blocked",
@@ -19284,14 +19293,14 @@ func _render_foundation_snapshots(prepared_environment_snapshot: Dictionary = {}
 			# A realtime module's first boundary is an entry anchor, not a gameplay
 			# tick. Apply it before the initial render so the module clock, host
 			# throttle, and canvas timestamp all begin from the same authored instant.
-			if last_game_surface_realtime_refresh_msec <= 0 \
+			if next_game_surface_realtime_refresh_units <= 0 \
 					and bool(game_snapshot.get("surface_realtime_state_refresh", false)):
 				var entry_msec := int(game_snapshot.get("surface_time_msec", _environment_simulation_time_msec()))
 				var entry_patch := _game_surface_realtime_entry_anchor_patch(entry_msec, game_snapshot)
 				if not entry_patch.is_empty():
 					for entry_key in entry_patch.keys():
 						game_snapshot[entry_key] = entry_patch[entry_key]
-					last_game_surface_realtime_refresh_msec = entry_msec
+					next_game_surface_realtime_refresh_units = entry_msec * GAME_SURFACE_REALTIME_REFRESH_HZ + 1000
 			game_surface_canvas.render_game_snapshot(game_snapshot)
 	if cheat_dock != null:
 		cheat_dock.render(game_snapshot)
@@ -19339,7 +19348,7 @@ func _render_embedded_action_snapshot_patch() -> bool:
 		debug_timing["refresh_snapshot_canvas_apply"] = Time.get_ticks_usec() - debug_stage_started_usec
 		debug_stage_started_usec = Time.get_ticks_usec()
 	if not realtime_patch.is_empty():
-		last_game_surface_realtime_refresh_msec = now_msec
+		next_game_surface_realtime_refresh_units = now_msec * GAME_SURFACE_REALTIME_REFRESH_HZ + 1000
 	if cheat_dock != null:
 		var patched_state: Dictionary = game_surface_canvas.realtime_surface_state()
 		var cheat_dock_key := _cheat_dock_model_key(patched_state)

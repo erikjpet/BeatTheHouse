@@ -99,8 +99,6 @@ func host_action_rollback_snapshot(action_id: String, run_state: RunState, envir
 		"durable_ready": bool(session.get("durable_ready", false)),
 		"durable_dirty_present": session.has("durable_dirty"),
 		"durable_dirty": bool(session.get("durable_dirty", false)),
-		"presentation_last_publish_msec_present": session.has("presentation_last_publish_msec"),
-		"presentation_last_publish_msec": int(session.get("presentation_last_publish_msec", -1)),
 		"durable_present": typeof(durable_value) == TYPE_DICTIONARY,
 		# _write_live_durable() patches a shallow replacement and never mutates the
 		# existing durable dictionary or its settled checkpoint. Retain that exact
@@ -136,7 +134,7 @@ func restore_host_action_rollback(snapshot: Dictionary, run_state: RunState, env
 	else:
 		simulation.erase("motor_target_rate_fp")
 	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
-	for field_name in ["durable_ready", "durable_dirty", "presentation_last_publish_msec"]:
+	for field_name in ["durable_ready", "durable_dirty"]:
 		if bool(snapshot.get("%s_present" % field_name, false)):
 			session[field_name] = snapshot.get(field_name)
 		else:
@@ -806,8 +804,7 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 		return _v3_headless_surface_state(_read_machine_state(run_state, environment), run_state, environment, ui_state)
 	var machine := _ensure_live_machine(run_state, environment)
 	var now_msec := int(ui_state.get("surface_time_msec", 0))
-	var publish_presentation := CoinPusherLiveSessionScript.presentation_publish_due(machine, now_msec)
-	var advanced := CoinPusherLiveSessionScript.advance(machine, now_msec, publish_presentation)
+	var advanced := CoinPusherLiveSessionScript.advance(machine, now_msec)
 	var advanced_events: Variant = advanced.get("events")
 	var physics_events: Array = advanced_events if typeof(advanced_events) == TYPE_ARRAY else []
 	_consume_live_physics_events(run_state, environment, machine, physics_events)
@@ -839,25 +836,7 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 			settled_empty_drop_count = _consume_pending_empty_settlement(session, settled_tray)
 	var presentation_session_value: Variant = machine.get("live_session")
 	var presentation_session: Dictionary = presentation_session_value if typeof(presentation_session_value) == TYPE_DICTIONARY else {}
-	# Publish the platform and coins together at the Web surface refresh cadence.
-	# Accepted controls acknowledge immediately without shifting the next scheduled
-	# publication of the packed coin positions.
-	var simulation := _simulation(machine)
-	var tray_value: Variant = simulation.get("tray_ledger")
-	var invariants_value: Variant = simulation.get("last_invariants")
-	var tray: Array = tray_value if typeof(tray_value) == TYPE_ARRAY else []
-	var invariants: Dictionary = invariants_value if typeof(invariants_value) == TYPE_DICTIONARY else {}
-	var patch := _v3_realtime_presentation_patch(machine, _current_surface_state, run_state, environment) if publish_presentation else {
-		"coin_pusher_body_count": int(invariants.get("active", 0)),
-		"coin_pusher_tray_count": tray.size(),
-		"coin_pusher_tray_value": _ledger_value(tray),
-		"coin_pusher_liveness_ticks": int(presentation_session.get("liveness_ticks", 0)),
-		"coin_pusher_last_step_metrics": presentation_session.get("last_step_metrics", {}),
-		"coin_pusher_drop_queue_count": _queued_drop_count(machine),
-		"coin_pusher_drop_queue_total": _queued_drop_total(machine),
-	}
-	if publish_presentation and int(advanced.get("ticks", 0)) > 0:
-		CoinPusherLiveSessionScript.mark_presentation_published(machine, now_msec)
+	var patch := _v3_realtime_presentation_patch(machine, _current_surface_state, run_state, environment)
 	if ui_state.has("coin_pusher_drop_charge_started_tick"):
 		var held_ticks := maxi(0, int(_simulation(machine).get("tick", 0)) - int(ui_state.get("coin_pusher_drop_charge_started_tick", 0)))
 		patch["coin_pusher_drop_charge_count"] = clampi(maxi(1, held_ticks / 6), 1, 60)
@@ -870,9 +849,8 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	patch["coin_pusher_audio_events"] = audio_events
 	patch["coin_pusher_audio_serial"] = int(presentation_session.get("presentation_audio_serial", 0))
 	patch["surface_realtime_state_refresh"] = true
-	# The Web canvas owns a measured low-detail presentation cadence. Solver
-	# patches still land every tick, but they must not bypass that scheduler and
-	# force a complete 300-body draw for every 16 ms authority refresh.
+	# The canvas redraws on its own clock. Publish the positions together without
+	# requesting an extra draw for each solver update.
 	patch["surface_defer_patch_redraw"] = true
 	patch["coin_pusher_ticks_advanced"] = int(advanced.get("ticks", 0))
 	patch["request_foundation_autosave"] = request_autosave

@@ -616,7 +616,7 @@ func _tick() -> void:
 	var canvas: Control = app.game_surface_canvas
 	canvas.surface_simulation_clock_msec = app.test_time
 	canvas.surface_presentation_clock_msec = app.test_time
-	app.last_game_surface_realtime_refresh_msec = 0
+	app.next_game_surface_realtime_refresh_units = 0
 	app._advance_game_surface_realtime_state()
 	await process_frame
 
