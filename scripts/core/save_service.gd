@@ -99,16 +99,14 @@ func begin_save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
 	if async_save_in_flight():
 		return ERR_BUSY
 	var clean_slot := _slot_id(slot_id)
-	# Seeded scenario definitions are immutable content. The worker may share those
-	# records while encoding; recursively copying them on the input thread made an
-	# otherwise asynchronous late-run save pause every active cabinet frame.
-	var runtime_snapshot := run_state.to_save_snapshot_for_encoding()
+	var save_in_frames := OS.has_feature("web") and OS.has_feature("nothreads")
+	var runtime_snapshot := run_state.to_save_snapshot_for_encoding(not save_in_frames)
 	var path := run_save_path(clean_slot)
 	var backup_path := backup_save_path(clean_slot)
 	# A prior installed generation can be reused only if the worker finds those
 	# exact validated bytes again. A changed or unknown primary is fully checked.
 	var primary_digest := _trusted_primary_digest(clean_slot, path)
-	if OS.has_feature("web") and OS.has_feature("nothreads"):
+	if save_in_frames:
 		return _begin_web_save(runtime_snapshot, clean_slot, path, primary_digest)
 	async_result_box = {"error": ERR_BUSY, "slot_id": clean_slot}
 	async_slot_id = clean_slot

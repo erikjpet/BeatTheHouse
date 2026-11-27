@@ -15954,8 +15954,22 @@ func to_action_snapshot_without_world() -> Dictionary:
 
 # Private immutable room compilations may be carried only to RunSaveCodec,
 # never through the ordinary save-shaped dictionary/transaction APIs.
-func to_save_snapshot_for_encoding() -> Dictionary:
-	return _save_snapshot(false, false, true)
+func to_save_snapshot_for_encoding(detach_for_worker: bool = false) -> Dictionary:
+	var snapshot := _save_snapshot(false, false, true)
+	if not detach_for_worker:
+		return snapshot
+	# The save projection copies outer containers for synchronous encoding.
+	# Own their mutable descendants before a writer can traverse them off-thread.
+	# Town snapshots already own the index of immutable seeded definitions.
+	var town: Dictionary = snapshot["town_state"]
+	var living_world: Dictionary = town.get("living_world", {})
+	const DEFINITIONS := "seeded_scenario_definitions_by_node"
+	var definitions: Variant = living_world.get(DEFINITIONS)
+	living_world.erase(DEFINITIONS)
+	var detached: Dictionary = PersistentEnvironmentProjectionScript.owned(snapshot)
+	if definitions != null:
+		detached["town_state"]["living_world"][DEFINITIONS] = definitions
+	return detached
 
 
 # Produces the same logical input that RunGenerator historically obtained by

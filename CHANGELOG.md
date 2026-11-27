@@ -4,6 +4,7 @@ All notable public release changes for Beat the House are recorded here.
 
 ## Unreleased
 
+- Keep Windows background saves isolated from live table updates.
 - Enable the next Blackjack Deal once the previous payout finishes.
 - Preserve the table's last result when answering Eye in the Sky during play.
 - Prepare Web cabinets and game content before the title appears, and pace

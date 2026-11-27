@@ -21,6 +21,14 @@ class RunAcknowledgementFailure extends SaveService:
 		return super.save_run(state, slot_id)
 
 
+class PausedAutosave extends SaveService:
+	var resume_encoding := Semaphore.new()
+
+	func _async_save_worker(snapshot: Dictionary, slot: String, path: String, backup: String, digest: String, result: Dictionary) -> void:
+		resume_encoding.wait()
+		super._async_save_worker(snapshot, slot, path, backup, digest, result)
+
+
 func _initialize() -> void:
 	call_deferred("_run")
 
@@ -32,9 +40,35 @@ func _run() -> void:
 	if failure.is_empty():
 		failure = _check_profile_recovery(app)
 	app.free()
+	if failure.is_empty():
+		failure = _check_autosave_generation()
 	if not failure.is_empty():
 		push_error(failure)
 	quit(0 if failure.is_empty() else 1)
+
+
+func _check_autosave_generation() -> String:
+	if OS.has_feature("web") and OS.has_feature("nothreads"):
+		return ""
+	var run := RunState.new()
+	run.start_new("CORE-AUTOSAVE-GENERATION")
+	var dealer := {"name": "Old dealer"}
+	var table := {"dealer_profile": dealer}
+	run.current_environment["game_states"] = {"blackjack": table}
+	var service := PausedAutosave.new()
+	const SLOT := "autosave-generation"
+	if service.begin_save_run(run, SLOT) != OK:
+		return "Could not begin the background autosave generation."
+	# Make a live nested replacement after begin_save_run but before encoding.
+	table["dealer_profile"] = {"name": "New dealer"}
+	dealer["name"] = "Late mutation to the previous dealer"
+	service.resume_encoding.post()
+	if service.wait_for_async_save() != OK:
+		return "The background autosave failed after the live table changed."
+	var restored := service.load_run(SLOT) as RunState
+	if restored == null or restored.current_environment.get("game_states", {}).get("blackjack", {}).get("dealer_profile", {}).get("name") != "Old dealer":
+		return "Background autosave encoded a nested Blackjack change from after capture."
+	return ""
 
 
 func _check_container_recovery(app: FoundationMain) -> String:
