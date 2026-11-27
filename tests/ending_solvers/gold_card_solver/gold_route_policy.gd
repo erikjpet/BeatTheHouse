@@ -1,6 +1,6 @@
 extends RefCounted
 
-const Opening := preload("res://tools/rourke_solver/rourke_opening_policy.gd")
+const Opening := preload("res://tests/ending_solvers/rourke_solver/rourke_opening_policy.gd")
 const TIERS := ["bronze", "silver", "gold"]
 const STANDARD_HANDS := [1, 3, 5]
 const STANDARD_NET := [5, 15, 30]

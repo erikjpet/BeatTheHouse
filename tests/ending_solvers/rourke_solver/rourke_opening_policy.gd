@@ -1,7 +1,7 @@
 extends RefCounted
 
 # Opening decisions share the same rendered observation as the duel policy.
-const RouteProfiles := preload("res://tools/ending_solver/route_profiles.gd")
+const RouteProfiles := preload("res://tests/ending_solvers/ending_solver/route_profiles.gd")
 const CHIP_RESERVE := 50
 
 var opening_profile := "standard"

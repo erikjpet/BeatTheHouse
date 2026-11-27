@@ -2,8 +2,8 @@ extends SceneTree
 
 # Player-visible observations and normal viewport input shared by ending solvers.
 const MainScene := preload("res://scenes/main.tscn")
-const Fidelity := preload("res://tools/ending_solver/visible_host.gd")
-const PublicObservation := preload("res://tools/ending_solver/public_observation.gd")
+const Fidelity := preload("res://tests/ending_solvers/ending_solver/visible_host.gd")
+const PublicObservation := preload("res://tests/ending_solvers/ending_solver/public_observation.gd")
 const POST_INPUT_SETTLE_FRAMES := 4
 
 var app: Control

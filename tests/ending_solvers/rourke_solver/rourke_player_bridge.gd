@@ -1,4 +1,4 @@
-extends "res://tools/ending_solver/visible_input.gd"
+extends "res://tests/ending_solvers/ending_solver/visible_input.gd"
 
 # The guarded solver uses the GUI input routines from the playtest bridge.
 # Only the rendered observation below reaches the policy.

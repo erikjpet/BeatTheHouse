@@ -1,7 +1,7 @@
 extends RefCounted
 
-const OpeningPolicy := preload("res://tools/rourke_solver/rourke_opening_policy.gd")
-const GoldBlackjack := preload("res://tools/gold_card_solver/gold_blackjack_policy.gd")
+const OpeningPolicy := preload("res://tests/ending_solvers/rourke_solver/rourke_opening_policy.gd")
+const GoldBlackjack := preload("res://tests/ending_solvers/gold_card_solver/gold_blackjack_policy.gd")
 
 const WAIT := "wait 16"
 const PROFIT_GOAL := 40

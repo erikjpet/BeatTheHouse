@@ -35,7 +35,7 @@ class SolverTarget:
 ROURKE = SolverTarget(
     name="Rourke",
     schema="bth.rourke_solver_campaign/v1",
-    script="tools/rourke_solver/rourke_solver.gd",
+    script="tests/ending_solvers/rourke_solver/rourke_solver.gd",
     ending="showdown_survived",
     ending_target="rourke_duel",
     victory_field="verified_rourke_victory",
@@ -45,7 +45,7 @@ RESULT_PREFIX = "BTH_SOLVER_RESULT "
 STEP_PREFIX = "BTH_SOLVER_STEP "
 POLICIES = ("balanced", "baseline", "risk_aware")
 ROUTE_MODEL_SCHEMA = "bth.ending_solver_route_model/v1"
-LOCAL_GODOT = Path(__file__).resolve().parents[1] / ".tools" / "godot-4.6-stable" / "Godot_v4.6-stable_win64_console.exe"
+LOCAL_GODOT = Path(__file__).resolve().parents[3] / ".tools" / "godot-4.6-stable" / "Godot_v4.6-stable_win64_console.exe"
 
 
 def _policy_name(value):

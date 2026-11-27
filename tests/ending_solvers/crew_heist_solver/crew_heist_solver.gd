@@ -1,4 +1,4 @@
-extends "res://tools/ending_solver/player_run_solver.gd"
+extends "res://tests/ending_solvers/ending_solver/player_run_solver.gd"
 
 const WINNING_REPORTS := ["heist_clean_sweep", "heist_out_hot", "heist_somebody_got_pinched"]
 const COOLING_RESPONSES := {

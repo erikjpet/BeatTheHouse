@@ -1,7 +1,7 @@
-extends "res://tools/ending_solver/player_run_solver.gd"
+extends "res://tests/ending_solvers/ending_solver/player_run_solver.gd"
 
-const DuelPolicy := preload("res://tools/rourke_solver/rourke_duel_policy.gd")
-const RouteProgression := preload("res://tools/ending_solver/route_progression.gd")
+const DuelPolicy := preload("res://tests/ending_solvers/rourke_solver/rourke_duel_policy.gd")
+const RouteProgression := preload("res://tests/ending_solvers/ending_solver/route_progression.gd")
 const PULL_TAB_SCAN := "pull_tab_detector_scan"
 const PULL_TAB_MAX_PEEKS := 4
 const PULL_TAB_MAX_DECISIONS := 40

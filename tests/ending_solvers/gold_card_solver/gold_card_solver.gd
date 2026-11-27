@@ -1,8 +1,8 @@
-extends "res://tools/ending_solver/player_run_solver.gd"
+extends "res://tests/ending_solvers/ending_solver/player_run_solver.gd"
 
-const RoutePolicy := preload("res://tools/gold_card_solver/gold_route_policy.gd")
-const BlackjackPolicy := preload("res://tools/gold_card_solver/gold_blackjack_policy.gd")
-const RouteProgression := preload("res://tools/ending_solver/route_progression.gd")
+const RoutePolicy := preload("res://tests/ending_solvers/gold_card_solver/gold_route_policy.gd")
+const BlackjackPolicy := preload("res://tests/ending_solvers/gold_card_solver/gold_blackjack_policy.gd")
+const RouteProgression := preload("res://tests/ending_solvers/ending_solver/route_progression.gd")
 const RESERVE_RECOVERY := "reserve_recovery"
 
 var route := RoutePolicy.new()

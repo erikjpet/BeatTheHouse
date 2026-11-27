@@ -1,7 +1,7 @@
-extends "res://tools/rourke_solver/rourke_player_bridge.gd"
+extends "res://tests/ending_solvers/rourke_solver/rourke_player_bridge.gd"
 
-const OpeningPolicy := preload("res://tools/rourke_solver/rourke_opening_policy.gd")
-const RouteProfiles := preload("res://tools/ending_solver/route_profiles.gd")
+const OpeningPolicy := preload("res://tests/ending_solvers/rourke_solver/rourke_opening_policy.gd")
+const RouteProfiles := preload("res://tests/ending_solvers/ending_solver/route_profiles.gd")
 const POLICIES := ["baseline", "balanced", "risk_aware"]
 const MAX_IDENTICAL_DECISIONS := 28
 const STARTUP_POLL_FRAMES := 96
