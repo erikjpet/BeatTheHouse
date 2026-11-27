@@ -4729,7 +4729,8 @@ func _complete_event_choice_resolution(prepared: Dictionary, result: Dictionary)
 				_refresh_after_foundation_lifecycle_rollback(event_rollback)
 			return surface_failure
 	if bool(result.get("ok", false)):
-		last_game_result = {}
+		if event_id != "eye_in_the_sky" or not return_to_game_after_event:
+			last_game_result = {}
 		last_item_result = {}
 		last_hook_result = result.duplicate(true)
 		immediate_environment_acknowledgement = ""

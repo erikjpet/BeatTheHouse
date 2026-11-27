@@ -58,6 +58,8 @@ func _run() -> void:
 			await _check_interrupted_roulette_confirmation()
 		elif game_id == "baccarat":
 			await _check_baccarat_all_in_confirmation()
+		elif game_id == "blackjack":
+			await _check_eye_in_the_sky()
 		elif game_id == "slot":
 			await _check_pinball_sealed_controls()
 	app.pending_autosave = false
@@ -121,6 +123,25 @@ func _play(game_id: String, reload: bool) -> Dictionary:
 		_fail(game_id, "restoring already settled state duplicates or loses a settlement")
 		return {}
 	return settled
+
+
+func _check_eye_in_the_sky() -> void:
+	const EVENT := "eye_in_the_sky"
+	for choice in ["press_anyway", "change_table"]:
+		if (await _play("blackjack", false)).is_empty():
+			return
+		var game := app.current_game
+		var run := app.run_state
+		var settled := app.last_game_result.duplicate(true)
+		var chips := run.grand_casino_chips
+		if not run.enqueue_triggered_event(EVENT, "event", {}, app._triggered_entry_overrides(app.library.event(EVENT))) \
+				or not app._show_next_pending_triggered_event() \
+				or not app.activate_event_choice_action(EVENT, choice):
+			_fail("blackjack", "could not resolve Eye in the Sky at the settled table")
+			return
+		if app.current_screen != app.SCREEN_GAME or app.current_game != game \
+				or run.grand_casino_chips != chips or app.last_game_result != settled:
+			_fail("blackjack", "Eye in the Sky lost the active table or its settlement")
 
 
 func _check_ticket_room_source(game_id: String, run: RunState, cabinet: GameModule) -> void:

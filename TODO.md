@@ -28,6 +28,8 @@ it into Now.
 
 ## Bugs
 
+- Windows can crash on the first Gold-tier Blackjack Deal at the Grand Casino
+  after accepting Silver from Linda, while the Ritual HUD shows Settlement.
 - 9 items promise an effect that never applies: Foil Sleeve and Mags' Lined
   Sleeve (Slot odds), Wedding Ribbon Favor and Rent-Party Hat Pin (luck when a
   scene grants them; check the other 11 souvenirs), Creased Luck Card, Lucky

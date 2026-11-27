@@ -4,6 +4,7 @@ All notable public release changes for Beat the House are recorded here.
 
 ## Unreleased
 
+- Preserve the table's last result when answering Eye in the Sky during play.
 - Prepare Web cabinets and game content before the title appears, and pace
   travel artwork, first cabinet entry, and save decoding across frames.
 - Load idle Slot room data separately from the cabinet when continuing a Web
