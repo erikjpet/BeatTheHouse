@@ -109,6 +109,18 @@ static func _wager_target(minimum: int, maximum: int, liquidity: int, progress: 
 	if progress.has("net_remaining") and (net_remaining == 0 \
 			or (net_remaining <= minimum and int(progress.get("hands_remaining", 1)) <= 1)):
 		return minimum
+	if policy == "reserve_recovery":
+		var segment_net := int(progress.get("segment_net", 0))
+		var hands_remaining := maxi(1, int(progress.get("hands_remaining", 1)))
+		# A deficit is a reason to preserve more hands, not to add the lost
+		# dollars to the next wager. Keep marker proceeds out of the reserve.
+		if segment_net <= 0:
+			net_remaining += segment_net
+			hands_remaining = maxi(3, hands_remaining)
+		var needed_per_hand := ceili(float(net_remaining) / float(hands_remaining))
+		var own_funds := liquidity - int(progress.get("marker_balance", 0))
+		var liquidity_cap := maxi(minimum, floori(float(own_funds) / 8.0))
+		return clampi(needed_per_hand, minimum, mini(maximum, liquidity_cap))
 	if policy == "risk_aware":
 		# Spread exposure over the remaining qualifying hands while retaining a
 		# recovery bankroll. Once the hand count is met, size to the visible gap.
@@ -190,7 +202,9 @@ static func _hand_action(game: Dictionary, hud: Dictionary, progress: Dictionary
 	var reserve := maxi(1, int(game.get("stake_min", 1)))
 	var liquidity := _total_liquidity(hud)
 	var can_raise := current_stake > 0 and liquidity - current_stake >= reserve
-	if policy == "risk_aware":
+	if policy == "reserve_recovery":
+		can_raise = can_raise and liquidity - int(progress.get("marker_balance", 0)) >= current_stake * 4 + reserve
+	elif policy == "risk_aware":
 		# The original stake is already on the felt at this point. Preserve a
 		# second live wager when extra exposure would not help the visible target.
 		var remaining := int(progress.get("net_remaining", 0))

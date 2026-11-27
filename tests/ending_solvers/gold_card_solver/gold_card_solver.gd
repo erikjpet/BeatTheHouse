@@ -43,11 +43,18 @@ func _ending_command(view: Dictionary) -> String:
 		if not next.is_empty():
 			return next
 		_maybe_switch_to_reserve(view)
-		return BlackjackPolicy.decide(view, active_policy)
+		return BlackjackPolicy.decide(view, _play_policy(view))
 	var interruption := BlackjackPolicy.decide(view, active_policy)
 	if not interruption.is_empty():
 		return interruption
 	return opening.decide(view)
+
+
+func _play_policy(view: Dictionary) -> String:
+	if selected_route == RESERVE_RECOVERY and active_policy == "risk_aware" \
+			and view.get("gold_progress", {}).get("tier") == "gold":
+		return RESERVE_RECOVERY
+	return active_policy
 
 
 func _maybe_switch_to_reserve(view: Dictionary) -> void:
@@ -77,7 +84,7 @@ func _ending_room_recovered() -> void:
 func _witness(view: Dictionary) -> Dictionary:
 	var witness := super._witness(view)
 	if selected_route == RESERVE_RECOVERY:
-		witness["gold_play_policy"] = active_policy
+		witness["gold_play_policy"] = _play_policy(view)
 	var game: Dictionary = view.get("game", {})
 	for field in ["blackjack_presentation", "wager_rail_tap_disabled"]:
 		if game.has(field):

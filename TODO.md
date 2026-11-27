@@ -48,7 +48,7 @@ it into Now.
 
 ## Later
 
-- Improve Gold Card solver routes for seeds that drain the bankroll before Linda's final tier.
+- Finish Linda's final tier on Gold Card solver routes that still stall with smaller recovery wagers.
 - For the full 1.0.0 release, remove the Developer section, placement tools,
   and debug library links from player builds.
 - Voice and copy pass on all 0.6 text (Erik, by hand).
