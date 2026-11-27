@@ -1,7 +1,8 @@
 extends SceneTree
 
 const CASES := [
-	"boot", "content", "money_roundtrip", "travel", "full_run", "terminal_persistence", "liveness", "gold_solver",
+	"boot", "content", "money_roundtrip", "travel", "full_run", "terminal_persistence", "liveness",
+	"gold_solver", "crew_solver",
 ]
 const TRAVEL_SAVE_PREFIX := "TRAVEL_SAVE "
 const WINDOWS_BOOT_TIMEOUT_MSEC := 60000

@@ -69,6 +69,18 @@ func observe() -> Dictionary:
 
 
 func send(command: String) -> Dictionary:
+	if command == "zoom_map_out":
+		var holder := app.get("world_map_holder") as Control
+		if holder == null or not holder.is_visible_in_tree():
+			return {"ok": false, "reason": "world map is closed"}
+		var bounds := _clipped_control_rect(holder)
+		if not bounds.has_area():
+			return {"ok": false, "reason": "world map has no visible hit area"}
+		var before := float(_map_view().get("target_map_bounds", {}).get("width", 0.0))
+		var position := bounds.position + bounds.size * Vector2(0.25, 0.75)
+		await _push_mouse_wheel(position, MOUSE_BUTTON_WHEEL_DOWN)
+		var after := float(_map_view().get("target_map_bounds", {}).get("width", 0.0))
+		return {"ok": after > before, "reason": "" if after > before else "world map did not zoom out"}
 	var input := await super.send(command)
 	if (command.begins_with("click_object delivery:") and not bool(input.get("ok", false))
 			and str(input.get("reason", "")).contains("not hittable")):
@@ -405,6 +417,13 @@ func _travel(view: Dictionary, destination: String, marked: bool = false) -> Str
 	if candidate.is_empty():
 		if marked and not destination.is_empty():
 			return "wait 16"
+		# The map may frame nearby stops and clip the Grand's marker until zoomed out.
+		if stage == Stage.ACCESS and destination == "grand_casino" and not destination_rejections.has(destination):
+			var canvas_view := _map_view()
+			if bool(canvas_view.get("selected_focus_zoom_animating", false)):
+				return "wait 16"
+			if not bool(canvas_view.get("navigation", {}).get("at_minimum_zoom", true)):
+				return "zoom_map_out"
 		return _travel_detour(view, destination)
 	var target := str(candidate.get("id", ""))
 	if selected != target:
@@ -416,6 +435,11 @@ func _travel(view: Dictionary, destination: String, marked: bool = false) -> Str
 			return _close_blocked_travel(view, candidate)
 		return "wait 16"
 	return OpeningPolicy.button(view, ["Travel"])
+
+
+func _map_view() -> Dictionary:
+	var canvas := app.get("world_map_nodes_layer") as Control
+	return canvas.current_view_snapshot() if canvas != null else {}
 
 
 func _travel_detour(view: Dictionary, destination: String) -> String:
@@ -432,6 +456,11 @@ func _travel_detour(view: Dictionary, destination: String) -> String:
 		if (marker.get("id") == map.get("selected_node_id") and marker.has("travel_enabled")
 				and not bool(marker.get("travel_enabled", false))):
 			return _close_blocked_travel(view, marker)
+	# A marked Bar job can be reached by a free walk from the Alley.
+	if stage == Stage.CAMERA_WINDOW and node == "grand_casino" and camera_target == "bar":
+		for marker: Dictionary in markers:
+			if marker.get("id") == "back_alley" and not destination_rejections.has("back_alley"):
+				return _travel(view, "back_alley")
 	# The Queen and Lounge are ordinary approaches to the Grand. Prefer a
 	# visible approach when a return leg quotes an unaffordable through fare.
 	if destination == "grand_casino":
