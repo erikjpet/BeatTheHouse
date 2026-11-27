@@ -804,6 +804,13 @@ static func prepare_sequence_fact_flush(environment: Dictionary, definition: Dic
 	var state := ensure_sequence_state(candidate, definition)
 	if state.is_empty():
 		return {"candidate": candidate, "definition": definition, "result": {"ok": false, "errors": ["No dynamic room sequence is active."]}, "unchanged_state": false}
+	# Arriving in a previously cleaned room is valid. Its sealed sequence no
+	# longer consumes arrival facts, so there is no active queue to flush.
+	if is_same(state, prior_state) and state.get("status") == SequenceRuntimeScript.STATUS_CLEANED \
+			and JsonCoerceScript._copy_array(state.get("errors", [])).is_empty() \
+			and typeof(state.get("fact_queue")) == TYPE_ARRAY and (state["fact_queue"] as Array).is_empty():
+		return {"candidate": candidate, "definition": definition,
+			"result": {"ok": false, "inactive": true, "processed": [], "errors": []}, "unchanged_state": false}
 	var result := SequenceRuntimeScript.flush_facts(state, definition, boundary_serial, true)
 	return {"candidate": candidate, "definition": definition, "result": result,
 		"unchanged_state": bool(result.get("ok", false)) and is_same(state, prior_state) and is_same(result.get("state"), state)}

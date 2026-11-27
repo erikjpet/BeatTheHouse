@@ -2,6 +2,7 @@ extends SceneTree
 
 const MAIN := preload("res://scenes/main.tscn")
 const SLOT_STATE := preload("res://scripts/games/slots/slot_machine_state.gd")
+const SCENARIO_SCHEMA := preload("res://scripts/core/scenario_sequence_schema.gd")
 const DESTINATION := "gas_station_casino"
 const TRAVEL_SAVE_PREFIX := "TRAVEL_SAVE "
 
@@ -39,7 +40,9 @@ func _run() -> void:
 	app.autosave_slot_id = "test_travel"
 	var failure: String
 	if arguments.is_empty():
-		failure = _check_roadside_map_scout(app)
+		failure = _check_expired_scenario_reentry(app)
+		if failure.is_empty():
+			failure = _check_roadside_map_scout(app)
 		if failure.is_empty():
 			failure = await _play_and_save(app)
 		if failure.is_empty():
@@ -183,6 +186,33 @@ func _resume_state(run: RunState, machine_key: String) -> Dictionary:
 		"coin_in": int(machine.get("coin_in", -1)),
 		"coin_out": int(machine.get("coin_out", -1)),
 	}
+
+
+func _check_expired_scenario_reentry(app) -> String:
+	if not app.start_foundation_run("PLAYTEST-CATALOG-01", {"modifiers": {"home_archetype_id": "back_alley"}}, false):
+		return "Could not start the motel reentry run."
+	var run: RunState = app.run_state
+	var generator: RunGenerator = app.generator
+	var source := run.current_world_node_id()
+	var visit := generator.travel_environment_result(run, "motel", true)
+	if not visit.get("ok", false):
+		return "Could not establish the first motel visit: %s." % str(visit.get("errors", []))
+	var sequence := SCENARIO_SCHEMA.sequence(run.seeded_scenario_definition_for_node("motel"))
+	var expiry: Dictionary = sequence.get("expiry", {})
+	if expiry.get("policy", "") not in ["cleanup", "fail"]:
+		return "The motel fixture needs an expiring scenario: %s." % str(expiry)
+	var expired := run.scenario_sequence_apply_expiry_boundary(str(expiry["boundary"]), int(expiry["after"]))
+	if not expired.get("ok", false) or not expired.get("expired", false):
+		return "The motel scenario did not expire through its authored boundary: %s." % str(expired.get("errors", []))
+	var departure := generator.travel_environment_result(run, source, true)
+	if not departure.get("ok", false):
+		return "Could not leave the expired motel: %s." % str(departure.get("errors", []))
+	var reentry := generator.travel_environment_result(run, "motel", true)
+	if not reentry.get("ok", false) or run.current_world_node_id() != "motel":
+		return "A completed motel scenario blocked the return trip: %s." % str(reentry.get("errors", []))
+	if run.current_environment.get("scenario_sequence_state", {}).get("status") != "cleaned":
+		return "Motel reentry did not preserve the completed scenario."
+	return ""
 
 
 func _check_roadside_map_scout(app) -> String:
