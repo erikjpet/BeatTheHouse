@@ -49,7 +49,6 @@ it into Now.
 ## Later
 
 - Finish Linda's final tier on Gold Card solver routes that still stall with smaller recovery wagers.
-- Keep the Crew solver funded for the return to the Grand after a Gas Casino Camera Window.
 - For the full 1.0.0 release, remove the Developer section, placement tools,
   and debug library links from player builds.
 - Voice and copy pass on all 0.6 text (Erik, by hand).

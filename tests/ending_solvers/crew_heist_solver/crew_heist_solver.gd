@@ -27,6 +27,7 @@ const RECRUITMENT_RESPONSES := {
 const CAMERA_TRAVEL_RESERVE := 25
 const CAMERA_TRAVEL_CUSHION := 10
 const CAMERA_DETOUR_REMAINING_CASH := 20
+const CAMERA_MARKER_DRAW := 50
 
 enum Stage { AUDIT, ACCESS, CAMERA_WINDOW, PLAN, SCHEDULE, CART, LIVE, GETAWAY }
 
@@ -43,8 +44,11 @@ var bishop_room_rechecks := 0
 var bishop_refresh_needed := false
 var camera_windows := 0
 var camera_window_start_cash := -1
+var camera_window_reward_cash := -1
 var camera_travel_reserve := CAMERA_TRAVEL_RESERVE
+var camera_return_cost := 0
 var reserve_checked_window := -1
+var expected_cash_after_first_draw := -1
 var last_hold_cash := -1
 var camera_target := ""
 var live_round := 0
@@ -224,6 +228,12 @@ func _search_audit(view: Dictionary, archetype: String) -> String:
 
 func _earn_access(view: Dictionary, archetype: String) -> String:
 	if archetype not in ["grand_casino", "grand_casino_cage"]:
+		# Meet contacts at the outlying stops while they're available. The
+		# Punchline's existing recruitment sequence starts during planning.
+		if camera_windows > 0 and archetype != "small_underground_casino":
+			var recruit := _visible_recruitment(view)
+			if not recruit.is_empty():
+				return recruit
 		return _travel(view, "grand_casino")
 	if not bishop_recruited:
 		return opening.room_object(view, "event:recruitment_bishop", ["Talk"], ["Bishop: Talk"])
@@ -246,15 +256,20 @@ func _earn_access(view: Dictionary, archetype: String) -> String:
 
 func _camera_reserve_command(view: Dictionary, archetype: String) -> String:
 	var hud: Dictionary = view.get("status_hud", {})
+	if not bool(hud.get("bankroll_rendered", false)):
+		return ""
+	var cash := int(hud.get("bankroll", 0))
 	# The balance on return to the Cage includes the reward and both fares.
-	if camera_window_start_cash >= 0 and bool(hud.get("bankroll_rendered", false)):
-		var round_trip_loss := camera_window_start_cash - int(hud.get("bankroll", 0))
+	if camera_window_start_cash >= 0:
+		var round_trip_loss := camera_window_start_cash - cash
 		camera_travel_reserve = maxi(
 			camera_travel_reserve, round_trip_loss + CAMERA_WINDOW_REWARD + CAMERA_TRAVEL_CUSHION
 		)
+		camera_return_cost = maxi(0, camera_window_reward_cash - cash)
 		camera_window_start_cash = -1
-	if camera_windows == 0 or reserve_checked_window == camera_windows \
-			or not bool(hud.get("bankroll_rendered", false)) or int(hud.get("bankroll", 0)) >= camera_travel_reserve:
+	var already_checked := reserve_checked_window == camera_windows
+	if camera_windows == 0 or cash >= camera_travel_reserve \
+			or (already_checked and cash != expected_cash_after_first_draw):
 		return ""
 	if archetype == "grand_casino":
 		return _grand_room(view, "grand_casino_cage", "Grand Casino Cage")
@@ -263,6 +278,11 @@ func _camera_reserve_command(view: Dictionary, archetype: String) -> String:
 	if view.get("spatial", {}).get("selected_object_id") != atm and _room_object_visible(view, atm):
 		return "click_object " + atm
 	reserve_checked_window = camera_windows
+	# A second draw is useful only when one successful draw still falls short
+	# of the last observed return. Never repeat a rejected ATM action.
+	expected_cash_after_first_draw = -1
+	if not already_checked and cash < CAMERA_TRAVEL_RESERVE and cash + CAMERA_MARKER_DRAW < camera_return_cost:
+		expected_cash_after_first_draw = cash + CAMERA_MARKER_DRAW
 	for action: Dictionary in view.get("clickable", {}).get("room_actions", []):
 		if action.get("selected_object_id") == atm and action.get("label") == loan and bool(action.get("enabled", false)):
 			return OpeningPolicy._room_action(action, atm)
@@ -274,6 +294,7 @@ func _camera_window(view: Dictionary, world_node: String) -> String:
 		var hud: Dictionary = view.get("status_hud", {})
 		if int(hud.get("bankroll", 0)) == last_hold_cash + CAMERA_WINDOW_REWARD:
 			camera_windows += 1
+			camera_window_reward_cash = int(hud.get("bankroll", 0))
 			stage = Stage.PLAN if camera_windows >= CAMERA_WINDOWS_FOR_PLANNING else Stage.ACCESS
 			bishop_refresh_needed = world_node == "grand_casino"
 			last_hold_cash = -1
@@ -301,12 +322,9 @@ func _hold_sightline(view: Dictionary, world_node: String) -> String:
 func _plan_command(view: Dictionary, archetype: String) -> String:
 	if archetype != "small_underground_casino":
 		return _travel(view, "small_underground_casino")
-	# Current plans require shared reputation. Recruit available contacts in
-	# the club and casino before going to the planning table.
-	for member: String in RECRUITMENT_RESPONSES:
-		var event := "event:recruitment_" + member
-		if member not in recruited_members and _room_object_visible(view, event):
-			return opening.room_object(view, event, ["Talk"], [member.capitalize() + ": Talk"])
+	var recruit := _visible_recruitment(view)
+	if not recruit.is_empty():
+		return recruit
 	if str(view.get("environment", {}).get("kind", "")) == "crew" or _room_object_visible(view, "event:crew_planning_table"):
 		if reopen_planning_table:
 			reopen_planning_table = false
@@ -320,6 +338,16 @@ func _plan_command(view: Dictionary, archetype: String) -> String:
 	if _room_object_visible(view, "environment_layer:back_room") or back_room.begins_with("click"):
 		return back_room
 	return opening.room_object(view, "environment_layer:casino", ["Enter Casino", "Enter Room"], ["Enter Casino: Enter Room", "Casino: Enter Room"])
+
+
+func _visible_recruitment(view: Dictionary) -> String:
+	if bool(view.get("screen", {}).get("world_map_overlay_visible", false)):
+		return ""
+	for member: String in RECRUITMENT_RESPONSES:
+		var event := "event:recruitment_" + member
+		if member not in recruited_members and _room_object_visible(view, event):
+			return opening.room_object(view, event, ["Talk"], [member.capitalize() + ": Talk"])
+	return ""
 
 
 func _live_game(view: Dictionary) -> String:
